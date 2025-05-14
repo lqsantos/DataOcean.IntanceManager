@@ -1,3 +1,8 @@
 export default function Home() {
-  return <h1>Hello, world!</h1>
+  return (
+    <main>
+      <h1>DataOcean Instance Manager</h1>
+      <p>Welcome to the instance manager application</p>
+    </main>
+  );
 }

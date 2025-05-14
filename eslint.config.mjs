@@ -1,41 +1,38 @@
-import eslintPluginNext from '@next/eslint-plugin-next'
-import eslintPluginImport from 'eslint-plugin-import'
-import eslintPluginUnusedImports from 'eslint-plugin-unused-imports'
+import nextPlugin from '@next/eslint-plugin-next';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import { defineConfig } from 'eslint-define-config';
 
-export default [
-  {
-    plugins: {
-      '@next/next': eslintPluginNext,
-      import: eslintPluginImport,
-      'unused-imports': eslintPluginUnusedImports,
-    },
-    rules: {
-      // Regras recomendadas do Next.js
-      ...eslintPluginNext.configs.recommended.rules,
-
-      // Limpeza de imports não utilizados
-      'unused-imports/no-unused-imports': 'warn',
-
-      // Organização de imports
-      'import/order': [
-        'warn',
-        {
-          groups: ['builtin', 'external', 'internal'],
-          pathGroups: [
-            {
-              pattern: '@/**',
-              group: 'internal',
-              position: 'after',
-            },
-          ],
-          pathGroupsExcludedImportTypes: ['builtin'],
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
-          'newlines-between': 'always',
-        },
-      ],
+export default defineConfig({
+  root: true,
+  plugins: {
+    '@typescript-eslint': tsPlugin,
+    '@next/next': nextPlugin,
+  },
+  languageOptions: {
+    parser: tsParser,
+    parserOptions: {
+      project: './tsconfig.json',
+      ecmaFeatures: {
+        jsx: true,
+      },
     },
   },
-]
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@next/next/recommended',
+    'prettier',
+  ],
+  rules: {
+    'react/react-in-jsx-scope': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+  },
+  settings: {
+    react: {
+      version: 'detect',
+    },
+  },
+});
