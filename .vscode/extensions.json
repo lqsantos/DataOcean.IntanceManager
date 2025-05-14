@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode", // Prettier: formatação automática
+    "dbaeumer.vscode-eslint", // ESLint: validação e auto-correção
+    "bradlc.vscode-tailwindcss", // Tailwind: IntelliSense
+    "streetsidesoftware.code-spell-checker", // Verificação ortográfica
+    "eamodio.gitlens" // GitLens: histórico de alterações no Git
+  ]
+}

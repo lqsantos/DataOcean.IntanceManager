@@ -1,0 +1,29 @@
+{
+  // Formata automaticamente ao salvar
+  "editor.formatOnSave": true,
+
+  // Define o Prettier como formatador padrão
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Executa correções automáticas do ESLint e organiza os imports ao salvar
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+
+  // Garante quebra de linha padrão Unix
+  "files.eol": "\n",
+
+  // Garante que o TypeScript do projeto (e não o global) seja usado
+  "typescript.tsdk": "node_modules/typescript/lib",
+
+  // Habilita a validação do ESLint (útil se estiver desativada por padrão)
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+
+  // Suporte completo ao Tailwind CSS (se estiver usando)
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  },
+  "tailwindCSS.experimental.classRegex": ["clsx\\(([^)]*)\\)", "cn\\(([^)]*)\\)"]
+}
