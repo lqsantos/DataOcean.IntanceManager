@@ -7,7 +7,8 @@ export const EnvironmentService = {
     const response = await fetch(`${API_BASE_URL}/environments`);
 
     if (!response.ok) {
-      throw new Error('Falha ao buscar ambientes');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Falha ao buscar ambientes');
     }
 
     return response.json();
@@ -23,7 +24,8 @@ export const EnvironmentService = {
     });
 
     if (!response.ok) {
-      throw new Error('Falha ao criar ambiente');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Falha ao criar ambiente');
     }
 
     return response.json();
@@ -39,7 +41,8 @@ export const EnvironmentService = {
     });
 
     if (!response.ok) {
-      throw new Error('Falha ao atualizar ambiente');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Falha ao atualizar ambiente');
     }
 
     return response.json();
@@ -51,7 +54,8 @@ export const EnvironmentService = {
     });
 
     if (!response.ok) {
-      throw new Error('Falha ao excluir ambiente');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Falha ao excluir ambiente');
     }
   },
 };

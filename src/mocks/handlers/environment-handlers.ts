@@ -1,9 +1,6 @@
-// src/mocks/handlers/environment-handlers.ts
-import { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
-import { rest } from 'msw';
-
+import { http, HttpResponse } from 'msw';
 // Dados mockados
-let environments: Environment[] = [
+let environments = [
   {
     id: '1',
     name: 'Development',
@@ -32,28 +29,30 @@ let environments: Environment[] = [
 
 export const environmentHandlers = [
   // GET /api/environments
-  rest.get('/api/environments', (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(environments));
+  http.get('/api/environments', () => {
+    return HttpResponse.json(environments);
   }),
 
   // POST /api/environments
-  rest.post('/api/environments', async (req, res, ctx) => {
-    const data = (await req.json()) as CreateEnvironmentDto;
+  http.post('/api/environments', async ({ request }) => {
+    const data = await request.json();
 
     // Validações
     if (!data.name || !data.slug) {
-      return res(ctx.status(400), ctx.json({ message: 'Nome e slug são obrigatórios' }));
+      return new HttpResponse(JSON.stringify({ message: 'Nome e slug são obrigatórios' }), {
+        status: 400,
+      });
     }
 
     // Verificar se o slug já existe
     if (environments.some((env) => env.slug === data.slug)) {
-      return res(
-        ctx.status(409),
-        ctx.json({ message: `Já existe um ambiente com o slug "${data.slug}"` })
+      return new HttpResponse(
+        JSON.stringify({ message: `Já existe um ambiente com o slug "${data.slug}"` }),
+        { status: 409 }
       );
     }
 
-    const newEnvironment: Environment = {
+    const newEnvironment = {
       id: Date.now().toString(),
       name: data.name,
       slug: data.slug,
@@ -64,18 +63,20 @@ export const environmentHandlers = [
 
     environments = [...environments, newEnvironment];
 
-    return res(ctx.status(201), ctx.json(newEnvironment));
+    return HttpResponse.json(newEnvironment, { status: 201 });
   }),
 
   // PATCH /api/environments/:id
-  rest.patch('/api/environments/:id', async (req, res, ctx) => {
-    const { id } = req.params;
-    const data = (await req.json()) as UpdateEnvironmentDto;
+  http.patch('/api/environments/:id', async ({ params, request }) => {
+    const { id } = params;
+    const data = await request.json();
 
     // Verificar se o ambiente existe
     const environmentIndex = environments.findIndex((env) => env.id === id);
     if (environmentIndex === -1) {
-      return res(ctx.status(404), ctx.json({ message: 'Ambiente não encontrado' }));
+      return new HttpResponse(JSON.stringify({ message: 'Ambiente não encontrado' }), {
+        status: 404,
+      });
     }
 
     // Verificar se o slug já existe (e não é o mesmo ambiente)
@@ -84,9 +85,9 @@ export const environmentHandlers = [
       data.slug !== environments[environmentIndex].slug &&
       environments.some((env) => env.slug === data.slug)
     ) {
-      return res(
-        ctx.status(409),
-        ctx.json({ message: `Já existe um ambiente com o slug "${data.slug}"` })
+      return new HttpResponse(
+        JSON.stringify({ message: `Já existe um ambiente com o slug "${data.slug}"` }),
+        { status: 409 }
       );
     }
 
@@ -102,17 +103,19 @@ export const environmentHandlers = [
       ...environments.slice(environmentIndex + 1),
     ];
 
-    return res(ctx.status(200), ctx.json(updatedEnvironment));
+    return HttpResponse.json(updatedEnvironment);
   }),
 
   // DELETE /api/environments/:id
-  rest.delete('/api/environments/:id', (req, res, ctx) => {
-    const { id } = req.params;
+  http.delete('/api/environments/:id', ({ params }) => {
+    const { id } = params;
 
     // Verificar se o ambiente existe
     const environmentIndex = environments.findIndex((env) => env.id === id);
     if (environmentIndex === -1) {
-      return res(ctx.status(404), ctx.json({ message: 'Ambiente não encontrado' }));
+      return new HttpResponse(JSON.stringify({ message: 'Ambiente não encontrado' }), {
+        status: 404,
+      });
     }
 
     environments = [
@@ -120,6 +123,6 @@ export const environmentHandlers = [
       ...environments.slice(environmentIndex + 1),
     ];
 
-    return res(ctx.status(204));
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

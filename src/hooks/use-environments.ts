@@ -1,4 +1,3 @@
-// src/hooks/use-environments.ts
 import { EnvironmentService } from '@/services/environment-service';
 import { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
 import { useCallback, useEffect, useState } from 'react';
@@ -6,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 export function useEnvironments() {
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Função para carregar os ambientes
@@ -23,6 +23,16 @@ export function useEnvironments() {
       setIsLoading(false);
     }
   }, []);
+
+  // Função para recarregar os ambientes
+  const refreshEnvironments = useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      await fetchEnvironments();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [fetchEnvironments]);
 
   // Carregar ambientes na montagem do componente
   useEffect(() => {
@@ -78,7 +88,9 @@ export function useEnvironments() {
   return {
     environments,
     isLoading,
+    isRefreshing,
     error,
+    refreshEnvironments,
     createEnvironment,
     updateEnvironment,
     deleteEnvironment,

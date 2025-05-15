@@ -1,12 +1,18 @@
 async function initMocks() {
-  if (typeof window === 'undefined') {
-    const { server } = await import('./server');
-    server.listen();
-  } else {
-    const { worker } = await import('./browser');
-    worker.start({
-      onUnhandledRequest: 'bypass', // Não mostrar avisos para requisições não interceptadas
-    });
+  if (process.env.NODE_ENV === 'development') {
+    if (typeof window === 'undefined') {
+      const { server } = await import('./server');
+      server.listen();
+    } else {
+      const { worker } = await import('./browser');
+      await worker.start({
+        serviceWorker: {
+          url: '/mockServiceWorker.js',
+        },
+        onUnhandledRequest: 'bypass',
+      });
+      console.log('🔶 Mock Service Worker inicializado');
+    }
   }
 }
 
