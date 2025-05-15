@@ -6,10 +6,8 @@ import { ptBR } from 'date-fns/locale';
 import {
   ArrowUpDown,
   ChevronDown,
-  ChevronRight,
   ChevronUp,
   Edit,
-  Loader2,
   MoreHorizontal,
   Search,
   Trash2,
@@ -280,19 +278,6 @@ export function EnvironmentsTable({
         onDelete={handleDelete}
         onCancel={() => setEnvironmentToDelete(null)}
       />
-
-      {/* Replace the nested ternary */}
-      {(() => {
-        if (row.getIsExpanded()) {
-          return <ChevronDown className="h-4 w-4" />;
-        }
-
-        if (isLoading) {
-          return <Loader2 className="h-4 w-4 animate-spin" />;
-        }
-
-        return <ChevronRight className="h-4 w-4" />;
-      })()}
     </>
   );
 }
