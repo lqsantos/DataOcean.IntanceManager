@@ -1,19 +1,28 @@
-if (process.env.NEXT_PUBLIC_API_MOCKING === 'enabled') {
-  import('@/mocks');
-}
+import { MainLayout } from '@/components/layout/main-layout';
+import { ThemeProvider } from '@/components/theme-provider';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
 
-import { Metadata } from 'next';
-import React from 'react';
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'DataOcean Instance Manager',
-  description: 'Manage your DataOcean instances',
+  description: 'Plataforma para gerenciamento de instâncias DataOcean',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <MainLayout>{children}</MainLayout>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
