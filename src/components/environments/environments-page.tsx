@@ -36,7 +36,9 @@ export function EnvironmentsPage() {
     try {
       await createEnvironment(data);
       setIsCreateDialogOpen(false);
-    } catch (err) {
+    } catch (_err) {
+      // Explicitly mark the error as handled
+      void _err;
       // Erro já tratado no hook
     } finally {
       setIsSubmitting(false);
@@ -44,14 +46,18 @@ export function EnvironmentsPage() {
   };
 
   const handleEditSubmit = async (data: UpdateEnvironmentDto) => {
-    if (!environmentToEdit) {return;}
+    if (!environmentToEdit) {
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
       await updateEnvironment(environmentToEdit.id, data);
       setEnvironmentToEdit(null);
-    } catch (err) {
+    } catch (_err) {
+      // Explicitly mark the error as handled
+      void _err;
       // Erro já tratado no hook
     } finally {
       setIsSubmitting(false);
@@ -59,11 +65,11 @@ export function EnvironmentsPage() {
   };
 
   return (
-    <div className="animate-in space-y-6">
+    <div className="space-y-6 animate-in">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Ambientes</h1>
-          <p className="text-muted-foreground mt-1">Gerencie seus ambientes de implantação</p>
+          <p className="mt-1 text-muted-foreground">Gerencie seus ambientes de implantação</p>
         </div>
         <div className="flex gap-2">
           <Button

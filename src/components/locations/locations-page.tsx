@@ -35,7 +35,9 @@ export function LocationsPage() {
     try {
       await createLocation(data);
       setIsCreateDialogOpen(false);
-    } catch (err) {
+    } catch (_err) {
+      // Explicitly mark the error as handled
+      void _err;
       // Erro já tratado no hook
     } finally {
       setIsSubmitting(false);
@@ -43,14 +45,18 @@ export function LocationsPage() {
   };
 
   const handleEditSubmit = async (data: UpdateLocationDto) => {
-    if (!locationToEdit) {return;}
+    if (!locationToEdit) {
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
       await updateLocation(locationToEdit.id, data);
       setLocationToEdit(null);
-    } catch (err) {
+    } catch (_err) {
+      // Explicitly mark the error as handled
+      void _err;
       // Erro já tratado no hook
     } finally {
       setIsSubmitting(false);

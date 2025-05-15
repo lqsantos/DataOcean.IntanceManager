@@ -37,7 +37,7 @@ import { DeleteLocationDialog } from './delete-location-dialog';
 interface LocationsTableProps {
   locations: Location[];
   isLoading: boolean;
-  isRefreshing: boolean;
+  _isRefreshing: boolean;
   onEdit: (location: Location) => void;
   onDelete: (id: string) => Promise<void>;
 }
@@ -48,7 +48,7 @@ type SortDirection = 'asc' | 'desc';
 export function LocationsTable({
   locations,
   isLoading,
-  isRefreshing,
+  _isRefreshing,
   onEdit,
   onDelete,
 }: LocationsTableProps) {
@@ -68,7 +68,9 @@ export function LocationsTable({
   };
 
   const handleDelete = async () => {
-    if (!locationToDelete) {return;}
+    if (!locationToDelete) {
+      return;
+    }
 
     setIsDeleting(true);
 
@@ -190,70 +192,74 @@ export function LocationsTable({
                     </TableCell>
                   </TableRow>
                 ))
-              ) : sortedLocations.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    {searchTerm ? (
-                      <>
-                        Nenhuma localidade encontrada para <strong>"{searchTerm}"</strong>.
-                        <br />
-                        Tente outro termo de busca.
-                      </>
-                    ) : (
-                      <>
-                        Nenhuma localidade encontrada.
-                        <br />
-                        Crie sua primeira localidade para começar.
-                      </>
-                    )}
-                  </TableCell>
-                </TableRow>
               ) : (
-                sortedLocations.map((location) => (
-                  <TableRow key={location.id} className="group">
-                    <TableCell className="font-medium">{location.name}</TableCell>
-                    <TableCell>
-                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                        {location.slug}
-                      </code>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(location.createdAt), {
-                        addSuffix: true,
-                        locale: ptBR,
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="opacity-0 group-hover:opacity-100"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Ações</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onEdit(location)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setLocationToDelete(location)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                <>
+                  {sortedLocations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-24 text-center">
+                        {searchTerm ? (
+                          <>
+                            Nenhuma localidade encontrada para <strong>"{searchTerm}"</strong>.
+                            <br />
+                            Tente outro termo de busca.
+                          </>
+                        ) : (
+                          <>
+                            Nenhuma localidade encontrada.
+                            <br />
+                            Crie sua primeira localidade para começar.
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedLocations.map((location) => (
+                      <TableRow key={location.id} className="group">
+                        <TableCell className="font-medium">{location.name}</TableCell>
+                        <TableCell>
+                          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                            {location.slug}
+                          </code>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(location.createdAt), {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="opacity-0 group-hover:opacity-100"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Ações</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onEdit(location)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setLocationToDelete(location)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </>
               )}
             </TableBody>
           </Table>

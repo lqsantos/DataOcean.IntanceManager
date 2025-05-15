@@ -224,4 +224,23 @@ export default [
       },
     },
   },
+
+  // Add a specific configuration for JavaScript config files
+  {
+    files: ['*.config.js', '*.config.mjs', 'postcss.config.js'],
+    rules: {},
+    languageOptions: {
+      parserOptions: {
+        project: null, // Disable TypeScript configuration for config files
+      },
+    },
+  },
+
+  // Add a specific configuration for mock files
+  {
+    files: ['**/mocks/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'no-console': 'off', // Allow console statements in mock files
+    },
+  },
 ];

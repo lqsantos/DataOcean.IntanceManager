@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "lint": "eslint --config eslint.config.mjs . --ext .js,.jsx,.ts,.tsx --max-warnings=0 --format stylish",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 --fix",
     "format": "prettier --write .",
     "prepare": "husky install",

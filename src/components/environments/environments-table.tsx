@@ -6,8 +6,10 @@ import { ptBR } from 'date-fns/locale';
 import {
   ArrowUpDown,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Edit,
+  Loader2,
   MoreHorizontal,
   Search,
   Trash2,
@@ -49,7 +51,7 @@ type SortDirection = 'asc' | 'desc';
 export function EnvironmentsTable({
   environments,
   isLoading,
-  isRefreshing,
+  _isRefreshing,
   onEdit,
   onDelete,
 }: EnvironmentsTableProps) {
@@ -69,7 +71,9 @@ export function EnvironmentsTable({
   };
 
   const handleDelete = async () => {
-    if (!environmentToDelete) {return;}
+    if (!environmentToDelete) {
+      return;
+    }
 
     setIsDeleting(true);
 
@@ -129,7 +133,7 @@ export function EnvironmentsTable({
     <>
       <div className="flex flex-col space-y-4">
         <div className="relative w-full sm:w-64">
-          <Search className="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Buscar ambientes..."
@@ -194,71 +198,75 @@ export function EnvironmentsTable({
                     </TableCell>
                   </TableRow>
                 ))
-              ) : sortedEnvironments.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    {searchTerm ? (
-                      <>
-                        Nenhum ambiente encontrado para <strong>"{searchTerm}"</strong>.
-                        <br />
-                        Tente outro termo de busca.
-                      </>
-                    ) : (
-                      <>
-                        Nenhum ambiente encontrado.
-                        <br />
-                        Crie seu primeiro ambiente para começar.
-                      </>
-                    )}
-                  </TableCell>
-                </TableRow>
               ) : (
-                sortedEnvironments.map((environment) => (
-                  <TableRow key={environment.id} className="group">
-                    <TableCell className="font-medium">{environment.name}</TableCell>
-                    <TableCell>
-                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                        {environment.slug}
-                      </code>
-                    </TableCell>
-                    <TableCell>{environment.order}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {formatDistanceToNow(new Date(environment.createdAt), {
-                        addSuffix: true,
-                        locale: ptBR,
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="opacity-0 group-hover:opacity-100"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Ações</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onEdit(environment)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setEnvironmentToDelete(environment)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                <>
+                  {sortedEnvironments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center">
+                        {searchTerm ? (
+                          <>
+                            Nenhum ambiente encontrado para <strong>"{searchTerm}"</strong>.
+                            <br />
+                            Tente outro termo de busca.
+                          </>
+                        ) : (
+                          <>
+                            Nenhum ambiente encontrado.
+                            <br />
+                            Crie seu primeiro ambiente para começar.
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedEnvironments.map((environment) => (
+                      <TableRow key={environment.id} className="group">
+                        <TableCell className="font-medium">{environment.name}</TableCell>
+                        <TableCell>
+                          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                            {environment.slug}
+                          </code>
+                        </TableCell>
+                        <TableCell>{environment.order}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(environment.createdAt), {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="opacity-0 group-hover:opacity-100"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Ações</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onEdit(environment)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setEnvironmentToDelete(environment)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </>
               )}
             </TableBody>
           </Table>
@@ -272,6 +280,19 @@ export function EnvironmentsTable({
         onDelete={handleDelete}
         onCancel={() => setEnvironmentToDelete(null)}
       />
+
+      {/* Replace the nested ternary */}
+      {(() => {
+        if (row.getIsExpanded()) {
+          return <ChevronDown className="h-4 w-4" />;
+        }
+
+        if (isLoading) {
+          return <Loader2 className="h-4 w-4 animate-spin" />;
+        }
+
+        return <ChevronRight className="h-4 w-4" />;
+      })()}
     </>
   );
 }
