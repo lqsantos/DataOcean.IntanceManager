@@ -129,7 +129,7 @@ export function EnvironmentsTable({
 
   return (
     <>
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col space-y-4" data-testid="environments-table-container">
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -138,26 +138,39 @@ export function EnvironmentsTable({
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            data-testid="environments-search-input"
           />
         </div>
 
         <div className="rounded-md border">
-          <Table>
+          <Table data-testid="environments-table">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px] cursor-pointer" onClick={() => handleSort('name')}>
+                <TableHead
+                  className="w-[200px] cursor-pointer"
+                  onClick={() => handleSort('name')}
+                  data-testid="sort-by-name"
+                >
                   <div className="flex items-center">
                     Nome
                     {renderSortIcon('name')}
                   </div>
                 </TableHead>
-                <TableHead className="w-[150px] cursor-pointer" onClick={() => handleSort('slug')}>
+                <TableHead
+                  className="w-[150px] cursor-pointer"
+                  onClick={() => handleSort('slug')}
+                  data-testid="sort-by-slug"
+                >
                   <div className="flex items-center">
                     Slug
                     {renderSortIcon('slug')}
                   </div>
                 </TableHead>
-                <TableHead className="w-[80px] cursor-pointer" onClick={() => handleSort('order')}>
+                <TableHead
+                  className="w-[80px] cursor-pointer"
+                  onClick={() => handleSort('order')}
+                  data-testid="sort-by-order"
+                >
                   <div className="flex items-center">
                     Ordem
                     {renderSortIcon('order')}
@@ -166,6 +179,7 @@ export function EnvironmentsTable({
                 <TableHead
                   className="w-[150px] cursor-pointer"
                   onClick={() => handleSort('createdAt')}
+                  data-testid="sort-by-created-at"
                 >
                   <div className="flex items-center">
                     Criado em
@@ -178,7 +192,7 @@ export function EnvironmentsTable({
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={index} data-testid="loading-row">
                     <TableCell>
                       <Skeleton className="h-5 w-[180px]" />
                     </TableCell>
@@ -200,7 +214,7 @@ export function EnvironmentsTable({
                 <>
                   {sortedEnvironments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
+                      <TableCell colSpan={5} className="h-24 text-center" data-testid="empty-state">
                         {searchTerm ? (
                           <>
                             Nenhum ambiente encontrado para <strong>"{searchTerm}"</strong>.
@@ -218,15 +232,29 @@ export function EnvironmentsTable({
                     </TableRow>
                   ) : (
                     sortedEnvironments.map((environment) => (
-                      <TableRow key={environment.id} className="group">
-                        <TableCell className="font-medium">{environment.name}</TableCell>
-                        <TableCell>
+                      <TableRow
+                        key={environment.id}
+                        className="group"
+                        data-testid={`environment-row-${environment.id}`}
+                      >
+                        <TableCell
+                          className="font-medium"
+                          data-testid={`environment-name-${environment.id}`}
+                        >
+                          {environment.name}
+                        </TableCell>
+                        <TableCell data-testid={`environment-slug-${environment.id}`}>
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
                             {environment.slug}
                           </code>
                         </TableCell>
-                        <TableCell>{environment.order}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell data-testid={`environment-order-${environment.id}`}>
+                          {environment.order}
+                        </TableCell>
+                        <TableCell
+                          className="text-sm text-muted-foreground"
+                          data-testid={`environment-created-at-${environment.id}`}
+                        >
                           {formatDistanceToNow(new Date(environment.createdAt), {
                             addSuffix: true,
                             locale: ptBR,
@@ -240,22 +268,27 @@ export function EnvironmentsTable({
                                   variant="ghost"
                                   size="icon"
                                   className="opacity-0 group-hover:opacity-100"
+                                  data-testid={`environment-actions-${environment.id}`}
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                   <span className="sr-only">Ações</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onEdit(environment)}>
+                                <DropdownMenuItem
+                                  data-testid={`edit-button-${environment.id}`}
+                                  onClick={() => onEdit(environment)}
+                                >
                                   <Edit className="mr-2 h-4 w-4" />
-                                  Editar
+                                  <span>Editar</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
+                                  data-testid={`delete-button-${environment.id}`}
                                   onClick={() => setEnvironmentToDelete(environment)}
                                   className="text-destructive focus:text-destructive"
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Excluir
+                                  <span>Excluir</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -277,6 +310,7 @@ export function EnvironmentsTable({
         isDeleting={isDeleting}
         onDelete={handleDelete}
         onCancel={() => setEnvironmentToDelete(null)}
+        data-testid="delete-environment-dialog"
       />
     </>
   );
