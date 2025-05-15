@@ -1,9 +1,9 @@
+// types/environment.ts
 export interface Environment {
   id: string;
   name: string;
   slug: string;
   order: number;
-  status: 'Active' | 'Ready' | 'Maintenance' | 'Deprecated';
   createdAt: string;
   updatedAt?: string;
 }
@@ -18,5 +18,4 @@ export interface UpdateEnvironmentDto {
   name?: string;
   slug?: string;
   order?: number;
-  status?: 'Active' | 'Ready' | 'Maintenance' | 'Deprecated';
 }

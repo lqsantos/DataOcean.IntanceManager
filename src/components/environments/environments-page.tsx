@@ -1,12 +1,13 @@
+// components/environments/environments-page.tsx
 'use client';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useEnvironments } from '@/hooks/use-environments';
 import { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
-import { AlertCircle, BarChart, Cloud, Plus, Server } from 'lucide-react';
+import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { EnvironmentForm } from './environment-form';
 import { EnvironmentsTable } from './environments-table';
@@ -15,7 +16,9 @@ export function EnvironmentsPage() {
   const {
     environments,
     isLoading,
+    isRefreshing,
     error,
+    refreshEnvironments,
     createEnvironment,
     updateEnvironment,
     deleteEnvironment,
@@ -30,6 +33,8 @@ export function EnvironmentsPage() {
     try {
       await createEnvironment(data);
       setIsCreateDialogOpen(false);
+    } catch (err) {
+      // Erro já tratado no hook
     } finally {
       setIsSubmitting(false);
     }
@@ -42,74 +47,54 @@ export function EnvironmentsPage() {
     try {
       await updateEnvironment(environmentToEdit.id, data);
       setEnvironmentToEdit(null);
+    } catch (err) {
+      // Erro já tratado no hook
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="animate-in space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Environments</h1>
-          <p className="text-muted-foreground mt-1">Manage your deployment environments</p>
+          <h1 className="text-3xl font-bold tracking-tight">Ambientes</h1>
+          <p className="text-muted-foreground mt-1">Gerencie seus ambientes de implantação</p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Environment
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={refreshEnvironments}
+            disabled={isRefreshing || isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Atualizar</span>
+          </Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Adicionar Ambiente
+          </Button>
+        </div>
       </div>
 
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Erro</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Environments</CardTitle>
-            <Server className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? '-' : environments.length}</div>
-            <p className="text-muted-foreground text-xs">Across all regions</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Instances</CardTitle>
-            <Cloud className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-muted-foreground text-xs">+12% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resource Usage</CardTitle>
-            <BarChart className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">68%</div>
-            <p className="text-muted-foreground text-xs">+2% from last week</p>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Manage Environments</CardTitle>
-          <CardDescription>Configure and organize your deployment environments.</CardDescription>
+          <CardTitle>Ambientes</CardTitle>
         </CardHeader>
         <CardContent>
           <EnvironmentsTable
             environments={environments}
             isLoading={isLoading}
+            isRefreshing={isRefreshing}
             onEdit={setEnvironmentToEdit}
             onDelete={deleteEnvironment}
           />
@@ -118,9 +103,9 @@ export function EnvironmentsPage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Create Environment</DialogTitle>
+            <DialogTitle>Criar Ambiente</DialogTitle>
           </DialogHeader>
           <EnvironmentForm
             onSubmit={handleCreateSubmit}
@@ -135,9 +120,9 @@ export function EnvironmentsPage() {
         open={!!environmentToEdit}
         onOpenChange={(open) => !open && setEnvironmentToEdit(null)}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Edit Environment</DialogTitle>
+            <DialogTitle>Editar Ambiente</DialogTitle>
           </DialogHeader>
           {environmentToEdit && (
             <EnvironmentForm
