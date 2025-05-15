@@ -25,6 +25,14 @@ let environments = [
     status: 'Active',
     createdAt: '2023-01-15T10:40:00Z',
   },
+  {
+    id: '4',
+    name: 'Testing',
+    slug: 'test',
+    order: 4,
+    status: 'Ready',
+    createdAt: '2023-01-15T10:45:00Z',
+  },
 ];
 
 export const environmentHandlers = [
@@ -33,7 +41,7 @@ export const environmentHandlers = [
     console.log('🔄 Handler interceptou GET com URL completa');
     return HttpResponse.json(environments);
   }),
-  
+
   // Handler para URL relativa
   http.get('/api/environments', () => {
     console.log('🔄 Handler interceptou GET com URL relativa');

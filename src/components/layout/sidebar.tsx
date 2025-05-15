@@ -1,3 +1,4 @@
+// components/layout/sidebar.tsx
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Overlay for mobile devices */}
       {open && (
         <div
-          className="bg-background/80 fixed inset-0 z-40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
           onClick={onClose}
         />
       )}
@@ -81,16 +82,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'bg-card fixed inset-y-0 left-0 z-50 w-64 border-r transition-transform duration-300 md:relative md:translate-x-0',
+          'bg-card/50 fixed inset-y-0 left-0 z-50 w-64 border-r border-border/40 backdrop-blur-md transition-transform duration-300 md:relative md:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-16 items-center border-b px-4">
+        <div className="flex h-16 items-center border-b border-border/40 px-4">
           <Link href="/" className="flex items-center gap-2">
-            <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-md">
+            <div className="gradient-blue flex h-8 w-8 items-center justify-center rounded-md shadow-lg">
               <span className="text-primary-foreground font-bold">DO</span>
             </div>
-            <span className="text-xl font-bold">DataOcean</span>
+            <span className="gradient-blue bg-clip-text text-xl font-bold text-transparent">
+              DataOcean
+            </span>
           </Link>
           <Button variant="ghost" size="icon" className="ml-auto md:hidden" onClick={onClose}>
             <X className="h-5 w-5" />
@@ -105,13 +108,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   key={route.href}
                   href={route.href}
                   className={cn(
-                    'hover:bg-accent hover:text-accent-foreground flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
                     pathname === route.href
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground'
+                      ? 'bg-primary/10 text-primary shadow-sm'
+                      : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
                   )}
                 >
-                  <route.icon className="h-5 w-5" />
+                  <route.icon
+                    className={cn(
+                      'h-5 w-5',
+                      pathname === route.href ? 'text-primary' : 'text-muted-foreground'
+                    )}
+                  />
                   {route.name}
                 </Link>
               ))}
