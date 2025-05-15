@@ -1,18 +1,20 @@
-async function initMocks() {
-  if (process.env.NODE_ENV === 'development') {
-    if (typeof window === 'undefined') {
-      const { server } = await import('./server');
-      server.listen();
-    } else {
-      const { worker } = await import('./browser');
-      await worker.start({
-        serviceWorker: {
-          url: '/mockServiceWorker.js',
-        },
-        onUnhandledRequest: 'bypass',
-      });
-      console.log('🔶 Mock Service Worker inicializado');
-    }
+// Este arquivo é o ponto de entrada para o mock API
+
+/**
+ * Inicializa o mock API baseado no ambiente atual
+ */
+export async function initMocks() {
+  // Verifica se estamos no ambiente de navegador
+  if (typeof window === 'undefined') {
+    return; // No modo server, não precisamos fazer nada
+  }
+
+  // No modo cliente, carregamos o MSW
+  try {
+    const { startWorker } = await import('./browser');
+    await startWorker();
+  } catch (error) {
+    console.error('❌ Erro ao carregar o mock service worker:', error);
   }
 }
 

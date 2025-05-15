@@ -7,7 +7,7 @@ const locations = [
   { id: '3', name: 'Belo Horizonte', slug: 'belo-horizonte', order: 3 },
 ];
 
-export const locationsHandlers = [
+export const handlers = [
   // GET /api/locations
   http.get('/api/locations', () => {
     return HttpResponse.json(locations);

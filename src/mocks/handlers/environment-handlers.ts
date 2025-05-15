@@ -28,8 +28,15 @@ let environments = [
 ];
 
 export const environmentHandlers = [
-  // GET /api/environments
+  // Handler para URL completa
+  http.get('http://localhost:3000/api/environments', () => {
+    console.log('🔄 Handler interceptou GET com URL completa');
+    return HttpResponse.json(environments);
+  }),
+  
+  // Handler para URL relativa
   http.get('/api/environments', () => {
+    console.log('🔄 Handler interceptou GET com URL relativa');
     return HttpResponse.json(environments);
   }),
 

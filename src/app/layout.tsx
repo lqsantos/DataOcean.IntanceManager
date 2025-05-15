@@ -1,6 +1,6 @@
 import { MainLayout } from '@/components/layout/main-layout';
-import { MswProvider } from '@/components/providers/msw-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { MockProvider } from '@/mocks/provider';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
-        <MswProvider>
+        <MockProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             <MainLayout>{children}</MainLayout>
           </ThemeProvider>
-        </MswProvider>
+        </MockProvider>
       </body>
     </html>
   );
