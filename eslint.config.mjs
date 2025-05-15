@@ -1,3 +1,6 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 import { FlatCompat } from '@eslint/eslintrc';
 import nextPlugin from '@next/eslint-plugin-next';
 import tseslint from '@typescript-eslint/eslint-plugin';
@@ -6,8 +9,6 @@ import importPlugin from 'eslint-plugin-import';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,9 +102,9 @@ export default [
       '@typescript-eslint': tseslint,
       '@next/next': nextPlugin,
       'unused-imports': unusedImportsPlugin,
-      'react': reactPlugin,
+      react: reactPlugin,
       'react-hooks': reactHooksPlugin,
-      'import': importPlugin,
+      import: importPlugin,
     },
 
     // Rules - enhanced for robust projects
@@ -165,9 +166,9 @@ export default [
           ignoreTemplateLiterals: true,
         },
       ],
-      'quotes': ['error', 'single', { avoidEscape: true }],
-      'semi': ['error', 'always'],
-      'eqeqeq': ['error', 'always'],
+      quotes: ['error', 'single', { avoidEscape: true }],
+      semi: ['error', 'always'],
+      eqeqeq: ['error', 'always'],
       'no-var': 'error',
       'prefer-const': 'error',
       'no-nested-ternary': 'warn',
@@ -177,7 +178,7 @@ export default [
       'no-useless-return': 'error',
       'prefer-spread': 'error',
       'array-callback-return': 'error',
-      'curly': ['error', 'all'],
+      curly: ['error', 'all'],
       'no-use-before-define': 'off',
       '@typescript-eslint/no-use-before-define': [
         'error',
@@ -208,6 +209,18 @@ export default [
         node: {
           extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },
+      },
+    },
+  },
+
+  // Add a specific configuration for .mjs files
+  {
+    files: ['*.mjs'],
+    rules: {},
+    // Disable TypeScript parsing for .mjs files
+    languageOptions: {
+      parserOptions: {
+        project: null, // Disable the TypeScript configuration for these files
       },
     },
   },
