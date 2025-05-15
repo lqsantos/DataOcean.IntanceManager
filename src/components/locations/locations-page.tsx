@@ -1,4 +1,3 @@
-// components/environments/environments-page.tsx
 'use client';
 
 import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
@@ -8,33 +7,33 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useEnvironments } from '@/hooks/use-environments';
-import type { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
+import { useLocations } from '@/hooks/use-locations';
+import type { CreateLocationDto, Location, UpdateLocationDto } from '@/types/location';
 
-import { EnvironmentForm } from './environment-form';
-import { EnvironmentsTable } from './environments-table';
+import { LocationForm } from './location-form';
+import { LocationsTable } from './locations-table';
 
-export function EnvironmentsPage() {
+export function LocationsPage() {
   const {
-    environments,
+    locations,
     isLoading,
     isRefreshing,
     error,
-    refreshEnvironments,
-    createEnvironment,
-    updateEnvironment,
-    deleteEnvironment,
-  } = useEnvironments();
+    refreshLocations,
+    createLocation,
+    updateLocation,
+    deleteLocation,
+  } = useLocations();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [environmentToEdit, setEnvironmentToEdit] = useState<Environment | null>(null);
+  const [locationToEdit, setLocationToEdit] = useState<Location | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreateSubmit = async (data: CreateEnvironmentDto) => {
+  const handleCreateSubmit = async (data: CreateLocationDto) => {
     setIsSubmitting(true);
 
     try {
-      await createEnvironment(data);
+      await createLocation(data);
       setIsCreateDialogOpen(false);
     } catch (err) {
       // Erro já tratado no hook
@@ -43,14 +42,14 @@ export function EnvironmentsPage() {
     }
   };
 
-  const handleEditSubmit = async (data: UpdateEnvironmentDto) => {
-    if (!environmentToEdit) {return;}
+  const handleEditSubmit = async (data: UpdateLocationDto) => {
+    if (!locationToEdit) {return;}
 
     setIsSubmitting(true);
 
     try {
-      await updateEnvironment(environmentToEdit.id, data);
-      setEnvironmentToEdit(null);
+      await updateLocation(locationToEdit.id, data);
+      setLocationToEdit(null);
     } catch (err) {
       // Erro já tratado no hook
     } finally {
@@ -59,17 +58,17 @@ export function EnvironmentsPage() {
   };
 
   return (
-    <div className="animate-in space-y-6">
+    <div className="space-y-6 animate-in">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Ambientes</h1>
-          <p className="text-muted-foreground mt-1">Gerencie seus ambientes de implantação</p>
+          <h1 className="text-3xl font-bold tracking-tight">Localidades</h1>
+          <p className="mt-1 text-muted-foreground">Gerencie suas localidades de implantação</p>
         </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="icon"
-            onClick={refreshEnvironments}
+            onClick={refreshLocations}
             disabled={isRefreshing || isLoading}
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -77,7 +76,7 @@ export function EnvironmentsPage() {
           </Button>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Adicionar Ambiente
+            Adicionar Localidade
           </Button>
         </div>
       </div>
@@ -92,15 +91,15 @@ export function EnvironmentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Ambientes</CardTitle>
+          <CardTitle>Localidades</CardTitle>
         </CardHeader>
         <CardContent>
-          <EnvironmentsTable
-            environments={environments}
+          <LocationsTable
+            locations={locations}
             isLoading={isLoading}
             isRefreshing={isRefreshing}
-            onEdit={setEnvironmentToEdit}
-            onDelete={deleteEnvironment}
+            onEdit={setLocationToEdit}
+            onDelete={deleteLocation}
           />
         </CardContent>
       </Card>
@@ -109,9 +108,9 @@ export function EnvironmentsPage() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Criar Ambiente</DialogTitle>
+            <DialogTitle>Criar Localidade</DialogTitle>
           </DialogHeader>
-          <EnvironmentForm
+          <LocationForm
             onSubmit={handleCreateSubmit}
             onCancel={() => setIsCreateDialogOpen(false)}
             isSubmitting={isSubmitting}
@@ -120,19 +119,16 @@ export function EnvironmentsPage() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog
-        open={!!environmentToEdit}
-        onOpenChange={(open) => !open && setEnvironmentToEdit(null)}
-      >
+      <Dialog open={!!locationToEdit} onOpenChange={(open) => !open && setLocationToEdit(null)}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Editar Ambiente</DialogTitle>
+            <DialogTitle>Editar Localidade</DialogTitle>
           </DialogHeader>
-          {environmentToEdit && (
-            <EnvironmentForm
-              environment={environmentToEdit}
+          {locationToEdit && (
+            <LocationForm
+              location={locationToEdit}
               onSubmit={handleEditSubmit}
-              onCancel={() => setEnvironmentToEdit(null)}
+              onCancel={() => setLocationToEdit(null)}
               isSubmitting={isSubmitting}
             />
           )}

@@ -20,9 +20,11 @@ export async function safeAsync<T>(
 ): Promise<[T | null, Error | null]> {
   try {
     const data = await promise;
+
     return [data, null];
   } catch (error) {
     logError(error, errorMessage);
+
     return [null, error instanceof Error ? error : new Error(errorMessage)];
   }
 }

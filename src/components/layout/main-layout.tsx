@@ -3,6 +3,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+
 import { Header } from './header';
 import { Sidebar } from './sidebar';
 
@@ -17,6 +18,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   // Fechar a sidebar em dispositivos móveis quando mudar de página
   useEffect(() => {
     const isMobile = window.innerWidth < 768;
+
     if (isMobile) {
       setSidebarOpen(false);
     }

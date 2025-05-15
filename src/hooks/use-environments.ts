@@ -1,6 +1,7 @@
-import { EnvironmentService } from '@/services/environment-service';
-import { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
 import { useCallback, useEffect, useState } from 'react';
+
+import { EnvironmentService } from '@/services/environment-service';
+import type { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
 
 export function useEnvironments() {
   const [environments, setEnvironments] = useState<Environment[]>([]);
@@ -15,6 +16,7 @@ export function useEnvironments() {
       setError(null);
 
       const data = await EnvironmentService.getAll();
+
       setEnvironments(data);
     } catch (err) {
       console.error('Failed to fetch environments:', err);
@@ -44,10 +46,13 @@ export function useEnvironments() {
     async (data: CreateEnvironmentDto): Promise<Environment> => {
       try {
         const newEnvironment = await EnvironmentService.create(data);
+
         setEnvironments((prev) => [...prev, newEnvironment]);
+
         return newEnvironment;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Erro ao criar ambiente';
+
         console.error('Failed to create environment:', err);
         throw new Error(errorMessage);
       }
@@ -66,6 +71,7 @@ export function useEnvironments() {
         return updatedEnvironment;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar ambiente';
+
         console.error('Failed to update environment:', err);
         throw new Error(errorMessage);
       }
@@ -80,6 +86,7 @@ export function useEnvironments() {
       setEnvironments((prev) => prev.filter((env) => env.id !== id));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao excluir ambiente';
+
       console.error('Failed to delete environment:', err);
       throw new Error(errorMessage);
     }

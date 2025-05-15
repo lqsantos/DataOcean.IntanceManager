@@ -1,4 +1,5 @@
 import { setupWorker } from 'msw/browser';
+
 import { handlers } from './handlers/index';
 
 // Configuração básica do worker

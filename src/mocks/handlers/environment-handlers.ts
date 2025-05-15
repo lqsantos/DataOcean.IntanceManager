@@ -39,12 +39,14 @@ export const environmentHandlers = [
   // Handler para URL completa
   http.get('http://localhost:3000/api/environments', () => {
     console.log('🔄 Handler interceptou GET com URL completa');
+
     return HttpResponse.json(environments);
   }),
 
   // Handler para URL relativa
   http.get('/api/environments', () => {
     console.log('🔄 Handler interceptou GET com URL relativa');
+
     return HttpResponse.json(environments);
   }),
 
@@ -88,6 +90,7 @@ export const environmentHandlers = [
 
     // Verificar se o ambiente existe
     const environmentIndex = environments.findIndex((env) => env.id === id);
+
     if (environmentIndex === -1) {
       return new HttpResponse(JSON.stringify({ message: 'Ambiente não encontrado' }), {
         status: 404,
@@ -127,6 +130,7 @@ export const environmentHandlers = [
 
     // Verificar se o ambiente existe
     const environmentIndex = environments.findIndex((env) => env.id === id);
+
     if (environmentIndex === -1) {
       return new HttpResponse(JSON.stringify({ message: 'Ambiente não encontrado' }), {
         status: 404,

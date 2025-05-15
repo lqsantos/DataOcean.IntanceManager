@@ -12,6 +12,7 @@ export async function initMocks() {
   // No modo cliente, carregamos o MSW
   try {
     const { startWorker } = await import('./browser');
+
     await startWorker();
   } catch (error) {
     console.error('❌ Erro ao carregar o mock service worker:', error);

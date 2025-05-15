@@ -1,5 +1,5 @@
-import { server } from '@/mocks/server'
+import { server } from '@/mocks/server';
 
-beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());

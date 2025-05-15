@@ -1,6 +1,9 @@
 // components/layout/header.tsx
 'use client';
 
+import { Bell, Menu, Moon, Search, Sun, User } from 'lucide-react';
+import { useTheme } from 'next-themes';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,8 +16,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Bell, Menu, Moon, Search, Sun, User } from 'lucide-react';
-import { useTheme } from 'next-themes';
 
 interface HeaderProps {
   onMenuClick: () => void;

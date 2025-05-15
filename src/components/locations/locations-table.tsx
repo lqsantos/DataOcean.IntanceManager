@@ -1,4 +1,3 @@
-// components/environments/environments-table.tsx
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
@@ -31,32 +30,32 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Environment } from '@/types/environment';
+import type { Location } from '@/types/location';
 
-import { DeleteEnvironmentDialog } from './delete-environment-dialog';
+import { DeleteLocationDialog } from './delete-location-dialog';
 
-interface EnvironmentsTableProps {
-  environments: Environment[];
+interface LocationsTableProps {
+  locations: Location[];
   isLoading: boolean;
   isRefreshing: boolean;
-  onEdit: (environment: Environment) => void;
+  onEdit: (location: Location) => void;
   onDelete: (id: string) => Promise<void>;
 }
 
-type SortField = 'name' | 'slug' | 'order' | 'createdAt';
+type SortField = 'name' | 'slug' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
-export function EnvironmentsTable({
-  environments,
+export function LocationsTable({
+  locations,
   isLoading,
   isRefreshing,
   onEdit,
   onDelete,
-}: EnvironmentsTableProps) {
-  const [environmentToDelete, setEnvironmentToDelete] = useState<Environment | null>(null);
+}: LocationsTableProps) {
+  const [locationToDelete, setLocationToDelete] = useState<Location | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('order');
+  const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleSort = (field: SortField) => {
@@ -69,27 +68,27 @@ export function EnvironmentsTable({
   };
 
   const handleDelete = async () => {
-    if (!environmentToDelete) {return;}
+    if (!locationToDelete) {return;}
 
     setIsDeleting(true);
 
     try {
-      await onDelete(environmentToDelete.id);
+      await onDelete(locationToDelete.id);
     } finally {
       setIsDeleting(false);
-      setEnvironmentToDelete(null);
+      setLocationToDelete(null);
     }
   };
 
-  // Filtrar ambientes com base no termo de pesquisa
-  const filteredEnvironments = environments.filter(
-    (env) =>
-      env.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      env.slug.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filtrar localidades com base no termo de pesquisa
+  const filteredLocations = locations.filter(
+    (loc) =>
+      loc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      loc.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Ordenar ambientes
-  const sortedEnvironments = [...filteredEnvironments].sort((a, b) => {
+  // Ordenar localidades
+  const sortedLocations = [...filteredLocations].sort((a, b) => {
     let comparison = 0;
 
     switch (sortField) {
@@ -98,9 +97,6 @@ export function EnvironmentsTable({
         break;
       case 'slug':
         comparison = a.slug.localeCompare(b.slug);
-        break;
-      case 'order':
-        comparison = a.order - b.order;
         break;
       case 'createdAt':
         comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -129,10 +125,10 @@ export function EnvironmentsTable({
     <>
       <div className="flex flex-col space-y-4">
         <div className="relative w-full sm:w-64">
-          <Search className="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar ambientes..."
+            placeholder="Buscar localidades..."
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -143,48 +139,48 @@ export function EnvironmentsTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px] cursor-pointer" onClick={() => handleSort('name')}>
-                  <div className="flex items-center">
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('name')}
+                    className="flex items-center gap-1 font-bold"
+                  >
                     Nome
                     {renderSortIcon('name')}
-                  </div>
+                  </Button>
                 </TableHead>
-                <TableHead className="w-[150px] cursor-pointer" onClick={() => handleSort('slug')}>
-                  <div className="flex items-center">
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('slug')}
+                    className="flex items-center gap-1 font-bold"
+                  >
                     Slug
                     {renderSortIcon('slug')}
-                  </div>
+                  </Button>
                 </TableHead>
-                <TableHead className="w-[80px] cursor-pointer" onClick={() => handleSort('order')}>
-                  <div className="flex items-center">
-                    Ordem
-                    {renderSortIcon('order')}
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="w-[150px] cursor-pointer"
-                  onClick={() => handleSort('createdAt')}
-                >
-                  <div className="flex items-center">
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('createdAt')}
+                    className="flex items-center gap-1 font-bold"
+                  >
                     Criado em
                     {renderSortIcon('createdAt')}
-                  </div>
+                  </Button>
                 </TableHead>
-                <TableHead className="w-[100px] text-right">Ações</TableHead>
+                <TableHead className="w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array.from({ length: 3 }).map((_, index) => (
+                Array.from({ length: 5 }).map((_, index) => (
                   <TableRow key={index}>
                     <TableCell>
                       <Skeleton className="h-5 w-[180px]" />
                     </TableCell>
                     <TableCell>
                       <Skeleton className="h-5 w-[120px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-5 w-[40px]" />
                     </TableCell>
                     <TableCell>
                       <Skeleton className="h-5 w-[120px]" />
@@ -194,36 +190,35 @@ export function EnvironmentsTable({
                     </TableCell>
                   </TableRow>
                 ))
-              ) : sortedEnvironments.length === 0 ? (
+              ) : sortedLocations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={4} className="h-24 text-center">
                     {searchTerm ? (
                       <>
-                        Nenhum ambiente encontrado para <strong>"{searchTerm}"</strong>.
+                        Nenhuma localidade encontrada para <strong>"{searchTerm}"</strong>.
                         <br />
                         Tente outro termo de busca.
                       </>
                     ) : (
                       <>
-                        Nenhum ambiente encontrado.
+                        Nenhuma localidade encontrada.
                         <br />
-                        Crie seu primeiro ambiente para começar.
+                        Crie sua primeira localidade para começar.
                       </>
                     )}
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedEnvironments.map((environment) => (
-                  <TableRow key={environment.id} className="group">
-                    <TableCell className="font-medium">{environment.name}</TableCell>
+                sortedLocations.map((location) => (
+                  <TableRow key={location.id} className="group">
+                    <TableCell className="font-medium">{location.name}</TableCell>
                     <TableCell>
                       <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                        {environment.slug}
+                        {location.slug}
                       </code>
                     </TableCell>
-                    <TableCell>{environment.order}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {formatDistanceToNow(new Date(environment.createdAt), {
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDistanceToNow(new Date(location.createdAt), {
                         addSuffix: true,
                         locale: ptBR,
                       })}
@@ -242,12 +237,12 @@ export function EnvironmentsTable({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onEdit(environment)}>
+                            <DropdownMenuItem onClick={() => onEdit(location)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Editar
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => setEnvironmentToDelete(environment)}
+                              onClick={() => setLocationToDelete(location)}
                               className="text-destructive focus:text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -265,12 +260,12 @@ export function EnvironmentsTable({
         </div>
       </div>
 
-      <DeleteEnvironmentDialog
-        environment={environmentToDelete}
-        isOpen={!!environmentToDelete}
+      <DeleteLocationDialog
+        location={locationToDelete}
+        isOpen={!!locationToDelete}
         isDeleting={isDeleting}
         onDelete={handleDelete}
-        onCancel={() => setEnvironmentToDelete(null)}
+        onCancel={() => setLocationToDelete(null)}
       />
     </>
   );

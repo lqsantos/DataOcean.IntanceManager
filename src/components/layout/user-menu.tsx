@@ -1,6 +1,9 @@
 // components/layout/user-menu.tsx
 'use client';
 
+import { LogOut, Settings, User } from 'lucide-react';
+import Link from 'next/link';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +15,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Settings, User } from 'lucide-react';
-import Link from 'next/link';
 
 export function UserMenu() {
   return (

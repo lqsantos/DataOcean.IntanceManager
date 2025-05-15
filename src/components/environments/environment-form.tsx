@@ -1,12 +1,13 @@
 // components/environments/environment-form.tsx
 'use client';
 
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
-import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import type { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
 
 interface EnvironmentFormProps {
   environment?: Environment;
@@ -35,7 +36,7 @@ export function EnvironmentForm({
 
   // Gerar slug automaticamente a partir do nome
   useEffect(() => {
-    if (name && !touched.slug) {
+    if (name && !touched.slug && !environment?.slug) {
       setSlug(
         name
           .toLowerCase()
@@ -43,7 +44,7 @@ export function EnvironmentForm({
           .replace(/[^a-z0-9-]/g, '')
       );
     }
-  }, [name, touched.slug]);
+  }, [name, touched.slug, environment?.slug]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -73,6 +74,7 @@ export function EnvironmentForm({
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -84,6 +86,7 @@ export function EnvironmentForm({
       (acc, key) => ({ ...acc, [key]: true }),
       {}
     );
+
     setTouched(allTouched);
 
     if (!validateForm()) {

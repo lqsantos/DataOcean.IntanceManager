@@ -1,5 +1,5 @@
 // src/mocks/handlers/index.ts
 import { environmentHandlers } from './environment-handlers';
-import { handlers as locationHandlers } from './locations';
+import { locationHandlers } from './location-handlers';
 
 export const handlers = [...environmentHandlers, ...locationHandlers];

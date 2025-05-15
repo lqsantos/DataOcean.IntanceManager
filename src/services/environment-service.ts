@@ -1,4 +1,4 @@
-import { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
+import type { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
 
 const API_BASE_URL = '/api';
 
@@ -8,6 +8,7 @@ export const EnvironmentService = {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+
       throw new Error(error.message || 'Falha ao buscar ambientes');
     }
 
@@ -25,6 +26,7 @@ export const EnvironmentService = {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+
       throw new Error(error.message || 'Falha ao criar ambiente');
     }
 
@@ -42,6 +44,7 @@ export const EnvironmentService = {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+
       throw new Error(error.message || 'Falha ao atualizar ambiente');
     }
 
@@ -54,6 +57,7 @@ export const EnvironmentService = {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+
       throw new Error(error.message || 'Falha ao excluir ambiente');
     }
   },

@@ -1,4 +1,4 @@
-import { NextConfig } from 'next';
+import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   reactStrictMode: true,
@@ -6,6 +6,7 @@ const config: NextConfig = {
   // Configuração de headers
   async headers() {
     const headers = [];
+
     if (process.env.NODE_ENV === 'development') {
       headers.push({
         source: '/:path*',

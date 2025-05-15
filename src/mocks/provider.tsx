@@ -27,6 +27,7 @@ export function MockProvider({ children }: MockProviderProps) {
         try {
           console.log('🔍 Tentando importar módulo de mocks...');
           const importedModule = await import('@/mocks');
+
           console.log('🔍 Módulo importado:', importedModule);
           
           if (!importedModule.default) {
@@ -38,6 +39,7 @@ export function MockProvider({ children }: MockProviderProps) {
           console.log('✅ MSW inicializado com sucesso');
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
+
           console.error('❌ Erro ao inicializar MSW:', errorMsg);
           setErrorMessage(errorMsg);
         } finally {
