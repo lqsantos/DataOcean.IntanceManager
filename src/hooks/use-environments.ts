@@ -1,98 +1,79 @@
-// hooks/use-environments.ts
+// src/hooks/use-environments.ts
+import { EnvironmentService } from '@/services/environment-service';
 import { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
-import { useEffect, useState } from 'react';
-
-// Dados mockados para desenvolvimento
-const mockEnvironments: Environment[] = [
-  { id: '1', name: 'Development', slug: 'dev', order: 1 },
-  { id: '2', name: 'Staging', slug: 'stg', order: 2 },
-  { id: '3', name: 'Production', slug: 'prod', order: 3 },
-];
+import { useCallback, useEffect, useState } from 'react';
 
 export function useEnvironments() {
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Simular carregamento de dados
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        // Simular atraso de rede
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setEnvironments(mockEnvironments);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load environments');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Função para carregar os ambientes
+  const fetchEnvironments = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-    loadData();
+      const data = await EnvironmentService.getAll();
+      setEnvironments(data);
+    } catch (err) {
+      console.error('Failed to fetch environments:', err);
+      setError('Não foi possível carregar os ambientes. Tente novamente mais tarde.');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const createEnvironment = async (data: CreateEnvironmentDto): Promise<Environment> => {
-    try {
-      // Simular atraso de rede
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Carregar ambientes na montagem do componente
+  useEffect(() => {
+    fetchEnvironments();
+  }, [fetchEnvironments]);
 
-      const newEnvironment: Environment = {
-        id: Date.now().toString(),
-        ...data,
-        order: data.order ?? environments.length + 1,
-      };
-
-      setEnvironments((prev) => [...prev, newEnvironment]);
-      return newEnvironment;
-    } catch (err) {
-      setError('Failed to create environment');
-      console.error(err);
-      throw err;
-    }
-  };
-
-  const updateEnvironment = async (
-    id: string,
-    data: UpdateEnvironmentDto
-  ): Promise<Environment> => {
-    try {
-      // Simular atraso de rede
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const updatedEnvironments = environments.map((env) =>
-        env.id === id ? { ...env, ...data } : env
-      );
-
-      setEnvironments(updatedEnvironments);
-      const updatedEnvironment = updatedEnvironments.find((env) => env.id === id);
-
-      if (!updatedEnvironment) {
-        throw new Error('Environment not found');
+  // Função para criar um novo ambiente
+  const createEnvironment = useCallback(
+    async (data: CreateEnvironmentDto): Promise<Environment> => {
+      try {
+        const newEnvironment = await EnvironmentService.create(data);
+        setEnvironments((prev) => [...prev, newEnvironment]);
+        return newEnvironment;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Erro ao criar ambiente';
+        console.error('Failed to create environment:', err);
+        throw new Error(errorMessage);
       }
+    },
+    []
+  );
 
-      return updatedEnvironment;
-    } catch (err) {
-      setError('Failed to update environment');
-      console.error(err);
-      throw err;
-    }
-  };
+  // Função para atualizar um ambiente existente
+  const updateEnvironment = useCallback(
+    async (id: string, data: UpdateEnvironmentDto): Promise<Environment> => {
+      try {
+        const updatedEnvironment = await EnvironmentService.update(id, data);
 
-  const deleteEnvironment = async (id: string): Promise<void> => {
+        setEnvironments((prev) => prev.map((env) => (env.id === id ? updatedEnvironment : env)));
+
+        return updatedEnvironment;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar ambiente';
+        console.error('Failed to update environment:', err);
+        throw new Error(errorMessage);
+      }
+    },
+    []
+  );
+
+  // Função para excluir um ambiente
+  const deleteEnvironment = useCallback(async (id: string): Promise<void> => {
     try {
-      // Simular atraso de rede
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      await EnvironmentService.delete(id);
       setEnvironments((prev) => prev.filter((env) => env.id !== id));
     } catch (err) {
-      setError('Failed to delete environment');
-      console.error(err);
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao excluir ambiente';
+      console.error('Failed to delete environment:', err);
+      throw new Error(errorMessage);
     }
-  };
+  }, []);
 
   return {
     environments,

@@ -3,7 +3,8 @@ export interface Environment {
   name: string;
   slug: string;
   order: number;
-  createdAt?: string;
+  status: 'Active' | 'Ready' | 'Maintenance' | 'Deprecated';
+  createdAt: string;
   updatedAt?: string;
 }
 
@@ -17,4 +18,5 @@ export interface UpdateEnvironmentDto {
   name?: string;
   slug?: string;
   order?: number;
+  status?: 'Active' | 'Ready' | 'Maintenance' | 'Deprecated';
 }

@@ -1,10 +1,7 @@
-import { environmentsHandlers } from './environments';
-import { locationsHandlers } from './locations';
-// Import other handlers here
+// src/mocks/handlers/index.ts
+import { environmentHandlers } from './environment-handlers';
 
-// Combine all handlers into a single array
 export const handlers = [
-  ...environmentsHandlers,
-  ...locationsHandlers,
-  // Add other handlers here
+  ...environmentHandlers,
+  // Adicione outros handlers aqui
 ];

@@ -2,6 +2,7 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { ThemeProvider } from '@/components/theme-provider';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { useEffect } from 'react';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -16,6 +17,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    // Inicializar MSW apenas em desenvolvimento
+    if (process.env.NODE_ENV === 'development') {
+      import('@/mocks').then((module) => module.default());
+    }
+  }, []);
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
