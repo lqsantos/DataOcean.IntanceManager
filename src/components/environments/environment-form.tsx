@@ -108,13 +108,14 @@ export function EnvironmentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" data-testid="environment-form">
       <div className="space-y-2">
-        <Label htmlFor="name">
+        <Label htmlFor="env-name">
           Nome <span className="text-destructive">*</span>
         </Label>
         <Input
-          id="name"
+          id="env-name"
+          data-testid="env-name-input"
           value={name}
           onChange={(e) => {
             setName(e.target.value);
@@ -125,15 +126,20 @@ export function EnvironmentForm({
           disabled={isSubmitting}
           className={errors.name && touched.name ? 'border-destructive' : ''}
         />
-        {errors.name && touched.name && <p className="text-destructive text-sm">{errors.name}</p>}
+        {errors.name && touched.name && (
+          <p className="text-sm text-destructive" data-testid="name-error">
+            {errors.name}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="slug">
+        <Label htmlFor="env-slug">
           Slug <span className="text-destructive">*</span>
         </Label>
         <Input
-          id="slug"
+          id="env-slug"
+          data-testid="env-slug-input"
           value={slug}
           onChange={(e) => {
             setSlug(e.target.value.toLowerCase());
@@ -145,18 +151,21 @@ export function EnvironmentForm({
           className={errors.slug && touched.slug ? 'border-destructive' : ''}
         />
         {errors.slug && touched.slug ? (
-          <p className="text-destructive text-sm">{errors.slug}</p>
+          <p className="text-sm text-destructive" data-testid="slug-error">
+            {errors.slug}
+          </p>
         ) : (
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground" data-testid="slug-help">
             Usado em URLs e requisições de API. Use apenas letras minúsculas, números e hífens.
           </p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="order">Ordem</Label>
+        <Label htmlFor="env-order">Ordem</Label>
         <Input
-          id="order"
+          id="env-order"
+          data-testid="env-order-input"
           type="number"
           value={order}
           onChange={(e) => {
@@ -169,20 +178,30 @@ export function EnvironmentForm({
           className={errors.order && touched.order ? 'border-destructive' : ''}
         />
         {errors.order && touched.order ? (
-          <p className="text-destructive text-sm">{errors.order}</p>
+          <p className="text-sm text-destructive" data-testid="order-error">
+            {errors.order}
+          </p>
         ) : (
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground" data-testid="order-help">
             Determina a ordem de exibição dos ambientes.
           </p>
         )}
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          data-testid="cancel-button"
+        >
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" disabled={isSubmitting} data-testid="submit-button">
+          {isSubmitting && (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="loading-spinner" />
+          )}
           {environment ? 'Atualizar' : 'Criar'}
         </Button>
       </div>

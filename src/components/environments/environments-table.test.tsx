@@ -1,8 +1,30 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { EnvironmentsTable } from '@/components/environments/environments-table';
 import type { Environment } from '@/types/environment';
+
+// Mock the dropdown menu to make its content directly accessible in tests
+vi.mock('@/components/ui/dropdown-menu', () => {
+  return {
+    DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DropdownMenuItem: ({
+      children,
+      onClick,
+      'data-testid': dataTestId,
+    }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+      'data-testid'?: string;
+    }) => (
+      <button data-testid={dataTestId} onClick={onClick}>
+        {children}
+      </button>
+    ),
+  };
+});
 
 // Mock the delete environment dialog component
 vi.mock('@/components/environments/delete-environment-dialog', () => ({
@@ -171,8 +193,7 @@ describe('EnvironmentsTable', () => {
     expect(emptyState).toHaveTextContent('"xyz"');
   });
 
-  // Skip the problematic tests that interact with the dropdown menu for now
-  it.skip('calls onEdit when edit button is clicked', async () => {
+  it('calls onEdit when edit button is clicked', async () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
@@ -183,11 +204,16 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // This test needs to be rewritten to match the actual component behavior
-    // For now, we'll skip it to prevent test failures
+    // With our mock in place, we can directly access the edit button
+    const editButton = screen.getByTestId('edit-button-1');
+
+    fireEvent.click(editButton);
+
+    // Check if onEdit was called with the correct environment
+    expect(mockOnEdit).toHaveBeenCalledWith(mockEnvironments[0]);
   });
 
-  it.skip('opens delete dialog when delete button is clicked', async () => {
+  it('opens delete dialog when delete button is clicked', async () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
@@ -198,11 +224,16 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // This test needs to be rewritten to match the actual component behavior
-    // For now, we'll skip it to prevent test failures
+    // With our mock in place, we can directly access the delete button
+    const deleteButton = screen.getByTestId('delete-button-1');
+
+    fireEvent.click(deleteButton);
+
+    // Check if delete dialog was opened
+    expect(screen.getByTestId('mock-delete-dialog')).toBeInTheDocument();
   });
 
-  it.skip('calls onDelete when delete is confirmed', async () => {
+  it('calls onDelete when delete is confirmed', async () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
@@ -213,8 +244,20 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // This test needs to be rewritten to match the actual component behavior
-    // For now, we'll skip it to prevent test failures
+    // Click the delete button to open the dialog
+    const deleteButton = screen.getByTestId('delete-button-1');
+
+    fireEvent.click(deleteButton);
+
+    // Find and click the confirm delete button in the dialog
+    const confirmDeleteButton = screen.getByTestId('confirm-delete');
+
+    fireEvent.click(confirmDeleteButton);
+
+    // Check if onDelete was called with the correct environment ID
+    await waitFor(() => {
+      expect(mockOnDelete).toHaveBeenCalledWith(mockEnvironments[0].id);
+    });
   });
 
   it('sorts environments by name when name header is clicked', () => {
