@@ -77,7 +77,7 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" data-testid="location-form">
       <div className="space-y-2">
         <Label htmlFor="name">Nome</Label>
         <Input
@@ -87,8 +87,13 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
           onBlur={() => handleBlur('name')}
           disabled={isSubmitting}
           className={errors.name ? 'border-destructive' : ''}
+          data-testid="location-form-name-input"
         />
-        {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+        {errors.name && (
+          <p className="text-sm text-destructive" data-testid="location-form-name-error">
+            {errors.name}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -100,18 +105,33 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
           onBlur={() => handleBlur('slug')}
           disabled={isSubmitting}
           className={errors.slug ? 'border-destructive' : ''}
+          data-testid="location-form-slug-input"
         />
-        {errors.slug && <p className="text-sm text-destructive">{errors.slug}</p>}
+        {errors.slug && (
+          <p className="text-sm text-destructive" data-testid="location-form-slug-error">
+            {errors.slug}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           Identificador único usado em URLs. Apenas letras minúsculas, números e hífens.
         </p>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel} 
+          disabled={isSubmitting}
+          data-testid="location-form-cancel-button"
+        >
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+          data-testid="location-form-submit-button"
+        >
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {location ? 'Salvar' : 'Criar'}
         </Button>

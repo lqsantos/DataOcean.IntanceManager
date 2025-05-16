@@ -29,11 +29,11 @@ export function LocationsPage() {
   const [locationToEdit, setLocationToEdit] = useState<Location | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreateSubmit = async (data: CreateLocationDto) => {
+  const handleCreateSubmit = async (data: CreateLocationDto | UpdateLocationDto) => {
     setIsSubmitting(true);
 
     try {
-      await createLocation(data);
+      await createLocation(data as CreateLocationDto);
       setIsCreateDialogOpen(false);
     } catch (_err) {
       // Explicitly mark the error as handled
@@ -64,10 +64,12 @@ export function LocationsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in">
+    <div className="space-y-6 animate-in" data-testid="locations-page-container">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Localidades</h1>
+          <h1 className="text-3xl font-bold tracking-tight" data-testid="locations-page-title">
+            Localidades
+          </h1>
           <p className="mt-1 text-muted-foreground">Gerencie suas localidades de implantação</p>
         </div>
         <div className="flex gap-2">
@@ -76,11 +78,15 @@ export function LocationsPage() {
             size="icon"
             onClick={refreshLocations}
             disabled={isRefreshing || isLoading}
+            data-testid="locations-page-refresh-button"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="sr-only">Atualizar</span>
           </Button>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button
+            onClick={() => setIsCreateDialogOpen(true)}
+            data-testid="locations-page-add-button"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Adicionar Localidade
           </Button>
@@ -88,14 +94,14 @@ export function LocationsPage() {
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" data-testid="locations-page-error-alert">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription data-testid="locations-page-error-message">{error}</AlertDescription>
         </Alert>
       )}
 
-      <Card>
+      <Card data-testid="locations-page-card">
         <CardHeader>
           <CardTitle>Localidades</CardTitle>
         </CardHeader>
@@ -103,7 +109,7 @@ export function LocationsPage() {
           <LocationsTable
             locations={locations}
             isLoading={isLoading}
-            isRefreshing={isRefreshing}
+            _isRefreshing={isRefreshing}
             onEdit={setLocationToEdit}
             onDelete={deleteLocation}
           />
@@ -112,7 +118,7 @@ export function LocationsPage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" data-testid="locations-page-create-dialog">
           <DialogHeader>
             <DialogTitle>Criar Localidade</DialogTitle>
           </DialogHeader>
@@ -126,7 +132,7 @@ export function LocationsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!locationToEdit} onOpenChange={(open) => !open && setLocationToEdit(null)}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" data-testid="locations-page-edit-dialog">
           <DialogHeader>
             <DialogTitle>Editar Localidade</DialogTitle>
           </DialogHeader>

@@ -125,7 +125,7 @@ export function LocationsTable({
 
   return (
     <>
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col space-y-4" data-testid="locations-table-container">
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -134,11 +134,12 @@ export function LocationsTable({
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            data-testid="locations-table-search"
           />
         </div>
 
         <div className="rounded-md border">
-          <Table>
+          <Table data-testid="locations-table">
             <TableHeader>
               <TableRow>
                 <TableHead>
@@ -146,6 +147,7 @@ export function LocationsTable({
                     variant="ghost"
                     onClick={() => handleSort('name')}
                     className="flex items-center gap-1 font-bold"
+                    data-testid="locations-table-sort-name"
                   >
                     Nome
                     {renderSortIcon('name')}
@@ -156,6 +158,7 @@ export function LocationsTable({
                     variant="ghost"
                     onClick={() => handleSort('slug')}
                     className="flex items-center gap-1 font-bold"
+                    data-testid="locations-table-sort-slug"
                   >
                     Slug
                     {renderSortIcon('slug')}
@@ -166,6 +169,7 @@ export function LocationsTable({
                     variant="ghost"
                     onClick={() => handleSort('createdAt')}
                     className="flex items-center gap-1 font-bold"
+                    data-testid="locations-table-sort-created-at"
                   >
                     Criado em
                     {renderSortIcon('createdAt')}
@@ -177,7 +181,7 @@ export function LocationsTable({
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={index} data-testid="locations-table-loading-row">
                     <TableCell>
                       <Skeleton className="h-5 w-[180px]" />
                     </TableCell>
@@ -196,7 +200,11 @@ export function LocationsTable({
                 <>
                   {sortedLocations.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
+                      <TableCell
+                        colSpan={4}
+                        className="h-24 text-center"
+                        data-testid="locations-table-empty-message"
+                      >
                         {searchTerm ? (
                           <>
                             Nenhuma localidade encontrada para <strong>"{searchTerm}"</strong>.
@@ -214,14 +222,26 @@ export function LocationsTable({
                     </TableRow>
                   ) : (
                     sortedLocations.map((location) => (
-                      <TableRow key={location.id} className="group">
-                        <TableCell className="font-medium">{location.name}</TableCell>
-                        <TableCell>
+                      <TableRow
+                        key={location.id}
+                        className="group"
+                        data-testid={`locations-table-row-${location.id}`}
+                      >
+                        <TableCell
+                          className="font-medium"
+                          data-testid={`locations-table-name-${location.id}`}
+                        >
+                          {location.name}
+                        </TableCell>
+                        <TableCell data-testid={`locations-table-slug-${location.id}`}>
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
                             {location.slug}
                           </code>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell
+                          className="text-sm text-muted-foreground"
+                          data-testid={`locations-table-created-at-${location.id}`}
+                        >
                           {formatDistanceToNow(new Date(location.createdAt), {
                             addSuffix: true,
                             locale: ptBR,
@@ -235,19 +255,24 @@ export function LocationsTable({
                                   variant="ghost"
                                   size="icon"
                                   className="opacity-0 group-hover:opacity-100"
+                                  data-testid={`locations-table-actions-${location.id}`}
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                   <span className="sr-only">Ações</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onEdit(location)}>
+                                <DropdownMenuItem
+                                  onClick={() => onEdit(location)}
+                                  data-testid={`locations-table-edit-${location.id}`}
+                                >
                                   <Edit className="mr-2 h-4 w-4" />
                                   Editar
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => setLocationToDelete(location)}
                                   className="text-destructive focus:text-destructive"
+                                  data-testid={`locations-table-delete-${location.id}`}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Excluir
@@ -272,6 +297,7 @@ export function LocationsTable({
         isDeleting={isDeleting}
         onDelete={handleDelete}
         onCancel={() => setLocationToDelete(null)}
+        data-testid="locations-table-delete-dialog"
       />
     </>
   );
