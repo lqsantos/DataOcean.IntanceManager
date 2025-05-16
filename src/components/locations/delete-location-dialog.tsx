@@ -31,18 +31,28 @@ export function DeleteLocationDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
-      <AlertDialogContent>
+      <AlertDialogContent data-testid="delete-location-dialog">
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir Localidade</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogTitle data-testid="delete-location-dialog-title">Excluir Localidade</AlertDialogTitle>
+          <AlertDialogDescription data-testid="delete-location-dialog-description">
             Tem certeza que deseja excluir a localidade{' '}
-            <span className="font-semibold">{location.name}</span>? Esta ação não pode ser desfeita.
+            <span className="font-semibold" data-testid="delete-location-dialog-name">{location.name}</span>? Esta ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <Button variant="destructive" onClick={onDelete} disabled={isDeleting}>
-            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <AlertDialogCancel
+            data-testid="delete-location-dialog-cancel"
+            disabled={isDeleting}
+          >
+            Cancelar
+          </AlertDialogCancel>
+          <Button 
+            data-testid="delete-location-dialog-confirm"
+            variant="destructive" 
+            onClick={onDelete} 
+            disabled={isDeleting}
+          >
+            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="delete-location-dialog-loading" />}
             Excluir
           </Button>
         </AlertDialogFooter>
