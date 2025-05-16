@@ -65,7 +65,7 @@ export function EnvironmentsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in">
+    <div className="space-y-6 animate-in" data-testid="environments-page">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Ambientes</h1>
@@ -77,11 +77,15 @@ export function EnvironmentsPage() {
             size="icon"
             onClick={refreshEnvironments}
             disabled={isRefreshing || isLoading}
+            data-testid="environments-page-refresh-button"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="sr-only">Atualizar</span>
           </Button>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)}
+            data-testid="environments-page-add-button"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Adicionar Ambiente
           </Button>
@@ -89,14 +93,14 @@ export function EnvironmentsPage() {
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" data-testid="environments-page-error-alert">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <Card>
+      <Card data-testid="environments-page-card">
         <CardHeader>
           <CardTitle>Ambientes</CardTitle>
         </CardHeader>
@@ -113,7 +117,7 @@ export function EnvironmentsPage() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" data-testid="environments-page-create-dialog">
           <DialogHeader>
             <DialogTitle>Criar Ambiente</DialogTitle>
           </DialogHeader>
@@ -130,7 +134,7 @@ export function EnvironmentsPage() {
         open={!!environmentToEdit}
         onOpenChange={(open) => !open && setEnvironmentToEdit(null)}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" data-testid="environments-page-edit-dialog">
           <DialogHeader>
             <DialogTitle>Editar Ambiente</DialogTitle>
           </DialogHeader>
