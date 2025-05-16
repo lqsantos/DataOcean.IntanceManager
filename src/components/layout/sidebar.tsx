@@ -75,6 +75,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Overlay for mobile devices */}
       {open && (
         <div
+          data-testid="sidebar-overlay"
           className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
           onClick={onClose}
         />
@@ -82,13 +83,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
+        data-testid="sidebar-container"
         className={cn(
           'bg-card/50 fixed inset-y-0 left-0 z-50 w-64 border-r border-border/40 backdrop-blur-md transition-transform duration-300 md:relative md:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex h-16 items-center border-b border-border/40 px-4">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2" data-testid="sidebar-logo-link">
             <div className="gradient-blue flex h-8 w-8 items-center justify-center rounded-md shadow-lg">
               <span className="text-primary-foreground font-bold">DO</span>
             </div>
@@ -96,18 +98,25 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               DataOcean
             </span>
           </Link>
-          <Button variant="ghost" size="icon" className="ml-auto md:hidden" onClick={onClose}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="ml-auto md:hidden" 
+            onClick={onClose}
+            data-testid="sidebar-close-button"
+          >
             <X className="h-5 w-5" />
             <span className="sr-only">Close menu</span>
           </Button>
         </div>
-        <ScrollArea className="h-[calc(100vh-64px)]">
+        <ScrollArea className="h-[calc(100vh-64px)]" data-testid="sidebar-scroll-area">
           <div className="px-3 py-4">
-            <nav className="flex flex-col gap-1">
+            <nav className="flex flex-col gap-1" data-testid="sidebar-navigation">
               {routes.map((route) => (
                 <Link
                   key={route.href}
                   href={route.href}
+                  data-testid={`sidebar-link-${route.name.toLowerCase()}`}
                   className={cn(
                     'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
                     pathname === route.href

@@ -25,12 +25,17 @@ export function MainLayout({ children }: MainLayoutProps) {
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background" data-testid="main-layout-container">
       <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" data-testid="main-layout-content">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="animate-in flex-1 overflow-auto p-4 md:p-6">
-          <div className="mx-auto max-w-7xl">{children}</div>
+        <main 
+          className="animate-in flex-1 overflow-auto p-4 md:p-6" 
+          data-testid="main-layout-main"
+        >
+          <div className="mx-auto max-w-7xl" data-testid="main-layout-children-container">
+            {children}
+          </div>
         </main>
       </div>
     </div>
