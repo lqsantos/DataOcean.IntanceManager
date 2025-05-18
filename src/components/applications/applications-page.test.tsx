@@ -1,42 +1,66 @@
 // components/applications/applications-page.test.tsx
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ApplicationsPage } from './applications-page';
 
-// Mock para o hook useApplications
+// Definindo os mocks usando hoisting para evitar problemas com vi.mock
+const mockDeleteFn = vi.fn();
+const mockCreateFn = vi.fn();
+const mockUpdateFn = vi.fn();
+const mockRefreshFn = vi.fn();
+
+// Variável para controlar qual implementação do mock usar
+let useErrorMock = false;
+
+// Configurando o mock para o hook useApplications
 vi.mock('@/hooks/use-applications', () => ({
-  useApplications: vi.fn(() => ({
-    applications: [
-      {
-        id: '1',
-        name: 'Frontend Web',
-        slug: 'frontend-web',
-        description: 'Main frontend application',
-        createdAt: '2023-01-15T10:00:00.000Z',
-        updatedAt: '2023-01-15T10:00:00.000Z',
-      },
-      {
-        id: '2',
-        name: 'API Gateway',
-        slug: 'api-gateway',
-        description: 'API gateway service',
-        createdAt: '2023-02-10T08:30:00.000Z',
-        updatedAt: '2023-02-10T08:30:00.000Z',
-      },
-    ],
-    isLoading: false,
-    isRefreshing: false,
-    error: null,
-    refreshApplications: vi.fn(),
-    createApplication: vi.fn(),
-    updateApplication: vi.fn(),
-    deleteApplication: vi.fn(),
-  })),
+  useApplications: () => {
+    if (useErrorMock) {
+      return {
+        applications: [],
+        isLoading: false,
+        isRefreshing: false,
+        error: 'Falha ao carregar aplicações',
+        refreshApplications: vi.fn(),
+        createApplication: vi.fn(),
+        updateApplication: vi.fn(),
+        deleteApplication: vi.fn(),
+      };
+    }
+
+    return {
+      applications: [
+        {
+          id: '1',
+          name: 'Frontend Web',
+          slug: 'frontend-web',
+          description: 'Main frontend application',
+          createdAt: '2023-01-15T10:00:00.000Z',
+          updatedAt: '2023-01-15T10:00:00.000Z',
+        },
+        {
+          id: '2',
+          name: 'API Gateway',
+          slug: 'api-gateway',
+          description: 'API gateway service',
+          createdAt: '2023-02-10T08:30:00.000Z',
+          updatedAt: '2023-02-10T08:30:00.000Z',
+        },
+      ],
+      isLoading: false,
+      isRefreshing: false,
+      error: null,
+      refreshApplications: mockRefreshFn,
+      createApplication: mockCreateFn,
+      updateApplication: mockUpdateFn,
+      deleteApplication: mockDeleteFn,
+    };
+  },
 }));
 
-// Mock para os componentes
+// Mock para os componentes da aplicação
 vi.mock('./applications-table', () => ({
   ApplicationsTable: ({ applications, onEdit, onDelete }: any) => (
     <div data-testid="applications-table">
@@ -84,7 +108,7 @@ vi.mock('@/components/ui/button', () => ({
 
 vi.mock('@/components/ui/dialog', () => ({
   Dialog: ({ open, onOpenChange, children }: any) => (
-    <div data-testid="dialog" data-open={open} onClick={() => onOpenChange && onOpenChange(false)}>
+    <div data-testid={open ? 'dialog-open' : 'dialog-closed'} data-open={open}>
       {open ? children : null}
     </div>
   ),
@@ -116,20 +140,29 @@ vi.mock('@/components/ui/alert', () => ({
 
 describe('ApplicationsPage', () => {
   beforeEach(() => {
+    // Limpar todos os mocks antes de cada teste
     vi.clearAllMocks();
+    // Resetar a flag de erro para cada teste
+    useErrorMock = false;
   });
 
   it('should render applications page with title and table', () => {
     render(<ApplicationsPage />);
 
-    // Usando o seletor mais específico para o título da página
-    const pageTitle = screen.getByRole('heading', { name: 'Aplicações', level: 1 });
-
-    expect(pageTitle).toBeInTheDocument();
-
+    // Verifica o título da página usando seletor role mais específico
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Aplicações');
+    
+    // Verifica a descrição
     expect(screen.getByText('Gerencie suas aplicações')).toBeInTheDocument();
+    
+    // Verifica se a tabela de aplicações está presente
     expect(screen.getByTestId('applications-table')).toBeInTheDocument();
-    expect(screen.getByTestId('applications-count')).toHaveTextContent('2');
+    
+    // Verifica a contagem de aplicações (2 do mock)
+    const appCount = screen.getByTestId('applications-count');
+
+    expect(appCount).toBeInTheDocument();
+    expect(appCount.textContent).toBe('2');
   });
 
   it('should open create dialog when add button is clicked', async () => {
@@ -137,19 +170,19 @@ describe('ApplicationsPage', () => {
 
     render(<ApplicationsPage />);
 
-    // Clica no botão de adicionar aplicação
+    // Clica no botão de adicionar
     const addButton = screen.getByTestId('applications-page-add-button');
 
     await user.click(addButton);
 
     // Verifica se o diálogo foi aberto
-    const dialog = screen.getByTestId('dialog');
+    const dialog = screen.getByTestId('dialog-open');
 
     expect(dialog).toHaveAttribute('data-open', 'true');
-
-    // Verifica se o título do diálogo é correto
+    
+    // Verifica o título do diálogo
     expect(screen.getByTestId('dialog-title')).toHaveTextContent('Criar Aplicação');
-
+    
     // Verifica se o formulário está no modo de criação
     const form = screen.getByTestId('application-form');
 
@@ -165,23 +198,17 @@ describe('ApplicationsPage', () => {
     const addButton = screen.getByTestId('applications-page-add-button');
 
     await user.click(addButton);
-
+    
     // Submete o formulário
     const submitButton = screen.getByTestId('mock-submit-button');
 
     await user.click(submitButton);
 
-    // Verifica se createApplication foi chamado (via useApplications mock)
-    const { createApplication } = require('@/hooks/use-applications').useApplications();
-
-    await waitFor(() => {
-      expect(createApplication).toHaveBeenCalledWith({ name: 'New App', slug: 'new-app' });
-    });
-
-    // Verifica se o diálogo foi fechado após submissão bem-sucedida
-    // No renderizado real isso vai fechar após setState, mas no teste temos que validar manualmente
-    await waitFor(() => {
-      expect(createApplication).toHaveBeenCalled();
+    // Verifica se createApplication foi chamado com os dados corretos
+    expect(mockCreateFn).toHaveBeenCalledTimes(1);
+    expect(mockCreateFn).toHaveBeenCalledWith({ 
+      name: 'New App', 
+      slug: 'new-app' 
     });
   });
 
@@ -190,19 +217,19 @@ describe('ApplicationsPage', () => {
 
     render(<ApplicationsPage />);
 
-    // Simula a ação de editar a partir da tabela
+    // Simula a ação de editar da tabela
     const editButton = screen.getByTestId('mock-edit-button');
 
     await user.click(editButton);
 
-    // Verifica se o diálogo de edição foi aberto
-    const dialog = screen.getByTestId('dialog');
+    // Verifica se o diálogo foi aberto
+    const dialog = screen.getByTestId('dialog-open');
 
     expect(dialog).toHaveAttribute('data-open', 'true');
-
-    // Verifica se o título do diálogo é correto
+    
+    // Verifica o título do diálogo
     expect(screen.getByTestId('dialog-title')).toHaveTextContent('Editar Aplicação');
-
+    
     // Verifica se o formulário está no modo de edição
     const form = screen.getByTestId('application-form');
 
@@ -210,46 +237,17 @@ describe('ApplicationsPage', () => {
   });
 
   it('should call deleteApplication when delete action is triggered', async () => {
-    const mockDeleteFn = vi.fn();
-
-    vi.mocked(require('@/hooks/use-applications').useApplications).mockReturnValueOnce({
-      applications: [
-        {
-          id: '1',
-          name: 'Frontend Web',
-          slug: 'frontend-web',
-          description: 'Main frontend application',
-          createdAt: '2023-01-15T10:00:00.000Z',
-          updatedAt: '2023-01-15T10:00:00.000Z',
-        },
-        {
-          id: '2',
-          name: 'API Gateway',
-          slug: 'api-gateway',
-          description: 'API gateway service',
-          createdAt: '2023-02-10T08:30:00.000Z',
-          updatedAt: '2023-02-10T08:30:00.000Z',
-        },
-      ],
-      isLoading: false,
-      isRefreshing: false,
-      error: null,
-      refreshApplications: vi.fn(),
-      createApplication: vi.fn(),
-      updateApplication: vi.fn(),
-      deleteApplication: mockDeleteFn,
-    });
-
     const user = userEvent.setup();
 
     render(<ApplicationsPage />);
 
-    // Simula a ação de excluir a partir da tabela
+    // Simula a ação de excluir da tabela
     const deleteButton = screen.getByTestId('mock-delete-button');
 
     await user.click(deleteButton);
 
-    // Verifica se a função de exclusão foi chamada
+    // Verifica se o método de exclusão foi chamado com o ID correto
+    expect(mockDeleteFn).toHaveBeenCalledTimes(1);
     expect(mockDeleteFn).toHaveBeenCalledWith('1');
   });
 
@@ -264,32 +262,24 @@ describe('ApplicationsPage', () => {
     await user.click(refreshButton);
 
     // Verifica se a função de atualização foi chamada
-    const { refreshApplications } = require('@/hooks/use-applications').useApplications();
-
-    expect(refreshApplications).toHaveBeenCalled();
+    expect(mockRefreshFn).toHaveBeenCalledTimes(1);
   });
 
   it('should display error alert when error is present', () => {
-    // Simula um erro no hook
-    vi.mocked(require('@/hooks/use-applications').useApplications).mockReturnValueOnce({
-      applications: [],
-      isLoading: false,
-      isRefreshing: false,
-      error: 'Falha ao carregar aplicações',
-      refreshApplications: vi.fn(),
-      createApplication: vi.fn(),
-      updateApplication: vi.fn(),
-      deleteApplication: vi.fn(),
-    });
-
+    // Ativa o mock de erro para este teste
+    useErrorMock = true;
+    
     render(<ApplicationsPage />);
 
-    // Verifica se o alerta de erro é exibido
-    expect(screen.getByTestId('alert')).toBeInTheDocument();
-    expect(screen.getByTestId('alert')).toHaveAttribute('data-variant', 'destructive');
-    expect(screen.getByTestId('alert-description')).toHaveTextContent(
-      'Falha ao carregar aplicações'
-    );
+    // Verifica se o alerta é exibido
+    const alertElement = screen.getByTestId('alert');
+
+    expect(alertElement).toBeInTheDocument();
+    expect(alertElement).toHaveAttribute('data-variant', 'destructive');
+    expect(screen.getByTestId('alert-description')).toHaveTextContent('Falha ao carregar aplicações');
+    
+    // Reseta o mock de erro
+    useErrorMock = false;
   });
 
   it('should update application when edit form is submitted', async () => {
@@ -297,25 +287,21 @@ describe('ApplicationsPage', () => {
 
     render(<ApplicationsPage />);
 
-    // Simula a ação de editar
+    // Abre o diálogo de edição
     const editButton = screen.getByTestId('mock-edit-button');
 
     await user.click(editButton);
-
+    
     // Submete o formulário de edição
     const submitButton = screen.getByTestId('mock-submit-button');
 
     await user.click(submitButton);
 
-    // Verifica se updateApplication foi chamado
-    const { updateApplication } = require('@/hooks/use-applications').useApplications();
-    const { applications } = require('@/hooks/use-applications').useApplications();
-
-    await waitFor(() => {
-      expect(updateApplication).toHaveBeenCalledWith(applications[0].id, {
-        name: 'New App',
-        slug: 'new-app',
-      });
+    // Verifica se updateApplication foi chamado com os dados corretos
+    expect(mockUpdateFn).toHaveBeenCalledTimes(1);
+    expect(mockUpdateFn).toHaveBeenCalledWith('1', { 
+      name: 'New App', 
+      slug: 'new-app' 
     });
   });
 });

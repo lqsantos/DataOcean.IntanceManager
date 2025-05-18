@@ -11,6 +11,7 @@ vi.mock('react-hook-form', () => {
       register: vi.fn(),
       handleSubmit: (onSubmit) => (event) => {
         event?.preventDefault?.();
+
         return onSubmit({ 
           name: 'Test Name', 
           slug: 'test-slug', 
@@ -35,7 +36,8 @@ vi.mock('@/components/ui/form', () => ({
       data-testid="form" 
       onSubmit={(e) => {
         e.preventDefault();
-        if (onSubmit) onSubmit(e);
+
+        if (onSubmit) {onSubmit(e);}
       }} 
       {...props}
     >
