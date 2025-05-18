@@ -28,7 +28,9 @@ export function DeleteEnvironmentDialog({
   onDelete,
   onCancel,
 }: DeleteEnvironmentDialogProps) {
-  if (!environment) {return null;}
+  if (!environment) {
+    return null;
+  }
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
@@ -43,7 +45,12 @@ export function DeleteEnvironmentDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <Button variant="destructive" onClick={onDelete} disabled={isDeleting}>
+          <Button
+            variant="destructive"
+            onClick={onDelete}
+            disabled={isDeleting}
+            data-testid="confirm-delete-button"
+          >
             {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Delete
           </Button>
