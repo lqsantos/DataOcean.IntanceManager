@@ -76,21 +76,46 @@ const mockEntityTable = vi.fn(({ entities, onEdit, onDelete }) => (
   </div>
 ));
 
-const mockEntityForm = vi.fn(({ entity, onSubmit, onCancel, isSubmitting }) => (
-  <div data-testid="mock-entity-form" data-edit-mode={entity ? 'true' : 'false'}>
-    <div data-testid="form-submitting">{isSubmitting ? 'true' : 'false'}</div>
-    <button
-      data-testid="mock-submit-button"
-      onClick={() => onSubmit({ name: 'Test Entity', description: 'Test Description' })}
-      disabled={isSubmitting}
-    >
-      Salvar
-    </button>
-    <button data-testid="mock-cancel-button" onClick={onCancel} disabled={isSubmitting}>
-      Cancelar
-    </button>
-  </div>
-));
+// Melhorado para verificar tanto entity quanto a propriedade específica
+const mockEntityForm = vi.fn((props) => {
+  const { entity, onSubmit, onCancel, isSubmitting } = props;
+
+  // Verificar se as props específicas foram passadas corretamente
+  const allProps = Object.keys(props).filter(
+    (key) => !['onSubmit', 'onCancel', 'isSubmitting'].includes(key)
+  );
+
+  return (
+    <div data-testid="mock-entity-form" data-edit-mode={entity ? 'true' : 'false'}>
+      <div data-testid="form-submitting">{isSubmitting ? 'true' : 'false'}</div>
+      <div data-testid="passed-props">{allProps.join(',')}</div>
+      {entity && <div data-testid="entity-id">{entity.id}</div>}
+
+      {/* Verificar propriedades específicas */}
+      {Object.entries(props).map(([key, value]) => {
+        if (typeof value === 'object' && value !== null && 'id' in value) {
+          return (
+            <div key={key} data-testid={`prop-${key}`}>
+              {(value as any).id}
+            </div>
+          );
+        }
+        return null;
+      })}
+
+      <button
+        data-testid="mock-submit-button"
+        onClick={() => onSubmit({ name: 'Test Entity', description: 'Test Description' })}
+        disabled={isSubmitting}
+      >
+        Salvar
+      </button>
+      <button data-testid="mock-cancel-button" onClick={onCancel} disabled={isSubmitting}>
+        Cancelar
+      </button>
+    </div>
+  );
+});
 
 describe('EntityPage', () => {
   const testEntities = [
@@ -229,6 +254,24 @@ describe('EntityPage', () => {
     // Verifica se o formulário está no modo de edição
     const form = screen.getByTestId('mock-entity-form');
     expect(form).toHaveAttribute('data-edit-mode', 'true');
+
+    // Verifica se a entidade foi passada corretamente
+    expect(screen.getByTestId('entity-id')).toHaveTextContent('1');
+    expect(screen.getByTestId('passed-props')).toHaveTextContent('entity');
+  });
+
+  it('should pass entityPropName correctly to the form when provided', async () => {
+    const user = userEvent.setup();
+    render(<EntityPage {...defaultProps} entityPropName="testEntity" />);
+
+    // Simula a ação de editar
+    const editButton = screen.getByTestId('mock-edit-button');
+    await user.click(editButton);
+
+    // Verifica se a propriedade específica foi passada corretamente
+    expect(screen.getByTestId('passed-props')).toHaveTextContent('entity,testEntity');
+    expect(screen.getByTestId('prop-entity')).toHaveTextContent('1');
+    expect(screen.getByTestId('prop-testEntity')).toHaveTextContent('1');
   });
 
   it('should call updateEntity and close dialog when edit form is submitted', async () => {
@@ -295,7 +338,6 @@ describe('EntityPage', () => {
   it('should handle errors during update action', async () => {
     // Simula um erro durante a atualização
     const errorMock = vi.fn().mockRejectedValueOnce(new Error('Erro ao atualizar entidade'));
-
     const user = userEvent.setup();
     render(<EntityPage {...defaultProps} updateEntity={errorMock} />);
 
