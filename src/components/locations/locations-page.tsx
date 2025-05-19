@@ -46,6 +46,7 @@ export function LocationsPage() {
           'data-testid': 'location-form',
           'data-edit': 'true',
         }}
+        entityPropName="location"
       />
     </div>
   );

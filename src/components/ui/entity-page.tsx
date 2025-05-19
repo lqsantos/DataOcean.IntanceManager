@@ -43,6 +43,9 @@ export interface EntityPageProps<T, CreateDto, UpdateDto> {
   // Props opcionais adicionais
   formProps?: Record<string, any>;
   tableProps?: Record<string, any>;
+
+  // Nome da propriedade esperada pelo formulário específico
+  entityPropName?: string;
 }
 
 export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
@@ -71,6 +74,10 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
   // Props opcionais
   formProps = {},
   tableProps = {},
+
+  // Nome da propriedade do formulário (ex: 'application', 'environment', etc.)
+  // Se não for fornecido, usa 'entity' como padrão
+  entityPropName,
 }: EntityPageProps<T, CreateDto, UpdateDto>) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [entityToEdit, setEntityToEdit] = useState<T | null>(null);
@@ -104,6 +111,17 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
       setIsSubmitting(false);
     }
   };
+
+  // Cria as props específicas para o formulário de edição
+  // Distribui a entidade sob múltiplos nomes de propriedade
+  const entityTypeFormProps = entityToEdit
+    ? {
+        // Sempre fornece com o nome genérico 'entity' para compatibilidade
+        entity: entityToEdit,
+        // Se um nome específico for fornecido, também passa sob esse nome
+        ...(entityPropName ? { [entityPropName]: entityToEdit } : {}),
+      }
+    : {};
 
   return (
     <div className="space-y-6 animate-in" data-testid={`${testIdPrefix}-page`}>
@@ -186,10 +204,10 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
           </DialogHeader>
           {entityToEdit && (
             <EntityForm
-              entity={entityToEdit}
               onSubmit={handleEditSubmit}
               onCancel={() => setEntityToEdit(null)}
               isSubmitting={isSubmitting}
+              {...entityTypeFormProps}
               {...formProps}
             />
           )}

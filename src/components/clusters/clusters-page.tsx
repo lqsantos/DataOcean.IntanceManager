@@ -46,6 +46,7 @@ export function ClustersPage() {
         formProps={{
           'data-testid': 'cluster-form',
         }}
+        entityPropName="cluster"
       />
     </div>
   );

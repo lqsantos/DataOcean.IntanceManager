@@ -46,6 +46,7 @@ export function ApplicationsPage() {
         formProps={{
           'data-testid': 'application-form',
         }}
+        entityPropName="application"
       />
     </div>
   );

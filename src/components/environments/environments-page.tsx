@@ -46,6 +46,7 @@ export function EnvironmentsPage() {
         formProps={{
           'data-testid': 'environment-form',
         }}
+        entityPropName="environment"
       />
     </div>
   );
