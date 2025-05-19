@@ -1,7 +1,7 @@
 // components/clusters/clusters-page.tsx
 'use client';
 
-import { EntityPage } from '@/components/ui/entity-page';
+import { EntityPage } from '@/components/entities/entity-page';
 import { useClusters } from '@/hooks/use-clusters';
 import type { Cluster, CreateClusterDto, UpdateClusterDto } from '@/types/cluster';
 

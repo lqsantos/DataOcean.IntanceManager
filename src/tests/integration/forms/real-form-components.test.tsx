@@ -10,9 +10,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 // Importações de componentes reais
 import { ApplicationForm } from '@/components/applications/application-form';
+// Atualização do caminho do import do EntityPage
+import { EntityPage } from '@/components/entities/entity-page';
 import { EnvironmentForm } from '@/components/environments/environment-form';
 import { LocationForm } from '@/components/locations/location-form';
-import { EntityPage } from '@/components/ui/entity-page';
 
 // Mock hooks e componentes relacionados para isolar os testes
 vi.mock('react-hook-form', () => ({

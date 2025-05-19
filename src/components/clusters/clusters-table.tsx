@@ -1,8 +1,8 @@
 // components/clusters/clusters-table.tsx
 'use client';
 
-import type { Column } from '@/components/ui/entity-table';
-import { EntityTable } from '@/components/ui/entity-table';
+import type { Column } from '@/components/entities/entity-table';
+import { EntityTable } from '@/components/entities/entity-table';
 import { useLocations } from '@/hooks/use-locations';
 import type { Cluster } from '@/types/cluster';
 
@@ -26,7 +26,7 @@ export function ClustersTable({
   onDelete,
 }: ClustersTableProps) {
   const { locations } = useLocations();
-  
+
   // Usar entities se clusters não for fornecido
   const items = clusters || entities || [];
 
@@ -40,24 +40,24 @@ export function ClustersTable({
 
   // Definir as colunas da tabela
   const columns: Column<Cluster>[] = [
-    { 
-      key: 'name', 
+    {
+      key: 'name',
       title: 'Nome',
-      sortable: true
+      sortable: true,
     },
-    { 
-      key: 'slug', 
+    {
+      key: 'slug',
       title: 'Slug',
-      sortable: true
+      sortable: true,
     },
-    { 
-      key: 'description', 
+    {
+      key: 'description',
       title: 'Descrição',
       render: (cluster) => (
         <div className="max-w-[300px] truncate">
           {cluster.description || <span className="italic text-muted-foreground">Nenhuma</span>}
         </div>
-      )
+      ),
     },
     {
       key: 'locations',
@@ -68,13 +68,13 @@ export function ClustersTable({
             <span className="italic text-muted-foreground">Nenhuma</span>
           )}
         </div>
-      )
+      ),
     },
-    { 
-      key: 'createdAt', 
+    {
+      key: 'createdAt',
       title: 'Criado em',
-      sortable: true
-    }
+      sortable: true,
+    },
   ];
 
   return (

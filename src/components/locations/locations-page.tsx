@@ -1,6 +1,6 @@
 'use client';
 
-import { EntityPage } from '@/components/ui/entity-page';
+import { EntityPage } from '@/components/entities/entity-page';
 import { useLocations } from '@/hooks/use-locations';
 import type { CreateLocationDto, Location, UpdateLocationDto } from '@/types/location';
 

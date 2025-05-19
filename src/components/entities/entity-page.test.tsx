@@ -2,6 +2,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+
 import { EntityPage } from './entity-page';
 
 // Mock dos componentes de UI
@@ -100,6 +101,7 @@ const mockEntityForm = vi.fn((props) => {
             </div>
           );
         }
+
         return null;
       })}
 
@@ -167,6 +169,7 @@ describe('EntityPage', () => {
 
     // Verifica se o alerta é exibido
     const alertElement = screen.getByTestId('test-entity-page-error-alert');
+
     expect(alertElement).toBeInTheDocument();
     expect(screen.getByText('Erro ao carregar entidades')).toBeInTheDocument();
     expect(screen.getByText('Erro')).toBeInTheDocument();
@@ -174,10 +177,12 @@ describe('EntityPage', () => {
 
   it('should call refreshEntities when refresh button is clicked', async () => {
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} />);
 
     // Clica no botão de atualizar
     const refreshButton = screen.getByTestId('test-entity-page-refresh-button');
+
     await user.click(refreshButton);
 
     // Verifica se a função de atualização foi chamada
@@ -198,6 +203,7 @@ describe('EntityPage', () => {
 
   it('should open create dialog when add button is clicked', async () => {
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} />);
 
     // Verifica se o diálogo está inicialmente fechado
@@ -205,6 +211,7 @@ describe('EntityPage', () => {
 
     // Clica no botão de adicionar
     const addButton = screen.getByTestId('test-entity-page-add-button');
+
     await user.click(addButton);
 
     // Verifica se o diálogo foi aberto
@@ -213,19 +220,23 @@ describe('EntityPage', () => {
 
     // Verifica se o formulário está no modo correto
     const form = screen.getByTestId('mock-entity-form');
+
     expect(form).toHaveAttribute('data-edit-mode', 'false');
   });
 
   it('should call createEntity and close dialog when form is submitted', async () => {
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} />);
 
     // Abre o diálogo
     const addButton = screen.getByTestId('test-entity-page-add-button');
+
     await user.click(addButton);
 
     // Submete o formulário
     const submitButton = screen.getByTestId('mock-submit-button');
+
     await user.click(submitButton);
 
     // Verifica se a função de criação foi chamada com os dados corretos
@@ -241,10 +252,12 @@ describe('EntityPage', () => {
 
   it('should open edit dialog when edit button is clicked', async () => {
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} />);
 
     // Simula a ação de editar
     const editButton = screen.getByTestId('mock-edit-button');
+
     await user.click(editButton);
 
     // Verifica se o diálogo foi aberto
@@ -253,6 +266,7 @@ describe('EntityPage', () => {
 
     // Verifica se o formulário está no modo de edição
     const form = screen.getByTestId('mock-entity-form');
+
     expect(form).toHaveAttribute('data-edit-mode', 'true');
 
     // Verifica se a entidade foi passada corretamente
@@ -262,10 +276,12 @@ describe('EntityPage', () => {
 
   it('should pass entityPropName correctly to the form when provided', async () => {
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} entityPropName="testEntity" />);
 
     // Simula a ação de editar
     const editButton = screen.getByTestId('mock-edit-button');
+
     await user.click(editButton);
 
     // Verifica se a propriedade específica foi passada corretamente
@@ -276,14 +292,17 @@ describe('EntityPage', () => {
 
   it('should call updateEntity and close dialog when edit form is submitted', async () => {
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} />);
 
     // Abre o diálogo de edição
     const editButton = screen.getByTestId('mock-edit-button');
+
     await user.click(editButton);
 
     // Submete o formulário
     const submitButton = screen.getByTestId('mock-submit-button');
+
     await user.click(submitButton);
 
     // Verifica se a função de atualização foi chamada com os dados corretos
@@ -299,10 +318,12 @@ describe('EntityPage', () => {
 
   it('should call deleteEntity when delete button is clicked', async () => {
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} />);
 
     // Simula a ação de excluir
     const deleteButton = screen.getByTestId('mock-delete-button');
+
     await user.click(deleteButton);
 
     // Verifica se a função de exclusão foi chamada com o ID correto
@@ -315,14 +336,17 @@ describe('EntityPage', () => {
     const errorMock = vi.fn().mockRejectedValueOnce(new Error('Erro ao criar entidade'));
 
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} createEntity={errorMock} />);
 
     // Abre o diálogo
     const addButton = screen.getByTestId('test-entity-page-add-button');
+
     await user.click(addButton);
 
     // Submete o formulário
     const submitButton = screen.getByTestId('mock-submit-button');
+
     await user.click(submitButton);
 
     // Verifica se tentativa de criação ocorreu
@@ -339,14 +363,17 @@ describe('EntityPage', () => {
     // Simula um erro durante a atualização
     const errorMock = vi.fn().mockRejectedValueOnce(new Error('Erro ao atualizar entidade'));
     const user = userEvent.setup();
+
     render(<EntityPage {...defaultProps} updateEntity={errorMock} />);
 
     // Abre o diálogo de edição
     const editButton = screen.getByTestId('mock-edit-button');
+
     await user.click(editButton);
 
     // Submete o formulário
     const submitButton = screen.getByTestId('mock-submit-button');
+
     await user.click(submitButton);
 
     // Verifica se tentativa de atualização ocorreu

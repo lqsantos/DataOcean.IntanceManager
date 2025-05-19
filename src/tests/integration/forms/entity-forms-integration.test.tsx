@@ -8,7 +8,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EntityPage } from '@/components/ui/entity-page';
+import { EntityPage } from '@/components/entities/entity-page';
 
 // Criamos interfaces de teste simulando as entidades reais
 interface TestEntity {

@@ -1,8 +1,8 @@
 // components/environments/environments-table.tsx
 'use client';
 
-import type { Column } from '@/components/ui/entity-table';
-import { EntityTable } from '@/components/ui/entity-table';
+import type { Column } from '@/components/entities/entity-table';
+import { EntityTable } from '@/components/entities/entity-table';
 import type { Environment } from '@/types/environment';
 
 import { DeleteEnvironmentDialog } from './delete-environment-dialog';

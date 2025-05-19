@@ -104,8 +104,8 @@ let isCreateDialogOpen = false;
 let isEditDialogOpen = false;
 let entityToEdit = null;
 
-// Mock para o componente EntityPage
-vi.mock('@/components/ui/entity-page', () => ({
+// Mock para o componente EntityPage - CAMINHO ATUALIZADO
+vi.mock('@/components/entities/entity-page', () => ({
   EntityPage: ({
     entities,
     error,
@@ -121,6 +121,7 @@ vi.mock('@/components/ui/entity-page', () => ({
     testIdPrefix,
     tableProps,
     formProps,
+    entityPropName,
   }: any) => (
     <div data-testid={`${testIdPrefix}-page`}>
       <h1>{entityName.plural}</h1>
@@ -184,6 +185,7 @@ vi.mock('@/components/ui/entity-page', () => ({
         <div data-testid={`${testIdPrefix}-page-edit-dialog`}>
           <EntityForm
             entity={entityToEdit}
+            {...(entityPropName ? { [entityPropName]: entityToEdit } : {})}
             onSubmit={(data: any) => {
               updateEntity(entityToEdit.id, data);
               isEditDialogOpen = false;

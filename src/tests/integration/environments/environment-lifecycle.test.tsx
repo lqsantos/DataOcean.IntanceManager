@@ -132,7 +132,7 @@ vi.mock('@/components/ui/alert-dialog', () => {
 });
 
 // Mock do componente EntityTable para simular a tabela de ambientes
-vi.mock('@/components/ui/entity-table', () => {
+vi.mock('@/components/entities/entity-table', () => {
   return {
     EntityTable: ({ entities, onEdit, onDelete, testIdPrefix }) => (
       <div data-testid={testIdPrefix}>

@@ -1,7 +1,7 @@
 // components/environments/environments-page.tsx
 'use client';
 
-import { EntityPage } from '@/components/ui/entity-page';
+import { EntityPage } from '@/components/entities/entity-page';
 import { useEnvironments } from '@/hooks/use-environments';
 import type { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
 

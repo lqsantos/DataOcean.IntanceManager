@@ -1,7 +1,7 @@
 'use client';
 
-import type { Column } from '@/components/ui/entity-table';
-import { EntityTable } from '@/components/ui/entity-table';
+import type { Column } from '@/components/entities/entity-table';
+import { EntityTable } from '@/components/entities/entity-table';
 import type { Location } from '@/types/location';
 
 import { DeleteLocationDialog } from './delete-location-dialog';

@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApplicationsTable } from './applications-table';
 
 // Mock para o componente EntityTable
-vi.mock('@/components/ui/entity-table', () => ({
+vi.mock('@/components/entities/entity-table', () => ({
   EntityTable: ({
     entities,
     isLoading,

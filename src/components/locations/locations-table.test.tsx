@@ -40,7 +40,7 @@ vi.mock('date-fns/locale', () => ({
 }));
 
 // Mock do EntityTable para testes com suporte a filtragem e ordenação simulada
-vi.mock('@/components/ui/entity-table', () => {
+vi.mock('@/components/entities/entity-table', () => {
   return {
     EntityTable: ({
       entities,

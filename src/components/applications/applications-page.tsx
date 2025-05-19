@@ -1,7 +1,7 @@
 // components/applications/applications-page.tsx
 'use client';
 
-import { EntityPage } from '@/components/ui/entity-page';
+import { EntityPage } from '@/components/entities/entity-page';
 import { useApplications } from '@/hooks/use-applications';
 import type { Application, CreateApplicationDto, UpdateApplicationDto } from '@/types/application';
 
