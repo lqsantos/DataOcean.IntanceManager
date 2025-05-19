@@ -1,5 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
+
+import { usePATModal } from '@/contexts/pat-modal-context';
 
 import { Header } from './header';
 
@@ -12,6 +15,11 @@ vi.mock('next-themes', () => ({
     theme: mockTheme,
     setTheme: mockSetTheme,
   }),
+}));
+
+// Mock para o hook usePATModal
+vi.mock('@/contexts/pat-modal-context', () => ({
+  usePATModal: vi.fn(),
 }));
 
 // Mock para os componentes de UI que podem ser complexos
@@ -66,11 +74,17 @@ vi.mock('@/components/ui/dropdown-menu', () => {
 
 describe('Header Component', () => {
   const mockOnMenuClick = vi.fn();
+  const mockPATModalOpen = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockTheme = 'light';
     mockSetTheme.mockClear();
+
+    // Set up the pat modal context mock
+    (usePATModal as jest.Mock).mockReturnValue({
+      open: mockPATModalOpen,
+    });
   });
 
   afterEach(() => {
@@ -193,5 +207,39 @@ describe('Header Component', () => {
     mockTheme = 'dark';
     render(<Header onMenuClick={mockOnMenuClick} />);
     expect(screen.getByTestId('header-theme-toggle')).toBeInTheDocument();
+  });
+
+  it('opens user menu and shows PAT option', async () => {
+    render(<Header onMenuClick={mockOnMenuClick} />);
+
+    const user = userEvent.setup();
+    const userMenuButton = screen.getByTestId('header-user-menu-button');
+
+    // Open the user dropdown
+    await user.click(userMenuButton);
+
+    // Check if PAT option is shown
+    const patOption = screen.getByTestId('header-pat-option');
+
+    expect(patOption).toBeInTheDocument();
+    expect(patOption).toHaveTextContent('Token de Acesso');
+  });
+
+  it('opens PAT modal when PAT option is clicked', async () => {
+    render(<Header onMenuClick={mockOnMenuClick} />);
+
+    const user = userEvent.setup();
+    const userMenuButton = screen.getByTestId('header-user-menu-button');
+
+    // Open the user dropdown
+    await user.click(userMenuButton);
+
+    // Click the PAT option
+    const patOption = screen.getByTestId('header-pat-option');
+
+    await user.click(patOption);
+
+    // Check if the PAT modal open function was called
+    expect(mockPATModalOpen).toHaveBeenCalledTimes(1);
   });
 });

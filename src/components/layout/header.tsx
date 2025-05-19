@@ -1,7 +1,7 @@
 // components/layout/header.tsx
 'use client';
 
-import { Bell, Menu, Moon, Search, Sun, User } from 'lucide-react';
+import { Bell, Key, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { usePATModal } from '@/contexts/pat-modal-context';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -23,9 +24,10 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { setTheme, theme } = useTheme();
+  const { open: openPATModal } = usePATModal();
 
   return (
-    <header 
+    <header
       className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60"
       data-testid="header-container"
     >
@@ -43,15 +45,18 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         <div className="flex items-center gap-2 md:hidden" data-testid="header-logo-mobile">
           <div className="gradient-blue flex h-8 w-8 items-center justify-center rounded-md shadow-lg">
-            <span className="text-primary-foreground font-bold">DO</span>
+            <span className="font-bold text-primary-foreground">DO</span>
           </div>
           <span className="text-lg font-bold">DataOcean</span>
         </div>
 
         <div className="flex flex-1 items-center gap-4 md:ml-auto md:justify-end">
-          <form className="hidden w-full max-w-sm items-center space-x-2 md:flex" data-testid="header-search-form">
+          <form
+            className="hidden w-full max-w-sm items-center space-x-2 md:flex"
+            data-testid="header-search-form"
+          >
             <div className="relative w-full">
-              <Search className="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search..."
@@ -61,22 +66,30 @@ export function Header({ onMenuClick }: HeaderProps) {
             </div>
           </form>
 
+          {/* Notifications dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="relative hover:bg-background/80"
                 data-testid="header-notifications-button"
               >
                 <Bell className="h-5 w-5" />
-                <Badge className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center bg-primary p-0" data-testid="header-notifications-badge">
+                <Badge
+                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center bg-primary p-0"
+                  data-testid="header-notifications-badge"
+                >
                   3
                 </Badge>
                 <span className="sr-only">Notifications</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="glass w-80" data-testid="header-notifications-dropdown">
+            <DropdownMenuContent
+              align="end"
+              className="glass w-80"
+              data-testid="header-notifications-dropdown"
+            >
               <DropdownMenuLabel>Notifications</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="max-h-80 overflow-auto" data-testid="header-notifications-list">
@@ -88,10 +101,10 @@ export function Header({ onMenuClick }: HeaderProps) {
                   >
                     <div className="flex flex-col gap-1">
                       <p className="font-medium">New instance deployed</p>
-                      <p className="text-muted-foreground text-sm">
+                      <p className="text-sm text-muted-foreground">
                         Instance "api-gateway" was successfully deployed to production
                       </p>
-                      <p className="text-muted-foreground mt-1 text-xs">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {new Date().toLocaleTimeString()}
                       </p>
                     </div>
@@ -101,6 +114,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Theme toggle button */}
           <Button
             variant="ghost"
             size="icon"
@@ -114,6 +128,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
+          {/* User dropdown menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -127,24 +142,55 @@ export function Header({ onMenuClick }: HeaderProps) {
                     alt="User"
                     data-testid="header-user-avatar"
                   />
-                  <AvatarFallback className="gradient-blue" data-testid="header-user-avatar-fallback">DO</AvatarFallback>
+                  <AvatarFallback
+                    className="gradient-blue"
+                    data-testid="header-user-avatar-fallback"
+                  >
+                    DO
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="glass w-56" align="end" forceMount data-testid="header-user-dropdown">
+            <DropdownMenuContent
+              className="glass w-56"
+              align="end"
+              forceMount
+              data-testid="header-user-dropdown"
+            >
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none" data-testid="header-user-name">Admin User</p>
-                  <p className="text-muted-foreground text-xs leading-none" data-testid="header-user-email">admin@dataocean.io</p>
+                  <p className="text-sm font-medium leading-none" data-testid="header-user-name">
+                    Admin User
+                  </p>
+                  <p
+                    className="text-xs leading-none text-muted-foreground"
+                    data-testid="header-user-email"
+                  >
+                    admin@dataocean.io
+                  </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="hover:bg-secondary/50 focus:bg-secondary/50" data-testid="header-profile-option">
+              <DropdownMenuItem
+                className="hover:bg-secondary/50 focus:bg-secondary/50"
+                data-testid="header-profile-option"
+              >
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:bg-secondary/50 focus:bg-secondary/50"
+                onClick={openPATModal}
+                data-testid="header-pat-option"
+              >
+                <Key className="mr-2 h-4 w-4" />
+                <span>Token de Acesso</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="hover:bg-secondary/50 focus:bg-secondary/50" data-testid="header-logout-option">
+              <DropdownMenuItem
+                className="hover:bg-secondary/50 focus:bg-secondary/50"
+                data-testid="header-logout-option"
+              >
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

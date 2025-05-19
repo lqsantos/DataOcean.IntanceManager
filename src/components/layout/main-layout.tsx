@@ -4,6 +4,8 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { PATModal } from '@/components/pat/pat-modal';
+
 import { Header } from './header';
 import { Sidebar } from './sidebar';
 
@@ -29,15 +31,14 @@ export function MainLayout({ children }: MainLayoutProps) {
       <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex flex-1 overflow-hidden" data-testid="main-layout-content">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main 
-          className="animate-in flex-1 overflow-auto p-4 md:p-6" 
-          data-testid="main-layout-main"
-        >
+        <main className="flex-1 overflow-auto p-4 animate-in md:p-6" data-testid="main-layout-main">
           <div className="mx-auto max-w-7xl" data-testid="main-layout-children-container">
             {children}
           </div>
         </main>
       </div>
+      {/* Include the PAT Modal here so it's available throughout the app */}
+      <PATModal />
     </div>
   );
 }

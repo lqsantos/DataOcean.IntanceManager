@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 
 import { ThemeProvider } from '@/components/theme-provider';
+import { PATModalProvider } from '@/contexts/pat-modal-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -14,7 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-      {children}
+      <PATModalProvider>{children}</PATModalProvider>
     </ThemeProvider>
   );
 }

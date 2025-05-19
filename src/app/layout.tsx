@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { Toaster } from 'sonner';
 
 import { MainLayout } from '@/components/layout/main-layout';
-import { ThemeProvider } from '@/components/theme-provider';
+import { Providers } from '@/lib/providers';
 import { MockProvider } from '@/mocks/provider';
+
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -18,14 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
         <MockProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
+          <Providers>
             <MainLayout>{children}</MainLayout>
-          </ThemeProvider>
+            <Toaster position="top-right" richColors />
+          </Providers>
         </MockProvider>
       </body>
     </html>

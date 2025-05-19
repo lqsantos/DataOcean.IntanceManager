@@ -5,6 +5,9 @@ import { handlers } from './handlers/index';
 // Configuração básica do worker
 export const worker = setupWorker(...handlers);
 
+// Log all handlers for debugging
+console.log('🔍 MSW Handlers registered:', handlers.length);
+
 // Função para inicializar com configurações avançadas
 export async function startWorker() {
   try {
@@ -17,6 +20,9 @@ export async function startWorker() {
           return;
         }
 
+        // Log all unhandled requests for debugging
+        console.log('⚠️ Unhandled request:', request.method, request.url);
+
         // Para todas as outras requisições não tratadas
         // Mostrar aviso no console (opcional)
         print.warning();
@@ -25,11 +31,14 @@ export async function startWorker() {
       // Configuração do service worker
       serviceWorker: {
         url: '/mockServiceWorker.js',
-        // Opções adicionais se necessário
+        options: {
+          // Force update on every page load
+          updateViaCache: 'none',
+        },
       },
     });
 
-    console.log('🔶 Mock Service Worker inicializado');
+    console.log('✅ Mock Service Worker inicializado com sucesso!');
   } catch (error) {
     console.error('❌ Erro ao inicializar Mock Service Worker:', error);
     console.error('Detalhes do erro:', error instanceof Error ? error.message : String(error));
