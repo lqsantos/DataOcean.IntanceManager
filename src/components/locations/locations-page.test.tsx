@@ -15,7 +15,10 @@ vi.mock('@/hooks/use-locations', () => ({
 vi.mock('./locations-table', () => ({
   LocationsTable: vi.fn(({ onEdit, onDelete }) => (
     <div data-testid="mock-locations-table">
-      <button data-testid="mock-edit-button" onClick={() => onEdit({ id: '123', name: 'Localidade Teste', region: 'us-east-1' })}>
+      <button
+        data-testid="mock-edit-button"
+        onClick={() => onEdit({ id: '123', name: 'Localidade Teste', region: 'us-east-1' })}
+      >
         Editar
       </button>
       <button data-testid="mock-delete-button" onClick={() => onDelete('123')}>
@@ -25,26 +28,33 @@ vi.mock('./locations-table', () => ({
   )),
 }));
 
-// Mock do componente LocationForm - corrigindo o objeto retornado para corresponder ao caso de edição
+// Mock do componente LocationForm - atualizando para garantir que a prop 'entity' seja corretamente reconhecida
 vi.mock('./location-form', () => ({
-  LocationForm: vi.fn(({ onSubmit, onCancel, location }) => (
-    <div data-testid={`mock-location-form-${location ? 'edit' : 'create'}`}>
-      <button
-        data-testid="mock-form-submit"
-        onClick={() =>
-          onSubmit({
-            name: location ? location.name : 'Nova Localidade',
-            region: location ? location.region : 'us-west-1',
-          })
-        }
-      >
-        Salvar
-      </button>
-      <button data-testid="mock-form-cancel" onClick={onCancel}>
-        Cancelar
-      </button>
-    </div>
-  )),
+  LocationForm: vi.fn(({ onSubmit, onCancel, entity, location, isSubmitting }) => {
+    // Garantir que aceitamos tanto 'entity' quanto 'location'
+    const locationData = entity || location;
+
+    return (
+      <div data-testid={`mock-location-form-${locationData ? 'edit' : 'create'}`}>
+        <button
+          data-testid="mock-form-submit"
+          onClick={() =>
+            onSubmit({
+              name: locationData ? locationData.name : 'Nova Localidade',
+              region: locationData ? locationData.region : 'us-west-1',
+            })
+          }
+        >
+          Salvar
+        </button>
+        <button data-testid="mock-form-cancel" onClick={onCancel}>
+          Cancelar
+        </button>
+        <span data-testid="is-submitting">{isSubmitting ? 'true' : 'false'}</span>
+        {locationData && <div data-testid="location-id">{locationData.id}</div>}
+      </div>
+    );
+  }),
 }));
 
 describe('LocationsPage', () => {
@@ -78,9 +88,10 @@ describe('LocationsPage', () => {
 
   it('should render the component correctly', () => {
     render(<LocationsPage />);
-    
-    expect(screen.getByTestId('locations-page-container')).toBeInTheDocument();
-    expect(screen.getByTestId('locations-page-title')).toBeInTheDocument();
+
+    expect(screen.getByTestId('locations-page')).toBeInTheDocument();
+    // Verificando pelo texto do título em vez do data-testid
+    expect(screen.getByRole('heading', { name: 'Localidades', level: 1 })).toBeInTheDocument();
     expect(screen.getByTestId('locations-page-refresh-button')).toBeInTheDocument();
     expect(screen.getByTestId('locations-page-add-button')).toBeInTheDocument();
     expect(screen.getByTestId('locations-page-card')).toBeInTheDocument();
@@ -92,20 +103,20 @@ describe('LocationsPage', () => {
       ...defaultMockState,
       error: 'Erro ao carregar localidades',
     });
-
     render(<LocationsPage />);
-    
+
     expect(screen.getByTestId('locations-page-error-alert')).toBeInTheDocument();
-    expect(screen.getByTestId('locations-page-error-message')).toHaveTextContent('Erro ao carregar localidades');
+    // Verificando pelo texto da mensagem de erro em vez do data-testid específico
+    expect(screen.getByText('Erro ao carregar localidades')).toBeInTheDocument();
   });
 
   it('should call refreshLocations when refresh button is clicked', async () => {
     const user = userEvent.setup();
-    
+
     render(<LocationsPage />);
-    
+
     await user.click(screen.getByTestId('locations-page-refresh-button'));
-    
+
     expect(mockRefreshLocations).toHaveBeenCalledTimes(1);
   });
 
@@ -117,7 +128,7 @@ describe('LocationsPage', () => {
     });
 
     render(<LocationsPage />);
-    
+
     expect(screen.getByTestId('locations-page-refresh-button')).toBeDisabled();
   });
 
@@ -129,43 +140,43 @@ describe('LocationsPage', () => {
     });
 
     render(<LocationsPage />);
-    
+
     expect(screen.getByTestId('locations-page-refresh-button')).toBeDisabled();
   });
 
   it('should open creation dialog when add button is clicked', async () => {
     const user = userEvent.setup();
-    
+
     render(<LocationsPage />);
-    
+
     expect(screen.queryByTestId('locations-page-create-dialog')).not.toBeInTheDocument();
-    
+
     await user.click(screen.getByTestId('locations-page-add-button'));
-    
+
     expect(screen.getByTestId('locations-page-create-dialog')).toBeInTheDocument();
     expect(screen.getByTestId('mock-location-form-create')).toBeInTheDocument();
   });
 
   it('should close creation dialog and call createLocation when form is submitted', async () => {
     mockCreateLocation.mockResolvedValue(undefined);
-    
+
     const user = userEvent.setup();
-    
+
     render(<LocationsPage />);
-    
+
     // Open creation dialog
     await user.click(screen.getByTestId('locations-page-add-button'));
-    
+
     // Submit form
     await user.click(screen.getByTestId('mock-form-submit'));
-    
+
     await waitFor(() => {
       expect(mockCreateLocation).toHaveBeenCalledWith({
         name: 'Nova Localidade',
         region: 'us-west-1',
       });
     });
-    
+
     // Dialog should be closed
     await waitFor(() => {
       expect(screen.queryByTestId('locations-page-create-dialog')).not.toBeInTheDocument();
@@ -174,71 +185,104 @@ describe('LocationsPage', () => {
 
   it('should keep dialog open if an error occurs during creation', async () => {
     mockCreateLocation.mockRejectedValue(new Error('Error creating location'));
-    
+
     const user = userEvent.setup();
-    
+
     render(<LocationsPage />);
-    
+
     // Open creation dialog
     await user.click(screen.getByTestId('locations-page-add-button'));
-    
+
     // Submit form
     await user.click(screen.getByTestId('mock-form-submit'));
-    
+
     await waitFor(() => {
       expect(mockCreateLocation).toHaveBeenCalled();
     });
-    
+
     // Dialog should remain open
     expect(screen.getByTestId('locations-page-create-dialog')).toBeInTheDocument();
   });
 
   it('should close creation dialog when Cancel is clicked', async () => {
     const user = userEvent.setup();
-    
+
     render(<LocationsPage />);
-    
+
     // Open creation dialog
     await user.click(screen.getByTestId('locations-page-add-button'));
-    
+
     // Click cancel
     await user.click(screen.getByTestId('mock-form-cancel'));
-    
+
     // Dialog should be closed
     expect(screen.queryByTestId('locations-page-create-dialog')).not.toBeInTheDocument();
   });
 
   it('should open edit dialog when edit button in the table is clicked', async () => {
+    const mockLocation = { id: '123', name: 'Localidade Teste', region: 'us-east-1' };
     const user = userEvent.setup();
-    
+
+    // Mock a implementação específica para garantir que o EntityPage está recebendo
+    // o componente correto com as props adequadas
+    const { LocationsTable } = await import('./locations-table');
+
+    (LocationsTable as vi.Mock).mockImplementation(({ onEdit }) => (
+      <div data-testid="mock-locations-table">
+        <button data-testid="mock-edit-button" onClick={() => onEdit(mockLocation)}>
+          Editar
+        </button>
+      </div>
+    ));
+
     render(<LocationsPage />);
-    
+
     // Simulate click on edit button in table
     await user.click(screen.getByTestId('mock-edit-button'));
-    
-    // Edit dialog should be open
-    expect(screen.getByTestId('locations-page-edit-dialog')).toBeInTheDocument();
+
+    // Wait for edit dialog to be rendered
+    await waitFor(() => {
+      expect(screen.getByTestId('locations-page-edit-dialog')).toBeInTheDocument();
+    });
+
+    // Verify edit form presence with correct location data
     expect(screen.getByTestId('mock-location-form-edit')).toBeInTheDocument();
   });
 
   it('should close edit dialog and call updateLocation when form is submitted', async () => {
+    const mockLocation = { id: '123', name: 'Localidade Teste', region: 'us-east-1' };
+
     mockUpdateLocation.mockResolvedValue(undefined);
-    
+
+    // Mock a implementação específica para garantir que o EntityPage está recebendo
+    // o componente correto com as props adequadas
+    const { LocationsTable } = await import('./locations-table');
+    const { LocationForm } = await import('./location-form');
+
+    (LocationsTable as vi.Mock).mockImplementation(({ onEdit }) => (
+      <div data-testid="mock-locations-table">
+        <button data-testid="mock-edit-button" onClick={() => onEdit(mockLocation)}>
+          Editar
+        </button>
+      </div>
+    ));
+
     const user = userEvent.setup();
-    
+
     render(<LocationsPage />);
-    
-    // Simulate click on edit button in table to open dialog with correct location
+
+    // Simulate click on edit button in table
     await user.click(screen.getByTestId('mock-edit-button'));
-    
-    // Verify if location was set correctly
+
+    // Wait for edit dialog and form to be rendered
     await waitFor(() => {
       expect(screen.getByTestId('locations-page-edit-dialog')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-location-form-edit')).toBeInTheDocument();
     });
-    
+
     // Submit form
     await user.click(screen.getByTestId('mock-form-submit'));
-    
+
     // Verify if updateLocation was called with correct arguments
     await waitFor(() => {
       expect(mockUpdateLocation).toHaveBeenCalledWith('123', {
@@ -246,7 +290,7 @@ describe('LocationsPage', () => {
         region: 'us-east-1',
       });
     });
-    
+
     // Dialog should be closed
     await waitFor(() => {
       expect(screen.queryByTestId('locations-page-edit-dialog')).not.toBeInTheDocument();
@@ -255,48 +299,65 @@ describe('LocationsPage', () => {
 
   it('should keep dialog open if an error occurs during update', async () => {
     mockUpdateLocation.mockRejectedValue(new Error('Error updating location'));
-    
+
     const user = userEvent.setup();
-    
+
     render(<LocationsPage />);
-    
+
     // Simulate click on edit button in table
     await user.click(screen.getByTestId('mock-edit-button'));
-    
+
     // Submit form
     await user.click(screen.getByTestId('mock-form-submit'));
-    
+
     await waitFor(() => {
       expect(mockUpdateLocation).toHaveBeenCalled();
     });
-    
+
     // Dialog should remain open
     expect(screen.getByTestId('locations-page-edit-dialog')).toBeInTheDocument();
   });
 
   it('should close edit dialog when Cancel is clicked', async () => {
     const user = userEvent.setup();
-    
+
     render(<LocationsPage />);
-    
+
     // Simulate click on edit button in table
     await user.click(screen.getByTestId('mock-edit-button'));
-    
+
     // Click cancel
     await user.click(screen.getByTestId('mock-form-cancel'));
-    
+
     // Dialog should be closed
     expect(screen.queryByTestId('locations-page-edit-dialog')).not.toBeInTheDocument();
   });
 
   it('should call deleteLocation when delete button in the table is clicked', async () => {
     const user = userEvent.setup();
-    
+
+    // Garantir que o mock do LocationsTable seja usado consistentemente
+    const { LocationsTable } = await import('./locations-table');
+
+    (LocationsTable as vi.Mock).mockImplementation(({ onEdit, onDelete }) => (
+      <div data-testid="mock-locations-table">
+        <button
+          data-testid="mock-edit-button"
+          onClick={() => onEdit({ id: '123', name: 'Localidade Teste', region: 'us-east-1' })}
+        >
+          Editar
+        </button>
+        <button data-testid="mock-delete-button" onClick={() => onDelete('123')}>
+          Excluir
+        </button>
+      </div>
+    ));
+
     render(<LocationsPage />);
-    
+
     // Simulate click on delete button in table
     await user.click(screen.getByTestId('mock-delete-button'));
-    
+
     expect(mockDeleteLocation).toHaveBeenCalledWith('123');
   });
 });

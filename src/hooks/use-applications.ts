@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { ApplicationService } from '@/services/application-service';
 import type { Application, CreateApplicationDto, UpdateApplicationDto } from '@/types/application';
-import { errorLogger } from '@/utils/errorLogger';
+import { logError } from '@/utils/errorLogger';
 
 export function useApplications() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -20,7 +20,7 @@ export function useApplications() {
       setApplications(data);
       setError(null);
     } catch (err) {
-      errorLogger(err, 'Failed to fetch applications');
+      logError(err, 'Failed to fetch applications');
       setError(err instanceof Error ? err.message : 'Falha ao carregar aplicações');
     } finally {
       setIsLoading(false);
@@ -41,7 +41,7 @@ export function useApplications() {
 
       return newApplication;
     } catch (err) {
-      errorLogger(err, 'Failed to create application');
+      logError(err, 'Failed to create application');
       throw err;
     }
   }, []);
@@ -56,7 +56,7 @@ export function useApplications() {
 
       return updatedApplication;
     } catch (err) {
-      errorLogger(err, 'Failed to update application');
+      logError(err, 'Failed to update application');
       throw err;
     }
   }, []);
@@ -66,7 +66,7 @@ export function useApplications() {
       await ApplicationService.delete(id);
       setApplications((prev) => prev.filter((application) => application.id !== id));
     } catch (err) {
-      errorLogger(err, 'Failed to delete application');
+      logError(err, 'Failed to delete application');
       throw err;
     }
   }, []);

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { ClusterService } from '@/services/cluster-service';
 import type { Cluster, CreateClusterDto, UpdateClusterDto } from '@/types/cluster';
-import { errorLogger } from '@/utils/errorLogger';
+import { logError } from '@/utils/errorLogger';
 
 export function useClusters() {
   const [clusters, setClusters] = useState<Cluster[]>([]);
@@ -20,7 +20,7 @@ export function useClusters() {
       setClusters(data);
       setError(null);
     } catch (err) {
-      errorLogger(err, 'Failed to fetch clusters');
+      logError(err, 'Failed to fetch clusters');
       setError(err instanceof Error ? err.message : 'Falha ao carregar clusters');
     } finally {
       setIsLoading(false);
@@ -41,7 +41,7 @@ export function useClusters() {
 
       return newCluster;
     } catch (err) {
-      errorLogger(err, 'Failed to create cluster');
+      logError(err, 'Failed to create cluster');
       throw err;
     }
   }, []);
@@ -54,7 +54,7 @@ export function useClusters() {
 
       return updatedCluster;
     } catch (err) {
-      errorLogger(err, 'Failed to update cluster');
+      logError(err, 'Failed to update cluster');
       throw err;
     }
   }, []);
@@ -64,7 +64,7 @@ export function useClusters() {
       await ClusterService.delete(id);
       setClusters((prev) => prev.filter((cluster) => cluster.id !== id));
     } catch (err) {
-      errorLogger(err, 'Failed to delete cluster');
+      logError(err, 'Failed to delete cluster');
       throw err;
     }
   }, []);

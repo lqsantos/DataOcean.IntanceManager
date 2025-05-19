@@ -54,3 +54,4 @@ storybook-static
 
 # turbo
 .turbo
+.report-test.json

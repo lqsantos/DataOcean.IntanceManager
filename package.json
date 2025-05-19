@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 --fix",
     "format": "prettier --write .",
     "prepare": "husky install",
-    "test": "vitest run",
+    "test": "vitest run --reporter=json --no-dom --outputFile=./.report-test.json",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
   },

@@ -17,9 +17,9 @@ vi.mock('@/services/application-service', () => ({
   },
 }));
 
-// Mock the errorLogger
+// Mock the errorLogger - corrigido para usar logError em vez de errorLogger
 vi.mock('@/utils/errorLogger', () => ({
-  errorLogger: vi.fn(),
+  logError: vi.fn(),
 }));
 
 describe('useApplications', () => {
