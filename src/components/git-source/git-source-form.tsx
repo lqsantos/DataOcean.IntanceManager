@@ -10,21 +10,21 @@ import { z } from 'zod';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { usePATModal } from '@/contexts/pat-modal-context';
@@ -32,10 +32,10 @@ import { useGitSource } from '@/hooks/use-git-source';
 import { usePAT } from '@/hooks/use-pat';
 import { PATService } from '@/services/pat-service';
 import type {
-    CreateGitSourceDto,
-    GitProvider,
-    GitSource,
-    UpdateGitSourceDto,
+  CreateGitSourceDto,
+  GitProvider,
+  GitSource,
+  UpdateGitSourceDto,
 } from '@/types/git-source';
 
 // Schema básica para validação comum a todos os provedores
@@ -94,7 +94,9 @@ export function GitSourceForm({
   isSubmitting = false,
 }: GitSourceFormProps) {
   // Inicialize provider com o valor padrão do formulário - 'azure-devops'
-  const [provider, setProvider] = useState<GitProvider | null>(gitSource?.provider || 'azure-devops');
+  const [provider, setProvider] = useState<GitProvider | null>(
+    gitSource?.provider || 'azure-devops'
+  );
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
@@ -143,7 +145,7 @@ export function GitSourceForm({
 
   const handleSubmit = async (formData: any) => {
     setAttemptedSubmit(true);
-    
+
     if (!patStatus.configured) {
       toast.error('É necessário configurar um token de acesso antes de criar uma fonte Git');
       openPatModal({
@@ -161,13 +163,13 @@ export function GitSourceForm({
     try {
       // Obter o PAT token através do service
       const patData = await PATService.getToken();
-      
+
       // Usar o token do PAT para a submissão
       const dataToSubmit = {
         ...formData,
-        token: patData.token || 'dummy-token-for-test'  // Em modo de teste usamos um dummy token
+        token: patData.token || 'dummy-token-for-test', // Em modo de teste usamos um dummy token
       };
-      
+
       // Chamar onSubmit com os dados atualizados
       await onSubmit(dataToSubmit);
     } catch (error) {
@@ -262,15 +264,19 @@ export function GitSourceForm({
         {/* Indicador de status do Token PAT */}
         <div
           className={`flex items-center gap-3 rounded-lg border p-3 ${patStatus.configured ? 'border-green-500/30 bg-green-500/10' : 'border-amber-500/30 bg-amber-500/10'}`}
+          data-testid="pat-status-indicator"
         >
-          <Key className={patStatus.configured ? 'text-green-500' : 'text-amber-500'} />
+          <Key
+            className={patStatus.configured ? 'text-green-500' : 'text-amber-500'}
+            data-testid="pat-status-icon"
+          />
           <div>
-            <p className="font-medium">
+            <p className="font-medium" data-testid="pat-status-text">
               {patStatus.configured
                 ? 'Token de acesso configurado'
                 : 'Token de acesso não configurado'}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground" data-testid="pat-status-details">
               {patStatus.configured
                 ? `Última atualização: ${new Date(patStatus.lastUpdated || '').toLocaleDateString('pt-BR')}`
                 : 'Configure um token de acesso pessoal para usar com as fontes Git'}
@@ -300,11 +306,11 @@ export function GitSourceForm({
                 <Input
                   placeholder="Fonte Git Corporativa"
                   {...field}
-                  data-testid="git-source-name"
+                  data-testid="git-source-name-input"
                 />
               </FormControl>
               <FormDescription>Um nome descritivo para identificar esta fonte Git</FormDescription>
-              <FormMessage />
+              <FormMessage data-testid="git-source-name-error" />
             </FormItem>
           )}
         />
@@ -323,15 +329,21 @@ export function GitSourceForm({
                     setProvider(value);
                   }}
                   disabled={isSubmitting || !!gitSource}
-                  data-testid="git-source-provider"
+                  data-testid="git-source-provider-select"
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-testid="git-source-provider-trigger">
                     <SelectValue placeholder="Selecione um provedor" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="azure-devops">Azure DevOps</SelectItem>
-                    <SelectItem value="github">GitHub</SelectItem>
-                    <SelectItem value="gitlab">GitLab</SelectItem>
+                  <SelectContent data-testid="git-source-provider-content">
+                    <SelectItem value="azure-devops" data-testid="git-source-provider-azure">
+                      Azure DevOps
+                    </SelectItem>
+                    <SelectItem value="github" data-testid="git-source-provider-github">
+                      GitHub
+                    </SelectItem>
+                    <SelectItem value="gitlab" data-testid="git-source-provider-gitlab">
+                      GitLab
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </FormControl>
@@ -340,7 +352,7 @@ export function GitSourceForm({
                   ? 'O provedor não pode ser alterado após a criação'
                   : 'Selecione o provedor Git para esta fonte'}
               </FormDescription>
-              <FormMessage />
+              <FormMessage data-testid="git-source-provider-error" />
             </FormItem>
           )}
         />
@@ -363,7 +375,7 @@ export function GitSourceForm({
                           : 'https://api.example.com'
                   }
                   {...field}
-                  data-testid="git-source-url"
+                  data-testid="git-source-url-input"
                 />
               </FormControl>
               <FormDescription>
@@ -373,7 +385,7 @@ export function GitSourceForm({
                   'URL do Azure DevOps (padrão: https://dev.azure.com)'}
                 {!provider && 'URL base do provedor Git'}
               </FormDescription>
-              <FormMessage />
+              <FormMessage data-testid="git-source-url-error" />
             </FormItem>
           )}
         />
@@ -389,11 +401,11 @@ export function GitSourceForm({
                   <Input
                     placeholder="nome-do-owner"
                     {...field}
-                    data-testid="git-source-organization"
+                    data-testid="git-source-organization-input"
                   />
                 </FormControl>
                 <FormDescription>Nome do owner/organização no GitHub</FormDescription>
-                <FormMessage />
+                <FormMessage data-testid="git-source-organization-error" />
               </FormItem>
             )}
           />
@@ -410,11 +422,11 @@ export function GitSourceForm({
                   <Input
                     placeholder="namespace-do-grupo"
                     {...field}
-                    data-testid="git-source-namespace"
+                    data-testid="git-source-namespace-input"
                   />
                 </FormControl>
                 <FormDescription>Namespace do grupo no GitLab</FormDescription>
-                <FormMessage />
+                <FormMessage data-testid="git-source-namespace-error" />
               </FormItem>
             )}
           />
@@ -432,11 +444,11 @@ export function GitSourceForm({
                     <Input
                       placeholder="nome-da-organizacao"
                       {...field}
-                      data-testid="git-source-organization"
+                      data-testid="git-source-organization-input"
                     />
                   </FormControl>
                   <FormDescription>Nome da organização no Azure DevOps</FormDescription>
-                  <FormMessage />
+                  <FormMessage data-testid="git-source-organization-error" />
                 </FormItem>
               )}
             />
@@ -450,11 +462,11 @@ export function GitSourceForm({
                     <Input
                       placeholder="nome-do-projeto"
                       {...field}
-                      data-testid="git-source-project"
+                      data-testid="git-source-project-input"
                     />
                   </FormControl>
                   <FormDescription>Nome do projeto no Azure DevOps</FormDescription>
-                  <FormMessage />
+                  <FormMessage data-testid="git-source-project-error" />
                 </FormItem>
               )}
             />
@@ -471,11 +483,11 @@ export function GitSourceForm({
                 <Textarea
                   placeholder="Observações sobre esta fonte Git..."
                   {...field}
-                  data-testid="git-source-notes"
+                  data-testid="git-source-notes-input"
                 />
               </FormControl>
               <FormDescription>Informações adicionais (opcional)</FormDescription>
-              <FormMessage />
+              <FormMessage data-testid="git-source-notes-error" />
             </FormItem>
           )}
         />
@@ -486,7 +498,9 @@ export function GitSourceForm({
             className={testResult.success ? 'border-green-500 bg-green-500/10' : undefined}
             data-testid="test-connection-result"
           >
-            <AlertDescription>{testResult.message}</AlertDescription>
+            <AlertDescription data-testid="test-connection-message">
+              {testResult.message}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -501,7 +515,10 @@ export function GitSourceForm({
             >
               {isTesting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2
+                    className="mr-2 h-4 w-4 animate-spin"
+                    data-testid="test-connection-loading"
+                  />
                   Testando...
                 </>
               ) : (
@@ -516,19 +533,22 @@ export function GitSourceForm({
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
-              data-testid="cancel-button"
+              data-testid="git-source-cancel-button"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || (attemptedSubmit && !isFormValid) || !patStatus.configured}
-              data-testid="submit-button"
+              data-testid="git-source-submit-button"
               onClick={() => !isFormValid && setAttemptedSubmit(true)}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2
+                    className="mr-2 h-4 w-4 animate-spin"
+                    data-testid="git-source-submit-loading"
+                  />
                   {gitSource ? 'Salvando...' : 'Criando...'}
                 </>
               ) : gitSource ? (

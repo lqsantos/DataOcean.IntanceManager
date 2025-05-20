@@ -1,5 +1,5 @@
 // src/hooks/use-pat.ts
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { PATService } from '@/services/pat-service';
 import type { PATDto, PATStatus } from '@/types/pat';
@@ -10,14 +10,23 @@ interface UsePATOptions {
    * @default true
    */
   autoFetch?: boolean;
+
+  /**
+   * Intervalo em segundos para verificar automaticamente o status do token
+   * @default 0 (desativado)
+   */
+  pollingInterval?: number;
 }
 
 /**
  * Hook para gerenciar operações relacionadas ao Personal Access Token (PAT)
  */
 export function usePAT(options: UsePATOptions = {}) {
-  const { autoFetch = true } = options;
-
+  const { 
+    autoFetch = true, 
+    pollingInterval = 0 
+  } = options;
+  
   const [status, setStatus] = useState<PATStatus>({
     configured: false,
     lastUpdated: null,
@@ -29,7 +38,7 @@ export function usePAT(options: UsePATOptions = {}) {
   /**
    * Obtém o status atual do token
    */
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -37,18 +46,24 @@ export function usePAT(options: UsePATOptions = {}) {
       const patStatus = await PATService.getStatus();
 
       setStatus(patStatus);
+
+      return patStatus;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao obter status do token');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao obter status do token';
+
+      setError(errorMessage);
       console.error('Erro ao obter status do token:', err);
+
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Configura um novo token
    */
-  const createToken = async (data: PATDto) => {
+  const createToken = useCallback(async (data: PATDto) => {
     setIsLoading(true);
     setError(null);
 
@@ -62,22 +77,29 @@ export function usePAT(options: UsePATOptions = {}) {
 
       return response;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao configurar o token');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao configurar o token';
+
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Atualiza um token existente
    */
-  const updateToken = async (data: PATDto) => {
+  const updateToken = useCallback(async (data: PATDto) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await PATService.updateToken(data);
+      // Para MVP, atualizamos o token padrão
+      // No futuro, quando tivermos múltiplos tokens, precisaremos do ID
+      const statusResponse = await fetchStatus();
+      const tokenId = statusResponse?.id || '1'; // Fallback para o ID 1 no MVP
+      
+      const response = await PATService.updateToken(tokenId, data);
 
       setStatus({
         configured: true,
@@ -86,19 +108,32 @@ export function usePAT(options: UsePATOptions = {}) {
 
       return response;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar o token');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar o token';
+
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchStatus]);
 
   // Carregar o status do token automaticamente se autoFetch=true
   useEffect(() => {
     if (autoFetch) {
       fetchStatus();
     }
-  }, [autoFetch]);
+  }, [autoFetch, fetchStatus]);
+
+  // Configurar polling para verificar atualizações no status do token
+  useEffect(() => {
+    if (pollingInterval <= 0) {return;}
+
+    const intervalId = setInterval(() => {
+      fetchStatus();
+    }, pollingInterval * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchStatus, pollingInterval]);
 
   return {
     status,
