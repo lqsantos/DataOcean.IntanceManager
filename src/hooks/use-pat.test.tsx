@@ -141,7 +141,16 @@ describe('usePAT', () => {
       lastUpdated: '2023-05-16T15:45:00.000Z',
     };
 
-    // Mock the service response
+    // Mock getStatus to return a token ID
+    const mockStatus = {
+      id: '1',
+      configured: true,
+      lastUpdated: '2023-05-15T10:30:00.000Z',
+    };
+
+    vi.mocked(PATService.getStatus).mockResolvedValue(mockStatus);
+
+    // Mock the update service response
     vi.mocked(PATService.updateToken).mockResolvedValue(mockResponse);
 
     const { result } = renderHook(() => usePAT({ autoFetch: false }));
@@ -153,8 +162,9 @@ describe('usePAT', () => {
       response = await result.current.updateToken(mockToken);
     });
 
-    // Verify the service was called and the hook updated
-    expect(PATService.updateToken).toHaveBeenCalledWith(mockToken);
+    // Verify the service was called correctly with token ID and data
+    expect(PATService.getStatus).toHaveBeenCalledTimes(1);
+    expect(PATService.updateToken).toHaveBeenCalledWith('1', mockToken);
     expect(response).toEqual(mockResponse);
     expect(result.current.status).toEqual({
       configured: true,
