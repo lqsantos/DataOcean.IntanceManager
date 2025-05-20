@@ -50,7 +50,7 @@ describe('PAT Integration', () => {
   it('should allow configuring a new PAT token', async () => {
     // Mock da API para retornar status inicial
     server.use(
-      http.get('/api/pat', () => {
+      http.get('/api/pat/status', () => {
         return HttpResponse.json({
           configured: patData.configured,
           lastUpdated: patData.lastUpdated,
@@ -140,13 +140,13 @@ describe('PAT Integration', () => {
 
     // Mock da API
     server.use(
-      http.get('/api/pat', () => {
+      http.get('/api/pat/status', () => {
         return HttpResponse.json({
           configured: patData.configured,
           lastUpdated: patData.lastUpdated,
         });
       }),
-      http.put('/api/pat', async ({ request }) => {
+      http.put('/api/pat/:id', async ({ request }) => {
         const body = await request.json();
 
         // Usar um delay maior para garantir que o estado de loading seja detectado
@@ -180,7 +180,7 @@ describe('PAT Integration', () => {
     // Verificar se o modal foi aberto com a informação de atualização
     await waitFor(() => {
       expect(screen.getByTestId('pat-modal')).toBeInTheDocument();
-      expect(screen.getByTestId('pat-modal-title')).toHaveTextContent('Configurar Token de Acesso');
+      expect(screen.getByTestId('pat-modal-title')).toHaveTextContent('Atualizar Token de Acesso');
     });
 
     // Digitar um novo token e enviar
@@ -188,6 +188,9 @@ describe('PAT Integration', () => {
     const submitButton = screen.getByTestId('pat-form-submit');
 
     await user.type(tokenInput, 'updated-token-678910');
+
+    // Verificar o texto do botão antes do clique
+    expect(screen.getByTestId('pat-form-submit-text')).toHaveTextContent('Atualizar');
 
     // Clicar no botão e verificar que o token está sendo enviado
     await user.click(submitButton);
@@ -217,7 +220,7 @@ describe('PAT Integration', () => {
   it('should handle API error when configuring a PAT', async () => {
     // Mock da API para retornar erro
     server.use(
-      http.get('/api/pat', () => {
+      http.get('/api/pat/status', () => {
         return HttpResponse.json({
           configured: false,
           lastUpdated: null,
@@ -291,7 +294,7 @@ describe('PAT Integration', () => {
   it('should toggle token visibility', async () => {
     // Mock da API para retornar status inicial
     server.use(
-      http.get('/api/pat', () => {
+      http.get('/api/pat/status', () => {
         return HttpResponse.json({
           configured: false,
           lastUpdated: null,
@@ -340,7 +343,7 @@ describe('PAT Integration', () => {
   it('should close modal when cancel button is clicked', async () => {
     // Mock da API para retornar status inicial
     server.use(
-      http.get('/api/pat', () => {
+      http.get('/api/pat/status', () => {
         return HttpResponse.json({
           configured: false,
           lastUpdated: null,
