@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { usePATModal } from '@/contexts/pat-modal-context';
 import { useGitSource } from '@/hooks/use-git-source';
 import type { CreateGitSourceDto, GitSource, UpdateGitSourceDto } from '@/types/git-source';
 
@@ -33,6 +34,9 @@ export function GitSourcePage() {
     deleteGitSource,
   } = useGitSource();
 
+  // Obter acesso ao modal de PAT
+  const { status: patStatus, open: openPatModal } = usePATModal();
+
   // Estados locais para controle da UI
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -42,7 +46,11 @@ export function GitSourcePage() {
   const [currentGitSource, setCurrentGitSource] = useState<GitSource | null>(null);
 
   // Manipuladores para abrir diálogos
-  const openCreateDialog = () => setIsCreateDialogOpen(true);
+  const openCreateDialog = () => {
+    // Abrir o diálogo de criação diretamente, sem verificar o PAT
+    setIsCreateDialogOpen(true);
+  };
+
   const closeCreateDialog = () => setIsCreateDialogOpen(false);
 
   const openEditDialog = (source: GitSource) => {
@@ -60,10 +68,7 @@ export function GitSourcePage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const closeDeleteDialog = () => {
-    setIsDeleteDialogOpen(false);
-    setCurrentGitSource(null);
-  };
+  const closeDeleteDialog = () => setIsDeleteDialogOpen(false);
 
   // Manipulador para criar uma nova fonte Git
   const handleCreate = async (data: CreateGitSourceDto) => {
