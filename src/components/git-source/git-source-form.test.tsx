@@ -232,7 +232,7 @@ describe('GitSourceForm', () => {
   it('should show loading state when submitting', () => {
     render(<GitSourceForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} isSubmitting={true} />);
 
-    expect(screen.getByTestId('git-source-submit-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('loader')).toBeInTheDocument();
     expect(screen.getByTestId('git-source-submit-button')).toHaveTextContent('Criando...');
     expect(screen.getByTestId('git-source-submit-button')).toBeDisabled();
     expect(screen.getByTestId('git-source-cancel-button')).toBeDisabled();
@@ -248,7 +248,7 @@ describe('GitSourceForm', () => {
       />
     );
 
-    expect(screen.getByTestId('git-source-submit-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('loader')).toBeInTheDocument();
     expect(screen.getByTestId('git-source-submit-button')).toHaveTextContent('Salvando...');
   });
 
