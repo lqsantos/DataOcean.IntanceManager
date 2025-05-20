@@ -68,6 +68,9 @@ export function GitSourceCard({ gitSource, onEdit, onDelete, onToggleStatus }: G
     }
   };
 
+  // Define a variante do Badge baseada no status
+  const badgeVariant = gitSource.status === 'active' ? 'default' : 'secondary';
+
   return (
     <Card className="hover-scale group w-full transition-all" data-testid="git-source-card">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -77,11 +80,7 @@ export function GitSourceCard({ gitSource, onEdit, onDelete, onToggleStatus }: G
           </div>
           <span data-testid="git-source-card-name">{gitSource.name}</span>
         </CardTitle>
-        <Badge
-          variant={gitSource.status === 'active' ? 'default' : 'secondary'}
-          className="px-2 py-0"
-          data-testid="git-source-card-status"
-        >
+        <Badge variant={badgeVariant} className="px-2 py-0" data-testid={`badge-${badgeVariant}`}>
           {gitSource.status === 'active' ? 'Ativo' : 'Inativo'}
         </Badge>
       </CardHeader>
