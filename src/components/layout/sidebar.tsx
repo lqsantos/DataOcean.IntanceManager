@@ -6,6 +6,7 @@ import {
   Cloud,
   Cog,
   Database,
+  GitBranch,
   Layers,
   LayoutDashboard,
   MapPin,
@@ -59,6 +60,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       icon: Package,
     },
     {
+      name: 'Git Sources',
+      href: '/git-sources',
+      icon: GitBranch,
+    },
+    {
       name: 'Templates',
       href: '/templates',
       icon: BarChart3,
@@ -85,23 +91,23 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <aside
         data-testid="sidebar-container"
         className={cn(
-          'bg-card/50 fixed inset-y-0 left-0 z-50 w-64 border-r border-border/40 backdrop-blur-md transition-transform duration-300 md:relative md:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 w-64 border-r border-border/40 bg-card/50 backdrop-blur-md transition-transform duration-300 md:relative md:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex h-16 items-center border-b border-border/40 px-4">
           <Link href="/" className="flex items-center gap-2" data-testid="sidebar-logo-link">
             <div className="gradient-blue flex h-8 w-8 items-center justify-center rounded-md shadow-lg">
-              <span className="text-primary-foreground font-bold">DO</span>
+              <span className="font-bold text-primary-foreground">DO</span>
             </div>
             <span className="gradient-blue bg-clip-text text-xl font-bold text-transparent">
               DataOcean
             </span>
           </Link>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="ml-auto md:hidden" 
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto md:hidden"
             onClick={onClose}
             data-testid="sidebar-close-button"
           >
