@@ -228,4 +228,61 @@ describe('PATModal', () => {
 
     expect(newTokenInput).toHaveValue('');
   });
+
+  it('should allow updating an existing PAT token', async () => {
+    // Mock status for an already configured token
+    (usePATModal as vi.Mock).mockReturnValue({
+      isOpen: true,
+      close: mockClose,
+      onConfigured: mockOnConfigured,
+      status: {
+        id: '1', // Add an ID to the status
+        configured: true,
+        lastUpdated: '2023-06-15T10:30:00Z',
+      },
+    });
+
+    // Mock the API response for token update
+    server.use(
+      http.put('/api/pat/1', () => {
+        return HttpResponse.json({
+          configured: true,
+          lastUpdated: '2023-06-16T14:45:00Z',
+        });
+      })
+    );
+
+    // Render the component
+    const { debug } = render(<PATModal />);
+
+    // Let's debug what's being rendered
+    debug();
+
+    const user = userEvent.setup();
+
+    // Confirm we're in update mode
+    expect(screen.getByTestId('pat-modal-title')).toHaveTextContent('Atualizar Token de Acesso');
+
+    // Check if submit button exists at all
+    const submitButton = screen.getByTestId('pat-form-submit');
+
+    expect(submitButton).toBeInTheDocument();
+
+    // Log the button's innerHTML to see what's inside
+    console.log('Submit button content:', submitButton.innerHTML);
+
+    // Enter a new token
+    const tokenInput = screen.getByTestId('pat-form-token');
+
+    await user.type(tokenInput, 'updated-token-12345');
+
+    // Click using the button directly rather than finding by text
+    await user.click(submitButton);
+
+    // Verify the form was submitted successfully
+    await waitFor(() => {
+      expect(mockOnConfigured).toHaveBeenCalled();
+      expect(mockClose).toHaveBeenCalled();
+    });
+  });
 });

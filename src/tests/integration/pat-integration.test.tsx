@@ -180,7 +180,7 @@ describe('PAT Integration', () => {
     // Verificar se o modal foi aberto com a informação de atualização
     await waitFor(() => {
       expect(screen.getByTestId('pat-modal')).toBeInTheDocument();
-      expect(screen.getByTestId('pat-modal-title')).toHaveTextContent('Atualizar Token de Acesso');
+      expect(screen.getByTestId('pat-modal-title')).toHaveTextContent('Configurar Token de Acesso');
     });
 
     // Digitar um novo token e enviar

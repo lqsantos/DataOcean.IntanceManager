@@ -19,9 +19,9 @@ describe('PATService', () => {
         lastUpdated: '2023-05-15T10:30:00.000Z',
       };
 
-      // Mock the API response
+      // Mock the API response - Fix endpoint to match implementation
       server.use(
-        http.get('/api/pat', () => {
+        http.get('/api/pat/status', () => {
           return HttpResponse.json(mockStatus);
         })
       );
@@ -32,9 +32,9 @@ describe('PATService', () => {
     });
 
     it('should return default status when request fails', async () => {
-      // Mock API error
+      // Mock API error - Fix endpoint to match implementation
       server.use(
-        http.get('/api/pat', () => {
+        http.get('/api/pat/status', () => {
           return new HttpResponse(null, { status: 500 });
         })
       );
@@ -85,36 +85,38 @@ describe('PATService', () => {
 
   describe('updateToken', () => {
     it('should update an existing token successfully', async () => {
+      const tokenId = '1'; // Add token ID parameter
       const mockToken = { token: 'updated-token-12345' };
       const mockResponse = {
         configured: true,
         lastUpdated: '2023-05-16T15:45:00.000Z',
       };
 
-      // Mock the API response
+      // Fix the endpoint to match implementation
       server.use(
-        http.put('/api/pat', () => {
+        http.put(`/api/pat/${tokenId}`, () => {
           return HttpResponse.json(mockResponse);
         })
       );
 
-      const result = await PATService.updateToken(mockToken);
+      const result = await PATService.updateToken(tokenId, mockToken);
 
       expect(result).toEqual(mockResponse);
     });
 
     it('should throw an error when update fails', async () => {
+      const tokenId = '1'; // Add token ID parameter
       const mockToken = { token: 'invalid' };
       const errorMessage = 'Token deve ter pelo menos 8 caracteres';
 
-      // Mock API error
+      // Fix the endpoint to match implementation
       server.use(
-        http.put('/api/pat', () => {
+        http.put(`/api/pat/${tokenId}`, () => {
           return new HttpResponse(JSON.stringify({ message: errorMessage }), { status: 400 });
         })
       );
 
-      await expect(PATService.updateToken(mockToken)).rejects.toThrow(errorMessage);
+      await expect(PATService.updateToken(tokenId, mockToken)).rejects.toThrow(errorMessage);
     });
   });
 });

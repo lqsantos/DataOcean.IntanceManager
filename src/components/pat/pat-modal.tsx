@@ -70,7 +70,10 @@ export function PATModal() {
     try {
       // Usar o serviço PAT para configurar ou atualizar o token
       if (status.configured) {
-        await PATService.updateToken(data);
+        // Get the token ID first - use the default ID '1' for now if no ID is available
+        const tokenId = status.id || '1';
+
+        await PATService.updateToken(tokenId, data);
         toast.success('Token atualizado com sucesso!');
       } else {
         await PATService.createToken(data);
