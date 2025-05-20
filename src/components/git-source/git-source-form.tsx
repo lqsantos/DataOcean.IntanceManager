@@ -56,6 +56,7 @@ const baseGitSourceSchema = {
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   url: z.string().url('URL deve ser válida'),
   notes: z.string().optional(),
+  token: z.string().optional(),
 };
 
 // Schema dinâmico baseado no provedor selecionado
@@ -67,12 +68,16 @@ const getGitSourceSchema = (provider: GitProvider | null) => {
       ...schema,
       provider: z.literal('github'),
       organization: z.string().min(1, 'Owner é obrigatório'),
+      namespace: z.string().optional(),
+      project: z.string().optional(),
     });
   } else if (provider === 'gitlab') {
     return z.object({
       ...schema,
       provider: z.literal('gitlab'),
       namespace: z.string().min(1, 'Namespace é obrigatório'),
+      organization: z.string().optional(),
+      project: z.string().optional(),
     });
   } else if (provider === 'azure-devops') {
     return z.object({
@@ -80,6 +85,7 @@ const getGitSourceSchema = (provider: GitProvider | null) => {
       provider: z.literal('azure-devops'),
       organization: z.string().min(1, 'Organização é obrigatória'),
       project: z.string().min(1, 'Projeto é obrigatório'),
+      namespace: z.string().optional(),
     });
   }
 
@@ -91,6 +97,18 @@ const getGitSourceSchema = (provider: GitProvider | null) => {
     namespace: z.string().optional(),
     project: z.string().optional(),
   });
+};
+
+// Definindo o tipo corretamente com todas as propriedades possíveis
+type GitSourceFormData = {
+  name: string;
+  provider: GitProvider;
+  url: string;
+  token?: string;
+  organization?: string;
+  namespace?: string;
+  project?: string;
+  notes?: string;
 };
 
 interface GitSourceFormProps {
@@ -124,7 +142,7 @@ export function GitSourceForm({
   const { open: openPatModal, isOpen: isPATModalOpen } = usePATModal();
 
   // Atualizar o formulário dinâmico com base no provider selecionado
-  const form = useForm<CreateGitSourceDto>({
+  const form = useForm<GitSourceFormData>({
     resolver: zodResolver(getGitSourceSchema(provider)),
     defaultValues: {
       name: gitSource?.name || '',
@@ -165,7 +183,7 @@ export function GitSourceForm({
   // Verificar se o formulário está válido
   const isFormValid = form.formState.isValid;
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: GitSourceFormData) => {
     setAttemptedSubmit(true);
 
     if (!patStatus.configured) {
@@ -194,14 +212,16 @@ export function GitSourceForm({
   };
 
   const handleConfigurePAT = () => {
-    openPatModal({
-      onConfigured: () => {
-        // Após configurar o token, buscar status atualizado
+    openPatModal();
+
+    // Handle the onConfigured logic separately
+    useEffect(() => {
+      if (!isPATModalOpen && patStatus.configured) {
         fetchStatus();
         toast.success('Token de acesso configurado com sucesso!');
         setTokenMissing(false);
-      },
-    });
+      }
+    }, [isPATModalOpen, patStatus.configured, fetchStatus]);
   };
 
   const handleTestConnection = async () => {

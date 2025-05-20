@@ -44,4 +44,9 @@ export interface PATResponse {
    * Mensagem de sucesso opcional
    */
   message?: string;
+
+  /**
+   * O valor do token (retornado apenas em operações específicas)
+   */
+  token?: string;
 }
