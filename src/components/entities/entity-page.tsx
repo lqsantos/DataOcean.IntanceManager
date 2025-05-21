@@ -1,11 +1,12 @@
 'use client';
 
+import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
 
 export interface EntityPageProps<T, CreateDto, UpdateDto> {
   // Dados e estado
@@ -46,6 +47,12 @@ export interface EntityPageProps<T, CreateDto, UpdateDto> {
 
   // Nome da propriedade esperada pelo formulário específico
   entityPropName?: string;
+
+  // Ação personalizada para o cabeçalho
+  customHeaderAction?: React.ReactNode;
+
+  // Esconder o botão de criação padrão
+  hideCreateButton?: boolean;
 }
 
 export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
@@ -78,6 +85,12 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
   // Nome da propriedade do formulário (ex: 'application', 'environment', etc.)
   // Se não for fornecido, usa 'entity' como padrão
   entityPropName,
+
+  // Ação personalizada para o cabeçalho
+  customHeaderAction,
+
+  // Esconder o botão de criação padrão
+  hideCreateButton = false,
 }: EntityPageProps<T, CreateDto, UpdateDto>) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [entityToEdit, setEntityToEdit] = useState<T | null>(null);
@@ -85,6 +98,7 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
 
   const handleCreateSubmit = async (data: CreateDto) => {
     setIsSubmitting(true);
+
     try {
       await createEntity(data);
       setIsCreateDialogOpen(false);
@@ -101,6 +115,7 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
       return;
     }
     setIsSubmitting(true);
+
     try {
       await updateEntity(entityToEdit.id, data);
       setEntityToEdit(null);
@@ -141,13 +156,16 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="sr-only">Atualizar</span>
           </Button>
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            data-testid={`${testIdPrefix}-page-add-button`}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar {entityName.singular}
-          </Button>
+          {customHeaderAction ||
+            (!hideCreateButton && (
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                data-testid={`${testIdPrefix}-page-add-button`}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar {entityName.singular}
+              </Button>
+            ))}
         </div>
       </div>
 

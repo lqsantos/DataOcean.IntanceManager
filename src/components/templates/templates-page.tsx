@@ -1,6 +1,10 @@
 'use client';
 
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
+
 import { EntityPage } from '@/components/entities/entity-page';
+import { Button } from '@/components/ui/button';
 import { useTemplates } from '@/hooks/use-templates';
 import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
 
@@ -20,6 +24,16 @@ export function TemplatesPage() {
     updateTemplate,
     deleteTemplate,
   } = useTemplates();
+
+  // Componente de ação personalizada para o cabeçalho
+  const CustomHeaderAction = () => (
+    <Button asChild className="gap-2">
+      <Link href="/templates/new" data-testid="new-template-button">
+        <Plus className="h-4 w-4" />
+        Novo Template
+      </Link>
+    </Button>
+  );
 
   return (
     <div
@@ -54,6 +68,8 @@ export function TemplatesPage() {
           'data-testid': 'template-form',
         }}
         entityPropName="template"
+        customHeaderAction={<CustomHeaderAction />}
+        hideCreateButton={true} // Esconde o botão padrão de criação já que usamos nosso próprio botão
       />
     </div>
   );
