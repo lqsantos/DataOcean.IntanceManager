@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, File, FolderOpen } from 'lucide-react';
+import { ChevronRight, File, FolderOpen, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,11 @@ export function GitDirectoryBrowserModal({
   const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({});
   const [loadingPaths, setLoadingPaths] = useState<Record<string, boolean>>({});
   const [loadedItems, setLoadedItems] = useState<Record<string, typeof treeItems>>({});
+  const [isModalLoading, setIsModalLoading] = useState(false);
+
+  useEffect(() => {
+    setIsModalLoading(isLoading);
+  }, [isLoading]);
 
   // Limpar estado quando o modal for fechado
   useEffect(() => {
@@ -152,25 +157,38 @@ export function GitDirectoryBrowserModal({
           <div
             className={cn(
               'flex cursor-pointer items-center rounded px-1.5 py-1 text-xs hover:bg-gray-100',
-              isSelected && 'border-l-2 border-blue-500 bg-blue-50'
+              isSelected && 'border-l-2 border-blue-500 bg-blue-50',
+              isLoading && 'opacity-70'
             )}
             onClick={() => {
-              if (isDirectory) {
+              if (isDirectory && !isLoading) {
                 handleToggleExpand(item.path, isExpanded);
               }
-              handleSelectDirectory(item.path, isDirectory, !!item.isChartDirectory);
+
+              if (!isLoading) {
+                handleSelectDirectory(item.path, isDirectory, !!item.isChartDirectory);
+              }
             }}
             style={{ paddingLeft: `${level * 12 + 8}px` }}
           >
             {isDirectory ? (
               <>
-                <ChevronRight
+                {isLoading ? (
+                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin text-amber-500" />
+                ) : (
+                  <ChevronRight
+                    className={cn(
+                      'mr-1.5 h-3 w-3 transition-transform',
+                      isExpanded && 'rotate-90 transform'
+                    )}
+                  />
+                )}
+                <FolderOpen 
                   className={cn(
-                    'mr-1.5 h-3 w-3 transition-transform',
-                    isExpanded && 'rotate-90 transform'
+                    'mr-1.5 h-3 w-3',
+                    isLoading ? 'text-amber-300' : 'text-amber-500'
                   )}
                 />
-                <FolderOpen className="mr-1.5 h-3 w-3 text-amber-500" />
               </>
             ) : (
               <>
@@ -179,33 +197,23 @@ export function GitDirectoryBrowserModal({
               </>
             )}
 
-            <span className="text-xs">{item.name}</span>
+            <span className={cn('text-xs', isLoading && 'text-muted-foreground')}>{item.name}</span>
 
             {item.isChartDirectory && (
               <Badge variant="secondary" className="ml-1.5 h-4 py-0 text-[10px]">
                 Chart
               </Badge>
             )}
-
-            {isLoading && <Spinner size="xs" className="ml-2 h-3 w-3" />}
           </div>
 
           {isDirectory && isExpanded && (
             <div className="flex flex-col">
-              {isLoading ? (
-                <div
-                  className="flex items-center px-2 py-1 text-xs text-muted-foreground"
-                  style={{ paddingLeft: `${(level + 1) * 12 + 8}px` }}
-                >
-                  <Spinner size="xs" className="mr-2 h-3 w-3" />
-                  Carregando...
-                </div>
-              ) : sortedChildItems.length === 0 ? (
+              {sortedChildItems.length === 0 ? (
                 <div
                   className="px-2 py-1 text-xs text-muted-foreground"
                   style={{ paddingLeft: `${(level + 1) * 12 + 8}px` }}
                 >
-                  Pasta vazia
+                  {isLoading ? 'Carregando...' : 'Pasta vazia'}
                 </div>
               ) : (
                 sortedChildItems.map((childItem) =>
@@ -243,30 +251,34 @@ export function GitDirectoryBrowserModal({
         </DialogHeader>
 
         <div className="mt-2 space-y-3">
-          <ScrollArea className="h-[300px] rounded-md border p-2">
-            {isLoading ? (
-              <div className="flex h-full items-center justify-center">
-                <Spinner size="sm" />
-              </div>
-            ) : rootItems.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center space-y-2 text-xs text-muted-foreground">
-                <p>Nenhum diretório encontrado</p>
-                <p className="text-[10px]">Total de itens: {treeItems.length}</p>
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                {rootItems
-                  .sort((a, b) => {
-                    if (a.type === 'tree' && b.type !== 'tree') {return -1;}
+          <div className="relative">
+            <ScrollArea className={cn('h-[300px] rounded-md border p-2', isModalLoading && 'opacity-60')}>
+              {isModalLoading ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                  <Spinner size="md" />
+                </div>
+              ) : null}
+              
+              {rootItems.length === 0 && !isModalLoading ? (
+                <div className="flex h-full flex-col items-center justify-center space-y-2 text-xs text-muted-foreground">
+                  <p>Nenhum diretório encontrado</p>
+                  <p className="text-[10px]">Total de itens: {treeItems.length}</p>
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  {rootItems
+                    .sort((a, b) => {
+                      if (a.type === 'tree' && b.type !== 'tree') {return -1;}
 
-                    if (a.type !== 'tree' && b.type === 'tree') {return 1;}
+                      if (a.type !== 'tree' && b.type === 'tree') {return 1;}
 
-                    return a.name.localeCompare(b.name);
-                  })
-                  .map((item) => renderTreeItem(item))}
-              </div>
-            )}
-          </ScrollArea>
+                      return a.name.localeCompare(b.name);
+                    })
+                    .map((item) => renderTreeItem(item))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
 
           <div className="rounded-md bg-muted/20 p-1.5">
             <div className="flex items-center text-xs">
