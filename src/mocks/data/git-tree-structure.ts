@@ -43,6 +43,73 @@ export const gitTreeStructure = [
     isHelmChart: true,
   },
 
+  // Arquivos dentro de web-app chart
+  {
+    repositoryId: '1',
+    branch: 'main',
+    path: '/charts/web-app/Chart.yaml',
+    name: 'Chart.yaml',
+    type: 'file',
+    parentPath: '/charts/web-app',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '1',
+    branch: 'main',
+    path: '/charts/web-app/values.yaml',
+    name: 'values.yaml',
+    type: 'file',
+    parentPath: '/charts/web-app',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '1',
+    branch: 'main',
+    path: '/charts/web-app/values.schema.json',
+    name: 'values.schema.json',
+    type: 'file',
+    parentPath: '/charts/web-app',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '1',
+    branch: 'main',
+    path: '/charts/web-app/templates',
+    name: 'templates',
+    type: 'directory',
+    parentPath: '/charts/web-app',
+    isHelmChart: false,
+  },
+
+  // Arquivos dentro de static-site chart
+  {
+    repositoryId: '1',
+    branch: 'main',
+    path: '/charts/static-site/Chart.yaml',
+    name: 'Chart.yaml',
+    type: 'file',
+    parentPath: '/charts/static-site',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '1',
+    branch: 'main',
+    path: '/charts/static-site/values.yaml',
+    name: 'values.yaml',
+    type: 'file',
+    parentPath: '/charts/static-site',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '1',
+    branch: 'main',
+    path: '/charts/static-site/values.schema.json',
+    name: 'values.schema.json',
+    type: 'file',
+    parentPath: '/charts/static-site',
+    isHelmChart: false,
+  },
+
   // Repository 1 - web-templates develop branch root directories
   {
     repositoryId: '1',
@@ -132,6 +199,35 @@ export const gitTreeStructure = [
     isHelmChart: true,
   },
 
+  // Arquivos dentro de api-service chart
+  {
+    repositoryId: '2',
+    branch: 'main',
+    path: '/charts/api-service/Chart.yaml',
+    name: 'Chart.yaml',
+    type: 'file',
+    parentPath: '/charts/api-service',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '2',
+    branch: 'main',
+    path: '/charts/api-service/values.yaml',
+    name: 'values.yaml',
+    type: 'file',
+    parentPath: '/charts/api-service',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '2',
+    branch: 'main',
+    path: '/charts/api-service/values.schema.json',
+    name: 'values.schema.json',
+    type: 'file',
+    parentPath: '/charts/api-service',
+    isHelmChart: false,
+  },
+
   // Repository 3 - database-templates main branch root directories
   {
     repositoryId: '3',
@@ -210,5 +306,34 @@ export const gitTreeStructure = [
     type: 'directory',
     parentPath: '/charts',
     isHelmChart: true,
+  },
+
+  // Arquivos dentro do ingress-controller chart
+  {
+    repositoryId: '4',
+    branch: 'main',
+    path: '/charts/ingress-controller/Chart.yaml',
+    name: 'Chart.yaml',
+    type: 'file',
+    parentPath: '/charts/ingress-controller',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '4',
+    branch: 'main',
+    path: '/charts/ingress-controller/values.yaml',
+    name: 'values.yaml',
+    type: 'file',
+    parentPath: '/charts/ingress-controller',
+    isHelmChart: false,
+  },
+  {
+    repositoryId: '4',
+    branch: 'main',
+    path: '/charts/ingress-controller/values.schema.json',
+    name: 'values.schema.json',
+    type: 'file',
+    parentPath: '/charts/ingress-controller',
+    isHelmChart: false,
   },
 ];

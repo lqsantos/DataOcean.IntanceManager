@@ -1,17 +1,17 @@
 'use client';
 
-import { ChevronRight, FolderOpen } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronRight, File, FolderOpen } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
@@ -28,6 +28,7 @@ interface GitDirectoryBrowserModalProps {
   }>;
   isLoading: boolean;
   onSelectPath: (path: string) => void;
+  onFetchDirectory?: (path: string) => Promise<void>;
 }
 
 export function GitDirectoryBrowserModal({
@@ -36,84 +37,198 @@ export function GitDirectoryBrowserModal({
   treeItems,
   isLoading,
   onSelectPath,
+  onFetchDirectory,
 }: GitDirectoryBrowserModalProps) {
   const [selectedPath, setSelectedPath] = useState<string>('');
   const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({});
+  const [loadingPaths, setLoadingPaths] = useState<Record<string, boolean>>({});
+  const [loadedItems, setLoadedItems] = useState<Record<string, typeof treeItems>>({});
 
-  // Organiza os itens em uma estrutura hierárquica
-  const organizeItemsIntoTree = (items: typeof treeItems) => {
-    const directoryTree: Record<string, typeof treeItems> = {};
+  // Limpar estado quando o modal for fechado
+  useEffect(() => {
+    if (!open) {
+      setExpandedPaths({});
+      setLoadingPaths({});
+    }
+  }, [open]);
 
-    // Filtrar apenas diretórios
-    const directories = items.filter((item) => item.type === 'tree');
+  // Salva os itens iniciais como itens de raiz
+  useEffect(() => {
+    if (treeItems.length > 0) {
+      setLoadedItems((prev) => ({
+        ...prev,
+        '': treeItems,
+      }));
+    }
+  }, [treeItems]);
 
-    // Agrupar por diretórios pais
-    directories.forEach((dir) => {
-      const pathParts = dir.path.split('/');
-      const parentPath = pathParts.slice(0, -1).join('/');
+  const handleToggleExpand = useCallback(
+    async (path: string, isExpanded: boolean) => {
+      // Se está expandindo um diretório que ainda não foi carregado
+      if (!isExpanded && onFetchDirectory && !loadedItems[path]) {
+        try {
+          setLoadingPaths((prev) => ({ ...prev, [path]: true }));
+          await onFetchDirectory(path);
 
-      if (!directoryTree[parentPath]) {
-        directoryTree[parentPath] = [];
+          // O callback onFetchDirectory vai atualizar os treeItems,
+          // mas precisamos marcá-los como já carregados para este path
+          setLoadedItems((prev) => ({
+            ...prev,
+            [path]: treeItems.filter((item) => {
+              const pathParts = item.path.split('/');
+              const parentPath =
+                pathParts.length <= 1 ? '' : pathParts.slice(0, -1).join('/');
+
+              return parentPath === path;
+            }),
+          }));
+        } catch (error) {
+          console.error('Erro ao carregar conteúdo do diretório:', error);
+        } finally {
+          setLoadingPaths((prev) => ({ ...prev, [path]: false }));
+        }
       }
 
-      directoryTree[parentPath].push(dir);
-    });
+      // Atualiza o estado de expandido/colapsado
+      setExpandedPaths((prev) => ({
+        ...prev,
+        [path]: !prev[path],
+      }));
+    },
+    [onFetchDirectory, treeItems, loadedItems]
+  );
 
-    return directoryTree;
-  };
+  const handleSelectDirectory = useCallback(
+    (path: string, isDirectory: boolean, isChartDirectory: boolean) => {
+      // Permite selecionar qualquer diretório
+      if (isDirectory) {
+        setSelectedPath(path);
+      }
+    },
+    []
+  );
 
-  const tree = organizeItemsIntoTree(treeItems);
-  const rootItems = tree[''] || [];
+  // Organiza os itens em uma estrutura hierárquica considerando os já carregados
+  const getChildItems = useCallback(
+    (parentPath: string): typeof treeItems => {
+      // Primeiro, verifica se temos itens já carregados para este parentPath
+      if (loadedItems[parentPath]) {
+        return loadedItems[parentPath];
+      }
 
-  const handleToggleExpand = (path: string) => {
-    setExpandedPaths((prev) => ({
-      ...prev,
-      [path]: !prev[path],
-    }));
-  };
+      // Caso contrário, filtra dos treeItems atuais
+      return treeItems.filter((item) => {
+        const pathParts = item.path.split('/');
+        const itemParentPath =
+          pathParts.length <= 1 ? '' : pathParts.slice(0, -1).join('/');
 
-  const handleSelectDirectory = (path: string) => {
-    setSelectedPath(path);
-  };
+        return itemParentPath === parentPath;
+      });
+    },
+    [treeItems, loadedItems]
+  );
 
-  const renderDirectory = (item: (typeof treeItems)[0], level = 0) => {
-    const isExpanded = expandedPaths[item.path];
-    const isSelected = selectedPath === item.path;
-    const childItems = tree[item.path] || [];
+  const renderTreeItem = useCallback(
+    (item: (typeof treeItems)[0], level = 0) => {
+      const isExpanded = expandedPaths[item.path];
+      const isSelected = selectedPath === item.path;
+      const isDirectory = item.type === 'tree';
+      const isLoading = loadingPaths[item.path];
 
-    return (
-      <div key={item.path} className="flex flex-col">
-        <div
-          className={cn(
-            'flex cursor-pointer items-center rounded px-1.5 py-0.5 text-xs hover:bg-gray-100',
-            isSelected && 'border-l-2 border-blue-500 bg-blue-50',
-            level > 0 && `ml-${level * 3}`
-          )}
-          onClick={() => {
-            handleSelectDirectory(item.path);
-            handleToggleExpand(item.path);
-          }}
-          style={{ marginLeft: `${level * 12}px` }}
-        >
-          <ChevronRight
+      // Obtém os itens filhos do diretório atual
+      const childItems = isDirectory ? getChildItems(item.path) : [];
+
+      // Ordena: primeiro diretórios, depois arquivos
+      const sortedChildItems = [...childItems].sort((a, b) => {
+        if (a.type === 'tree' && b.type !== 'tree') {return -1;}
+
+        if (a.type !== 'tree' && b.type === 'tree') {return 1;}
+
+        return a.name.localeCompare(b.name);
+      });
+
+      return (
+        <div key={item.path} className="flex flex-col">
+          <div
             className={cn(
-              'mr-1.5 h-3 w-3 transition-transform',
-              isExpanded && 'rotate-90 transform'
+              'flex cursor-pointer items-center rounded px-1.5 py-1 text-xs hover:bg-gray-100',
+              isSelected && 'border-l-2 border-blue-500 bg-blue-50'
             )}
-          />
-          <FolderOpen className="mr-1.5 h-3 w-3 text-amber-500" />
-          <span className="text-xs">{item.name}</span>
-          {item.isChartDirectory && (
-            <Badge variant="secondary" className="ml-1.5 h-4 py-0 text-[10px]">
-              Chart
-            </Badge>
+            onClick={() => {
+              if (isDirectory) {
+                handleToggleExpand(item.path, isExpanded);
+              }
+              handleSelectDirectory(item.path, isDirectory, !!item.isChartDirectory);
+            }}
+            style={{ paddingLeft: `${level * 12 + 8}px` }}
+          >
+            {isDirectory ? (
+              <>
+                <ChevronRight
+                  className={cn(
+                    'mr-1.5 h-3 w-3 transition-transform',
+                    isExpanded && 'rotate-90 transform'
+                  )}
+                />
+                <FolderOpen className="mr-1.5 h-3 w-3 text-amber-500" />
+              </>
+            ) : (
+              <>
+                <span className="mr-1.5 w-3"></span>
+                <File className="mr-1.5 h-3 w-3 text-gray-500" />
+              </>
+            )}
+
+            <span className="text-xs">{item.name}</span>
+
+            {item.isChartDirectory && (
+              <Badge variant="secondary" className="ml-1.5 h-4 py-0 text-[10px]">
+                Chart
+              </Badge>
+            )}
+
+            {isLoading && <Spinner size="xs" className="ml-2 h-3 w-3" />}
+          </div>
+
+          {isDirectory && isExpanded && (
+            <div className="flex flex-col">
+              {isLoading ? (
+                <div
+                  className="flex items-center px-2 py-1 text-xs text-muted-foreground"
+                  style={{ paddingLeft: `${(level + 1) * 12 + 8}px` }}
+                >
+                  <Spinner size="xs" className="mr-2 h-3 w-3" />
+                  Carregando...
+                </div>
+              ) : sortedChildItems.length === 0 ? (
+                <div
+                  className="px-2 py-1 text-xs text-muted-foreground"
+                  style={{ paddingLeft: `${(level + 1) * 12 + 8}px` }}
+                >
+                  Pasta vazia
+                </div>
+              ) : (
+                sortedChildItems.map((childItem) =>
+                  renderTreeItem(childItem, level + 1)
+                )
+              )}
+            </div>
           )}
         </div>
+      );
+    },
+    [
+      expandedPaths,
+      selectedPath,
+      loadingPaths,
+      getChildItems,
+      handleToggleExpand,
+      handleSelectDirectory,
+    ]
+  );
 
-        {isExpanded && childItems.map((child) => renderDirectory(child, level + 1))}
-      </div>
-    );
-  };
+  // Obtém itens da raiz
+  const rootItems = getChildItems('');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -134,11 +249,22 @@ export function GitDirectoryBrowserModal({
                 <Spinner size="sm" />
               </div>
             ) : rootItems.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                Nenhum diretório encontrado
+              <div className="flex h-full flex-col items-center justify-center space-y-2 text-xs text-muted-foreground">
+                <p>Nenhum diretório encontrado</p>
+                <p className="text-[10px]">Total de itens: {treeItems.length}</p>
               </div>
             ) : (
-              <div className="space-y-0.5">{rootItems.map((item) => renderDirectory(item))}</div>
+              <div className="space-y-0.5">
+                {rootItems
+                  .sort((a, b) => {
+                    if (a.type === 'tree' && b.type !== 'tree') {return -1;}
+
+                    if (a.type !== 'tree' && b.type === 'tree') {return 1;}
+
+                    return a.name.localeCompare(b.name);
+                  })
+                  .map((item) => renderTreeItem(item))}
+              </div>
             )}
           </ScrollArea>
 
@@ -162,7 +288,10 @@ export function GitDirectoryBrowserModal({
               onSelectPath(selectedPath);
               onOpenChange(false);
             }}
-            disabled={!selectedPath}
+            disabled={
+              !selectedPath ||
+              !treeItems.find((item) => item.path === selectedPath && item.isChartDirectory)
+            }
             className="h-7 text-xs"
           >
             Selecionar Caminho

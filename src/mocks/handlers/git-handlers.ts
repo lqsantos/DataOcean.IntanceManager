@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 
 import { gitBranches } from '../data/git-branches';
 import { gitRepos } from '../data/git-repos';
@@ -22,7 +22,10 @@ export const gitHandlers = [
   }),
 
   // GET /git/repos/:repo/tree - Get tree structure for a repository and branch
-  http.get('/api/git/repos/:repoId/tree', ({ params, request }) => {
+  http.get('/api/git/repos/:repoId/tree', async ({ params, request }) => {
+    // Adicionar um delay para simular o carregamento
+    await delay(1000);
+
     const url = new URL(request.url);
     const branch = url.searchParams.get('branch');
     const path = url.searchParams.get('path') || '';
@@ -31,25 +34,55 @@ export const gitHandlers = [
       return new HttpResponse({ message: 'Branch parameter is required' }, { status: 400 });
     }
 
-    const items = gitTreeStructure.filter(
-      (item) =>
-        item.repositoryId === params.repoId &&
-        item.branch === branch &&
-        (path === '' ? item.parentPath === null : item.parentPath === path)
+    console.log(`Fetching tree for repo: ${params.repoId}, branch: ${branch}, path: '${path}'`);
+
+    // Para solicitações de diretório raiz (path vazio), retornar apenas os diretórios de nível superior
+    // que têm parentPath === null
+    const items =
+      path === ''
+        ? gitTreeStructure.filter(
+            (item) =>
+              item.repositoryId === params.repoId &&
+              item.branch === branch &&
+              item.parentPath === null
+          )
+        : gitTreeStructure.filter((item) => {
+            // Para path não vazio, normalizar os caminhos para comparação
+            const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+            const itemParentPath = item.parentPath;
+
+            return (
+              item.repositoryId === params.repoId &&
+              item.branch === branch &&
+              itemParentPath === normalizedPath
+            );
+          });
+
+    console.log(`Found ${items.length} items`);
+
+    // Mapear os itens para o formato esperado pelo componente
+    const mappedItems = items.map((item) => ({
+      // Remover barra inicial do caminho para usar formato consistente
+      path: item.path.startsWith('/') ? item.path.substring(1) : item.path,
+      name: item.name,
+      // Converter 'directory'/'file' para 'tree'/'blob' conforme esperado pelo componente
+      type: item.type === 'directory' ? 'tree' : 'blob',
+      isChartDirectory: item.isHelmChart || false,
+    }));
+
+    console.log(
+      `Returning ${mappedItems.length} mapped items`,
+      JSON.stringify(mappedItems, null, 2)
     );
 
-    return HttpResponse.json(
-      items.map((item) => ({
-        path: item.path,
-        name: item.name,
-        type: item.type,
-        isHelmChart: item.isHelmChart || false,
-      }))
-    );
+    return HttpResponse.json(mappedItems);
   }),
 
   // GET /git/repos/:repo/file - Get file content
-  http.get('/api/git/repos/:repoId/file', ({ params, request }) => {
+  http.get('/api/git/repos/:repoId/file', async ({ params, request }) => {
+    // Adicionar um delay para simular o carregamento
+    await delay(800);
+
     const url = new URL(request.url);
     const branch = url.searchParams.get('branch');
     const path = url.searchParams.get('path');
@@ -66,9 +99,10 @@ export const gitHandlers = [
     let content = '';
 
     if (path.endsWith('.yaml') || path.endsWith('.yml')) {
-      content = `# Example YAML content for ${path}`;
+      content = `# Example YAML content for ${path}\n\nname: example-chart\nversion: 1.0.0\ndescription: Example Helm chart\napiVersion: v2\ntype: application\nappVersion: "1.0.0"`;
     } else if (path.endsWith('.json')) {
-      content = `{ "message": "Example JSON content for ${path}" }`;
+      content =
+        '{\n  "type": "object",\n  "required": ["name", "replicas"],\n  "properties": {\n    "name": {\n      "type": "string",\n      "description": "Name for the deployment"\n    },\n    "replicas": {\n      "type": "integer",\n      "minimum": 1,\n      "description": "Number of pods to run"\n    }\n  }\n}';
     } else {
       content = `Example content for ${path}`;
     }

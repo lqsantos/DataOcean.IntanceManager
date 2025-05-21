@@ -2,36 +2,36 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-    AlertCircle,
-    CheckCircle2,
-    Eye,
-    FileCode2,
-    GitBranch,
-    GitFork,
-    Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  FileCode2,
+  GitBranch,
+  GitFork,
+  Loader2,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
@@ -213,6 +213,16 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
       await getPreview(gitRepositoryId, branch, path);
     }
   };
+
+  // Função para carregar um diretório específico
+  const handleFetchDirectory = useCallback(
+    async (path: string) => {
+      if (gitRepositoryId && branch) {
+        await fetchTreeStructure(gitRepositoryId, branch, path);
+      }
+    },
+    [gitRepositoryId, branch, fetchTreeStructure]
+  );
 
   // Função para abrir navegador de diretórios
   const handleOpenDirectoryBrowser = () => {
@@ -420,7 +430,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                       </Button>
                       <Button
                         type="button"
-                        className="gap-2 flex-shrink-0"
+                        className="flex-shrink-0 gap-2"
                         onClick={() => setShowPreview(true)}
                         disabled={!chartInfo?.isValid || isLoadingPreview}
                       >
@@ -486,6 +496,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           treeItems={treeItems}
           isLoading={isLoadingTree}
           onSelectPath={handleSelectPath}
+          onFetchDirectory={handleFetchDirectory}
         />
         <TemplatePreviewModal
           open={showPreview}
