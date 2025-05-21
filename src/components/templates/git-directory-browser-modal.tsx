@@ -1,17 +1,17 @@
 'use client';
 
-import { ChevronRight, File, FolderOpen, Loader2 } from 'lucide-react';
+import { ChevronRight, File, FolderClosed, FolderOpen, Home, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
@@ -44,12 +44,10 @@ export function GitDirectoryBrowserModal({
   const [loadingPaths, setLoadingPaths] = useState<Record<string, boolean>>({});
   const [loadedItems, setLoadedItems] = useState<Record<string, typeof treeItems>>({});
   const [isModalLoading, setIsModalLoading] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string>('');
+  const [currentItems, setCurrentItems] = useState<typeof treeItems>([]);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
-  useEffect(() => {
-    setIsModalLoading(isLoading);
-  }, [isLoading]);
-
-  // Limpar estado quando o modal for fechado
   useEffect(() => {
     if (!open) {
       setExpandedPaths({});
@@ -57,100 +55,148 @@ export function GitDirectoryBrowserModal({
     }
   }, [open]);
 
-  // Salva os itens iniciais como itens de raiz
   useEffect(() => {
-    if (treeItems.length > 0) {
+    if (open && treeItems.length > 0 && currentPath === '' && currentItems.length === 0) {
+      setCurrentItems(treeItems);
       setLoadedItems((prev) => ({
         ...prev,
         '': treeItems,
       }));
     }
-  }, [treeItems]);
+  }, [open, treeItems, currentPath, currentItems.length]);
 
-  const handleToggleExpand = useCallback(
-    async (path: string, isExpanded: boolean) => {
-      // Se está expandindo um diretório que ainda não foi carregado
-      if (!isExpanded && onFetchDirectory && !loadedItems[path]) {
-        try {
-          setLoadingPaths((prev) => ({ ...prev, [path]: true }));
-          await onFetchDirectory(path);
+  useEffect(() => {
+    setIsModalLoading(isLoading);
 
-          // O callback onFetchDirectory vai atualizar os treeItems,
-          // mas precisamos marcá-los como já carregados para este path
-          setLoadedItems((prev) => ({
-            ...prev,
-            [path]: treeItems.filter((item) => {
-              const pathParts = item.path.split('/');
-              const parentPath =
-                pathParts.length <= 1 ? '' : pathParts.slice(0, -1).join('/');
+    if (!isLoading && pendingNavigation !== null) {
+      const path = pendingNavigation;
 
-              return parentPath === path;
-            }),
-          }));
-        } catch (error) {
-          console.error('Erro ao carregar conteúdo do diretório:', error);
-        } finally {
-          setLoadingPaths((prev) => ({ ...prev, [path]: false }));
-        }
+      setPendingNavigation(null);
+
+      if (loadedItems[path]) {
+        console.log(`Using cached items for path: ${path}`, loadedItems[path]);
+        setCurrentItems(loadedItems[path]);
+      } else {
+        console.log(`No cached items found for path: ${path}. Using treeItems:`, treeItems);
+        setCurrentItems(treeItems);
+        setLoadedItems((prev) => ({
+          ...prev,
+          [path]: treeItems,
+        }));
+      }
+    }
+  }, [isLoading, pendingNavigation, loadedItems, treeItems]);
+
+  useEffect(() => {
+    if (treeItems.length > 0 && isLoading === false && pendingNavigation === null) {
+      console.log(`Caching ${treeItems.length} items for path: ${currentPath}`);
+      setLoadedItems((prev) => ({
+        ...prev,
+        [currentPath]: treeItems,
+      }));
+      setCurrentItems(treeItems);
+    }
+  }, [treeItems, currentPath, isLoading, pendingNavigation]);
+
+  const navigateToDirectory = useCallback(
+    async (path: string) => {
+      console.log(`Navigating to directory: ${path}`);
+      setIsModalLoading(true);
+      setCurrentPath(path);
+
+      if (loadedItems[path]) {
+        console.log(`Using cached items for ${path}`);
+        setCurrentItems(loadedItems[path]);
+        setIsModalLoading(false);
+
+        return;
       }
 
-      // Atualiza o estado de expandido/colapsado
-      setExpandedPaths((prev) => ({
-        ...prev,
-        [path]: !prev[path],
-      }));
+      if (onFetchDirectory) {
+        try {
+          console.log(`Fetching items for ${path}`);
+          setPendingNavigation(path);
+          await onFetchDirectory(path);
+        } catch (error) {
+          console.error('Erro ao carregar conteúdo do diretório:', error);
+          setPendingNavigation(null);
+          setIsModalLoading(false);
+
+          if (loadedItems[currentPath]) {
+            setCurrentItems(loadedItems[currentPath]);
+          }
+        }
+      } else {
+        setIsModalLoading(false);
+      }
     },
-    [onFetchDirectory, treeItems, loadedItems]
+    [loadedItems, onFetchDirectory, currentPath]
+  );
+
+  const getBreadcrumbParts = useCallback(() => {
+    if (!currentPath) {
+      return [{ name: '/', path: '' }];
+    }
+
+    const parts = currentPath.split('/').filter(Boolean);
+
+    return [
+      { name: '/', path: '' },
+      ...parts.map((part, index) => ({
+        name: part,
+        path: parts.slice(0, index + 1).join('/'),
+      })),
+    ];
+  }, [currentPath]);
+
+  const breadcrumbParts = getBreadcrumbParts();
+
+  const handleBreadcrumbClick = useCallback(
+    (path: string) => {
+      console.log(`Breadcrumb clicked: ${path}`);
+
+      // Defina isso como true para forçar uma busca, independentemente do cache
+      const forceFetch = true;
+
+      // Atualiza o path selecionado
+      setSelectedPath('');
+
+      if (onFetchDirectory) {
+        // Se forceFetch for true, limpe o cache para este caminho
+        if (forceFetch) {
+          setLoadedItems((prev) => {
+            const newCache = { ...prev };
+
+            delete newCache[path];
+
+            return newCache;
+          });
+        }
+
+        // Sempre navegue diretamente, sem condição adicional
+        navigateToDirectory(path);
+      }
+    },
+    [navigateToDirectory, onFetchDirectory]
   );
 
   const handleSelectDirectory = useCallback(
     (path: string, isDirectory: boolean, isChartDirectory: boolean) => {
-      // Permite selecionar qualquer diretório
       if (isDirectory) {
         setSelectedPath(path);
+
+        // Navegar com um único clique se for diretório
+        navigateToDirectory(path);
       }
     },
-    []
-  );
-
-  // Organiza os itens em uma estrutura hierárquica considerando os já carregados
-  const getChildItems = useCallback(
-    (parentPath: string): typeof treeItems => {
-      // Primeiro, verifica se temos itens já carregados para este parentPath
-      if (loadedItems[parentPath]) {
-        return loadedItems[parentPath];
-      }
-
-      // Caso contrário, filtra dos treeItems atuais
-      return treeItems.filter((item) => {
-        const pathParts = item.path.split('/');
-        const itemParentPath =
-          pathParts.length <= 1 ? '' : pathParts.slice(0, -1).join('/');
-
-        return itemParentPath === parentPath;
-      });
-    },
-    [treeItems, loadedItems]
+    [navigateToDirectory]
   );
 
   const renderTreeItem = useCallback(
     (item: (typeof treeItems)[0], level = 0) => {
-      const isExpanded = expandedPaths[item.path];
       const isSelected = selectedPath === item.path;
       const isDirectory = item.type === 'tree';
       const isLoading = loadingPaths[item.path];
-
-      // Obtém os itens filhos do diretório atual
-      const childItems = isDirectory ? getChildItems(item.path) : [];
-
-      // Ordena: primeiro diretórios, depois arquivos
-      const sortedChildItems = [...childItems].sort((a, b) => {
-        if (a.type === 'tree' && b.type !== 'tree') {return -1;}
-
-        if (a.type !== 'tree' && b.type === 'tree') {return 1;}
-
-        return a.name.localeCompare(b.name);
-      });
 
       return (
         <div key={item.path} className="flex flex-col">
@@ -161,10 +207,6 @@ export function GitDirectoryBrowserModal({
               isLoading && 'opacity-70'
             )}
             onClick={() => {
-              if (isDirectory && !isLoading) {
-                handleToggleExpand(item.path, isExpanded);
-              }
-
               if (!isLoading) {
                 handleSelectDirectory(item.path, isDirectory, !!item.isChartDirectory);
               }
@@ -176,19 +218,8 @@ export function GitDirectoryBrowserModal({
                 {isLoading ? (
                   <Loader2 className="mr-1.5 h-3 w-3 animate-spin text-amber-500" />
                 ) : (
-                  <ChevronRight
-                    className={cn(
-                      'mr-1.5 h-3 w-3 transition-transform',
-                      isExpanded && 'rotate-90 transform'
-                    )}
-                  />
+                  <FolderClosed className="mr-1.5 h-3 w-3 text-amber-500" />
                 )}
-                <FolderOpen 
-                  className={cn(
-                    'mr-1.5 h-3 w-3',
-                    isLoading ? 'text-amber-300' : 'text-amber-500'
-                  )}
-                />
               </>
             ) : (
               <>
@@ -205,38 +236,11 @@ export function GitDirectoryBrowserModal({
               </Badge>
             )}
           </div>
-
-          {isDirectory && isExpanded && (
-            <div className="flex flex-col">
-              {sortedChildItems.length === 0 ? (
-                <div
-                  className="px-2 py-1 text-xs text-muted-foreground"
-                  style={{ paddingLeft: `${(level + 1) * 12 + 8}px` }}
-                >
-                  {isLoading ? 'Carregando...' : 'Pasta vazia'}
-                </div>
-              ) : (
-                sortedChildItems.map((childItem) =>
-                  renderTreeItem(childItem, level + 1)
-                )
-              )}
-            </div>
-          )}
         </div>
       );
     },
-    [
-      expandedPaths,
-      selectedPath,
-      loadingPaths,
-      getChildItems,
-      handleToggleExpand,
-      handleSelectDirectory,
-    ]
+    [selectedPath, loadingPaths, handleSelectDirectory]
   );
-
-  // Obtém itens da raiz
-  const rootItems = getChildItems('');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -251,26 +255,49 @@ export function GitDirectoryBrowserModal({
         </DialogHeader>
 
         <div className="mt-2 space-y-3">
+          <div className="flex items-center overflow-x-auto rounded-md border bg-muted/10 p-1.5 text-xs">
+            <div className="flex flex-wrap items-center gap-1">
+              {breadcrumbParts.map((part, index) => (
+                <div key={part.path} className="flex items-center">
+                  {index > 0 && <ChevronRight className="mx-1 h-3 w-3 text-muted-foreground" />}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-1.5 py-0 text-xs hover:bg-muted"
+                    onClick={() => handleBreadcrumbClick(part.path)}
+                  >
+                    {index === 0 ? <Home className="h-3 w-3" /> : part.name}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="relative">
-            <ScrollArea className={cn('h-[300px] rounded-md border p-2', isModalLoading && 'opacity-60')}>
+            <ScrollArea
+              className={cn('h-[250px] rounded-md border p-2', isModalLoading && 'opacity-60')}
+            >
               {isModalLoading ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
                   <Spinner size="md" />
                 </div>
               ) : null}
-              
-              {rootItems.length === 0 && !isModalLoading ? (
+
+              {currentItems.length === 0 && !isModalLoading ? (
                 <div className="flex h-full flex-col items-center justify-center space-y-2 text-xs text-muted-foreground">
-                  <p>Nenhum diretório encontrado</p>
-                  <p className="text-[10px]">Total de itens: {treeItems.length}</p>
+                  <p>Nenhum item encontrado neste diretório</p>
                 </div>
               ) : (
                 <div className="space-y-0.5">
-                  {rootItems
+                  {currentItems
                     .sort((a, b) => {
-                      if (a.type === 'tree' && b.type !== 'tree') {return -1;}
+                      if (a.type === 'tree' && b.type !== 'tree') {
+                        return -1;
+                      }
 
-                      if (a.type !== 'tree' && b.type === 'tree') {return 1;}
+                      if (a.type !== 'tree' && b.type === 'tree') {
+                        return 1;
+                      }
 
                       return a.name.localeCompare(b.name);
                     })

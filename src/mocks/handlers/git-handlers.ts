@@ -24,7 +24,7 @@ export const gitHandlers = [
   // GET /git/repos/:repo/tree - Get tree structure for a repository and branch
   http.get('/api/git/repos/:repoId/tree', async ({ params, request }) => {
     // Adicionar um delay para simular o carregamento
-    await delay(1000);
+    await delay(400); // Reduzir o atraso para facilitar o teste e debug
 
     const url = new URL(request.url);
     const branch = url.searchParams.get('branch');
@@ -34,31 +34,31 @@ export const gitHandlers = [
       return new HttpResponse({ message: 'Branch parameter is required' }, { status: 400 });
     }
 
-    console.log(`Fetching tree for repo: ${params.repoId}, branch: ${branch}, path: '${path}'`);
+    console.log(
+      `[MSW] Fetching tree for repo: ${params.repoId}, branch: ${branch}, path: '${path}'`
+    );
 
-    // Para solicitações de diretório raiz (path vazio), retornar apenas os diretórios de nível superior
-    // que têm parentPath === null
-    const items =
-      path === ''
-        ? gitTreeStructure.filter(
-            (item) =>
-              item.repositoryId === params.repoId &&
-              item.branch === branch &&
-              item.parentPath === null
-          )
-        : gitTreeStructure.filter((item) => {
-            // Para path não vazio, normalizar os caminhos para comparação
-            const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-            const itemParentPath = item.parentPath;
+    // Normalizar o caminho para a comparação
+    // Para a raiz, sempre use null
+    const normalizedPath = path === '' ? null : path.startsWith('/') ? path : `/${path}`;
 
-            return (
-              item.repositoryId === params.repoId &&
-              item.branch === branch &&
-              itemParentPath === normalizedPath
-            );
-          });
+    console.log(`[MSW] Normalized path: ${normalizedPath}`);
 
-    console.log(`Found ${items.length} items`);
+    // Filtrar itens com base no normalizedPath como parentPath
+    const items = gitTreeStructure.filter((item) => {
+      const match =
+        item.repositoryId === params.repoId &&
+        item.branch === branch &&
+        item.parentPath === normalizedPath;
+
+      if (match) {
+        console.log(`[MSW] Matched item: ${item.path}`);
+      }
+
+      return match;
+    });
+
+    console.log(`[MSW] Found ${items.length} items with parent path: ${normalizedPath}`);
 
     // Mapear os itens para o formato esperado pelo componente
     const mappedItems = items.map((item) => ({
@@ -70,10 +70,7 @@ export const gitHandlers = [
       isChartDirectory: item.isHelmChart || false,
     }));
 
-    console.log(
-      `Returning ${mappedItems.length} mapped items`,
-      JSON.stringify(mappedItems, null, 2)
-    );
+    console.log(`[MSW] Returning ${mappedItems.length} mapped items for path: ${normalizedPath}`);
 
     return HttpResponse.json(mappedItems);
   }),
