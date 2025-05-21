@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { v4 as uuidv4 } from 'uuid';
 
 import { gitRepos } from '../data/git-repos';
@@ -101,6 +101,9 @@ export const templateHandlers = [
 
   // POST /templates/validate - Validate a template path
   http.post('/api/templates/validate', async ({ request }) => {
+    // Adiciona um delay de 3 segundos para simular uma validação mais demorada
+    await delay(3000);
+
     const { gitRepositoryId, branch, path } = await request.json();
 
     // Simulate validation logic checking for Chart.yaml and values.schema.json
@@ -148,6 +151,9 @@ export const templateHandlers = [
 
   // POST /templates/preview - Get preview of template files
   http.post('/api/templates/preview', async ({ request }) => {
+    // Adiciona um delay de 2 segundos para a pré-visualização
+    await delay(2000);
+
     const { gitRepositoryId, branch, path } = await request.json();
 
     // Find the content for each file if it exists

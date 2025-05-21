@@ -53,12 +53,12 @@ export function TemplatePreviewModal({
     }
 
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-x-4 gap-y-2 md:grid-cols-2">
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-x-3 gap-y-1.5 md:grid-cols-2">
           {infoItems.map((item, index) => (
-            <div key={index} className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">{item.label}:</div>
-              <div className="font-mono text-sm">{item.value}</div>
+            <div key={index} className="space-y-0.5">
+              <div className="text-xs font-medium text-muted-foreground">{item.label}:</div>
+              <div className="font-mono text-xs">{item.value}</div>
             </div>
           ))}
         </div>
@@ -69,7 +69,7 @@ export function TemplatePreviewModal({
   const renderSchema = () => {
     if (!preview?.schema) {
       return (
-        <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+        <div className="flex h-[250px] items-center justify-center rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
           Nenhum schema encontrado (values.schema.json)
         </div>
       );
@@ -77,8 +77,8 @@ export function TemplatePreviewModal({
 
     // Formato JSON com syntax highlighting simplificado
     return (
-      <ScrollArea className="h-[400px] w-full rounded-md border">
-        <pre className="p-4 font-mono text-xs">{JSON.stringify(preview.schema, null, 2)}</pre>
+      <ScrollArea className="h-[350px] w-full rounded-md border">
+        <pre className="p-3 font-mono text-[10px]">{JSON.stringify(preview.schema, null, 2)}</pre>
       </ScrollArea>
     );
   };
@@ -86,7 +86,7 @@ export function TemplatePreviewModal({
   const renderValues = () => {
     if (!preview?.values) {
       return (
-        <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+        <div className="flex h-[250px] items-center justify-center rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
           Nenhum arquivo values.yaml encontrado
         </div>
       );
@@ -94,8 +94,8 @@ export function TemplatePreviewModal({
 
     // YAML como texto simples
     return (
-      <ScrollArea className="h-[400px] w-full rounded-md border">
-        <pre className="p-4 font-mono text-xs">{preview.values}</pre>
+      <ScrollArea className="h-[350px] w-full rounded-md border">
+        <pre className="p-3 font-mono text-[10px]">{preview.values}</pre>
       </ScrollArea>
     );
   };
@@ -104,9 +104,9 @@ export function TemplatePreviewModal({
   if (!preview || !chartInfo) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[700px]">
-          <div className="flex h-[300px] w-full items-center justify-center">
-            <Spinner size="lg" />
+        <DialogContent className="sm:max-w-[650px]">
+          <div className="flex h-[250px] w-full items-center justify-center">
+            <Spinner size="md" />
           </div>
         </DialogContent>
       </Dialog>
@@ -115,10 +115,10 @@ export function TemplatePreviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px]">
-        <DialogHeader>
-          <DialogTitle>Pré-visualização do Template</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[650px]">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-base">Pré-visualização do Template</DialogTitle>
+          <DialogDescription className="text-xs">
             {chartInfo.name} v{chartInfo.version}
           </DialogDescription>
         </DialogHeader>
@@ -129,30 +129,30 @@ export function TemplatePreviewModal({
           onValueChange={(value) => setActiveTab(value as 'chart' | 'schema' | 'values')}
           className="mt-2"
         >
-          <TabsList className="w-full">
-            <TabsTrigger value="chart" className="flex-1">
+          <TabsList className="h-8 w-full">
+            <TabsTrigger value="chart" className="h-7 flex-1 text-xs">
               Chart.yaml
             </TabsTrigger>
-            <TabsTrigger value="schema" className="flex-1">
+            <TabsTrigger value="schema" className="h-7 flex-1 text-xs">
               Schema
             </TabsTrigger>
-            <TabsTrigger value="values" className="flex-1">
+            <TabsTrigger value="values" className="h-7 flex-1 text-xs">
               Values
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="chart" className="mt-4">
+          <TabsContent value="chart" className="mt-3">
             {renderChartInfo()}
           </TabsContent>
-          <TabsContent value="schema" className="mt-4">
+          <TabsContent value="schema" className="mt-3">
             {renderSchema()}
           </TabsContent>
-          <TabsContent value="values" className="mt-4">
+          <TabsContent value="values" className="mt-3">
             {renderValues()}
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="pt-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="h-7 text-xs">
             Fechar
           </Button>
         </DialogFooter>

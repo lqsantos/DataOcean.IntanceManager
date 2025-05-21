@@ -2,37 +2,36 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  AlertCircle,
-  AlertTriangle,
-  CheckCircle2,
-  Eye,
-  FileCode2,
-  GitBranch,
-  GitFork,
-  Loader2,
+    AlertCircle,
+    CheckCircle2,
+    Eye,
+    FileCode2,
+    GitBranch,
+    GitFork,
+    Loader2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
@@ -64,6 +63,9 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
   const [showDirectoryBrowser, setShowDirectoryBrowser] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [validationAttempted, setValidationAttempted] = useState(false);
+  const [shouldShowToast, setShouldShowToast] = useState(false);
+  const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const toastShownRef = useRef(false);
 
   // Configuração do formulário
   const form = useForm<TemplateFormValues>({
@@ -127,8 +129,34 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
       fetchTreeStructure(gitRepositoryId, branch);
       form.setValue('path', '');
       resetValidation();
+      setValidationAttempted(false);
     }
   }, [gitRepositoryId, branch, fetchTreeStructure, form, resetValidation]);
+
+  // Auto-validar quando o caminho mudar, com debounce
+  useEffect(() => {
+    if (gitRepositoryId && branch && path) {
+      // Limpar timeout anterior se existir
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
+
+      // Configurar novo timeout (debounce de 500ms)
+      validationTimeoutRef.current = setTimeout(() => {
+        validateTemplateAuto();
+        // Apenas habilita a exibição do toast quando a validação for explicitamente solicitada
+        setShouldShowToast(true);
+        toastShownRef.current = false;
+      }, 1000);
+    }
+
+    // Cleanup do timeout quando o componente desmontar ou as dependências mudarem
+    return () => {
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
+    };
+  }, [gitRepositoryId, branch, path]);
 
   // Atualizar o nome com nome sugerido do chart após validação bem-sucedida
   useEffect(() => {
@@ -137,11 +165,50 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
     }
   }, [chartInfo, form]);
 
-  // Função para validar o template
-  const handleValidate = async () => {
-    setValidationAttempted(true);
+  // Efeito para mostrar toast quando o template for inválido
+  useEffect(() => {
+    if (
+      validationAttempted &&
+      !isValidating &&
+      chartInfo &&
+      !chartInfo.isValid &&
+      shouldShowToast &&
+      !toastShownRef.current
+    ) {
+      toast.error('Template inválido', {
+        description: (
+          <div>
+            <p>{chartInfo.validationMessage}</p>
+            <div className="mt-2">
+              <ul className="list-inside space-y-1">
+                {chartInfo.requiredFiles?.map((file) => (
+                  <li key={file.name} className="flex items-center gap-1">
+                    {file.exists ? (
+                      <CheckCircle2 className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-3 w-3 text-red-600" />
+                    )}
+                    {file.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ),
+        duration: 5000,
+      });
 
+      // Marca que o toast já foi mostrado para esta validação
+      toastShownRef.current = true;
+      // Desabilita novas exibições automáticas até a próxima validação explícita
+      setShouldShowToast(false);
+    }
+  }, [chartInfo, isValidating, validationAttempted, shouldShowToast]);
+
+  // Função para validar o template - agora será usada automaticamente quando o caminho mudar
+  const validateTemplateAuto = async () => {
     if (gitRepositoryId && branch && path) {
+      setValidationAttempted(true);
       await validateChart(gitRepositoryId, branch, path);
       await getPreview(gitRepositoryId, branch, path);
     }
@@ -162,12 +229,27 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
   const onSubmit = async (values: TemplateFormValues) => {
     setIsSubmitting(true);
 
-    try {
-      await createTemplate(values);
-      onCreateSuccess();
-    } catch (error) {
-      console.error('Erro ao criar template:', error);
-    } finally {
+    // Limpar timeout se existir
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
+
+    // Habilitar exibição de toast para a validação final
+    setShouldShowToast(true);
+    toastShownRef.current = false;
+
+    // Executar validação antes de salvar
+    await validateTemplateAuto();
+
+    // Só salvar se o template for válido
+    if (chartInfo?.isValid) {
+      try {
+        await createTemplate(values);
+        onCreateSuccess();
+      } catch (error) {
+        console.error('Erro ao criar template:', error);
+      }
+    } else {
       setIsSubmitting(false);
     }
   };
@@ -176,8 +258,8 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-6">
-          {/* Seção de Identificação */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Campo Nome e Descrição */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div>
               <FormField
                 control={form.control}
@@ -188,14 +270,13 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                     <FormControl>
                       <Input placeholder="Nome do template" {...field} />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      Nome descritivo para identificar o template
-                    </FormDescription>
+                    <FormDescription>Nome descritivo para identificar o template</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
             <div>
               <FormField
                 control={form.control}
@@ -207,10 +288,10 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                       <Textarea
                         placeholder="Descrição do template"
                         {...field}
-                        className="min-h-[70px] resize-none"
+                        className="resize-none"
                       />
                     </FormControl>
-                    <FormDescription className="text-xs">
+                    <FormDescription>
                       Breve descrição sobre o propósito deste template
                     </FormDescription>
                     <FormMessage />
@@ -220,60 +301,59 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
             </div>
           </div>
 
-          {/* Seção de Repositório */}
-          <div>
-            <FormField
-              control={form.control}
-              name="gitRepositoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Repositório Git</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    disabled={isLoadingRepos}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <GitFork className="mr-2 h-4 w-4" />
-                        <SelectValue placeholder="Selecione um repositório" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingRepos ? (
-                        <div className="flex items-center justify-center p-2">
-                          <Spinner size="sm" />
-                        </div>
-                      ) : repositories.length === 0 ? (
-                        <div className="p-2 text-xs text-muted-foreground">
-                          Nenhum repositório encontrado
-                        </div>
-                      ) : (
-                        repositories.map((repo) => (
-                          <SelectItem key={repo.id} value={repo.id}>
-                            {repo.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription className="text-xs">
-                    Repositório Git que contém o chart Helm
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          {/* Repositório Git e Branch na mesma linha */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div>
+              <FormField
+                control={form.control}
+                name="gitRepositoryId"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>Repositório Git</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isLoadingRepos}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <div className="flex flex-1 items-center">
+                            <GitFork className="mr-2 h-4 w-4" />
+                            <SelectValue placeholder="Selecione um repositório" />
+                          </div>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isLoadingRepos ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Spinner size="sm" />
+                          </div>
+                        ) : repositories.length === 0 ? (
+                          <div className="p-2 text-sm text-muted-foreground">
+                            Nenhum repositório encontrado
+                          </div>
+                        ) : (
+                          repositories.map((repo) => (
+                            <SelectItem key={repo.id} value={repo.id}>
+                              {repo.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>Repositório Git que contém o chart Helm</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          {/* Seção de Branch e Caminho */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <FormField
                 control={form.control}
                 name="branch"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="w-full">
                     <FormLabel>Branch</FormLabel>
                     <Select
                       onValueChange={field.onChange}
@@ -281,9 +361,11 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                       disabled={!gitRepositoryId || isLoadingBranches}
                     >
                       <FormControl>
-                        <SelectTrigger>
-                          <GitBranch className="mr-2 h-4 w-4" />
-                          <SelectValue placeholder="Selecione um branch" />
+                        <SelectTrigger className="w-full">
+                          <div className="flex flex-1 items-center">
+                            <GitBranch className="mr-2 h-4 w-4" />
+                            <SelectValue placeholder="Selecione um branch" />
+                          </div>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -292,7 +374,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                             <Spinner size="sm" />
                           </div>
                         ) : branches.length === 0 ? (
-                          <div className="p-2 text-xs text-muted-foreground">
+                          <div className="p-2 text-sm text-muted-foreground">
                             Nenhum branch encontrado
                           </div>
                         ) : (
@@ -304,25 +386,27 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                         )}
                       </SelectContent>
                     </Select>
-                    <FormDescription className="text-xs">
-                      Branch do repositório a ser utilizada
-                    </FormDescription>
+                    <FormDescription>Branch do repositório a ser utilizada</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <div>
-              <FormField
-                control={form.control}
-                name="path"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Caminho do Chart</FormLabel>
-                    <div className="flex gap-2">
-                      <FormControl>
-                        <Input placeholder="charts/app" {...field} className="flex-1" />
-                      </FormControl>
+          </div>
+
+          {/* Caminho do Chart com botões de navegação e pré-visualização */}
+          <div>
+            <FormField
+              control={form.control}
+              name="path"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Caminho do Chart</FormLabel>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
+                    <FormControl>
+                      <Input placeholder="charts/app" {...field} className="flex-1" />
+                    </FormControl>
+                    <div className="flex gap-3">
                       <Button
                         type="button"
                         variant="outline"
@@ -334,106 +418,55 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                       >
                         <FileCode2 className="h-4 w-4" />
                       </Button>
+                      <Button
+                        type="button"
+                        className="gap-2 flex-shrink-0"
+                        onClick={() => setShowPreview(true)}
+                        disabled={!chartInfo?.isValid || isLoadingPreview}
+                      >
+                        <Eye className="h-4 w-4" />
+                        Pré-visualizar
+                      </Button>
                     </div>
-                    <FormDescription className="text-xs">
-                      Caminho relativo dentro do repositório onde o chart está localizado
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* Seção de Validação e Pré-visualização */}
-          <div className="space-y-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex gap-2"
-                onClick={handleValidate}
-                disabled={!gitRepositoryId || !branch || !path || isValidating}
-              >
-                {isValidating ? <Spinner size="sm" /> : <CheckCircle2 className="h-4 w-4" />}
-                {isValidating ? 'Validando...' : 'Validar Template'}
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setShowPreview(true)}
-                disabled={!chartInfo?.isValid || isLoadingPreview}
-                className="flex gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                Pré-visualizar
-              </Button>
-            </div>
-
-            {/* Área de resultado da validação */}
-            {validationAttempted && (
-              <div>
-                {isValidating ? (
-                  <Alert>
-                    <Spinner size="sm" className="mr-2" />
-                    <AlertTitle>Validando template</AlertTitle>
-                    <AlertDescription>Aguarde enquanto verificamos o template...</AlertDescription>
-                  </Alert>
-                ) : validationError ? (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Erro de validação</AlertTitle>
-                    <AlertDescription>{validationError}</AlertDescription>
-                  </Alert>
-                ) : chartInfo?.isValid ? (
-                  <Alert variant="success">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <AlertTitle>Template válido</AlertTitle>
-                    <AlertDescription>
-                      <div className="mt-1 grid grid-cols-1 gap-2 md:grid-cols-2">
-                        <div>
-                          <span className="font-medium">Nome:</span> {chartInfo.name}
-                        </div>
-                        <div>
-                          <span className="font-medium">Versão:</span> {chartInfo.version}
-                        </div>
-                        {chartInfo.description && (
-                          <div className="md:col-span-2">
-                            <span className="font-medium">Descrição:</span> {chartInfo.description}
-                          </div>
-                        )}
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ) : chartInfo ? (
-                  <Alert variant="warning">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Template inválido</AlertTitle>
-                    <AlertDescription>
-                      <p>{chartInfo.validationMessage}</p>
-                      <div className="mt-2">
-                        <ul className="list-inside space-y-1">
-                          {chartInfo.requiredFiles?.map((file) => (
-                            <li key={file.name} className="flex items-center gap-1 text-sm">
-                              {file.exists ? (
-                                <CheckCircle2 className="h-3 w-3 text-green-600" />
-                              ) : (
-                                <AlertCircle className="h-3 w-3 text-red-600" />
-                              )}
-                              {file.name}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
-              </div>
-            )}
+                  </div>
+                  <FormDescription>
+                    Caminho relativo dentro do repositório onde o chart está localizado
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
 
-        {/* Botão de Salvar - ajustado para ficar no canto direito */}
-        <div className="mt-8 flex justify-end">
+        {/* Botão de Salvar com indicadores de status ao lado */}
+        <div className="mt-8 flex items-center justify-end gap-3">
+          {validationAttempted && (
+            <>
+              {isValidating ? (
+                <div className="flex items-center text-muted-foreground">
+                  <Spinner size="sm" className="mr-2" />
+                  <span className="text-sm">Validando template...</span>
+                </div>
+              ) : validationError ? (
+                <div className="flex items-center text-destructive">
+                  <AlertCircle className="mr-2 h-4 w-4" />
+                  <span className="text-sm">{validationError}</span>
+                </div>
+              ) : chartInfo?.isValid ? (
+                <div className="flex items-center text-green-600">
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  <span className="text-sm">Template válido</span>
+                </div>
+              ) : chartInfo && !chartInfo.isValid ? (
+                <div className="flex items-center text-destructive">
+                  <AlertCircle className="mr-2 h-4 w-4" />
+                  <span className="text-sm">Template inválido</span>
+                </div>
+              ) : null}
+            </>
+          )}
+
           <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
             {isSubmitting ? (
               <>
@@ -446,7 +479,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           </Button>
         </div>
 
-        {/* Modal de navegação no repositório */}
+        {/* Modais */}
         <GitDirectoryBrowserModal
           open={showDirectoryBrowser}
           onOpenChange={setShowDirectoryBrowser}
@@ -454,8 +487,6 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           isLoading={isLoadingTree}
           onSelectPath={handleSelectPath}
         />
-
-        {/* Modal de pré-visualização */}
         <TemplatePreviewModal
           open={showPreview}
           onOpenChange={setShowPreview}

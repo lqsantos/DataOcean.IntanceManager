@@ -37,29 +37,28 @@ export function CreateTemplatePage() {
   };
 
   return (
-    <div className="container py-6" data-testid="create-template-page">
-      {/* Cabeçalho da página */}
-      <div className="mb-5">
-        <div className="flex items-start justify-between">
+    <div className="container max-w-5xl py-6" data-testid="create-template-page">
+      {/* Cabeçalho da página - ajustado para o layout da imagem */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Novo Template</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Crie um novo template Helm para uso em blueprints
             </p>
           </div>
-          <Button variant="outline" asChild className="gap-1.5 h-8" size="sm">
+          <Button variant="outline" asChild className="gap-1.5">
             <Link href="/templates">
-              <ArrowLeft className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-4 w-4" />
               Voltar
             </Link>
           </Button>
         </div>
-        <Separator className="mt-4" />
+        <Separator className="mb-6" />
       </div>
 
-      {/* Verificação de PAT - apenas mostra o spinner durante a verificação */}
       {isVerifyingPat ? (
-        <div className="mb-4 rounded-lg border p-2">
+        <div className="mb-4 rounded-md border p-2">
           <div className="flex items-center gap-2">
             <Spinner size="sm" />
             <span className="text-sm">Verificando configurações...</span>

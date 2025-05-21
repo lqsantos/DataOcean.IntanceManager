@@ -85,23 +85,26 @@ export function GitDirectoryBrowserModal({
       <div key={item.path} className="flex flex-col">
         <div
           className={cn(
-            'flex cursor-pointer items-center rounded px-2 py-1 hover:bg-gray-100',
+            'flex cursor-pointer items-center rounded px-1.5 py-0.5 text-xs hover:bg-gray-100',
             isSelected && 'border-l-2 border-blue-500 bg-blue-50',
-            level > 0 && `ml-${level * 4}`
+            level > 0 && `ml-${level * 3}`
           )}
           onClick={() => {
             handleSelectDirectory(item.path);
             handleToggleExpand(item.path);
           }}
-          style={{ marginLeft: `${level * 16}px` }}
+          style={{ marginLeft: `${level * 12}px` }}
         >
           <ChevronRight
-            className={cn('mr-2 h-4 w-4 transition-transform', isExpanded && 'rotate-90 transform')}
+            className={cn(
+              'mr-1.5 h-3 w-3 transition-transform',
+              isExpanded && 'rotate-90 transform'
+            )}
           />
-          <FolderOpen className="mr-2 h-4 w-4 text-amber-500" />
-          <span className="text-sm">{item.name}</span>
+          <FolderOpen className="mr-1.5 h-3 w-3 text-amber-500" />
+          <span className="text-xs">{item.name}</span>
           {item.isChartDirectory && (
-            <Badge variant="secondary" className="ml-2 text-xs">
+            <Badge variant="secondary" className="ml-1.5 h-4 py-0 text-[10px]">
               Chart
             </Badge>
           )}
@@ -114,44 +117,44 @@ export function GitDirectoryBrowserModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <FolderOpen className="mr-2 h-5 w-5" /> Navegador de Diretórios
+      <DialogContent className="sm:max-w-[550px]">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center text-base">
+            <FolderOpen className="mr-1.5 h-4 w-4" /> Navegador de Diretórios
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             Navegue e selecione o diretório que contém o chart Helm
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 space-y-4">
-          <ScrollArea className="h-[350px] rounded-md border p-4">
+        <div className="mt-2 space-y-3">
+          <ScrollArea className="h-[300px] rounded-md border p-2">
             {isLoading ? (
               <div className="flex h-full items-center justify-center">
-                <Spinner size="md" />
+                <Spinner size="sm" />
               </div>
             ) : rootItems.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhum diretório encontrado
               </div>
             ) : (
-              <div className="space-y-1">{rootItems.map((item) => renderDirectory(item))}</div>
+              <div className="space-y-0.5">{rootItems.map((item) => renderDirectory(item))}</div>
             )}
           </ScrollArea>
 
-          <div className="rounded-md bg-muted/20 p-2">
-            <div className="flex items-center text-sm">
-              <FolderOpen className="mr-2 h-4 w-4" />
-              <span className="font-medium">Caminho selecionado:</span>
-              <span className="ml-2 rounded bg-muted px-2 py-1">
+          <div className="rounded-md bg-muted/20 p-1.5">
+            <div className="flex items-center text-xs">
+              <FolderOpen className="mr-1.5 h-3 w-3" />
+              <span className="text-xs font-medium">Caminho selecionado:</span>
+              <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-xs">
                 {selectedPath || 'Nenhum caminho selecionado'}
               </span>
             </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="pt-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="h-7 text-xs">
             Cancelar
           </Button>
           <Button
@@ -160,6 +163,7 @@ export function GitDirectoryBrowserModal({
               onOpenChange(false);
             }}
             disabled={!selectedPath}
+            className="h-7 text-xs"
           >
             Selecionar Caminho
           </Button>
