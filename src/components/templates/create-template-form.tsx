@@ -1,13 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  AlertCircle,
-  CheckCircle2,
-  GitBranch,
-  GitFork,
-  Loader2,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, GitBranch, GitFork, Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -17,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -242,171 +235,144 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="space-y-6">
-          {/* Campo Nome e Descrição */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div>
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Template</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do template" {...field} />
-                    </FormControl>
-                    <FormDescription>Nome descritivo para identificar o template</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Nome do Template */}
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome do Template</FormLabel>
+              <FormControl>
+                <Input placeholder="Nome do template" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <div>
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Descrição do template"
-                        {...field}
-                        className="resize-none"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Breve descrição sobre o propósito deste template
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+        {/* Repositório Git - agora ocupando largura total */}
+        <FormField
+          control={form.control}
+          name="gitRepositoryId"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormLabel>Repositório Git</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoadingRepos}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <div className="flex flex-1 items-center">
+                      <GitFork className="mr-2 h-4 w-4" />
+                      <SelectValue placeholder="Selecione um repositório" />
+                    </div>
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {isLoadingRepos ? (
+                    <div className="flex items-center justify-center p-2">
+                      <Spinner size="sm" />
+                    </div>
+                  ) : repositories.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      Nenhum repositório encontrado
+                    </div>
+                  ) : (
+                    repositories.map((repo) => (
+                      <SelectItem key={repo.id} value={repo.id}>
+                        {repo.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          {/* Repositório Git e Branch na mesma linha */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div>
-              <FormField
-                control={form.control}
-                name="gitRepositoryId"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>Repositório Git</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isLoadingRepos}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <div className="flex flex-1 items-center">
-                            <GitFork className="mr-2 h-4 w-4" />
-                            <SelectValue placeholder="Selecione um repositório" />
-                          </div>
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {isLoadingRepos ? (
-                          <div className="flex items-center justify-center p-2">
-                            <Spinner size="sm" />
-                          </div>
-                        ) : repositories.length === 0 ? (
-                          <div className="p-2 text-sm text-muted-foreground">
-                            Nenhum repositório encontrado
-                          </div>
-                        ) : (
-                          repositories.map((repo) => (
-                            <SelectItem key={repo.id} value={repo.id}>
-                              {repo.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>Repositório Git que contém o chart Helm</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+        {/* Branch - agora ocupando largura total */}
+        <FormField
+          control={form.control}
+          name="branch"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormLabel>Branch</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={!gitRepositoryId || isLoadingBranches}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <div className="flex flex-1 items-center">
+                      <GitBranch className="mr-2 h-4 w-4" />
+                      <SelectValue placeholder="Selecione um branch" />
+                    </div>
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {isLoadingBranches ? (
+                    <div className="flex items-center justify-center p-2">
+                      <Spinner size="sm" />
+                    </div>
+                  ) : branches.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      Nenhum branch encontrado
+                    </div>
+                  ) : (
+                    branches.map((branch) => (
+                      <SelectItem key={branch.name} value={branch.name}>
+                        {branch.name} {branch.isDefault && '(padrão)'}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-            <div>
-              <FormField
-                control={form.control}
-                name="branch"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>Branch</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={!gitRepositoryId || isLoadingBranches}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <div className="flex flex-1 items-center">
-                            <GitBranch className="mr-2 h-4 w-4" />
-                            <SelectValue placeholder="Selecione um branch" />
-                          </div>
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {isLoadingBranches ? (
-                          <div className="flex items-center justify-center p-2">
-                            <Spinner size="sm" />
-                          </div>
-                        ) : branches.length === 0 ? (
-                          <div className="p-2 text-sm text-muted-foreground">
-                            Nenhum branch encontrado
-                          </div>
-                        ) : (
-                          branches.map((branch) => (
-                            <SelectItem key={branch.name} value={branch.name}>
-                              {branch.name} {branch.isDefault && '(padrão)'}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>Branch do repositório a ser utilizada</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+        {/* Caminho do Chart */}
+        <FormField
+          control={form.control}
+          name="path"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Caminho do Chart</FormLabel>
+              <FormControl>
+                <Input placeholder="charts/app" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          {/* Caminho do Chart */}
-          <div>
-            <FormField
-              control={form.control}
-              name="path"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Caminho do Chart</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="charts/app"
-                      {...field}
-                      className="flex-1"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Caminho relativo dentro do repositório onde o chart está localizado
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
+        {/* Descrição - movido para o fim do formulário */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Descrição do template"
+                  {...field}
+                  className="h-16 resize-none"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        {/* Botão de Salvar com indicadores de status ao lado */}
-        <div className="mt-8 flex items-center justify-end gap-3">
+        {/* Botão de Salvar com indicadores de status */}
+        <div className="mt-6 flex items-center justify-end gap-3">
           {validationAttempted && (
             <>
               {isValidating ? (
@@ -433,7 +399,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
             </>
           )}
 
-          <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
