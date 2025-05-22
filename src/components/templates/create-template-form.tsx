@@ -316,9 +316,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           name="branch"
           render={({ field }) => (
             <FormItem className="group w-full">
-              <FormLabel className="text-sm font-medium text-foreground/90">
-                Branch
-              </FormLabel>
+              <FormLabel className="text-sm font-medium text-foreground/90">Branch</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
@@ -403,7 +401,9 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
             <FormItem>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FormLabel className="text-sm font-medium text-foreground/90">Descrição</FormLabel>
+                  <FormLabel className="text-sm font-medium text-foreground/90">
+                    Descrição
+                  </FormLabel>
                   <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
                     Opcional
                   </span>
