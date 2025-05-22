@@ -1,13 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  FileCode2,
-  GitBranch,
-  GitFork,
-  Loader2,
-  ServerCog
-} from 'lucide-react';
+import { FileCode2, GitBranch, GitFork, Loader2, ServerCog } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -39,7 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useGitNavigation } from '@/hooks/use-git-navigation';
@@ -48,8 +41,6 @@ import { useTemplateValidation } from '@/hooks/use-template-validation';
 import { cn } from '@/lib/utils';
 import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
 
-import { GitDirectoryBrowser } from './git-directory-browser';
-import { TemplatePreview } from './template-preview';
 import { TemplateValidationStatus } from './template-validation-status';
 
 // Form schema with validation
@@ -78,8 +69,6 @@ export function TemplateForm({
   isSubmitting = false,
   'data-testid': dataTestId = 'template-form',
 }: TemplateFormProps) {
-  const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({});
-  const [directoryItems, setDirectoryItems] = useState<Record<string, any>>({});
   const [activeStep, setActiveStep] = useState<'provider' | 'location' | 'details'>(
     template ? 'details' : 'provider'
   );
@@ -201,21 +190,6 @@ export function TemplateForm({
       form.setValue('name', chartInfo.name);
     }
   }, [chartInfo, form, template]);
-
-  // Handle directory expansion
-  const handleExpandDirectory = async (dirPath: string) => {
-    if (!gitRepositoryId || !branch) {
-      return;
-    }
-
-    if (!expandedPaths[dirPath]) {
-      const items = await fetchTreeStructure(gitRepositoryId, branch, dirPath);
-
-      setDirectoryItems((prev) => ({ ...prev, [dirPath]: items }));
-    }
-
-    setExpandedPaths((prev) => ({ ...prev, [dirPath]: !prev[dirPath] }));
-  };
 
   // Handle form submission
   const handleSubmit = async (values: TemplateFormValues) => {
@@ -340,7 +314,9 @@ export function TemplateForm({
               <Card data-testid="template-provider-card">
                 <CardHeader>
                   <CardTitle>Selecione o Repositório</CardTitle>
-                  <CardDescription>Escolha o repositório e o branch para o template</CardDescription>
+                  <CardDescription>
+                    Escolha o repositório e o branch para o template
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <FormField
@@ -451,7 +427,7 @@ export function TemplateForm({
                     <CardTitle>Localização do Template</CardTitle>
                   </div>
                   <CardDescription>
-                    Selecione o caminho para o template Helm no repositório
+                    Insira o caminho para o template Helm no repositório
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -471,63 +447,12 @@ export function TemplateForm({
                           />
                         </FormControl>
                         <FormDescription>
-                          Navegue ou digite o caminho para o diretório contendo o Chart.yaml.
+                          Digite o caminho para o diretório contendo o Chart.yaml.
                         </FormDescription>
                         <FormMessage data-testid={`${dataTestId}-path-error`} />
                       </FormItem>
                     )}
                   />
-
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Estrutura do Repositório</h3>
-                      <div className="min-h-[300px]">
-                        {isLoadingTree ? (
-                          <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed p-4">
-                            <Spinner size="md" />
-                          </div>
-                        ) : treeItems.length === 0 ? (
-                          <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed p-4">
-                            <p className="text-center text-muted-foreground">
-                              Nenhum arquivo encontrado
-                            </p>
-                          </div>
-                        ) : (
-                          <GitDirectoryBrowser
-                            treeItems={treeItems}
-                            isLoading={isLoadingTree}
-                            selectedPath={path}
-                            onSelectPath={(path) => form.setValue('path', path)}
-                            onExpandDirectory={handleExpandDirectory}
-                            data-testid={`${dataTestId}-directory-browser`}
-                            className="h-[400px]"
-                          />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium">Status de Validação</h3>
-                      <TemplateValidationStatus
-                        chartInfo={chartInfo}
-                        isValidating={isValidating}
-                        error={validationError}
-                        data-testid={`${dataTestId}-validation-status`}
-                      />
-
-                      {path && chartInfo?.isValid && (
-                        <div className="mt-4 space-y-2">
-                          <h3 className="text-sm font-medium">Pré-visualização</h3>
-                          <TemplatePreview
-                            preview={preview}
-                            isLoading={isLoadingPreview}
-                            error={previewError}
-                            data-testid={`${dataTestId}-preview`}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button
@@ -559,9 +484,7 @@ export function TemplateForm({
               <Card data-testid="template-details-card">
                 <CardHeader>
                   <CardTitle>Detalhes do Template</CardTitle>
-                  <CardDescription>
-                    Finalize o cadastro com informações adicionais
-                  </CardDescription>
+                  <CardDescription>Finalize o cadastro com informações adicionais</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <FormField
@@ -653,7 +576,9 @@ export function TemplateForm({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isSubmitting || (attemptedSubmit && !isFormValid) || !chartInfo?.isValid}
+                    disabled={
+                      isSubmitting || (attemptedSubmit && !isFormValid) || !chartInfo?.isValid
+                    }
                     data-testid="submit-button"
                     className="min-w-[140px]"
                     onClick={() => {
@@ -694,7 +619,7 @@ export function TemplateForm({
               <CardDescription>Atualize as informações do template {template.name}</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="md:col-span-2 space-y-4">
+              <div className="space-y-4 md:col-span-2">
                 <FormField
                   control={form.control}
                   name="name"
@@ -709,9 +634,7 @@ export function TemplateForm({
                           data-testid="name-input"
                         />
                       </FormControl>
-                      <FormDescription>
-                        Nome descritivo para identificar o template
-                      </FormDescription>
+                      <FormDescription>Nome descritivo para identificar o template</FormDescription>
                       <FormMessage data-testid={`${dataTestId}-name-error`} />
                     </FormItem>
                   )}
@@ -771,9 +694,7 @@ export function TemplateForm({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Repositório Git contendo o template Helm
-                    </FormDescription>
+                    <FormDescription>Repositório Git contendo o template Helm</FormDescription>
                     <FormMessage data-testid={`${dataTestId}-repo-error`} />
                   </FormItem>
                 )}

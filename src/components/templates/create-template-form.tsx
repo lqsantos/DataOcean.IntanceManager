@@ -4,13 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
   CheckCircle2,
-  Eye,
-  FileCode2,
   GitBranch,
   GitFork,
   Loader2,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -39,7 +37,6 @@ import { useGitNavigation } from '@/hooks/use-git-navigation';
 import { useTemplateValidation } from '@/hooks/use-template-validation';
 import type { CreateTemplateDto } from '@/types/template';
 
-import { GitDirectoryBrowserModal } from './git-directory-browser-modal';
 import { TemplatePreviewModal } from './template-preview-modal';
 
 // Form schema com validação
@@ -214,27 +211,6 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
     }
   };
 
-  // Função para carregar um diretório específico
-  const handleFetchDirectory = useCallback(
-    async (path: string) => {
-      if (gitRepositoryId && branch) {
-        await fetchTreeStructure(gitRepositoryId, branch, path);
-      }
-    },
-    [gitRepositoryId, branch, fetchTreeStructure]
-  );
-
-  // Função para abrir navegador de diretórios
-  const handleOpenDirectoryBrowser = () => {
-    setShowDirectoryBrowser(true);
-  };
-
-  // Função para selecionar caminho no navegador de diretórios
-  const handleSelectPath = (selectedPath: string) => {
-    form.setValue('path', selectedPath);
-    setShowDirectoryBrowser(false);
-  };
-
   // Função para enviar o formulário
   const onSubmit = async (values: TemplateFormValues) => {
     setIsSubmitting(true);
@@ -404,7 +380,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
             </div>
           </div>
 
-          {/* Caminho do Chart com botões de navegação e pré-visualização */}
+          {/* Caminho do Chart */}
           <div>
             <FormField
               control={form.control}
@@ -412,33 +388,13 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Caminho do Chart</FormLabel>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
-                    <FormControl>
-                      <Input placeholder="charts/app" {...field} className="flex-1" />
-                    </FormControl>
-                    <div className="flex gap-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={handleOpenDirectoryBrowser}
-                        disabled={!gitRepositoryId || !branch}
-                        title="Navegar"
-                        className="h-10 w-10 flex-shrink-0"
-                      >
-                        <FileCode2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        className="flex-shrink-0 gap-2"
-                        onClick={() => setShowPreview(true)}
-                        disabled={!chartInfo?.isValid || isLoadingPreview}
-                      >
-                        <Eye className="h-4 w-4" />
-                        Pré-visualizar
-                      </Button>
-                    </div>
-                  </div>
+                  <FormControl>
+                    <Input
+                      placeholder="charts/app"
+                      {...field}
+                      className="flex-1"
+                    />
+                  </FormControl>
                   <FormDescription>
                     Caminho relativo dentro do repositório onde o chart está localizado
                   </FormDescription>
@@ -489,15 +445,6 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           </Button>
         </div>
 
-        {/* Modais */}
-        <GitDirectoryBrowserModal
-          open={showDirectoryBrowser}
-          onOpenChange={setShowDirectoryBrowser}
-          treeItems={treeItems}
-          isLoading={isLoadingTree}
-          onSelectPath={handleSelectPath}
-          onFetchDirectory={handleFetchDirectory}
-        />
         <TemplatePreviewModal
           open={showPreview}
           onOpenChange={setShowPreview}
