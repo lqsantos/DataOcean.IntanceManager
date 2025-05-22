@@ -28,6 +28,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useGitNavigation } from '@/hooks/use-git-navigation';
 import { useTemplateValidation } from '@/hooks/use-template-validation';
+import { cn } from '@/lib/utils';
 import type { CreateTemplateDto } from '@/types/template';
 
 import { TemplatePreviewModal } from './template-preview-modal';
@@ -235,54 +236,69 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Nome do Template */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="relative z-10 space-y-5">
+        {/* Nome do Template com destaque */}
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome do Template</FormLabel>
+            <FormItem className="transition-all duration-200 focus-within:shadow-sm">
+              <FormLabel className="text-sm font-medium text-foreground/90">
+                Nome do Template
+              </FormLabel>
               <FormControl>
-                <Input placeholder="Nome do template" {...field} />
+                <Input
+                  placeholder="Nome do template"
+                  {...field}
+                  className="transition-shadow duration-200 focus:border-primary focus:shadow-md"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Repositório Git - agora ocupando largura total */}
+        {/* Repositório Git com efeito de hover */}
         <FormField
           control={form.control}
           name="gitRepositoryId"
           render={({ field }) => (
-            <FormItem className="w-full">
-              <FormLabel>Repositório Git</FormLabel>
+            <FormItem className="group w-full">
+              <FormLabel className="text-sm font-medium text-foreground/90">
+                Repositório Git
+              </FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
                 disabled={isLoadingRepos}
               >
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full transition-all duration-200 focus:shadow-md group-hover:border-primary/50">
                     <div className="flex flex-1 items-center">
-                      <GitFork className="mr-2 h-4 w-4" />
+                      <GitFork className="mr-2 h-4 w-4 text-muted-foreground" />
                       <SelectValue placeholder="Selecione um repositório" />
                     </div>
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="max-h-[300px]" position="popper">
                   {isLoadingRepos ? (
-                    <div className="flex items-center justify-center p-2">
-                      <Spinner size="sm" />
+                    <div className="flex items-center justify-center p-4">
+                      <Spinner size="sm" className="text-primary" />
                     </div>
                   ) : repositories.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      Nenhum repositório encontrado
+                    <div className="p-4 text-center">
+                      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-muted p-2">
+                        <GitFork className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Nenhum repositório encontrado</p>
                     </div>
                   ) : (
                     repositories.map((repo) => (
-                      <SelectItem key={repo.id} value={repo.id}>
+                      <SelectItem
+                        key={repo.id}
+                        value={repo.id}
+                        className="transition-colors duration-150 hover:bg-primary/5"
+                      >
                         {repo.name}
                       </SelectItem>
                     ))
@@ -294,39 +310,55 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           )}
         />
 
-        {/* Branch - agora ocupando largura total */}
+        {/* Branch com estilização idêntica */}
         <FormField
           control={form.control}
           name="branch"
           render={({ field }) => (
-            <FormItem className="w-full">
-              <FormLabel>Branch</FormLabel>
+            <FormItem className="group w-full">
+              <FormLabel className="text-sm font-medium text-foreground/90">
+                Branch
+              </FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
                 disabled={!gitRepositoryId || isLoadingBranches}
               >
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full transition-all duration-200 focus:shadow-md group-hover:border-primary/50">
                     <div className="flex flex-1 items-center">
-                      <GitBranch className="mr-2 h-4 w-4" />
+                      <GitBranch className="mr-2 h-4 w-4 text-muted-foreground" />
                       <SelectValue placeholder="Selecione um branch" />
                     </div>
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="max-h-[300px]" position="popper">
                   {isLoadingBranches ? (
-                    <div className="flex items-center justify-center p-2">
-                      <Spinner size="sm" />
+                    <div className="flex items-center justify-center p-4">
+                      <Spinner size="sm" className="text-primary" />
                     </div>
                   ) : branches.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      Nenhum branch encontrado
+                    <div className="p-4 text-center">
+                      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-muted p-2">
+                        <GitBranch className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Nenhum branch encontrado</p>
                     </div>
                   ) : (
                     branches.map((branch) => (
-                      <SelectItem key={branch.name} value={branch.name}>
-                        {branch.name} {branch.isDefault && '(padrão)'}
+                      <SelectItem
+                        key={branch.name}
+                        value={branch.name}
+                        className="transition-colors duration-150 hover:bg-primary/5"
+                      >
+                        <div className="flex w-full items-center justify-between">
+                          <span>{branch.name}</span>
+                          {branch.isDefault && (
+                            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                              padrão
+                            </span>
+                          )}
+                        </div>
                       </SelectItem>
                     ))
                   )}
@@ -342,28 +374,44 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           control={form.control}
           name="path"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Caminho do Chart</FormLabel>
+            <FormItem className="transition-all duration-200 focus-within:shadow-sm">
+              <FormLabel className="text-sm font-medium text-foreground/90">
+                Caminho do Chart
+              </FormLabel>
               <FormControl>
-                <Input placeholder="charts/app" {...field} />
+                <div className="relative">
+                  <Input
+                    placeholder="charts/app"
+                    {...field}
+                    className="pl-9 transition-shadow duration-200 focus:border-primary focus:shadow-md"
+                  />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <div className="font-mono text-sm text-muted-foreground">/</div>
+                  </div>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Descrição - movido para o fim do formulário */}
+        {/* Descrição com contador de caracteres */}
         <FormField
           control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descrição</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel className="text-sm font-medium text-foreground/90">Descrição</FormLabel>
+                <span className="text-xs text-muted-foreground">
+                  {field.value?.length || 0} caracteres
+                </span>
+              </div>
               <FormControl>
                 <Textarea
-                  placeholder="Descrição do template"
+                  placeholder="Breve descrição sobre o template..."
                   {...field}
-                  className="h-16 resize-none"
+                  className="h-20 resize-none transition-shadow duration-200 focus:border-primary focus:shadow-md"
                 />
               </FormControl>
               <FormMessage />
@@ -371,27 +419,30 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           )}
         />
 
+        {/* Separador sutil antes dos controles de ação */}
+        <div className="my-2 h-px w-full bg-border" />
+
         {/* Botão de Salvar com indicadores de status */}
-        <div className="mt-6 flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3">
           {validationAttempted && (
             <>
               {isValidating ? (
-                <div className="flex items-center text-muted-foreground">
-                  <Spinner size="sm" className="mr-2" />
+                <div className="flex animate-pulse items-center rounded-md bg-primary/5 px-3 py-1.5 text-foreground/80">
+                  <Spinner size="sm" className="mr-2 text-primary" />
                   <span className="text-sm">Validando template...</span>
                 </div>
               ) : validationError ? (
-                <div className="flex items-center text-destructive">
+                <div className="flex items-center rounded-md bg-destructive/5 px-3 py-1.5 text-destructive">
                   <AlertCircle className="mr-2 h-4 w-4" />
                   <span className="text-sm">{validationError}</span>
                 </div>
               ) : chartInfo?.isValid ? (
-                <div className="flex items-center text-green-600">
+                <div className="flex items-center rounded-md bg-green-50 px-3 py-1.5 text-green-600">
                   <CheckCircle2 className="mr-2 h-4 w-4" />
                   <span className="text-sm">Template válido</span>
                 </div>
               ) : chartInfo && !chartInfo.isValid ? (
-                <div className="flex items-center text-destructive">
+                <div className="flex items-center rounded-md bg-destructive/5 px-3 py-1.5 text-destructive">
                   <AlertCircle className="mr-2 h-4 w-4" />
                   <span className="text-sm">Template inválido</span>
                 </div>
@@ -399,14 +450,24 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
             </>
           )}
 
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className={cn(
+              'relative min-w-[140px] overflow-hidden transition-all',
+              'bg-gradient-to-r from-primary to-primary/90',
+              'hover:from-primary/90 hover:to-primary hover:shadow-md'
+            )}
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Salvando...
               </>
             ) : (
-              'Salvar Template'
+              <>
+                <span className="mr-1">Salvar Template</span>
+              </>
             )}
           </Button>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { FileSymlink } from 'lucide-react';
+import { BookTemplate, FileSymlink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -34,21 +34,45 @@ export function CreateTemplateModal() {
         className={cn(
           'w-[90vw] max-w-2xl',
           'overflow-visible p-0',
-          'rounded-md border border-border'
+          'rounded-lg border border-border',
+          'shadow-lg',
+          'duration-200 animate-in fade-in-0 zoom-in-95'
         )}
       >
-        {/* Cabeçalho */}
-        <div className="border-b border-border p-6">
-          <DialogHeader className="flex flex-row items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <FileSymlink className="h-5 w-5 text-primary" />
-            </div>
-            <DialogTitle className="text-xl font-medium">Novo Template</DialogTitle>
-          </DialogHeader>
+        {/* Cabeçalho com gradiente e decoração */}
+        <div className="relative overflow-hidden border-b border-border">
+          {/* Decoração de fundo */}
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/5"
+            aria-hidden="true"
+          />
+
+          <div className="relative p-5">
+            <DialogHeader className="flex flex-row items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
+                <FileSymlink className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-medium">Novo Template</DialogTitle>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Para uso em blueprints de aplicação
+                </p>
+              </div>
+            </DialogHeader>
+          </div>
         </div>
 
-        {/* Conteúdo do formulário */}
-        <div className="p-6">
+        {/* Conteúdo do formulário com elementos decorativos - padding reduzido na parte superior */}
+        <div className="relative px-6 py-3">
+          {/* Ícone decorativo no canto */}
+          <div className="absolute -bottom-2 -right-2 opacity-5">
+            <BookTemplate className="h-24 w-24 text-primary" />
+          </div>
+
           <CreateTemplateForm
             onCreateSuccess={handleCreateSuccess}
             createTemplate={handleCreateTemplateSubmit}
