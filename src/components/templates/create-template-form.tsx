@@ -2,9 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, CheckCircle2, GitBranch, GitFork, Loader2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -27,13 +26,13 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useGitNavigation } from '@/hooks/use-git-navigation';
-import { useTemplateValidation } from '@/hooks/use-template-validation';
+import { useTemplateFormValidation } from '@/hooks/use-template-form-validation';
 import { cn } from '@/lib/utils';
 import type { CreateTemplateDto } from '@/types/template';
 
 import { TemplatePreviewModal } from './template-preview-modal';
 
-// Form schema com validação
+// Form schema com validação - movido para fora do componente para evitar recriações
 const templateFormSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
   description: z.string().optional(),
@@ -49,16 +48,15 @@ interface CreateTemplateFormProps {
   createTemplate: (values: CreateTemplateDto) => Promise<void>;
 }
 
+/**
+ * Componente de formulário para criação de templates
+ * Com otimizações de performance e separação de responsabilidades
+ */
 export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTemplateFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDirectoryBrowser, setShowDirectoryBrowser] = useState(false);
+  // Estado para o modal de pré-visualização
   const [showPreview, setShowPreview] = useState(false);
-  const [validationAttempted, setValidationAttempted] = useState(false);
-  const [shouldShowToast, setShouldShowToast] = useState(false);
-  const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const toastShownRef = useRef(false);
 
-  // Configuração do formulário
+  // Configuração do formulário - memoizada para evitar recálculos
   const form = useForm<TemplateFormValues>({
     resolver: zodResolver(templateFormSchema),
     defaultValues: {
@@ -70,174 +68,153 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
     },
   });
 
-  // Hooks para manipulação de repositório Git e validação
+  // Valores do formulário para validação e navegação - memoizados
+  const formValues = form.watch();
+  const { gitRepositoryId, branch, path } = formValues;
+
+  // Hooks para manipulação de repositório Git - agora com valores memoizados
   const {
     repositories,
     branches,
-    treeItems,
     isLoadingRepos,
     isLoadingBranches,
-    isLoadingTree,
     fetchRepositories,
     fetchBranches,
     fetchTreeStructure,
   } = useGitNavigation();
 
+  // Hook de validação de template - separada do componente principal
   const {
     chartInfo,
     preview,
     isValidating,
-    isLoadingPreview,
     validationError,
-    validateChart,
-    getPreview,
-    resetValidation,
-  } = useTemplateValidation();
+    isSubmitting,
+    validationAttempted,
+    setIsSubmitting,
+    validateTemplateAuto,
+    resetFormValidation,
+  } = useTemplateFormValidation({
+    gitRepositoryId,
+    branch,
+    path,
+  });
 
-  // Valores do formulário para validação e navegação
-  const gitRepositoryId = form.watch('gitRepositoryId');
-  const branch = form.watch('branch');
-  const path = form.watch('path');
-
-  // Carregar repositórios ao montar o componente
+  // Carregar repositórios ao montar o componente - memoizado
   useEffect(() => {
     fetchRepositories();
   }, [fetchRepositories]);
 
-  // Carregar branches quando o repositório mudar
+  // Carregar branches quando o repositório mudar - memoizado
   useEffect(() => {
     if (gitRepositoryId) {
       fetchBranches(gitRepositoryId);
       form.setValue('branch', '');
       form.setValue('path', '');
-      resetValidation();
+      resetFormValidation();
     }
-  }, [gitRepositoryId, fetchBranches, form, resetValidation]);
+  }, [gitRepositoryId, fetchBranches, form, resetFormValidation]);
 
-  // Carregar estrutura do diretório quando branch mudar
+  // Carregar estrutura do diretório quando branch mudar - memoizado
   useEffect(() => {
     if (gitRepositoryId && branch) {
       fetchTreeStructure(gitRepositoryId, branch);
       form.setValue('path', '');
-      resetValidation();
-      setValidationAttempted(false);
+      resetFormValidation();
     }
-  }, [gitRepositoryId, branch, fetchTreeStructure, form, resetValidation]);
+  }, [gitRepositoryId, branch, fetchTreeStructure, form, resetFormValidation]);
 
-  // Auto-validar quando o caminho mudar, com debounce
-  useEffect(() => {
-    if (gitRepositoryId && branch && path) {
-      // Limpar timeout anterior se existir
-      if (validationTimeoutRef.current) {
-        clearTimeout(validationTimeoutRef.current);
-      }
-
-      // Configurar novo timeout (debounce de 500ms)
-      validationTimeoutRef.current = setTimeout(() => {
-        validateTemplateAuto();
-        // Apenas habilita a exibição do toast quando a validação for explicitamente solicitada
-        setShouldShowToast(true);
-        toastShownRef.current = false;
-      }, 1000);
-    }
-
-    // Cleanup do timeout quando o componente desmontar ou as dependências mudarem
-    return () => {
-      if (validationTimeoutRef.current) {
-        clearTimeout(validationTimeoutRef.current);
-      }
-    };
-  }, [gitRepositoryId, branch, path]);
-
-  // Atualizar o nome com nome sugerido do chart após validação bem-sucedida
+  // Atualizar o nome com nome sugerido do chart após validação bem-sucedida - memoizado
   useEffect(() => {
     if (chartInfo?.isValid && chartInfo?.name && !form.getValues('name')) {
       form.setValue('name', chartInfo.name);
     }
   }, [chartInfo, form]);
 
-  // Efeito para mostrar toast quando o template for inválido
-  useEffect(() => {
-    if (
-      validationAttempted &&
-      !isValidating &&
-      chartInfo &&
-      !chartInfo.isValid &&
-      shouldShowToast &&
-      !toastShownRef.current
-    ) {
-      toast.error('Template inválido', {
-        description: (
-          <div>
-            <p>{chartInfo.validationMessage}</p>
-            <div className="mt-2">
-              <ul className="list-inside space-y-1">
-                {chartInfo.requiredFiles?.map((file) => (
-                  <li key={file.name} className="flex items-center gap-1">
-                    {file.exists ? (
-                      <CheckCircle2 className="h-3 w-3 text-green-600" />
-                    ) : (
-                      <AlertCircle className="h-3 w-3 text-red-600" />
-                    )}
-                    {file.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ),
-        duration: 5000,
-      });
+  // Função para enviar o formulário - memoizada
+  const onSubmit = useCallback(
+    async (values: TemplateFormValues) => {
+      setIsSubmitting(true);
 
-      // Marca que o toast já foi mostrado para esta validação
-      toastShownRef.current = true;
-      // Desabilita novas exibições automáticas até a próxima validação explícita
-      setShouldShowToast(false);
-    }
-  }, [chartInfo, isValidating, validationAttempted, shouldShowToast]);
+      // Executar validação antes de salvar
+      await validateTemplateAuto();
 
-  // Função para validar o template - agora será usada automaticamente quando o caminho mudar
-  const validateTemplateAuto = async () => {
-    if (gitRepositoryId && branch && path) {
-      setValidationAttempted(true);
-      await validateChart(gitRepositoryId, branch, path);
-      await getPreview(gitRepositoryId, branch, path);
-    }
-  };
-
-  // Função para enviar o formulário
-  const onSubmit = async (values: TemplateFormValues) => {
-    setIsSubmitting(true);
-
-    // Limpar timeout se existir
-    if (validationTimeoutRef.current) {
-      clearTimeout(validationTimeoutRef.current);
-    }
-
-    // Habilitar exibição de toast para a validação final
-    setShouldShowToast(true);
-    toastShownRef.current = false;
-
-    // Executar validação antes de salvar
-    await validateTemplateAuto();
-
-    // Só salvar se o template for válido
-    if (chartInfo?.isValid) {
-      try {
-        await createTemplate(values);
-        onCreateSuccess();
-      } catch (error) {
-        console.error('Erro ao criar template:', error);
+      // Só salvar se o template for válido
+      if (chartInfo?.isValid) {
+        try {
+          await createTemplate(values);
+          onCreateSuccess();
+        } catch (error) {
+          console.error('Erro ao criar template:', error);
+          setIsSubmitting(false);
+        }
+      } else {
+        setIsSubmitting(false);
       }
-    } else {
-      setIsSubmitting(false);
+    },
+    [chartInfo?.isValid, createTemplate, onCreateSuccess, setIsSubmitting, validateTemplateAuto]
+  );
+
+  // Memoizando os componentes de status de validação para evitar re-renderizações
+  const validationStatus = useMemo(() => {
+    if (!validationAttempted) {
+      return null;
     }
-  };
+
+    if (isValidating) {
+      return (
+        <div className="flex animate-pulse items-center rounded-md bg-primary/5 px-3 py-1.5 text-foreground/80">
+          <Spinner size="sm" className="mr-2 text-primary" />
+          <span className="text-sm">Validando template...</span>
+        </div>
+      );
+    }
+
+    if (validationError) {
+      return (
+        <div className="flex items-center rounded-md bg-destructive/5 px-3 py-1.5 text-destructive">
+          <AlertCircle className="mr-2 h-4 w-4" />
+          <span className="text-sm">{validationError}</span>
+        </div>
+      );
+    }
+
+    if (chartInfo?.isValid) {
+      return (
+        <div className="flex items-center rounded-md bg-green-50 px-3 py-1.5 text-green-600">
+          <CheckCircle2 className="mr-2 h-4 w-4" />
+          <span className="text-sm">Template válido</span>
+        </div>
+      );
+    }
+
+    if (chartInfo && !chartInfo.isValid) {
+      return (
+        <div className="flex items-center rounded-md bg-destructive/5 px-3 py-1.5 text-destructive">
+          <AlertCircle className="mr-2 h-4 w-4" />
+          <span className="text-sm">Template inválido</span>
+        </div>
+      );
+    }
+
+    return null;
+  }, [validationAttempted, isValidating, validationError, chartInfo]);
+
+  // Classes do botão memoizadas
+  const buttonClasses = useMemo(
+    () =>
+      cn(
+        'relative min-w-[140px] overflow-hidden transition-all',
+        'bg-gradient-to-r from-primary to-primary/90',
+        'hover:from-primary/90 hover:to-primary hover:shadow-md'
+      ),
+    []
+  );
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="relative z-10 space-y-5">
-        {/* Nome do Template com destaque */}
+        {/* Nome do Template */}
         <FormField
           control={form.control}
           name="name"
@@ -258,7 +235,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           )}
         />
 
-        {/* Repositório Git com efeito de hover */}
+        {/* Repositório Git */}
         <FormField
           control={form.control}
           name="gitRepositoryId"
@@ -310,7 +287,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           )}
         />
 
-        {/* Branch com estilização idêntica */}
+        {/* Branch */}
         <FormField
           control={form.control}
           name="branch"
@@ -393,7 +370,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           )}
         />
 
-        {/* Descrição com contador de caracteres e indicação de campo opcional */}
+        {/* Descrição */}
         <FormField
           control={form.control}
           name="description"
@@ -429,41 +406,9 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
 
         {/* Botão de Salvar com indicadores de status */}
         <div className="flex items-center justify-end gap-3">
-          {validationAttempted && (
-            <>
-              {isValidating ? (
-                <div className="flex animate-pulse items-center rounded-md bg-primary/5 px-3 py-1.5 text-foreground/80">
-                  <Spinner size="sm" className="mr-2 text-primary" />
-                  <span className="text-sm">Validando template...</span>
-                </div>
-              ) : validationError ? (
-                <div className="flex items-center rounded-md bg-destructive/5 px-3 py-1.5 text-destructive">
-                  <AlertCircle className="mr-2 h-4 w-4" />
-                  <span className="text-sm">{validationError}</span>
-                </div>
-              ) : chartInfo?.isValid ? (
-                <div className="flex items-center rounded-md bg-green-50 px-3 py-1.5 text-green-600">
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  <span className="text-sm">Template válido</span>
-                </div>
-              ) : chartInfo && !chartInfo.isValid ? (
-                <div className="flex items-center rounded-md bg-destructive/5 px-3 py-1.5 text-destructive">
-                  <AlertCircle className="mr-2 h-4 w-4" />
-                  <span className="text-sm">Template inválido</span>
-                </div>
-              ) : null}
-            </>
-          )}
+          {validationStatus}
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className={cn(
-              'relative min-w-[140px] overflow-hidden transition-all',
-              'bg-gradient-to-r from-primary to-primary/90',
-              'hover:from-primary/90 hover:to-primary hover:shadow-md'
-            )}
-          >
+          <Button type="submit" disabled={isSubmitting} className={buttonClasses}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

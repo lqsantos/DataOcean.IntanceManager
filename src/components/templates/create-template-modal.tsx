@@ -2,6 +2,7 @@
 
 import { BookTemplate, FileSymlink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -12,33 +13,46 @@ import type { CreateTemplateDto } from '@/types/template';
 
 import { CreateTemplateForm } from './create-template-form';
 
-export function CreateTemplateModal() {
+/**
+ * Modal para criação de novos templates.
+ * Implementa melhores práticas com memoização e tipagens rigorosas.
+ */
+export function CreateTemplateModal(): JSX.Element {
   const { isOpen, closeModal } = useCreateTemplateModal();
   const router = useRouter();
   const { createTemplate } = useTemplates();
 
-  const handleCreateSuccess = () => {
+  // Memoizando funções de callback para evitar recriações desnecessárias
+  const handleCreateSuccess = useCallback(() => {
     toast.success('Template criado com sucesso');
     closeModal();
     router.refresh();
-  };
+  }, [closeModal, router]);
 
-  const handleCreateTemplateSubmit = async (values: CreateTemplateDto) => {
-    await createTemplate(values);
-    // Garantindo que retorna void para corresponder à assinatura esperada
-  };
+  const handleCreateTemplateSubmit = useCallback(
+    async (values: CreateTemplateDto): Promise<void> => {
+      await createTemplate(values);
+      // Garantindo que retorna void para corresponder à assinatura esperada
+    },
+    [createTemplate]
+  );
+
+  // Memoizando classes para evitar recalcular a cada renderização
+  const dialogContentClasses = useMemo(
+    () =>
+      cn(
+        'w-[90vw] max-w-2xl',
+        'overflow-visible p-0',
+        'rounded-lg border border-border',
+        'shadow-lg',
+        'duration-200 animate-in fade-in-0 zoom-in-95'
+      ),
+    []
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
-      <DialogContent
-        className={cn(
-          'w-[90vw] max-w-2xl',
-          'overflow-visible p-0',
-          'rounded-lg border border-border',
-          'shadow-lg',
-          'duration-200 animate-in fade-in-0 zoom-in-95'
-        )}
-      >
+      <DialogContent className={dialogContentClasses}>
         {/* Cabeçalho com gradiente e decoração */}
         <div className="relative overflow-hidden border-b border-border">
           {/* Decoração de fundo */}
@@ -66,7 +80,7 @@ export function CreateTemplateModal() {
           </div>
         </div>
 
-        {/* Conteúdo do formulário com elementos decorativos - padding reduzido na parte superior */}
+        {/* Conteúdo do formulário com elementos decorativos */}
         <div className="relative px-6 py-3">
           {/* Ícone decorativo no canto */}
           <div className="absolute -bottom-2 -right-2 opacity-5">
