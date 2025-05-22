@@ -1,12 +1,15 @@
 // components/clusters/clusters-page.tsx
 'use client';
 
-import { EntityPage } from '@/components/entities/entity-page';
-import { useClusters } from '@/hooks/use-clusters';
-import type { Cluster, CreateClusterDto, UpdateClusterDto } from '@/types/cluster';
+import { PlusCircle } from 'lucide-react';
 
-import { ClusterForm } from './cluster-form';
+import { Button } from '@/components/ui/button';
+import { useClusterModal } from '@/contexts/modal-manager-context';
+import { useClusters } from '@/hooks/use-clusters';
+import type { Cluster } from '@/types/cluster';
+
 import { ClustersTable } from './clusters-table';
+import { CreateClusterModal } from './create-cluster-modal';
 
 export function ClustersPage() {
   const {
@@ -20,33 +23,51 @@ export function ClustersPage() {
     deleteCluster,
   } = useClusters();
 
+  const { isOpen, clusterToEdit, openModal, openEditModal, closeModal } = useClusterModal();
+
+  const handleEdit = (cluster: Cluster) => {
+    openEditModal(cluster);
+  };
+
   return (
-    <div data-testid="clusters-container">
-      <EntityPage<Cluster, CreateClusterDto, UpdateClusterDto>
+    <div className="space-y-4" data-testid="clusters-container">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Clusters</h2>
+          <p className="text-muted-foreground">Gerencie seus clusters de infraestrutura</p>
+        </div>
+        <Button onClick={openModal} className="gap-2" data-testid="clusters-page-add-button">
+          <PlusCircle className="h-4 w-4" />
+          Adicionar Cluster
+        </Button>
+      </div>
+
+      {error && (
+        <div
+          className="rounded-md bg-destructive/10 p-4 text-destructive"
+          data-testid="clusters-page-error-alert"
+        >
+          {error}
+        </div>
+      )}
+
+      <ClustersTable
+        clusters={clusters}
         entities={clusters}
         isLoading={isLoading}
         isRefreshing={isRefreshing}
-        error={error}
-        refreshEntities={refreshClusters}
-        createEntity={createCluster}
-        updateEntity={updateCluster}
-        deleteEntity={deleteCluster}
-        EntityTable={ClustersTable}
-        EntityForm={ClusterForm}
-        entityName={{
-          singular: 'Cluster',
-          plural: 'Clusters',
-          description: 'Gerencie seus clusters de infraestrutura',
-        }}
-        testIdPrefix="clusters"
-        tableProps={{
-          clusters,
-          'data-testid': 'clusters-table',
-        }}
-        formProps={{
-          'data-testid': 'cluster-form',
-        }}
-        entityPropName="cluster"
+        onEdit={handleEdit}
+        onDelete={deleteCluster}
+        data-testid="clusters-table"
+      />
+
+      <CreateClusterModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        createCluster={createCluster}
+        updateCluster={updateCluster}
+        clusterToEdit={clusterToEdit}
+        onCreateSuccess={refreshClusters}
       />
     </div>
   );

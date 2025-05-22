@@ -1,12 +1,15 @@
 // components/applications/applications-page.tsx
 'use client';
 
-import { EntityPage } from '@/components/entities/entity-page';
-import { useApplications } from '@/hooks/use-applications';
-import type { Application, CreateApplicationDto, UpdateApplicationDto } from '@/types/application';
+import { PlusCircle } from 'lucide-react';
 
-import { ApplicationForm } from './application-form';
+import { Button } from '@/components/ui/button';
+import { useApplicationModal } from '@/contexts/modal-manager-context';
+import { useApplications } from '@/hooks/use-applications';
+import type { Application } from '@/types/application';
+
 import { ApplicationsTable } from './applications-table';
+import { CreateApplicationModal } from './create-application-modal';
 
 export function ApplicationsPage() {
   const {
@@ -20,33 +23,51 @@ export function ApplicationsPage() {
     deleteApplication,
   } = useApplications();
 
+  const { isOpen, applicationToEdit, openModal, openEditModal, closeModal } = useApplicationModal();
+
+  const handleEdit = (application: Application) => {
+    openEditModal(application);
+  };
+
   return (
-    <div data-testid="applications-container">
-      <EntityPage<Application, CreateApplicationDto, UpdateApplicationDto>
+    <div className="space-y-4" data-testid="applications-container">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Aplicações</h2>
+          <p className="text-muted-foreground">Gerencie suas aplicações</p>
+        </div>
+        <Button onClick={openModal} className="gap-2" data-testid="applications-page-add-button">
+          <PlusCircle className="h-4 w-4" />
+          Adicionar Aplicação
+        </Button>
+      </div>
+
+      {error && (
+        <div
+          className="rounded-md bg-destructive/10 p-4 text-destructive"
+          data-testid="applications-page-error-alert"
+        >
+          {error}
+        </div>
+      )}
+
+      <ApplicationsTable
+        applications={applications}
         entities={applications}
         isLoading={isLoading}
         isRefreshing={isRefreshing}
-        error={error}
-        refreshEntities={refreshApplications}
-        createEntity={createApplication}
-        updateEntity={updateApplication}
-        deleteEntity={deleteApplication}
-        EntityTable={ApplicationsTable}
-        EntityForm={ApplicationForm}
-        entityName={{
-          singular: 'Aplicação',
-          plural: 'Aplicações',
-          description: 'Gerencie suas aplicações',
-        }}
-        testIdPrefix="applications"
-        tableProps={{
-          applications,
-          'data-testid': 'applications-table',
-        }}
-        formProps={{
-          'data-testid': 'application-form',
-        }}
-        entityPropName="application"
+        onEdit={handleEdit}
+        onDelete={deleteApplication}
+        data-testid="applications-table"
+      />
+
+      <CreateApplicationModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        createApplication={createApplication}
+        updateApplication={updateApplication}
+        applicationToEdit={applicationToEdit}
+        onCreateSuccess={refreshApplications}
       />
     </div>
   );

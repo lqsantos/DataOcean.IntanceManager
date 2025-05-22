@@ -1,22 +1,15 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { EyeIcon, EyeOffIcon, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { EyeIcon, EyeOffIcon, Key, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { DialogFooter } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -26,7 +19,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { usePATModal } from '@/contexts/pat-modal-context';
+import { StyledModal } from '@/components/ui/styled-modal';
+// Importando do novo sistema centralizado de modais em vez do contexto antigo
+import { usePATModal } from '@/contexts/modal-manager-context';
 import { PATService } from '@/services/pat-service';
 
 // Schema para validação do token
@@ -40,7 +35,8 @@ const patFormSchema = z.object({
 type PatFormValues = z.infer<typeof patFormSchema>;
 
 export function PATModal() {
-  const { isOpen, close, onConfigured, status } = usePATModal();
+  // Usando o hook do sistema centralizado com métodos padronizados
+  const { isOpen, closeModal, onConfigured, status } = usePATModal();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToken, setShowToken] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +52,7 @@ export function PATModal() {
   // Resetar erros ao abrir o modal
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      close();
+      closeModal();
       form.reset();
       setError(null);
       setShowToken(false);
@@ -84,8 +80,7 @@ export function PATModal() {
       if (onConfigured) {
         onConfigured();
       }
-
-      close();
+      closeModal();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao processar a solicitação');
     } finally {
@@ -94,135 +89,140 @@ export function PATModal() {
   };
 
   // Foco automático no campo de entrada quando o modal é aberto
-  const handleDialogOpen = () => {
-    setTimeout(() => {
-      const inputElement = document.querySelector('input[name="token"]');
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        const inputElement = document.querySelector('input[name="token"]');
 
-      if (inputElement instanceof HTMLInputElement) {
-        inputElement.focus();
-      }
-    }, 100);
+        if (inputElement instanceof HTMLInputElement) {
+          inputElement.focus();
+        }
+      }, 100);
+    }
+  }, [isOpen]);
+
+  // Preparar descrição com data da última atualização, se aplicável
+  const getDescription = () => {
+    const baseDescription = status.configured
+      ? 'Insira um novo token para substituir o atual.'
+      : 'Insira seu token de acesso pessoal para interagir com as APIs.';
+
+    if (status.configured && status.lastUpdated) {
+      return (
+        <>
+          {baseDescription}
+          <p className="mt-1 text-xs text-muted-foreground" data-testid="pat-modal-last-updated">
+            Última atualização: {new Date(status.lastUpdated).toLocaleString()}
+          </p>
+        </>
+      );
+    }
+
+    return baseDescription;
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="sm:max-w-[425px]"
-        data-testid="pat-modal"
-        onOpenAutoFocus={handleDialogOpen}
-      >
-        <DialogHeader data-testid="pat-modal-header">
-          <DialogTitle data-testid="pat-modal-title">
-            {status.configured ? 'Atualizar Token de Acesso' : 'Configurar Token de Acesso'}
-          </DialogTitle>
-          <DialogDescription data-testid="pat-modal-description">
-            {status.configured
-              ? 'Insira um novo token para substituir o atual.'
-              : 'Insira seu token de acesso pessoal para interagir com as APIs.'}
-            {status.configured && status.lastUpdated && (
-              <p
-                className="mt-2 text-xs text-muted-foreground"
-                data-testid="pat-modal-last-updated"
-              >
-                Última atualização: {new Date(status.lastUpdated).toLocaleString()}
-              </p>
-            )}
-          </DialogDescription>
-        </DialogHeader>
+    <StyledModal
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      title={status.configured ? 'Atualizar Token de Acesso' : 'Configurar Token de Acesso'}
+      description={getDescription()}
+      icon={Key}
+      backgroundIcon={Key}
+      testId="pat-modal"
+      maxWidth="md"
+    >
+      {error && (
+        <Alert variant="destructive" className="mb-4" data-testid="pat-modal-error">
+          <AlertDescription data-testid="pat-modal-error-message">{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {error && (
-          <Alert variant="destructive" data-testid="pat-modal-error">
-            <AlertDescription data-testid="pat-modal-error-message">{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-            data-testid="pat-form"
-          >
-            <FormField
-              control={form.control}
-              name="token"
-              render={({ field }) => (
-                <FormItem data-testid="pat-form-item">
-                  <FormLabel data-testid="pat-form-label">Token de Acesso</FormLabel>
-                  <FormControl>
-                    <div className="flex" data-testid="pat-form-field-container">
-                      <div className="relative flex-grow">
-                        <Input
-                          autoFocus
-                          type={showToken ? 'text' : 'password'}
-                          placeholder="Digite seu token"
-                          {...field}
-                          data-testid="pat-form-token"
-                          className="pr-10"
-                          disabled={isSubmitting}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full"
-                          onClick={() => setShowToken(!showToken)}
-                          data-testid="pat-form-toggle-visibility"
-                          aria-label={showToken ? 'Esconder token' : 'Mostrar token'}
-                          disabled={isSubmitting}
-                        >
-                          {showToken ? (
-                            <EyeOffIcon className="h-4 w-4" data-testid="pat-eye-off-icon" />
-                          ) : (
-                            <EyeIcon className="h-4 w-4" data-testid="pat-eye-icon" />
-                          )}
-                          <span className="sr-only">
-                            {showToken ? 'Esconder token' : 'Mostrar token'}
-                          </span>
-                        </Button>
-                      </div>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="space-y-4"
+          data-testid="pat-form"
+        >
+          <FormField
+            control={form.control}
+            name="token"
+            render={({ field }) => (
+              <FormItem data-testid="pat-form-item">
+                <FormLabel data-testid="pat-form-label">Token de Acesso</FormLabel>
+                <FormControl>
+                  <div className="flex" data-testid="pat-form-field-container">
+                    <div className="relative flex-grow">
+                      <Input
+                        autoFocus
+                        type={showToken ? 'text' : 'password'}
+                        placeholder="Digite seu token"
+                        {...field}
+                        data-testid="pat-form-token"
+                        className="pr-10"
+                        disabled={isSubmitting}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full"
+                        onClick={() => setShowToken(!showToken)}
+                        data-testid="pat-form-toggle-visibility"
+                        aria-label={showToken ? 'Esconder token' : 'Mostrar token'}
+                        disabled={isSubmitting}
+                      >
+                        {showToken ? (
+                          <EyeOffIcon className="h-4 w-4" data-testid="pat-eye-off-icon" />
+                        ) : (
+                          <EyeIcon className="h-4 w-4" data-testid="pat-eye-icon" />
+                        )}
+                        <span className="sr-only">
+                          {showToken ? 'Esconder token' : 'Mostrar token'}
+                        </span>
+                      </Button>
                     </div>
-                  </FormControl>
-                  <FormMessage data-testid="pat-form-error-message" />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter data-testid="pat-modal-footer">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={close}
-                disabled={isSubmitting}
-                data-testid="pat-form-cancel"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                data-testid="pat-form-submit"
-                aria-busy={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2
-                      className="mr-2 h-4 w-4 animate-spin"
-                      data-testid="pat-form-loading-spinner"
-                    />
-                    <span data-testid="pat-form-submit-text">
-                      {status.configured ? 'Atualizando...' : 'Configurando...'}
-                    </span>
-                  </>
-                ) : (
+                  </div>
+                </FormControl>
+                <FormMessage data-testid="pat-form-error-message" />
+              </FormItem>
+            )}
+          />
+          <DialogFooter className="mt-6" data-testid="pat-modal-footer">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeModal}
+              disabled={isSubmitting}
+              data-testid="pat-form-cancel"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              data-testid="pat-form-submit"
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2
+                    className="mr-2 h-4 w-4 animate-spin"
+                    data-testid="pat-form-loading-spinner"
+                  />
                   <span data-testid="pat-form-submit-text">
-                    {status.configured ? 'Atualizar' : 'Configurar'}
+                    {status.configured ? 'Atualizando...' : 'Configurando...'}
                   </span>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                </>
+              ) : (
+                <span data-testid="pat-form-submit-text">
+                  {status.configured ? 'Atualizar' : 'Configurar'}
+                </span>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </StyledModal>
   );
 }

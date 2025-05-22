@@ -1,16 +1,7 @@
 // components/environments/delete-environment-dialog.tsx
-import { Loader2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
+import { StyledDeleteDialog } from '@/components/ui/styled-delete-dialog';
 import type { Environment } from '@/types/environment';
 
 interface DeleteEnvironmentDialogProps {
@@ -33,29 +24,24 @@ export function DeleteEnvironmentDialog({
   }
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Environment</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete the{' '}
-            <span className="font-semibold">{environment.name}</span> environment? This action
-            cannot be undone and may affect instances deployed to this environment.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <Button
-            variant="destructive"
-            onClick={onDelete}
-            disabled={isDeleting}
-            data-testid="confirm-delete-button"
-          >
-            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <StyledDeleteDialog
+      open={isOpen}
+      onOpenChange={(open) => !open && onCancel()}
+      title="Excluir Ambiente"
+      itemName={environment.name}
+      description={
+        <>
+          Tem certeza que deseja excluir o ambiente{' '}
+          <span className="font-semibold">{environment.name}</span>? Esta ação não pode ser desfeita
+          e pode afetar instâncias implantadas neste ambiente.
+        </>
+      }
+      onConfirm={onDelete}
+      onCancel={onCancel}
+      isDeleting={isDeleting}
+      icon={Trash2}
+      confirmText="Excluir"
+      testId="delete-environment-dialog"
+    />
   );
 }

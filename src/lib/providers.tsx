@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 
+import { PATModal } from '@/components/pat/pat-modal';
 import { ThemeProvider } from '@/components/theme-provider';
-import { CreateTemplateModalProvider } from '@/contexts/create-template-modal-context';
-import { PATModalProvider } from '@/contexts/pat-modal-context';
+import { ModalManagerProvider } from '@/contexts/modal-manager-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -16,9 +16,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-      <PATModalProvider>
-        <CreateTemplateModalProvider>{children}</CreateTemplateModalProvider>
-      </PATModalProvider>
+      <ModalManagerProvider>
+        {/* Renderizar o PATModal aqui garante que ele está disponível em toda a aplicação */}
+        <PATModal />
+        {children}
+      </ModalManagerProvider>
     </ThemeProvider>
   );
 }

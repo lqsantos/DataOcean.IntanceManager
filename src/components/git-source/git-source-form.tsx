@@ -39,7 +39,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { usePATModal } from '@/contexts/pat-modal-context';
+import { usePATModal } from '@/contexts/modal-manager-context';
 import { useGitSource } from '@/hooks/use-git-source';
 import { usePAT } from '@/hooks/use-pat';
 import { cn } from '@/lib/utils';
@@ -139,7 +139,9 @@ export function GitSourceForm({
 
   // Usar o hook usePAT diretamente para obter o status mais atualizado
   const { status: patStatus, fetchStatus } = usePAT();
-  const { open: openPatModal, isOpen: isPATModalOpen } = usePATModal();
+  // Atualizando para usar métodos padronizados
+  const { openModal: openPatModal, isOpen: isPATModalOpen } = usePATModal();
+  const [patModalOpened, setPatModalOpened] = useState(false);
 
   // Atualizar o formulário dinâmico com base no provider selecionado
   const form = useForm<GitSourceFormData>({
@@ -169,16 +171,18 @@ export function GitSourceForm({
 
   // Monitorar quando o modal PAT é fechado para atualizar o status
   useEffect(() => {
-    if (!isPATModalOpen) {
-      // Quando o modal PAT é fechado, buscar o status atual do PAT
+    if (!isPATModalOpen && patModalOpened) {
+      // Quando o modal PAT é fechado e foi aberto pelo botão, buscar o status atual do PAT
       fetchStatus();
 
       // Resetar o estado de token missing se o usuário configurou o token
       if (patStatus.configured) {
         setTokenMissing(false);
+        toast.success('Token de acesso configurado com sucesso!');
       }
+      setPatModalOpened(false);
     }
-  }, [isPATModalOpen, fetchStatus, patStatus.configured]);
+  }, [isPATModalOpen, fetchStatus, patStatus.configured, patModalOpened]);
 
   // Verificar se o formulário está válido
   const isFormValid = form.formState.isValid;
@@ -212,16 +216,8 @@ export function GitSourceForm({
   };
 
   const handleConfigurePAT = () => {
-    openPatModal();
-
-    // Handle the onConfigured logic separately
-    useEffect(() => {
-      if (!isPATModalOpen && patStatus.configured) {
-        fetchStatus();
-        toast.success('Token de acesso configurado com sucesso!');
-        setTokenMissing(false);
-      }
-    }, [isPATModalOpen, patStatus.configured, fetchStatus]);
+    setPatModalOpened(true);
+    openPatModal(); // Usando o método padronizado
   };
 
   const handleTestConnection = async () => {

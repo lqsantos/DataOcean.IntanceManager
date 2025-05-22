@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { usePATModal } from '@/contexts/pat-modal-context';
+import { usePATModal } from '@/contexts/modal-manager-context';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -24,7 +24,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { setTheme, theme } = useTheme();
-  const { open: openPATModal } = usePATModal();
+  const { openModal } = usePATModal();
 
   return (
     <header
@@ -180,7 +180,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:bg-secondary/50 focus:bg-secondary/50"
-                onClick={openPATModal}
+                onClick={openModal}
                 data-testid="header-pat-option"
               >
                 <Key className="mr-2 h-4 w-4" />
