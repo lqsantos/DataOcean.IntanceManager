@@ -104,7 +104,7 @@ export function TemplatePreviewModal({
   if (!preview || !chartInfo) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[650px]">
+        <DialogContent className="sm:max-w-[650px]" data-testid="template-preview-loading">
           <div className="flex h-[250px] w-full items-center justify-center">
             <Spinner size="md" />
           </div>
@@ -115,9 +115,11 @@ export function TemplatePreviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="sm:max-w-[650px]" data-testid="template-preview-modal">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-base">Pré-visualização do Template</DialogTitle>
+          <DialogTitle className="text-base" data-testid="template-preview-title">
+            Pré-visualização do Template
+          </DialogTitle>
           <DialogDescription className="text-xs">
             {chartInfo.name} v{chartInfo.version}
           </DialogDescription>
@@ -128,31 +130,49 @@ export function TemplatePreviewModal({
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as 'chart' | 'schema' | 'values')}
           className="mt-2"
+          data-testid="template-preview-tabs"
         >
           <TabsList className="h-8 w-full">
-            <TabsTrigger value="chart" className="h-7 flex-1 text-xs">
+            <TabsTrigger
+              value="chart"
+              className="h-7 flex-1 text-xs"
+              data-testid="template-tab-chart"
+            >
               Chart.yaml
             </TabsTrigger>
-            <TabsTrigger value="schema" className="h-7 flex-1 text-xs">
+            <TabsTrigger
+              value="schema"
+              className="h-7 flex-1 text-xs"
+              data-testid="template-tab-schema"
+            >
               Schema
             </TabsTrigger>
-            <TabsTrigger value="values" className="h-7 flex-1 text-xs">
+            <TabsTrigger
+              value="values"
+              className="h-7 flex-1 text-xs"
+              data-testid="template-tab-values"
+            >
               Values
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="chart" className="mt-3">
+          <TabsContent value="chart" className="mt-3" data-testid="template-content-chart">
             {renderChartInfo()}
           </TabsContent>
-          <TabsContent value="schema" className="mt-3">
+          <TabsContent value="schema" className="mt-3" data-testid="template-content-schema">
             {renderSchema()}
           </TabsContent>
-          <TabsContent value="values" className="mt-3">
+          <TabsContent value="values" className="mt-3" data-testid="template-content-values">
             {renderValues()}
           </TabsContent>
         </Tabs>
 
         <DialogFooter className="pt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="h-7 text-xs">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="h-7 text-xs"
+            data-testid="template-preview-close"
+          >
             Fechar
           </Button>
         </DialogFooter>

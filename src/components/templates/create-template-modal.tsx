@@ -52,7 +52,7 @@ export function CreateTemplateModal(): JSX.Element {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
-      <DialogContent className={dialogContentClasses}>
+      <DialogContent className={dialogContentClasses} data-testid="create-template-modal">
         {/* Cabeçalho com gradiente e decoração */}
         <div className="relative overflow-hidden border-b border-border">
           {/* Decoração de fundo */}
@@ -71,7 +71,9 @@ export function CreateTemplateModal(): JSX.Element {
                 <FileSymlink className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-medium">Novo Template</DialogTitle>
+                <DialogTitle className="text-xl font-medium" data-testid="create-template-title">
+                  Novo Template
+                </DialogTitle>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   Para uso em blueprints de aplicação
                 </p>

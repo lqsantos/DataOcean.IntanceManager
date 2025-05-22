@@ -213,7 +213,11 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="relative z-10 space-y-5">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="relative z-10 space-y-5"
+        data-testid="template-create-form"
+      >
         {/* Nome do Template */}
         <FormField
           control={form.control}
@@ -227,6 +231,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                 <Input
                   placeholder="Nome do template"
                   {...field}
+                  data-testid="template-name-input"
                   className="transition-shadow duration-200 focus:border-primary focus:shadow-md"
                 />
               </FormControl>
@@ -248,9 +253,13 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                 onValueChange={field.onChange}
                 defaultValue={field.value}
                 disabled={isLoadingRepos}
+                data-testid="template-repo-select"
               >
                 <FormControl>
-                  <SelectTrigger className="w-full transition-all duration-200 focus:shadow-md group-hover:border-primary/50">
+                  <SelectTrigger
+                    className="w-full transition-all duration-200 focus:shadow-md group-hover:border-primary/50"
+                    data-testid="template-repo-trigger"
+                  >
                     <div className="flex flex-1 items-center">
                       <GitFork className="mr-2 h-4 w-4 text-muted-foreground" />
                       <SelectValue placeholder="Selecione um repositório" />
@@ -275,6 +284,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                         key={repo.id}
                         value={repo.id}
                         className="transition-colors duration-150 hover:bg-primary/5"
+                        data-testid={`repo-option-${repo.id}`}
                       >
                         {repo.name}
                       </SelectItem>
@@ -298,9 +308,13 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                 onValueChange={field.onChange}
                 defaultValue={field.value}
                 disabled={!gitRepositoryId || isLoadingBranches}
+                data-testid="template-branch-select"
               >
                 <FormControl>
-                  <SelectTrigger className="w-full transition-all duration-200 focus:shadow-md group-hover:border-primary/50">
+                  <SelectTrigger
+                    className="w-full transition-all duration-200 focus:shadow-md group-hover:border-primary/50"
+                    data-testid="template-branch-trigger"
+                  >
                     <div className="flex flex-1 items-center">
                       <GitBranch className="mr-2 h-4 w-4 text-muted-foreground" />
                       <SelectValue placeholder="Selecione um branch" />
@@ -358,6 +372,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                   <Input
                     placeholder="charts/app"
                     {...field}
+                    data-testid="template-path-input"
                     className="pl-9 transition-shadow duration-200 focus:border-primary focus:shadow-md"
                   />
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -393,6 +408,7 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
                 <Textarea
                   placeholder="Breve descrição sobre o template..."
                   {...field}
+                  data-testid="template-description-input"
                   className="h-20 resize-none transition-shadow duration-200 focus:border-primary focus:shadow-md"
                 />
               </FormControl>
@@ -406,9 +422,16 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
 
         {/* Botão de Salvar com indicadores de status */}
         <div className="flex items-center justify-end gap-3">
-          {validationStatus}
+          {validationStatus && (
+            <div data-testid="template-validation-status">{validationStatus}</div>
+          )}
 
-          <Button type="submit" disabled={isSubmitting} className={buttonClasses}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className={buttonClasses}
+            data-testid="template-submit-button"
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
