@@ -395,14 +395,19 @@ export function CreateTemplateForm({ onCreateSuccess, createTemplate }: CreateTe
           )}
         />
 
-        {/* Descrição com contador de caracteres */}
+        {/* Descrição com contador de caracteres e indicação de campo opcional */}
         <FormField
           control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
-                <FormLabel className="text-sm font-medium text-foreground/90">Descrição</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormLabel className="text-sm font-medium text-foreground/90">Descrição</FormLabel>
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                    Opcional
+                  </span>
+                </div>
                 <span className="text-xs text-muted-foreground">
                   {field.value?.length || 0} caracteres
                 </span>
