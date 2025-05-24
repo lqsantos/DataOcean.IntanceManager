@@ -1,12 +1,12 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
-import { usePATModal } from '@/contexts/pat-modal-context';
+import { render } from '@/tests/test-utils';
 
 import { Header } from './header';
 
-// Mock para o hook useTheme do next-themes
+// Mock for next-themes useTheme hook
 const mockSetTheme = vi.fn();
 let mockTheme = 'light';
 
@@ -15,114 +15,87 @@ vi.mock('next-themes', () => ({
     theme: mockTheme,
     setTheme: mockSetTheme,
   }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-// Mock para o hook usePATModal
-vi.mock('@/contexts/pat-modal-context', () => ({
-  usePATModal: vi.fn(),
-}));
+// Mock for modal manager context
+vi.mock('@/contexts/modal-manager-context', () => {
+  const mockPATModalOpen = vi.fn();
+  const mockOpenModal = vi.fn();
+  const mockCloseModal = vi.fn();
+  const mockOpenEditModal = vi.fn();
+  const mockSetPatCallback = vi.fn();
 
-// Mock para os componentes de UI que podem ser complexos
-vi.mock('@/components/ui/avatar', () => ({
-  Avatar: ({ children, className, ...props }: any) => (
-    <div data-testid="mocked-avatar" className={className} {...props}>
-      {children}
-    </div>
-  ),
-  AvatarImage: ({ src, alt, ...props }: any) => (
-    <img src={src} alt={alt} data-testid="mocked-avatar-image" {...props} />
-  ),
-  AvatarFallback: ({ children, ...props }: any) => (
-    <div data-testid="mocked-avatar-fallback" {...props}>
-      {children}
-    </div>
-  ),
-}));
-
-// Mock para o dropdown menu - ajustando para manipular o atributo asChild corretamente
-vi.mock('@/components/ui/dropdown-menu', () => {
   return {
-    DropdownMenu: ({ children }: any) => <div data-testid="mocked-dropdown-menu">{children}</div>,
-    DropdownMenuTrigger: ({ children, asChild, ...props }: any) => {
-      // Se asChild for true, retorna o children (que é o Button), caso contrário retorna um wrapper
-      return asChild ? (
-        children
-      ) : (
-        <div data-testid="mocked-dropdown-trigger" {...props}>
-          {children}
-        </div>
-      );
-    },
-    DropdownMenuContent: ({ children, ...props }: any) => (
-      <div data-testid="mocked-dropdown-content" {...props}>
-        {children}
-      </div>
-    ),
-    DropdownMenuItem: ({ children, ...props }: any) => (
-      <div data-testid="mocked-dropdown-item" {...props}>
-        {children}
-      </div>
-    ),
-    DropdownMenuLabel: ({ children, ...props }: any) => (
-      <div data-testid="mocked-dropdown-label" {...props}>
-        {children}
-      </div>
-    ),
-    DropdownMenuSeparator: () => <hr data-testid="mocked-dropdown-separator" />,
+    useModalManager: () => ({
+      modals: {
+        pat: { isOpen: false },
+        environment: { isOpen: false, editItem: null },
+        application: { isOpen: false, editItem: null },
+        cluster: { isOpen: false, editItem: null },
+        location: { isOpen: false, editItem: null },
+        gitSource: { isOpen: false, editItem: null },
+        template: { isOpen: false },
+      },
+      openModal: mockOpenModal,
+      closeModal: mockCloseModal,
+      openEditModal: mockOpenEditModal,
+      setPatCallback: mockSetPatCallback,
+    }),
+    usePATModal: () => ({
+      open: mockPATModalOpen,
+      openModal: mockPATModalOpen,
+      isOpen: false,
+      status: {
+        configured: true,
+        lastUpdated: '2023-06-15T10:30:00Z',
+      },
+    }),
   };
 });
 
+// Mock for UserMenu component
+vi.mock('./user-menu', () => ({
+  UserMenu: () => <div data-testid="user-menu">User Menu</div>,
+}));
+
+// Mock for UI components
+vi.mock('@/components/ui/button', () => ({
+  Button: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} data-testid={props['data-testid'] || 'button'} {...props}>
+      {children}
+    </button>
+  ),
+}));
+
 describe('Header Component', () => {
   const mockOnMenuClick = vi.fn();
-  const mockPATModalOpen = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockTheme = 'light';
-    mockSetTheme.mockClear();
-
-    // Set up the pat modal context mock
-    (usePATModal as jest.Mock).mockReturnValue({
-      open: mockPATModalOpen,
-    });
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  it('should render the component correctly', () => {
+  it('should render correctly', () => {
     render(<Header onMenuClick={mockOnMenuClick} />);
 
-    // Verifica se o container principal está presente
-    expect(screen.getByTestId('header-container')).toBeInTheDocument();
-
-    // Verifica se o botão de menu mobile está presente
-    expect(screen.getByTestId('header-menu-button')).toBeInTheDocument();
-
-    // Verifica se o logo mobile está presente
-    expect(screen.getByTestId('header-logo-mobile')).toBeInTheDocument();
-
-    // Verifica se o formulário de busca está presente
-    expect(screen.getByTestId('header-search-form')).toBeInTheDocument();
-    expect(screen.getByTestId('header-search-input')).toBeInTheDocument();
-
-    // Verifica se o botão de notificações está presente
-    expect(screen.getByTestId('header-notifications-button')).toBeInTheDocument();
-    expect(screen.getByTestId('header-notifications-badge')).toBeInTheDocument();
-    expect(screen.getByTestId('header-notifications-badge')).toHaveTextContent('3');
-
-    // Verifica se o botão de toggle de tema está presente
-    expect(screen.getByTestId('header-theme-toggle')).toBeInTheDocument();
-
-    // Verifica se o botão do menu de usuário está presente
-    expect(screen.getByTestId('header-user-menu-button')).toBeInTheDocument();
+    // Check basic elements
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+    expect(screen.getByTestId('menu-button')).toBeInTheDocument();
+    expect(screen.getByTestId('app-logo')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('pat-status-button')).toBeInTheDocument();
+    expect(screen.getByTestId('user-menu')).toBeInTheDocument();
   });
 
   it('should call onMenuClick when menu button is clicked', () => {
     render(<Header onMenuClick={mockOnMenuClick} />);
 
-    const menuButton = screen.getByTestId('header-menu-button');
+    const menuButton = screen.getByTestId('menu-button');
 
     fireEvent.click(menuButton);
 
@@ -130,116 +103,66 @@ describe('Header Component', () => {
   });
 
   it('should toggle theme when theme button is clicked', () => {
-    // Teste com tema light
-    mockTheme = 'light';
-
     render(<Header onMenuClick={mockOnMenuClick} />);
 
-    const themeButton = screen.getByTestId('header-theme-toggle');
+    const themeButton = screen.getByTestId('theme-toggle');
 
     fireEvent.click(themeButton);
 
-    // Verifica se o setTheme foi chamado com 'dark'
+    // Should set theme to dark
     expect(mockSetTheme).toHaveBeenCalledWith('dark');
+  });
 
-    // Limpa o componente renderizado
-    cleanup();
-    mockSetTheme.mockClear();
-
-    // Muda o tema para 'dark' e testa novamente
+  it('should render sun icon when theme is dark', () => {
     mockTheme = 'dark';
 
     render(<Header onMenuClick={mockOnMenuClick} />);
 
-    const updatedThemeButton = screen.getByTestId('header-theme-toggle');
-
-    fireEvent.click(updatedThemeButton);
-
-    // Verifica se o setTheme foi chamado com 'light'
-    expect(mockSetTheme).toHaveBeenCalledWith('light');
+    // In dark mode, should show sun icon
+    expect(screen.getByTestId('sun-icon')).toBeInTheDocument();
   });
 
-  it('should display notifications correctly', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
-
-    // Verifica o contador de notificações
-    const badge = screen.getByTestId('header-notifications-badge');
-
-    expect(badge).toHaveTextContent('3');
-
-    // Verifica os elementos do dropdown de notificações
-    expect(screen.getByTestId('header-notifications-dropdown')).toBeInTheDocument();
-
-    // Verificamos o título/label do dropdown de notificações
-    const labels = screen.getAllByTestId('mocked-dropdown-label');
-    const notificationLabel = labels.find((label) => label.textContent?.includes('Notifications'));
-
-    expect(notificationLabel).toBeDefined();
-
-    // Verificamos a lista de notificações
-    expect(screen.getByTestId('header-notifications-list')).toBeInTheDocument();
-    expect(screen.getByTestId('header-notification-item-1')).toBeInTheDocument();
-    expect(screen.getByTestId('header-notification-item-2')).toBeInTheDocument();
-    expect(screen.getByTestId('header-notification-item-3')).toBeInTheDocument();
-  });
-
-  it('should display user menu correctly', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
-
-    // Verificamos se os elementos do dropdown do usuário estão presentes
-    expect(screen.getByTestId('header-user-dropdown')).toBeInTheDocument();
-    expect(screen.getByTestId('header-user-name')).toBeInTheDocument();
-    expect(screen.getByTestId('header-user-email')).toBeInTheDocument();
-    expect(screen.getByTestId('header-profile-option')).toBeInTheDocument();
-    expect(screen.getByTestId('header-logout-option')).toBeInTheDocument();
-  });
-
-  it('should render with different theme states', () => {
-    // Teste com tema light
+  it('should render moon icon when theme is light', () => {
     mockTheme = 'light';
-    render(<Header onMenuClick={mockOnMenuClick} />);
-    expect(screen.getByTestId('header-theme-toggle')).toBeInTheDocument();
 
-    // Limpa o componente
-    cleanup();
-
-    // Teste com tema dark
-    mockTheme = 'dark';
     render(<Header onMenuClick={mockOnMenuClick} />);
-    expect(screen.getByTestId('header-theme-toggle')).toBeInTheDocument();
+
+    // In light mode, should show moon icon
+    expect(screen.getByTestId('moon-icon')).toBeInTheDocument();
   });
 
-  it('opens user menu and shows PAT option', async () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
+  it('should open PAT modal when PAT button is clicked', async () => {
+    const { usePATModal } = require('@/contexts/modal-manager-context');
+    const mockOpen = vi.fn();
+
+    // Override the mock to provide a fresh function
+    usePATModal.mockReturnValue({
+      open: mockOpen,
+      openModal: mockOpen,
+      isOpen: false,
+      status: {
+        configured: true,
+        lastUpdated: '2023-06-15T10:30:00Z',
+      },
+    });
 
     const user = userEvent.setup();
-    const userMenuButton = screen.getByTestId('header-user-menu-button');
 
-    // Open the user dropdown
-    await user.click(userMenuButton);
+    render(<Header onMenuClick={mockOnMenuClick} />);
 
-    // Check if PAT option is shown
-    const patOption = screen.getByTestId('header-pat-option');
+    const patButton = screen.getByTestId('pat-status-button');
 
-    expect(patOption).toBeInTheDocument();
-    expect(patOption).toHaveTextContent('Token de Acesso');
+    await user.click(patButton);
+
+    expect(mockOpen).toHaveBeenCalledTimes(1);
   });
 
-  it('opens PAT modal when PAT option is clicked', async () => {
+  it('should display PAT status correctly', () => {
     render(<Header onMenuClick={mockOnMenuClick} />);
 
-    const user = userEvent.setup();
-    const userMenuButton = screen.getByTestId('header-user-menu-button');
+    // PAT status is mocked as configured
+    const patStatus = screen.getByTestId('pat-status');
 
-    // Open the user dropdown
-    await user.click(userMenuButton);
-
-    // Click the PAT option
-    const patOption = screen.getByTestId('header-pat-option');
-
-    await user.click(patOption);
-
-    // Check if the PAT modal open function was called
-    expect(mockPATModalOpen).toHaveBeenCalledTimes(1);
+    expect(patStatus).toHaveTextContent(/configurado/i);
   });
 });

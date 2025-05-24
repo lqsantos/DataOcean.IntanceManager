@@ -1,8 +1,9 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, type Mock } from 'vitest';
 
 import { useLocations } from '@/hooks/use-locations';
+import { render as renderWithWrapper } from '@/tests/test-utils';
 
 import { LocationsPage } from './locations-page';
 
@@ -10,6 +11,40 @@ import { LocationsPage } from './locations-page';
 vi.mock('@/hooks/use-locations', () => ({
   useLocations: vi.fn(),
 }));
+
+// Mock do contexto modal-manager
+vi.mock('@/contexts/modal-manager-context', () => {
+  const mockOpenModal = vi.fn();
+  const mockCloseModal = vi.fn();
+  const mockOpenEditModal = vi.fn();
+  const mockSetPatCallback = vi.fn();
+
+  return {
+    ModalManagerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useModalManager: () => ({
+      modals: {
+        pat: { isOpen: false },
+        environment: { isOpen: false, editItem: null },
+        application: { isOpen: false, editItem: null },
+        cluster: { isOpen: false, editItem: null },
+        location: { isOpen: false, editItem: null },
+        gitSource: { isOpen: false, editItem: null },
+        template: { isOpen: false },
+      },
+      openModal: mockOpenModal,
+      closeModal: mockCloseModal,
+      openEditModal: mockOpenEditModal,
+      setPatCallback: mockSetPatCallback,
+    }),
+    useLocationModal: () => ({
+      isOpen: false,
+      locationToEdit: null,
+      openModal: mockOpenModal,
+      openEditModal: mockOpenEditModal,
+      closeModal: mockCloseModal,
+    }),
+  };
+});
 
 // Mock do componente LocationsTable
 vi.mock('./locations-table', () => ({
@@ -87,7 +122,7 @@ describe('LocationsPage', () => {
   });
 
   it('should render the component correctly', () => {
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     expect(screen.getByTestId('locations-page')).toBeInTheDocument();
     // Verificando pelo texto do título em vez do data-testid
@@ -103,7 +138,7 @@ describe('LocationsPage', () => {
       ...defaultMockState,
       error: 'Erro ao carregar localidades',
     });
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     expect(screen.getByTestId('locations-page-error-alert')).toBeInTheDocument();
     // Verificando pelo texto da mensagem de erro em vez do data-testid específico
@@ -113,7 +148,7 @@ describe('LocationsPage', () => {
   it('should call refreshLocations when refresh button is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     await user.click(screen.getByTestId('locations-page-refresh-button'));
 
@@ -127,7 +162,7 @@ describe('LocationsPage', () => {
       isLoading: true,
     });
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     expect(screen.getByTestId('locations-page-refresh-button')).toBeDisabled();
   });
@@ -139,7 +174,7 @@ describe('LocationsPage', () => {
       isRefreshing: true,
     });
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     expect(screen.getByTestId('locations-page-refresh-button')).toBeDisabled();
   });
@@ -147,7 +182,7 @@ describe('LocationsPage', () => {
   it('should open creation dialog when add button is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     expect(screen.queryByTestId('locations-page-create-dialog')).not.toBeInTheDocument();
 
@@ -162,7 +197,7 @@ describe('LocationsPage', () => {
 
     const user = userEvent.setup();
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     // Open creation dialog
     await user.click(screen.getByTestId('locations-page-add-button'));
@@ -188,7 +223,7 @@ describe('LocationsPage', () => {
 
     const user = userEvent.setup();
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     // Open creation dialog
     await user.click(screen.getByTestId('locations-page-add-button'));
@@ -207,7 +242,7 @@ describe('LocationsPage', () => {
   it('should close creation dialog when Cancel is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     // Open creation dialog
     await user.click(screen.getByTestId('locations-page-add-button'));
@@ -235,7 +270,7 @@ describe('LocationsPage', () => {
       </div>
     ));
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     // Simulate click on edit button in table
     await user.click(screen.getByTestId('mock-edit-button'));
@@ -269,7 +304,7 @@ describe('LocationsPage', () => {
 
     const user = userEvent.setup();
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     // Simulate click on edit button in table
     await user.click(screen.getByTestId('mock-edit-button'));
@@ -302,7 +337,7 @@ describe('LocationsPage', () => {
 
     const user = userEvent.setup();
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     // Simulate click on edit button in table
     await user.click(screen.getByTestId('mock-edit-button'));
@@ -321,7 +356,7 @@ describe('LocationsPage', () => {
   it('should close edit dialog when Cancel is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     // Simulate click on edit button in table
     await user.click(screen.getByTestId('mock-edit-button'));
@@ -353,7 +388,7 @@ describe('LocationsPage', () => {
       </div>
     ));
 
-    render(<LocationsPage />);
+    renderWithWrapper(<LocationsPage />);
 
     // Simulate click on delete button in table
     await user.click(screen.getByTestId('mock-delete-button'));

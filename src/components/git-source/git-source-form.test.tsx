@@ -1,7 +1,8 @@
 // src/components/git-source/git-source-form.test.tsx
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { render } from '@/tests/test-utils';
 import type { GitSource } from '@/types/git-source';
 
 import { GitSourceForm } from './git-source-form';
@@ -28,19 +29,46 @@ vi.mock('@/hooks/use-pat', () => ({
   }),
 }));
 
+// Mock do contexto modal-manager
+vi.mock('@/contexts/modal-manager-context', () => {
+  const mockOpenModal = vi.fn();
+  const mockCloseModal = vi.fn();
+  const mockOpenEditModal = vi.fn();
+  const mockSetPatCallback = vi.fn();
+
+  return {
+    ModalManagerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useModalManager: () => ({
+      modals: {
+        pat: { isOpen: false },
+        environment: { isOpen: false, editItem: null },
+        application: { isOpen: false, editItem: null },
+        cluster: { isOpen: false, editItem: null },
+        location: { isOpen: false, editItem: null },
+        gitSource: { isOpen: false, editItem: null },
+        template: { isOpen: false },
+      },
+      openModal: mockOpenModal,
+      closeModal: mockCloseModal,
+      openEditModal: mockOpenEditModal,
+      setPatCallback: mockSetPatCallback,
+    }),
+    usePATModal: () => ({
+      open: vi.fn(),
+      isOpen: false,
+      status: {
+        configured: true,
+        lastUpdated: '2023-06-15T10:30:00Z',
+      },
+    }),
+  };
+});
+
 // Mock do PATService
 vi.mock('@/services/pat-service', () => ({
   PATService: {
     getToken: vi.fn().mockResolvedValue({ token: 'mock-token-12345' }),
   },
-}));
-
-// Mock do usePATModal context
-vi.mock('@/contexts/pat-modal-context', () => ({
-  usePATModal: () => ({
-    open: vi.fn(),
-    isOpen: false,
-  }),
 }));
 
 // Mock da toast
@@ -219,6 +247,7 @@ vi.mock('lucide-react', () => ({
   XCircle: () => <span data-testid="xcircle-icon" />,
   CheckCircle2: () => <span data-testid="checkcircle-icon" />,
   GitBranchPlus: () => <span data-testid="gitbranchplus-icon" />,
+  XIcon: () => <span data-testid="x-icon" />,
 }));
 
 describe('GitSourceForm', () => {

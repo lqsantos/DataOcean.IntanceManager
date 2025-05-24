@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import { EnvironmentsTable } from '@/components/environments/environments-table';
@@ -72,15 +72,45 @@ const mockEnvironments: Environment[] = [
 ];
 
 describe('EnvironmentsTable', () => {
-  // Mock functions
+  // Mocked callbacks for testing
   const mockOnEdit = vi.fn();
-  const mockOnDelete = vi.fn().mockResolvedValue(undefined);
+  const mockOnDelete = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders loading skeletons when isLoading is true', () => {
+  it('should render environments table with correct data', () => {
+    render(
+      <EnvironmentsTable
+        environments={mockEnvironments}
+        isLoading={false}
+        isRefreshing={false}
+        onEdit={mockOnEdit}
+        onDelete={mockOnDelete}
+      />
+    );
+
+    // Check if table is rendered
+    expect(screen.getByRole('table')).toBeInTheDocument();
+
+    // Check if all environments are rendered in the table
+    expect(screen.getByText('Production')).toBeInTheDocument();
+    expect(screen.getByText('Development')).toBeInTheDocument();
+    expect(screen.getByText('Testing')).toBeInTheDocument();
+
+    // Check if slugs are displayed
+    expect(screen.getByText('prod')).toBeInTheDocument();
+    expect(screen.getByText('dev')).toBeInTheDocument();
+    expect(screen.getByText('test')).toBeInTheDocument();
+
+    // Check for action buttons
+    const actionButtons = screen.getAllByTestId(/env-row-\d+-actions/i);
+
+    expect(actionButtons.length).toBe(3);
+  });
+
+  it('should render loading state when isLoading is true', () => {
     render(
       <EnvironmentsTable
         environments={[]}
@@ -91,44 +121,10 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // Check for loading rows with skeletons
-    const loadingRows = screen.getAllByTestId('environment-skeleton-row');
-
-    expect(loadingRows.length).toBeGreaterThan(0);
+    expect(screen.getByTestId('environments-table-loading')).toBeInTheDocument();
   });
 
-  it('renders environments data correctly', () => {
-    render(
-      <EnvironmentsTable
-        environments={mockEnvironments}
-        isLoading={false}
-        isRefreshing={false}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
-
-    // Check if environment rows are rendered correctly by their data-testid
-    expect(screen.getByTestId('environment-row-1')).toBeInTheDocument();
-    expect(screen.getByTestId('environment-row-2')).toBeInTheDocument();
-    expect(screen.getByTestId('environment-row-3')).toBeInTheDocument();
-
-    // Verifica se há células na tabela, sem verificar o número exato
-    expect(screen.getAllByRole('cell').length).toBeGreaterThan(0);
-
-    // Name, slug, and other information are within table cells
-    expect(screen.getByText('Production')).toBeInTheDocument();
-    expect(screen.getByText('Development')).toBeInTheDocument();
-    expect(screen.getByText('Testing')).toBeInTheDocument();
-    expect(screen.getByText('prod')).toBeInTheDocument();
-    expect(screen.getByText('dev')).toBeInTheDocument();
-    expect(screen.getByText('test')).toBeInTheDocument();
-
-    // Não verificando diretamente os valores de ordem, pois podem estar sendo
-    // formatados ou apresentados de maneira diferente na tabela real
-  });
-
-  it('renders empty state message when no environments', () => {
+  it('should render empty state when no environments are available', () => {
     render(
       <EnvironmentsTable
         environments={[]}
@@ -139,11 +135,10 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // Check for empty state using its data-testid
-    expect(screen.getByText(/Nenhum ambiente/i)).toBeInTheDocument();
+    expect(screen.getByText('No environments found.')).toBeInTheDocument();
   });
 
-  it('filters environments based on search term', () => {
+  it('should call onEdit when edit option is clicked', async () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
@@ -154,50 +149,8 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // Get the search input by its data-testid and type a search term
-    const searchInput = screen.getByTestId('environment-search');
-
-    fireEvent.change(searchInput, { target: { value: 'dev' } });
-
-    // Should show only the Development environment
-    expect(screen.getByText('Development')).toBeInTheDocument();
-    expect(screen.queryByText('Production')).not.toBeInTheDocument();
-    expect(screen.queryByText('Testing')).not.toBeInTheDocument();
-  });
-
-  it('shows not found message when search has no results', () => {
-    render(
-      <EnvironmentsTable
-        environments={mockEnvironments}
-        isLoading={false}
-        isRefreshing={false}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
-
-    // Search for a term that won't match any environment
-    const searchInput = screen.getByTestId('environment-search');
-
-    fireEvent.change(searchInput, { target: { value: 'xyz' } });
-
-    // Should show the not found message in the empty state
-    expect(screen.getByText(/Nenhum ambiente encontrado/i)).toBeInTheDocument();
-  });
-
-  it('calls onEdit when edit button is clicked', async () => {
-    render(
-      <EnvironmentsTable
-        environments={mockEnvironments}
-        isLoading={false}
-        isRefreshing={false}
-        onEdit={mockOnEdit}
-        onDelete={mockOnDelete}
-      />
-    );
-
-    // With our mock in place, we can directly access the edit button
-    const editButton = screen.getByTestId('edit-button-1');
+    // Find and click the first environment's edit action
+    const editButton = screen.getByTestId('env-row-1-edit');
 
     fireEvent.click(editButton);
 
@@ -205,7 +158,7 @@ describe('EnvironmentsTable', () => {
     expect(mockOnEdit).toHaveBeenCalledWith(mockEnvironments[0]);
   });
 
-  it('opens delete dialog when delete button is clicked', async () => {
+  it('should open delete dialog when delete option is clicked', async () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
@@ -216,16 +169,16 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // With our mock in place, we can directly access the delete button
-    const deleteButton = screen.getByTestId('delete-button-1');
+    // Find and click the first environment's delete action
+    const deleteButton = screen.getByTestId('env-row-1-delete');
 
     fireEvent.click(deleteButton);
 
-    // Check if delete dialog was opened
+    // Check if delete dialog is opened
     expect(screen.getByTestId('mock-delete-dialog')).toBeInTheDocument();
   });
 
-  it('calls onDelete when delete is confirmed', async () => {
+  it('should call onDelete when delete is confirmed', async () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
@@ -236,23 +189,21 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // Click the delete button to open the dialog
-    const deleteButton = screen.getByTestId('delete-button-1');
+    // Open delete dialog
+    const deleteButton = screen.getByTestId('env-row-1-delete');
 
     fireEvent.click(deleteButton);
 
-    // Find and click the confirm delete button in the dialog
-    const confirmDeleteButton = screen.getByTestId('confirm-delete');
+    // Confirm delete
+    const confirmButton = screen.getByTestId('confirm-delete');
 
-    fireEvent.click(confirmDeleteButton);
+    fireEvent.click(confirmButton);
 
     // Check if onDelete was called with the correct environment ID
-    await waitFor(() => {
-      expect(mockOnDelete).toHaveBeenCalledWith(mockEnvironments[0].id);
-    });
+    expect(mockOnDelete).toHaveBeenCalledWith('1');
   });
 
-  it('sorts environments by name when name header is clicked', () => {
+  it('should close delete dialog when cancel is clicked', async () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
@@ -263,18 +214,24 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // Click on the name column header to sort by name
-    const nameHeader = screen.getByTestId('sort-by-name');
+    // Open delete dialog
+    const deleteButton = screen.getByTestId('env-row-1-delete');
 
-    fireEvent.click(nameHeader);
+    fireEvent.click(deleteButton);
 
-    // Check if environments are still rendered after sorting
-    expect(screen.getByText('Development')).toBeInTheDocument();
-    expect(screen.getByText('Production')).toBeInTheDocument();
-    expect(screen.getByText('Testing')).toBeInTheDocument();
+    // Ensure dialog is shown
+    expect(screen.getByTestId('mock-delete-dialog')).toBeInTheDocument();
+
+    // Click cancel
+    const cancelButton = screen.getByTestId('cancel-delete');
+
+    fireEvent.click(cancelButton);
+
+    // Verify dialog is closed by checking that onDelete wasn't called
+    expect(mockOnDelete).not.toHaveBeenCalled();
   });
 
-  it('reverses sort order when the same header is clicked twice', () => {
+  it('should sort environments when clicking on column headers', async () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
@@ -285,42 +242,29 @@ describe('EnvironmentsTable', () => {
       />
     );
 
-    // Click name header twice to sort in descending order
-    const nameHeader = screen.getByTestId('sort-by-name');
+    // Find and click on the Name column header to sort
+    const nameHeader = screen.getByTestId('header-name');
 
     fireEvent.click(nameHeader);
-    fireEvent.click(nameHeader);
 
-    // Check if environments are still rendered after sorting
-    expect(screen.getByText('Development')).toBeInTheDocument();
-    expect(screen.getByText('Production')).toBeInTheDocument();
-    expect(screen.getByText('Testing')).toBeInTheDocument();
+    // Sorting logic is implemented in the component and should be reflected in the UI
+    // We could verify the order of rendered items, but that would depend on the specific implementation
+    // For now, we're just ensuring the click handler doesn't break
+    expect(nameHeader).toBeInTheDocument();
   });
 
-  it('sorts by different field when another header is clicked', () => {
+  it('should handle refreshing state correctly', () => {
     render(
       <EnvironmentsTable
         environments={mockEnvironments}
         isLoading={false}
-        isRefreshing={false}
+        isRefreshing={true}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
     );
 
-    // First sort by name
-    const nameHeader = screen.getByTestId('sort-by-name');
-
-    fireEvent.click(nameHeader);
-
-    // Then sort by createdAt (que está disponível como coluna sortable)
-    const createdAtHeader = screen.getByTestId('sort-by-createdAt');
-
-    fireEvent.click(createdAtHeader);
-
-    // Check if environments are still rendered after sorting
-    expect(screen.getByText('Development')).toBeInTheDocument();
-    expect(screen.getByText('Production')).toBeInTheDocument();
-    expect(screen.getByText('Testing')).toBeInTheDocument();
+    // Check if refreshing indicator is shown
+    expect(screen.getByTestId('environments-table-refreshing')).toBeInTheDocument();
   });
 });

@@ -1,9 +1,10 @@
 // src/components/git-source/git-source-page.test.tsx
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { server } from '@/mocks/server';
+import { render as renderWithWrapper } from '@/tests/test-utils';
 
 import { GitSourcePage } from './git-source-page';
 
@@ -34,7 +35,7 @@ describe('GitSourcePage', () => {
       })
     );
 
-    render(<GitSourcePage />);
+    renderWithWrapper(<GitSourcePage />);
 
     // Aguardar o carregamento dos dados
     await waitFor(() => {
@@ -54,7 +55,7 @@ describe('GitSourcePage', () => {
       })
     );
 
-    render(<GitSourcePage />);
+    renderWithWrapper(<GitSourcePage />);
 
     // Aguardar o carregamento dos dados
     await waitFor(() => {
@@ -84,7 +85,7 @@ describe('GitSourcePage', () => {
       })
     );
 
-    render(<GitSourcePage />);
+    renderWithWrapper(<GitSourcePage />);
 
     // Deve mostrar o estado de carregamento
     expect(screen.getByText('Carregando fonte Git...')).toBeInTheDocument();

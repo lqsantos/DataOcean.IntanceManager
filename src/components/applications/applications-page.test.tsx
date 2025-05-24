@@ -1,7 +1,9 @@
 // components/applications/applications-page.test.tsx
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+
+import { render, TestWrapper } from '@/tests/test-utils';
 
 import { ApplicationsPage } from './applications-page';
 
@@ -216,7 +218,7 @@ describe('ApplicationsPage', () => {
   });
 
   it('should render applications page with title and table', () => {
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Verifica o título da página
     expect(screen.getByRole('heading')).toHaveTextContent('Aplicações');
@@ -237,7 +239,7 @@ describe('ApplicationsPage', () => {
   it('should open create dialog when add button is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Clica no botão de adicionar
     const addButton = screen.getByTestId('applications-page-add-button');
@@ -247,7 +249,7 @@ describe('ApplicationsPage', () => {
     // Agora renderiza novamente para atualizar o DOM com o diálogo aberto
     // Isso é necessário porque estamos usando variáveis globais para controlar o estado
     // em vez de um estado React real
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Verifica se o diálogo foi aberto
     const dialog = screen.getByTestId('applications-page-create-dialog');
@@ -264,7 +266,7 @@ describe('ApplicationsPage', () => {
     const user = userEvent.setup();
 
     // Primeiro renderiza com o diálogo de criação fechado
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Clica no botão de adicionar
     const addButton = screen.getByTestId('applications-page-add-button');
@@ -272,7 +274,7 @@ describe('ApplicationsPage', () => {
     await user.click(addButton);
 
     // Agora renderiza novamente para atualizar o DOM com o diálogo aberto
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Submete o formulário
     const submitButton = screen.getByTestId('mock-submit-button');
@@ -290,7 +292,7 @@ describe('ApplicationsPage', () => {
   it('should open edit dialog when table edit action is triggered', async () => {
     const user = userEvent.setup();
 
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Simula a ação de editar da tabela
     const editButton = screen.getByTestId('mock-edit-button');
@@ -298,7 +300,7 @@ describe('ApplicationsPage', () => {
     await user.click(editButton);
 
     // Renderiza novamente para atualizar o DOM com o diálogo aberto
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Verifica se o diálogo foi aberto
     const dialog = screen.getByTestId('applications-page-edit-dialog');
@@ -314,7 +316,7 @@ describe('ApplicationsPage', () => {
   it('should call deleteApplication when delete action is triggered', async () => {
     const user = userEvent.setup();
 
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Simula a ação de excluir da tabela
     const deleteButton = screen.getByTestId('mock-delete-button');
@@ -329,7 +331,7 @@ describe('ApplicationsPage', () => {
   it('should call refreshApplications when refresh button is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Clica no botão de atualizar
     const refreshButton = screen.getByTestId('applications-page-refresh-button');
@@ -344,7 +346,7 @@ describe('ApplicationsPage', () => {
     // Ativa o mock de erro para este teste
     useErrorMock = true;
 
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Verifica se o alerta é exibido
     const alertElement = screen.getByTestId('applications-page-error-alert');
@@ -359,7 +361,7 @@ describe('ApplicationsPage', () => {
   it('should update application when edit form is submitted', async () => {
     const user = userEvent.setup();
 
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Abre o diálogo de edição
     const editButton = screen.getByTestId('mock-edit-button');
@@ -367,7 +369,7 @@ describe('ApplicationsPage', () => {
     await user.click(editButton);
 
     // Renderiza novamente para atualizar o DOM com o diálogo aberto
-    render(<ApplicationsPage />);
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
 
     // Submete o formulário de edição
     const submitButton = screen.getByTestId('mock-submit-button');

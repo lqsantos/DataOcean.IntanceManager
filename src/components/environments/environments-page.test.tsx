@@ -1,9 +1,10 @@
 // components/environments/environments-page.test.tsx
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
 import { useEnvironments } from '@/hooks/use-environments';
+import { render as renderWithWrapper } from '@/tests/test-utils';
 
 import { EnvironmentsPage } from './environments-page';
 
@@ -90,7 +91,7 @@ describe('EnvironmentsPage', () => {
   });
 
   it('renders the environments page correctly', () => {
-    const { container } = render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     expect(screen.getByTestId('environments-page')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ambientes', level: 1 })).toBeInTheDocument();
@@ -115,7 +116,7 @@ describe('EnvironmentsPage', () => {
       deleteEnvironment: mockDeleteEnvironment,
     });
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     expect(screen.getByTestId('environments-page-error-alert')).toBeInTheDocument();
     expect(screen.getByText('Failed to load environments')).toBeInTheDocument();
@@ -133,7 +134,7 @@ describe('EnvironmentsPage', () => {
       deleteEnvironment: mockDeleteEnvironment,
     });
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     expect(screen.getByTestId('environments-page-refresh-button')).toBeDisabled();
   });
@@ -150,7 +151,7 @@ describe('EnvironmentsPage', () => {
       deleteEnvironment: mockDeleteEnvironment,
     });
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     expect(screen.getByTestId('environments-page-refresh-button')).toBeDisabled();
   });
@@ -158,7 +159,7 @@ describe('EnvironmentsPage', () => {
   it('calls refreshEnvironments when refresh button is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     await user.click(screen.getByTestId('environments-page-refresh-button'));
 
@@ -168,7 +169,7 @@ describe('EnvironmentsPage', () => {
   it('opens create dialog when add button is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     expect(screen.queryByTestId('environments-page-create-dialog')).not.toBeInTheDocument();
 
@@ -181,7 +182,7 @@ describe('EnvironmentsPage', () => {
   it('handles form submission for creating an environment', async () => {
     const user = userEvent.setup();
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     // Abrir o diálogo de criação
     await user.click(screen.getByTestId('environments-page-add-button'));
@@ -209,7 +210,7 @@ describe('EnvironmentsPage', () => {
 
     const user = userEvent.setup();
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     // Abrir o diálogo de criação
     await user.click(screen.getByTestId('environments-page-add-button'));
@@ -228,7 +229,7 @@ describe('EnvironmentsPage', () => {
 
     const user = userEvent.setup();
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     // Abrir o diálogo de criação
     await user.click(screen.getByTestId('environments-page-add-button'));
@@ -245,7 +246,7 @@ describe('EnvironmentsPage', () => {
   it('closes create dialog when cancel button is clicked', async () => {
     const user = userEvent.setup();
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     // Abrir o diálogo de criação
     await user.click(screen.getByTestId('environments-page-add-button'));
@@ -285,7 +286,7 @@ describe('EnvironmentsPage', () => {
     const user = userEvent.setup();
 
     // Renderizar o componente
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     // Simular um clique no botão que acionará o callback onEdit
     await user.click(screen.getByTestId('mock-edit-button'));
@@ -343,7 +344,7 @@ describe('EnvironmentsPage', () => {
     const user = userEvent.setup();
 
     // Renderizar o componente
-    const { rerender } = render(<EnvironmentsPage />);
+    const { rerender } = renderWithWrapper(<EnvironmentsPage />);
 
     // Simular o clique no botão de edição para abrir o diálogo
     await user.click(screen.getByTestId('mock-edit-button'));
@@ -422,7 +423,7 @@ describe('EnvironmentsPage', () => {
     const user = userEvent.setup();
 
     // Renderizar o componente
-    const { rerender } = render(<EnvironmentsPage />);
+    const { rerender } = renderWithWrapper(<EnvironmentsPage />);
 
     // Simular o clique no botão de edição para abrir o diálogo
     await user.click(screen.getByTestId('mock-edit-button'));
@@ -459,7 +460,7 @@ describe('EnvironmentsPage', () => {
 
     const user = userEvent.setup();
 
-    render(<EnvironmentsPage />);
+    renderWithWrapper(<EnvironmentsPage />);
 
     // Abrir o diálogo de criação
     await user.click(screen.getByTestId('environments-page-add-button'));

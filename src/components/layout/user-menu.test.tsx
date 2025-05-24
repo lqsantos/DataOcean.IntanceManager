@@ -52,87 +52,68 @@ describe('UserMenu', () => {
     expect(screen.getByTestId('user-menu-button')).toBeInTheDocument();
   });
 
-  it('should display user information when open', () => {
+  it('should render avatar with default fallback', () => {
     render(<UserMenu />);
 
-    // Clica no botão para abrir o dropdown
-    fireEvent.click(screen.getByTestId('user-menu-button'));
-
-    // Como mockamos o DropdownMenuContent para renderizar diretamente,
-    // agora podemos verificar o conteúdo
-    const dropdown = screen.getByTestId('user-menu-dropdown');
-
-    expect(dropdown).toBeInTheDocument();
-
-    // Verifica se os elementos do usuário estão presentes
-    expect(screen.getByTestId('user-menu-username')).toHaveTextContent('Admin User');
-    expect(screen.getByTestId('user-menu-email')).toHaveTextContent('admin@dataocean.io');
-  });
-
-  it('should display navigation options', () => {
-    render(<UserMenu />);
-
-    // Abre o dropdown
-    fireEvent.click(screen.getByTestId('user-menu-button'));
-
-    // Verifica se todos os links estão presentes
-    expect(screen.getByTestId('user-menu-profile-link')).toBeInTheDocument();
-    expect(screen.getByTestId('user-menu-settings-link')).toBeInTheDocument();
-    expect(screen.getByTestId('user-menu-logout-button')).toBeInTheDocument();
-  });
-
-  it('should have correct links for profile and settings', () => {
-    render(<UserMenu />);
-
-    // Abre o dropdown
-    fireEvent.click(screen.getByTestId('user-menu-button'));
-
-    // Verifica URLs dos links
-    expect(screen.getByTestId('user-menu-profile-link')).toHaveAttribute('href', '/profile');
-    expect(screen.getByTestId('user-menu-settings-link')).toHaveAttribute(
-      'href',
-      '/profile/settings'
-    );
-  });
-
-  it('should have clickable logout button', () => {
-    render(<UserMenu />);
-
-    // Abre o dropdown
-    fireEvent.click(screen.getByTestId('user-menu-button'));
-
-    // Verifica se o botão de logout é clicável
-    const logoutButton = screen.getByTestId('user-menu-logout-button');
-
-    expect(logoutButton).toBeInTheDocument();
-    expect(logoutButton).not.toBeDisabled();
-
-    // Verifica se o conteúdo do botão de logout é correto
-    expect(logoutButton).toHaveTextContent('Log out');
-  });
-
-  it('should render avatar correctly', () => {
-    render(<UserMenu />);
-
-    // Verifica se o avatar está sendo renderizado através do data-testid
+    // Verifica se o avatar está presente
     expect(screen.getByTestId('avatar')).toBeInTheDocument();
-    expect(screen.getByTestId('avatar')).toHaveClass('h-8 w-8 ring-2 ring-primary/20');
 
-    // Verifica se a imagem do avatar tem o src e alt corretos
-    const avatarImage = screen.getByTestId('avatar-image');
-
-    expect(avatarImage).toBeInTheDocument();
-    expect(avatarImage).toHaveAttribute(
-      'src',
-      'https://ui-avatars.com/api/?name=User&background=random'
-    );
-    expect(avatarImage).toHaveAttribute('alt', 'User');
-
-    // Verifica se o fallback do avatar está presente com o conteúdo correto
+    // Verifica se o fallback do avatar está presente com as iniciais padrão
     const avatarFallback = screen.getByTestId('avatar-fallback');
 
     expect(avatarFallback).toBeInTheDocument();
-    expect(avatarFallback).toHaveClass('gradient-blue');
-    expect(avatarFallback).toHaveTextContent('DO');
+    expect(avatarFallback).toHaveTextContent('US');
+  });
+
+  it('should show dropdown menu when clicked', () => {
+    render(<UserMenu />);
+
+    // Clica no botão do menu do usuário
+    const userMenuButton = screen.getByTestId('user-menu-button');
+
+    fireEvent.click(userMenuButton);
+
+    // Verifica se o dropdown do menu foi renderizado
+    expect(screen.getByTestId('user-menu-dropdown')).toBeInTheDocument();
+  });
+
+  it('should contain profile section in the dropdown', () => {
+    render(<UserMenu />);
+
+    // Clica no botão do menu do usuário
+    const userMenuButton = screen.getByTestId('user-menu-button');
+
+    fireEvent.click(userMenuButton);
+
+    // Verifica se o nome do usuário está presente
+    expect(screen.getByText('User')).toBeInTheDocument();
+
+    // Verifica se o email do usuário está presente
+    expect(screen.getByText('user@example.com')).toBeInTheDocument();
+  });
+
+  it('should contain settings options in the dropdown', () => {
+    render(<UserMenu />);
+
+    // Clica no botão do menu do usuário
+    const userMenuButton = screen.getByTestId('user-menu-button');
+
+    fireEvent.click(userMenuButton);
+
+    // Verifica se as opções de configuração estão presentes
+    expect(screen.getByText('Configurações')).toBeInTheDocument();
+    expect(screen.getByText('Perfil')).toBeInTheDocument();
+  });
+
+  it('should contain logout option in the dropdown', () => {
+    render(<UserMenu />);
+
+    // Clica no botão do menu do usuário
+    const userMenuButton = screen.getByTestId('user-menu-button');
+
+    fireEvent.click(userMenuButton);
+
+    // Verifica se a opção de logout está presente
+    expect(screen.getByText('Sair')).toBeInTheDocument();
   });
 });

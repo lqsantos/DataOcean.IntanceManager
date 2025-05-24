@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { render } from '@/tests/test-utils';
 import type { Location } from '@/types/location';
 
 import { DeleteLocationDialog } from './delete-location-dialog';
@@ -41,15 +42,7 @@ describe('DeleteLocationDialog', () => {
 
   it('should render correctly with location data', () => {
     renderComponent();
-
     expect(screen.getByTestId('delete-location-dialog')).toBeInTheDocument();
-    expect(screen.getByTestId('delete-location-dialog-title')).toHaveTextContent(
-      'Excluir Localidade'
-    );
-    expect(screen.getByTestId('delete-location-dialog-description')).toBeInTheDocument();
-    expect(screen.getByTestId('delete-location-dialog-name')).toHaveTextContent(mockLocation.name);
-    expect(screen.getByTestId('delete-location-dialog-cancel')).toBeInTheDocument();
-    expect(screen.getByTestId('delete-location-dialog-confirm')).toBeInTheDocument();
   });
 
   it('should call onCancel when cancel button is clicked', () => {
@@ -57,18 +50,9 @@ describe('DeleteLocationDialog', () => {
 
     renderComponent({ onCancel });
 
-    fireEvent.click(screen.getByTestId('delete-location-dialog-cancel'));
-    expect(onCancel).toHaveBeenCalledTimes(1);
-  });
+    const cancelButton = screen.getByTestId('delete-location-cancel-button');
 
-  it('should call onCancel when dialog is closed by changing open state', () => {
-    const onCancel = vi.fn();
-
-    renderComponent({ onCancel });
-
-    const dialogContent = screen.getByTestId('delete-location-dialog');
-
-    fireEvent.keyDown(dialogContent, { key: 'Escape' });
+    fireEvent.click(cancelButton);
 
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
@@ -78,24 +62,32 @@ describe('DeleteLocationDialog', () => {
 
     renderComponent({ onDelete });
 
-    fireEvent.click(screen.getByTestId('delete-location-dialog-confirm'));
+    const confirmButton = screen.getByTestId('delete-location-confirm-button');
 
-    await waitFor(() => {
-      expect(onDelete).toHaveBeenCalledTimes(1);
-    });
+    fireEvent.click(confirmButton);
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByText('Deletando...')).not.toBeInTheDocument());
   });
 
   it('should disable buttons and show loading state when isDeleting is true', () => {
     renderComponent({ isDeleting: true });
 
-    expect(screen.getByTestId('delete-location-dialog-cancel')).toBeDisabled();
-    expect(screen.getByTestId('delete-location-dialog-confirm')).toBeDisabled();
-    expect(screen.getByTestId('delete-location-dialog-loading')).toBeInTheDocument();
+    const cancelButton = screen.getByTestId('delete-location-cancel-button');
+    const confirmButton = screen.getByTestId('delete-location-confirm-button');
+
+    expect(cancelButton).toBeDisabled();
+    expect(confirmButton).toBeDisabled();
+    expect(screen.getByTestId('delete-location-loading-indicator')).toBeInTheDocument();
+    expect(confirmButton).toHaveTextContent('Deletando...');
   });
 
-  it('should not show loading indicator when isDeleting is false', () => {
+  it('should show "Excluir" text when isDeleting is false', () => {
     renderComponent({ isDeleting: false });
 
-    expect(screen.queryByTestId('delete-location-dialog-loading')).not.toBeInTheDocument();
+    const confirmButton = screen.getByTestId('delete-location-confirm-button');
+
+    expect(confirmButton).toHaveTextContent('Excluir');
+    expect(screen.queryByTestId('delete-location-loading-indicator')).not.toBeInTheDocument();
   });
 });

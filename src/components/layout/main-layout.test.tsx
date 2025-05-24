@@ -1,188 +1,202 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import { usePathname } from 'next/navigation';
+import { fireEvent, screen } from '@testing-library/react';
+import { vi } from 'vitest';
 
-import { Header } from './header';
+import { render as renderWithWrapper, TestWrapper } from '@/tests/test-utils';
+
 import { MainLayout } from './main-layout';
-import { Sidebar } from './sidebar';
 
-// Mock das dependências
-vi.mock('next/navigation', () => ({
-  usePathname: vi.fn(),
-}));
-
+// Mock dos componentes filhos
 vi.mock('./header', () => ({
-  Header: vi.fn(({ onMenuClick }) => (
-    <div data-testid="header-mock">
-      <button data-testid="menu-button" onClick={onMenuClick}>
+  Header: ({ onMenuClick }: any) => (
+    <header data-testid="mock-header">
+      <button data-testid="mock-header-button" onClick={onMenuClick}>
         Toggle Menu
       </button>
-    </div>
-  )),
+    </header>
+  ),
 }));
 
 vi.mock('./sidebar', () => ({
-  Sidebar: vi.fn(({ open, onClose }) => (
-    <div data-testid="sidebar-mock" className={open ? 'visible' : 'hidden'}>
-      <button data-testid="close-sidebar-button" onClick={onClose}>
+  Sidebar: ({ isOpen, onClose }: any) => (
+    <aside data-testid="mock-sidebar" data-is-open={isOpen ? 'true' : 'false'}>
+      <button data-testid="mock-sidebar-close-button" onClick={onClose}>
         Close Sidebar
       </button>
-    </div>
-  )),
+    </aside>
+  ),
+}));
+
+// Mock para useMediaQuery
+vi.mock('react-responsive', () => ({
+  useMediaQuery: vi.fn().mockReturnValue(true), // Default to desktop view
+}));
+
+// Mock para useRouter
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    pathname: '/',
+  }),
+  usePathname: () => '/',
 }));
 
 describe('MainLayout', () => {
   beforeEach(() => {
-    // Reset mocks
     vi.clearAllMocks();
-
-    // Default mock implementation
-    (usePathname as any).mockReturnValue('/');
-
-    // Mock window.innerWidth
-    Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      configurable: true,
-      value: 1024, // Desktop por padrão
-    });
-  });
-
-  afterEach(() => {
-    vi.resetAllMocks();
   });
 
   it('should render the layout with all components', () => {
-    render(
+    renderWithWrapper(
       <MainLayout>
-        <div data-testid="test-children">Test Content</div>
+        <div data-testid="mock-children">Test Content</div>
       </MainLayout>
     );
 
+    // Verificar se todos os componentes principais estão presentes
     expect(screen.getByTestId('main-layout-container')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-header')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-sidebar')).toBeInTheDocument();
     expect(screen.getByTestId('main-layout-content')).toBeInTheDocument();
-    expect(screen.getByTestId('main-layout-main')).toBeInTheDocument();
-    expect(screen.getByTestId('main-layout-children-container')).toBeInTheDocument();
-    expect(screen.getByTestId('header-mock')).toBeInTheDocument();
-    expect(screen.getByTestId('sidebar-mock')).toBeInTheDocument();
-    expect(screen.getByTestId('test-children')).toBeInTheDocument();
+    expect(screen.getByTestId('mock-children')).toBeInTheDocument();
+    expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
   it('should toggle sidebar when menu button is clicked', () => {
-    render(
+    renderWithWrapper(
       <MainLayout>
         <div>Test Content</div>
       </MainLayout>
     );
 
-    const menuButton = screen.getByTestId('menu-button');
+    // Initially, sidebar should be closed on desktop
+    const sidebar = screen.getByTestId('mock-sidebar');
 
-    // Verify sidebar is open by default (on desktop)
-    expect(screen.getByTestId('sidebar-mock')).toHaveClass('visible');
+    expect(sidebar).toHaveAttribute('data-is-open', 'false');
 
-    // Click menu button to close sidebar
-    fireEvent.click(menuButton);
-    expect(screen.getByTestId('sidebar-mock')).toHaveClass('hidden');
+    // Click the header button to toggle sidebar
+    const headerButton = screen.getByTestId('mock-header-button');
 
-    // Click again to open sidebar
-    fireEvent.click(menuButton);
-    expect(screen.getByTestId('sidebar-mock')).toHaveClass('visible');
+    fireEvent.click(headerButton);
+
+    // Sidebar should now be open
+    expect(sidebar).toHaveAttribute('data-is-open', 'true');
+
+    // Click again to close
+    fireEvent.click(headerButton);
+
+    // Sidebar should now be closed again
+    expect(sidebar).toHaveAttribute('data-is-open', 'false');
   });
 
   it('should close sidebar when close button is clicked', () => {
-    render(
+    renderWithWrapper(
       <MainLayout>
         <div>Test Content</div>
       </MainLayout>
     );
 
-    const closeButton = screen.getByTestId('close-sidebar-button');
+    // First, open the sidebar
+    const headerButton = screen.getByTestId('mock-header-button');
 
-    // Verify sidebar is open by default (on desktop)
-    expect(screen.getByTestId('sidebar-mock')).toHaveClass('visible');
+    fireEvent.click(headerButton);
 
-    // Click close button
+    const sidebar = screen.getByTestId('mock-sidebar');
+
+    expect(sidebar).toHaveAttribute('data-is-open', 'true');
+
+    // Now close it using the sidebar close button
+    const closeButton = screen.getByTestId('mock-sidebar-close-button');
+
     fireEvent.click(closeButton);
-    expect(screen.getByTestId('sidebar-mock')).toHaveClass('hidden');
+
+    // Sidebar should be closed
+    expect(sidebar).toHaveAttribute('data-is-open', 'false');
   });
 
   it('should start with sidebar closed on mobile devices', () => {
-    // Set window width to mobile size
-    Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      configurable: true,
-      value: 640, // Mobile width
-    });
+    // Mock useMediaQuery to return false (mobile view)
+    const { useMediaQuery } = require('react-responsive');
 
-    render(
+    useMediaQuery.mockReturnValue(false);
+
+    renderWithWrapper(
       <MainLayout>
         <div>Test Content</div>
       </MainLayout>
     );
 
-    // Force useEffect to run
-    act(() => {
-      // Trigger the useEffect
-    });
+    // Sidebar should be closed by default on mobile
+    const sidebar = screen.getByTestId('mock-sidebar');
 
-    // Verify sidebar is closed on mobile
-    expect(screen.getByTestId('sidebar-mock')).toHaveClass('hidden');
+    expect(sidebar).toHaveAttribute('data-is-open', 'false');
   });
 
   it('should close sidebar when route changes on mobile', () => {
-    // Set window width to mobile size
-    Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      configurable: true,
-      value: 640, // Mobile width
-    });
+    // Mock useMediaQuery to return false (mobile view)
+    const { useMediaQuery } = require('react-responsive');
 
-    const pathname = vi.fn();
+    useMediaQuery.mockReturnValue(false);
 
-    (usePathname as any).mockImplementation(() => pathname);
+    // Get the mocked router
+    const { usePathname } = vi.requireMock('next/navigation');
+    let pathnameMock = '/';
 
-    const { rerender } = render(
+    vi.mocked(usePathname).mockImplementation(() => pathnameMock);
+
+    const { rerender } = renderWithWrapper(
       <MainLayout>
         <div>Test Content</div>
       </MainLayout>
     );
 
-    // Change route
-    pathname.mockReturnValue('/new-route');
+    // Open the sidebar
+    const headerButton = screen.getByTestId('mock-header-button');
 
+    fireEvent.click(headerButton);
+
+    const sidebar = screen.getByTestId('mock-sidebar');
+
+    expect(sidebar).toHaveAttribute('data-is-open', 'true');
+
+    // Change the route
+    pathnameMock = '/new-route';
+
+    // Re-render with the new route
     rerender(
-      <MainLayout>
-        <div>New Route Content</div>
-      </MainLayout>
+      <TestWrapper>
+        <MainLayout>
+          <div>New Content</div>
+        </MainLayout>
+      </TestWrapper>
     );
 
-    // Trigger useEffect for pathname change
-    act(() => {
-      // Simulate the effect of changing routes
-    });
-
-    // Verify sidebar is closed after route change on mobile
-    expect(screen.getByTestId('sidebar-mock')).toHaveClass('hidden');
+    // Sidebar should be closed due to route change
+    expect(sidebar).toHaveAttribute('data-is-open', 'false');
   });
 
   it('should always pass the correct props to the Header and Sidebar components', () => {
-    render(
+    renderWithWrapper(
       <MainLayout>
         <div>Test Content</div>
       </MainLayout>
     );
 
-    // Verificar se Header foi chamado com uma função onMenuClick
-    expect(Header).toHaveBeenCalled();
-    const headerCall = (Header as any).mock.calls[0][0];
+    // Check if Header and Sidebar are rendered with the correct props via their mocked behaviors
+    const header = screen.getByTestId('mock-header');
+    const sidebar = screen.getByTestId('mock-sidebar');
 
-    expect(headerCall).toHaveProperty('onMenuClick');
-    expect(typeof headerCall.onMenuClick).toBe('function');
+    expect(header).toBeInTheDocument();
+    expect(sidebar).toBeInTheDocument();
+    expect(sidebar).toHaveAttribute('data-is-open', 'false');
 
-    // Verificar se Sidebar foi chamado com as props corretas
-    expect(Sidebar).toHaveBeenCalled();
-    const sidebarCall = (Sidebar as any).mock.calls[0][0];
+    // Test that props are correctly passed by checking the behavior
+    const headerButton = screen.getByTestId('mock-header-button');
 
-    expect(sidebarCall).toHaveProperty('open', true);
-    expect(sidebarCall).toHaveProperty('onClose');
-    expect(typeof sidebarCall.onClose).toBe('function');
+    fireEvent.click(headerButton);
+
+    // Check if the sidebar state changed based on the header button click
+    expect(sidebar).toHaveAttribute('data-is-open', 'true');
   });
 });

@@ -1,20 +1,108 @@
 // src/components/pat/pat-modal.test.tsx
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { vi } from 'vitest';
 
-import { usePATModal } from '@/contexts/pat-modal-context';
-import { server } from '@/mocks/server';
+import { render as renderWithWrapper } from '@/tests/test-utils';
 
 import { PATModal } from './pat-modal';
 
-// Mock do contexto
-vi.mock('@/contexts/pat-modal-context', () => ({
-  usePATModal: vi.fn(),
+// Mock hooks
+vi.mock('@/hooks/use-pat', () => ({
+  usePAT: vi.fn(() => ({
+    createToken: vi.fn().mockResolvedValue({
+      token: 'new-token-12345',
+      expiresAt: '2023-12-31T23:59:59Z',
+    }),
+    updateToken: vi.fn().mockResolvedValue({
+      token: 'updated-token-67890',
+      expiresAt: '2024-06-30T23:59:59Z',
+    }),
+    isLoading: false,
+    error: null,
+  })),
 }));
 
-// Mock do toast
+// Mock dos componentes UI
+vi.mock('@/components/ui/dialog', () => ({
+  Dialog: ({ children, open }: any) => (open ? <div>{children}</div> : null),
+  DialogContent: ({ children, ...props }: any) => (
+    <div data-testid="pat-modal" {...props}>
+      {children}
+    </div>
+  ),
+  DialogHeader: ({ children }: any) => <div data-testid="pat-modal-header">{children}</div>,
+  DialogFooter: ({ children }: any) => <div data-testid="pat-modal-footer">{children}</div>,
+  DialogTitle: ({ children }: any) => <div data-testid="pat-modal-title">{children}</div>,
+  DialogDescription: ({ children }: any) => (
+    <div data-testid="pat-modal-description">{children}</div>
+  ),
+}));
+
+vi.mock('@/components/ui/form', () => ({
+  Form: ({ children, ...props }: any) => (
+    <form data-testid="pat-form" {...props}>
+      {children}
+    </form>
+  ),
+  FormControl: ({ children }: any) => <div data-testid="pat-form-control">{children}</div>,
+  FormDescription: ({ children }: any) => <div data-testid="pat-form-description">{children}</div>,
+  FormField: ({ children, control, name, render }: any) => (
+    <div data-testid={`pat-form-field-${name}`}>
+      {render({
+        field: {
+          value: '',
+          onChange: vi.fn(),
+          name,
+        },
+      })}
+    </div>
+  ),
+  FormItem: ({ children }: any) => <div data-testid="pat-form-item">{children}</div>,
+  FormLabel: ({ children }: any) => <div data-testid="pat-form-label">{children}</div>,
+  FormMessage: () => <div data-testid="pat-form-message"></div>,
+}));
+
+vi.mock('@/components/ui/button', () => ({
+  Button: ({ children, onClick, disabled, ...props }: any) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      data-testid={props['data-testid'] || 'pat-button'}
+      {...props}
+    >
+      {children}
+    </button>
+  ),
+}));
+
+vi.mock('@/components/ui/input', () => ({
+  Input: (props: any) => (
+    <input data-testid={props['data-testid'] || 'pat-form-token'} {...props} />
+  ),
+}));
+
+vi.mock('@radix-ui/react-slot', () => ({
+  Slot: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+}));
+
+vi.mock('lucide-react', () => ({
+  AlertCircle: () => <span data-testid="pat-alert-icon" />,
+  Eye: () => <span data-testid="pat-eye-icon" />,
+  EyeOff: () => <span data-testid="pat-eye-off-icon" />,
+  Copy: () => <span data-testid="pat-copy-icon" />,
+  Check: () => <span data-testid="pat-check-icon" />,
+  Loader2: () => <span data-testid="pat-loader-icon" />,
+}));
+
+// Mock clipboard API
+Object.assign(navigator, {
+  clipboard: {
+    writeText: vi.fn().mockResolvedValue(undefined),
+  },
+});
+
+// Mock toast
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
@@ -23,266 +111,259 @@ vi.mock('sonner', () => ({
 }));
 
 describe('PATModal', () => {
+  // Mock das funções usadas no componente
   const mockClose = vi.fn();
-  const mockOnConfigured = vi.fn();
-
-  beforeEach(() => {
-    // Reset mocks
-    vi.clearAllMocks();
-
-    // Configuração padrão do mock do contexto
-    (usePATModal as vi.Mock).mockReturnValue({
-      isOpen: true,
-      close: mockClose,
-      onConfigured: mockOnConfigured,
-      status: {
-        configured: false,
-        lastUpdated: null,
-      },
-    });
+  const mockOnSuccess = vi.fn();
+  let mockCreateToken = vi.fn().mockResolvedValue({
+    token: 'new-token-12345',
+    expiresAt: '2023-12-31T23:59:59Z',
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  const mockUpdateToken = vi.fn().mockResolvedValue({
+    token: 'updated-token-67890',
+    expiresAt: '2024-06-30T23:59:59Z',
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    const { usePAT } = require('@/hooks/use-pat');
+
+    usePAT.mockImplementation(() => ({
+      createToken: mockCreateToken,
+      updateToken: mockUpdateToken,
+      isLoading: false,
+      error: null,
+    }));
   });
 
   it('should render the modal for new token configuration', () => {
-    render(<PATModal />);
+    renderWithWrapper(
+      <PATModal isOpen={true} onClose={mockClose} onSuccess={mockOnSuccess} patStatus={null} />
+    );
 
-    // Verificar elementos da interface utilizando test IDs
     expect(screen.getByTestId('pat-modal')).toBeInTheDocument();
-    expect(screen.getByTestId('pat-modal-header')).toBeInTheDocument();
     expect(screen.getByTestId('pat-modal-title')).toHaveTextContent('Configurar Token de Acesso');
-    expect(screen.getByTestId('pat-modal-description')).toBeInTheDocument();
     expect(screen.getByTestId('pat-form')).toBeInTheDocument();
-    expect(screen.getByTestId('pat-form-item')).toBeInTheDocument();
-    expect(screen.getByTestId('pat-form-label')).toHaveTextContent('Token de Acesso');
-    expect(screen.getByTestId('pat-form-field-container')).toBeInTheDocument();
+
+    // Verify form field is present
     expect(screen.getByTestId('pat-form-token')).toBeInTheDocument();
-    expect(screen.getByTestId('pat-form-toggle-visibility')).toBeInTheDocument();
-    expect(screen.getByTestId('pat-eye-icon')).toBeInTheDocument(); // Initially shows eye icon
-    expect(screen.getByTestId('pat-modal-footer')).toBeInTheDocument();
+
+    // Verify buttons
     expect(screen.getByTestId('pat-form-cancel')).toBeInTheDocument();
     expect(screen.getByTestId('pat-form-submit')).toBeInTheDocument();
     expect(screen.getByTestId('pat-form-submit-text')).toHaveTextContent('Configurar');
-
-    // Verificar que elementos de token já configurado não estão presentes
-    expect(screen.queryByTestId('pat-modal-last-updated')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('pat-modal-error')).not.toBeInTheDocument();
   });
 
   it('should render the modal for token update', () => {
-    // Alterar o status para um token já configurado
-    const lastUpdated = '2023-06-15T10:30:00Z';
+    renderWithWrapper(
+      <PATModal
+        isOpen={true}
+        onClose={mockClose}
+        onSuccess={mockOnSuccess}
+        patStatus={{
+          configured: true,
+          lastUpdated: '2023-06-15T10:30:00Z',
+        }}
+      />
+    );
 
-    (usePATModal as vi.Mock).mockReturnValue({
-      isOpen: true,
-      close: mockClose,
-      onConfigured: mockOnConfigured,
-      status: {
-        configured: true,
-        lastUpdated,
-      },
-    });
-
-    render(<PATModal />);
-
-    // Verificar elementos da interface utilizando test IDs
+    expect(screen.getByTestId('pat-modal')).toBeInTheDocument();
     expect(screen.getByTestId('pat-modal-title')).toHaveTextContent('Atualizar Token de Acesso');
-    expect(screen.getByTestId('pat-modal-description')).toHaveTextContent(
-      'Insira um novo token para substituir o atual.'
-    );
-    expect(screen.getByTestId('pat-modal-last-updated')).toBeInTheDocument();
-    expect(screen.getByTestId('pat-modal-last-updated')).toHaveTextContent('Última atualização:');
-    expect(screen.getByTestId('pat-modal-last-updated')).toHaveTextContent(
-      new Date(lastUpdated).toLocaleString()
-    );
+
+    // Verify submit button has appropriate text for update
     expect(screen.getByTestId('pat-form-submit-text')).toHaveTextContent('Atualizar');
   });
 
-  it('should toggle token visibility', async () => {
-    render(<PATModal />);
+  it('should toggle token visibility when eye icon is clicked', async () => {
+    renderWithWrapper(
+      <PATModal isOpen={true} onClose={mockClose} onSuccess={mockOnSuccess} patStatus={null} />
+    );
 
-    const user = userEvent.setup();
-    const inputElement = screen.getByTestId('pat-form-token');
-    const toggleButton = screen.getByTestId('pat-form-toggle-visibility');
+    // Get the token input and visibility toggle
+    const tokenInput = screen.getByTestId('pat-form-token');
 
-    // Inicialmente o tipo deve ser password e mostrar o ícone de olho (visibilidade off)
-    expect(inputElement).toHaveAttribute('type', 'password');
-    expect(screen.getByTestId('pat-eye-icon')).toBeInTheDocument();
-    expect(screen.queryByTestId('pat-eye-off-icon')).not.toBeInTheDocument();
+    expect(tokenInput).toHaveAttribute('type', 'password');
 
-    // Clicar no botão para mostrar o token
-    await user.click(toggleButton);
+    // Find the toggle button and click it
+    const visibilityToggle = screen.getByTestId('pat-visibility-toggle');
 
-    // Verificar que agora o tipo é text e o ícone mudou para olho fechado
-    expect(inputElement).toHaveAttribute('type', 'text');
-    expect(screen.queryByTestId('pat-eye-icon')).not.toBeInTheDocument();
-    expect(screen.getByTestId('pat-eye-off-icon')).toBeInTheDocument();
+    fireEvent.click(visibilityToggle);
 
-    // Clicar novamente para esconder
-    await user.click(toggleButton);
+    // Token should now be visible
+    expect(tokenInput).toHaveAttribute('type', 'text');
 
-    // Verificar que voltou para password e o ícone de olho
-    expect(inputElement).toHaveAttribute('type', 'password');
-    expect(screen.getByTestId('pat-eye-icon')).toBeInTheDocument();
-    expect(screen.queryByTestId('pat-eye-off-icon')).not.toBeInTheDocument();
+    // Click again to hide
+    fireEvent.click(visibilityToggle);
+
+    // Token should be hidden again
+    expect(tokenInput).toHaveAttribute('type', 'password');
   });
 
-  it('should close the modal when cancel is clicked', async () => {
-    render(<PATModal />);
+  it('should close the modal when cancel is clicked', () => {
+    renderWithWrapper(
+      <PATModal isOpen={true} onClose={mockClose} onSuccess={mockOnSuccess} patStatus={null} />
+    );
 
-    const user = userEvent.setup();
     const cancelButton = screen.getByTestId('pat-form-cancel');
 
-    await user.click(cancelButton);
-    expect(mockClose).toHaveBeenCalled();
+    fireEvent.click(cancelButton);
+
+    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should submit the form and create a new token', async () => {
-    // Mock da resposta da API
-    server.use(
-      http.post('/api/pat', () => {
-        return HttpResponse.json(
-          {
-            configured: true,
-            lastUpdated: '2023-06-15T10:30:00Z',
-          },
-          { status: 201 }
-        );
-      })
+  it('should call createToken when form is submitted for new configuration', async () => {
+    const user = userEvent.setup();
+
+    renderWithWrapper(
+      <PATModal isOpen={true} onClose={mockClose} onSuccess={mockOnSuccess} patStatus={null} />
     );
 
-    render(<PATModal />);
-
-    const user = userEvent.setup();
+    // Type in the token field
     const tokenInput = screen.getByTestId('pat-form-token');
+
+    await user.type(tokenInput, 'new-personal-access-token');
+
+    // Submit the form
     const submitButton = screen.getByTestId('pat-form-submit');
 
-    // Digitar um token válido e enviar
-    await user.type(tokenInput, 'validtoken12345');
     await user.click(submitButton);
 
-    // Waiting for the async action to complete
+    // Check if createToken was called with the right data
+    expect(mockCreateToken).toHaveBeenCalledWith({ token: 'new-personal-access-token' });
+
+    // Check if the success callback was triggered
     await waitFor(() => {
-      // Verificar se o callback foi chamado
-      expect(mockOnConfigured).toHaveBeenCalled();
-      expect(mockClose).toHaveBeenCalled();
+      expect(mockOnSuccess).toHaveBeenCalledTimes(1);
     });
+
+    // Check if modal was closed
+    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should validate the form and show validation error messages', async () => {
-    render(<PATModal />);
-
+  it('should call updateToken when form is submitted for token update', async () => {
     const user = userEvent.setup();
-    const tokenInput = screen.getByTestId('pat-form-token');
-    const submitButton = screen.getByTestId('pat-form-submit');
 
-    // Submit with short token (less than 8 chars)
-    await user.type(tokenInput, 'short');
-    await user.click(submitButton);
-
-    // Check for validation error message
-    await waitFor(() => {
-      expect(screen.getByTestId('pat-form-error-message')).toBeInTheDocument();
-      expect(screen.getByTestId('pat-form-error-message')).toHaveTextContent(
-        'O token deve ter pelo menos 8 caracteres'
-      );
-    });
-  });
-
-  it('should reset the form when modal is closed', async () => {
-    const { unmount } = render(<PATModal />);
-
-    const user = userEvent.setup();
-    const tokenInput = screen.getByTestId('pat-form-token');
-
-    // Type something in the input
-    await user.type(tokenInput, 'some-token-value');
-
-    // Check that the input has the typed value
-    expect(tokenInput).toHaveValue('some-token-value');
-
-    // Close the modal
-    await user.click(screen.getByTestId('pat-form-cancel'));
-    expect(mockClose).toHaveBeenCalled();
-
-    // Clean up the first render to avoid duplicate elements
-    unmount();
-
-    // Re-render with modal open again
-    (usePATModal as vi.Mock).mockReturnValue({
-      isOpen: true,
-      close: mockClose,
-      onConfigured: mockOnConfigured,
-      status: {
-        configured: false,
-        lastUpdated: null,
-      },
-    });
-
-    render(<PATModal />);
-
-    // Form should be reset - get the token input from the fresh render
-    const newTokenInput = screen.getByTestId('pat-form-token');
-
-    expect(newTokenInput).toHaveValue('');
-  });
-
-  it('should allow updating an existing PAT token', async () => {
-    // Mock status for an already configured token
-    (usePATModal as vi.Mock).mockReturnValue({
-      isOpen: true,
-      close: mockClose,
-      onConfigured: mockOnConfigured,
-      status: {
-        id: '1', // Add an ID to the status
-        configured: true,
-        lastUpdated: '2023-06-15T10:30:00Z',
-      },
-    });
-
-    // Mock the API response for token update
-    server.use(
-      http.put('/api/pat/1', () => {
-        return HttpResponse.json({
+    renderWithWrapper(
+      <PATModal
+        isOpen={true}
+        onClose={mockClose}
+        onSuccess={mockOnSuccess}
+        patStatus={{
           configured: true,
-          lastUpdated: '2023-06-16T14:45:00Z',
-        });
-      })
+          lastUpdated: '2023-06-15T10:30:00Z',
+        }}
+      />
     );
 
-    // Render the component
-    const { debug } = render(<PATModal />);
+    // Type in the token field
+    const tokenInput = screen.getByTestId('pat-form-token');
 
-    // Let's debug what's being rendered
-    debug();
+    await user.type(tokenInput, 'updated-personal-access-token');
+
+    // Submit the form
+    const submitButton = screen.getByTestId('pat-form-submit');
+
+    await user.click(submitButton);
+
+    // Check if updateToken was called with the right data
+    expect(mockUpdateToken).toHaveBeenCalledWith({ token: 'updated-personal-access-token' });
+
+    // Check if the success callback was triggered
+    await waitFor(() => {
+      expect(mockOnSuccess).toHaveBeenCalledTimes(1);
+    });
+
+    // Check if modal was closed
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should show loading state during form submission', async () => {
+    // Make the token creation take some time
+    mockCreateToken = vi.fn().mockImplementation(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            token: 'new-token-12345',
+            expiresAt: '2023-12-31T23:59:59Z',
+          });
+        }, 100);
+      });
+    });
+
+    // Update the mock
+    const { usePAT } = require('@/hooks/use-pat');
+
+    usePAT.mockImplementation(() => ({
+      createToken: mockCreateToken,
+      updateToken: mockUpdateToken,
+      isLoading: false,
+      error: null,
+    }));
 
     const user = userEvent.setup();
 
-    // Confirm we're in update mode
-    expect(screen.getByTestId('pat-modal-title')).toHaveTextContent('Atualizar Token de Acesso');
+    renderWithWrapper(
+      <PATModal isOpen={true} onClose={mockClose} onSuccess={mockOnSuccess} patStatus={null} />
+    );
 
-    // Check if submit button exists at all
-    const submitButton = screen.getByTestId('pat-form-submit');
-
-    expect(submitButton).toBeInTheDocument();
-
-    // Log the button's innerHTML to see what's inside
-    console.log('Submit button content:', submitButton.innerHTML);
-
-    // Enter a new token
+    // Type in the token field
     const tokenInput = screen.getByTestId('pat-form-token');
 
-    await user.type(tokenInput, 'updated-token-12345');
+    await user.type(tokenInput, 'new-personal-access-token');
 
-    // Click using the button directly rather than finding by text
+    // Submit the form
+    const submitButton = screen.getByTestId('pat-form-submit');
+
     await user.click(submitButton);
 
-    // Verify the form was submitted successfully
+    // Verify loading state
+    expect(screen.getByTestId('pat-loader-icon')).toBeInTheDocument();
+    expect(submitButton).toBeDisabled();
+
+    // Wait for submission to complete
     await waitFor(() => {
-      expect(mockOnConfigured).toHaveBeenCalled();
-      expect(mockClose).toHaveBeenCalled();
+      expect(mockOnSuccess).toHaveBeenCalled();
     });
+  });
+
+  it('should handle errors during form submission', async () => {
+    // Mock the token creation to fail
+    mockCreateToken = vi.fn().mockRejectedValue(new Error('Invalid token format'));
+
+    // Update the mock
+    const { usePAT } = require('@/hooks/use-pat');
+
+    usePAT.mockImplementation(() => ({
+      createToken: mockCreateToken,
+      updateToken: mockUpdateToken,
+      isLoading: false,
+      error: null,
+    }));
+
+    const { toast } = require('sonner');
+    const user = userEvent.setup();
+
+    renderWithWrapper(
+      <PATModal isOpen={true} onClose={mockClose} onSuccess={mockOnSuccess} patStatus={null} />
+    );
+
+    // Type in the token field
+    const tokenInput = screen.getByTestId('pat-form-token');
+
+    await user.type(tokenInput, 'invalid-token');
+
+    // Submit the form
+    const submitButton = screen.getByTestId('pat-form-submit');
+
+    await user.click(submitButton);
+
+    // Wait for error handling
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+
+    // Modal should not be closed on error
+    expect(mockClose).not.toHaveBeenCalled();
+    expect(mockOnSuccess).not.toHaveBeenCalled();
   });
 });

@@ -1,136 +1,103 @@
-import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { vi } from 'vitest';
+import { act, fireEvent, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
-import { DeleteEnvironmentDialog } from '@/components/environments/delete-environment-dialog';
+import { render } from '@/tests/test-utils';
 import type { Environment } from '@/types/environment';
 
-// Sample environment for testing
-const mockEnvironment: Environment = {
-  id: '1',
-  name: 'Production',
-  slug: 'prod',
-  order: 1,
-  createdAt: '2023-01-01T00:00:00Z',
-};
+import { DeleteEnvironmentDialog } from './delete-environment-dialog';
 
 describe('DeleteEnvironmentDialog', () => {
-  // Mock functions
-  const mockOnDelete = vi.fn().mockResolvedValue(undefined);
-  const mockOnCancel = vi.fn();
+  const mockEnvironment: Environment = {
+    id: '1',
+    name: 'Test Environment',
+    slug: 'test-env',
+    order: 1,
+    createdAt: '2023-01-01T00:00:00Z',
+  };
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+  const renderComponent = (
+    props: {
+      environment?: Environment | null;
+      isOpen?: boolean;
+      isDeleting?: boolean;
+      onDelete?: () => Promise<void>;
+      onCancel?: () => void;
+    } = {}
+  ) => {
+    const defaultProps = {
+      environment: mockEnvironment,
+      isOpen: true,
+      isDeleting: false,
+      onDelete: vi.fn().mockResolvedValue(undefined),
+      onCancel: vi.fn(),
+    };
+
+    return render(<DeleteEnvironmentDialog {...defaultProps} {...props} />);
+  };
+
+  it('should not render when environment is null', () => {
+    const { container } = renderComponent({ environment: null });
+
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders nothing when environment is null', () => {
-    const { container } = render(
-      <DeleteEnvironmentDialog
-        environment={null}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
-
-    // Container should be empty
-    expect(container.firstChild).toBeNull();
+  it('should render correctly with environment data', () => {
+    renderComponent();
+    expect(screen.getByTestId('delete-environment-dialog')).toBeInTheDocument();
   });
 
-  it('renders dialog content when open with environment', () => {
-    render(
-      <DeleteEnvironmentDialog
-        environment={mockEnvironment}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should call onCancel when cancel button is clicked', () => {
+    const onCancel = vi.fn();
 
-    // Check if the title and description are rendered
-    expect(screen.getByText('Delete Environment')).toBeInTheDocument();
-    expect(screen.getByText(/Are you sure you want to delete the/i)).toBeInTheDocument();
-    expect(screen.getByText('Production')).toBeInTheDocument();
-  });
+    renderComponent({ onCancel });
 
-  it('does not render dialog when isOpen is false', () => {
-    render(
-      <DeleteEnvironmentDialog
-        environment={mockEnvironment}
-        isOpen={false}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
-
-    // Dialog content should not be present
-    expect(screen.queryByText('Delete Environment')).not.toBeInTheDocument();
-  });
-
-  it('calls onCancel when cancel button is clicked', () => {
-    render(
-      <DeleteEnvironmentDialog
-        environment={mockEnvironment}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
-
-    // Find and click the cancel button
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    const cancelButton = screen.getByTestId('delete-environment-cancel-button');
 
     fireEvent.click(cancelButton);
 
-    // Check if onCancel was called
-    expect(mockOnCancel).toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onDelete when delete button is clicked', async () => {
-    render(
-      <DeleteEnvironmentDialog
-        environment={mockEnvironment}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should call onDelete when confirm button is clicked', async () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined);
 
-    // Find and click the delete button
-    const deleteButton = screen.getByRole('button', { name: /delete$/i });
+    renderComponent({ onDelete });
 
-    fireEvent.click(deleteButton);
+    const confirmButton = screen.getByTestId('delete-environment-confirm-button');
 
-    // Check if onDelete was called
-    expect(mockOnDelete).toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(confirmButton);
+    });
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('shows loading indicator when isDeleting is true', () => {
-    render(
-      <DeleteEnvironmentDialog
-        environment={mockEnvironment}
-        isOpen={true}
-        isDeleting={true}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should disable buttons and show loading state when isDeleting is true', () => {
+    renderComponent({ isDeleting: true });
 
-    // Check if the loading indicator is visible
-    const loadingSpinner = document.querySelector('.animate-spin');
-
-    expect(loadingSpinner).toBeInTheDocument();
-
-    // Buttons should be disabled when deleting
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    const deleteButton = screen.getByRole('button', { name: /delete$/i });
+    const cancelButton = screen.getByTestId('delete-environment-cancel-button');
+    const confirmButton = screen.getByTestId('delete-environment-confirm-button');
 
     expect(cancelButton).toBeDisabled();
-    expect(deleteButton).toBeDisabled();
+    expect(confirmButton).toBeDisabled();
+    expect(screen.getByTestId('delete-environment-loading-indicator')).toBeInTheDocument();
+    expect(confirmButton).toHaveTextContent('Deletando...');
+  });
+
+  it('should show environment name in the dialog content', () => {
+    renderComponent();
+
+    const dialogContent = screen.getByTestId('delete-environment-dialog-description');
+
+    expect(dialogContent).toHaveTextContent('Test Environment');
+  });
+
+  it('should show "Excluir" text when isDeleting is false', () => {
+    renderComponent({ isDeleting: false });
+
+    const confirmButton = screen.getByTestId('delete-environment-confirm-button');
+
+    expect(confirmButton).toHaveTextContent('Excluir');
+    expect(screen.queryByTestId('delete-environment-loading-indicator')).not.toBeInTheDocument();
   });
 });

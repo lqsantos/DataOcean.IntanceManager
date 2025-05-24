@@ -1,187 +1,110 @@
-// components/applications/delete-application-dialog.test.tsx
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+
+import { render } from '@/tests/test-utils';
+import type { Application } from '@/types/application';
 
 import { DeleteApplicationDialog } from './delete-application-dialog';
 
-// Mock do Dialog usando uma implementação mais completa
-vi.mock('@/components/ui/dialog', () => ({
-  Dialog: ({ open, children }: any) => (open ? <div>{children}</div> : null),
-  DialogContent: ({ children, ...props }: any) => (
-    <div data-testid="delete-application-dialog" {...props}>
-      {children}
-    </div>
-  ),
-  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
-  DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
-  DialogTitle: ({ children }: any) => <div data-testid="dialog-title">{children}</div>,
-  DialogDescription: ({ children }: any) => <div data-testid="dialog-description">{children}</div>,
-}));
-
-// Mock do Button
-vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, variant, disabled, ...props }: any) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      data-variant={variant}
-      data-testid={props['data-testid'] || 'button'}
-      {...props}
-    >
-      {children}
-    </button>
-  ),
-}));
-
 describe('DeleteApplicationDialog', () => {
-  const mockApplication = {
+  const mockApplication: Application = {
     id: '1',
     name: 'Test Application',
     slug: 'test-app',
-    description: 'A test application',
+    description: 'This is a test application',
     createdAt: '2023-01-01T00:00:00Z',
     updatedAt: '2023-01-01T00:00:00Z',
   };
 
-  const mockOnDelete = vi.fn();
-  const mockOnCancel = vi.fn();
+  const renderComponent = (
+    props: {
+      application?: Application | null;
+      isOpen?: boolean;
+      isDeleting?: boolean;
+      onDelete?: () => Promise<void>;
+      onCancel?: () => void;
+    } = {}
+  ) => {
+    const defaultProps = {
+      application: mockApplication,
+      isOpen: true,
+      isDeleting: false,
+      onDelete: vi.fn().mockResolvedValue(undefined),
+      onCancel: vi.fn(),
+    };
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+    return render(<DeleteApplicationDialog {...defaultProps} {...props} />);
+  };
+
+  it('should not render when application is null', () => {
+    const { container } = renderComponent({ application: null });
+
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('should not render if application is null', () => {
-    render(
-      <DeleteApplicationDialog
-        application={null}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
-
-    expect(screen.queryByTestId('delete-application-dialog')).not.toBeInTheDocument();
-  });
-
-  it('should render dialog with application name when open', () => {
-    render(
-      <DeleteApplicationDialog
-        application={mockApplication}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
-
-    // Testando a presença dos elementos do diálogo usando o data-testid correto
+  it('should render correctly with application data', () => {
+    renderComponent();
     expect(screen.getByTestId('delete-application-dialog')).toBeInTheDocument();
-    expect(screen.getByTestId('dialog-title')).toHaveTextContent('Excluir Aplicação');
-    expect(screen.getByTestId('dialog-description')).toContainHTML(
-      'Tem certeza que deseja excluir a aplicação <strong>Test Application</strong>?'
-    );
+    expect(screen.getByText('Excluir Aplicação')).toBeInTheDocument();
   });
 
-  it('should not render dialog when closed', () => {
-    render(
-      <DeleteApplicationDialog
-        application={mockApplication}
-        isOpen={false}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should display the application name in the description', () => {
+    renderComponent();
+    const dialogContent = screen.getByTestId('delete-application-dialog-description');
 
-    expect(screen.queryByTestId('delete-application-dialog')).not.toBeInTheDocument();
+    expect(dialogContent).toHaveTextContent('Test Application');
   });
 
-  it('should call onCancel when cancel button is clicked', async () => {
-    render(
-      <DeleteApplicationDialog
-        application={mockApplication}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should call onCancel when cancel button is clicked', () => {
+    const onCancel = vi.fn();
+
+    renderComponent({ onCancel });
 
     const cancelButton = screen.getByTestId('delete-application-cancel-button');
 
-    await act(async () => {
-      fireEvent.click(cancelButton);
-    });
+    fireEvent.click(cancelButton);
 
-    expect(mockOnCancel).toHaveBeenCalledTimes(1);
-    expect(mockOnDelete).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onDelete when delete button is clicked', async () => {
-    render(
-      <DeleteApplicationDialog
-        application={mockApplication}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should call onDelete when confirm button is clicked', async () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined);
 
-    const deleteButton = screen.getByTestId('delete-application-confirm-button');
+    renderComponent({ onDelete });
+
+    const confirmButton = screen.getByTestId('delete-application-confirm-button');
 
     await act(async () => {
-      fireEvent.click(deleteButton);
+      fireEvent.click(confirmButton);
     });
 
-    expect(mockOnDelete).toHaveBeenCalledTimes(1);
-    expect(mockOnCancel).not.toHaveBeenCalled();
+    expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('should disable buttons when deleting', () => {
-    render(
-      <DeleteApplicationDialog
-        application={mockApplication}
-        isOpen={true}
-        isDeleting={true}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should disable buttons and show loading state when isDeleting is true', () => {
+    renderComponent({ isDeleting: true });
 
     const cancelButton = screen.getByTestId('delete-application-cancel-button');
-    const deleteButton = screen.getByTestId('delete-application-confirm-button');
+    const confirmButton = screen.getByTestId('delete-application-confirm-button');
 
     expect(cancelButton).toBeDisabled();
-    expect(deleteButton).toBeDisabled();
+    expect(confirmButton).toBeDisabled();
+    expect(screen.getByTestId('delete-application-loading-indicator')).toBeInTheDocument();
+    expect(confirmButton).toHaveTextContent('Deletando...');
   });
 
-  it('should show loading state when deleting', () => {
-    render(
-      <DeleteApplicationDialog
-        application={mockApplication}
-        isOpen={true}
-        isDeleting={true}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should show "Excluir" text when isDeleting is false', () => {
+    renderComponent({ isDeleting: false });
 
-    expect(screen.getByText('Excluindo...')).toBeInTheDocument();
+    const confirmButton = screen.getByTestId('delete-application-confirm-button');
+
+    expect(confirmButton).toHaveTextContent('Excluir');
+    expect(screen.queryByTestId('delete-application-loading-indicator')).not.toBeInTheDocument();
   });
 
-  it('should show normal text when not deleting', () => {
-    render(
-      <DeleteApplicationDialog
-        application={mockApplication}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={mockOnDelete}
-        onCancel={mockOnCancel}
-      />
-    );
+  it('should not show dialog when isOpen is false', () => {
+    const { container } = renderComponent({ isOpen: false });
 
-    expect(screen.getByText('Excluir')).toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 });

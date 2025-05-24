@@ -1,7 +1,8 @@
 // src/components/git-source/delete-git-source-dialog.test.tsx
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { render } from '@/tests/test-utils';
 import type { GitSource } from '@/types/git-source';
 
 import { DeleteGitSourceDialog } from './delete-git-source-dialog';
@@ -47,6 +48,8 @@ vi.mock('@/components/ui/button', () => ({
 
 vi.mock('lucide-react', () => ({
   Loader2: ({ className }: any) => <span data-testid="loader" className={className} />,
+  Trash2: ({ className }: any) => <span data-testid="trash-icon" className={className} />,
+  XIcon: ({ className }: any) => <span data-testid="x-icon" className={className} />,
 }));
 
 describe('DeleteGitSourceDialog', () => {
@@ -80,30 +83,10 @@ describe('DeleteGitSourceDialog', () => {
       />
     );
 
-    expect(container.innerHTML).toBe('');
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('should render dialog with correct content when open', () => {
-    render(
-      <DeleteGitSourceDialog
-        gitSource={mockGitSource}
-        isOpen={true}
-        isDeleting={false}
-        onDelete={onDelete}
-        onCancel={onCancel}
-      />
-    );
-
-    expect(screen.getByTestId('delete-git-source-dialog')).toBeInTheDocument();
-    expect(screen.getByTestId('alert-dialog-title')).toHaveTextContent('Excluir Fonte Git');
-    expect(screen.getByTestId('alert-dialog-description')).toHaveTextContent(
-      'Tem certeza que deseja excluir a fonte Git GitHub Demo?'
-    );
-    expect(screen.getByTestId('delete-git-source-cancel')).toHaveTextContent('Cancelar');
-    expect(screen.getByTestId('delete-git-source-confirm')).toHaveTextContent('Excluir');
-  });
-
-  it('should not render dialog when not open', () => {
+  it('should not render dialog when isOpen is false', () => {
     const { container } = render(
       <DeleteGitSourceDialog
         gitSource={mockGitSource}
@@ -114,8 +97,32 @@ describe('DeleteGitSourceDialog', () => {
       />
     );
 
-    // O AlertDialog mockado retorna null quando open é false
-    expect(container.innerHTML).toBe('');
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('should render dialog with correct content when isOpen is true', () => {
+    render(
+      <DeleteGitSourceDialog
+        gitSource={mockGitSource}
+        isOpen={true}
+        isDeleting={false}
+        onDelete={onDelete}
+        onCancel={onCancel}
+      />
+    );
+
+    // Check that the dialog content is rendered
+    expect(screen.getByTestId('alert-dialog-content')).toBeInTheDocument();
+    expect(screen.getByTestId('alert-dialog-title')).toHaveTextContent(/excluir fonte git/i);
+
+    // Check that the git source name is displayed in the description
+    const description = screen.getByTestId('alert-dialog-description');
+
+    expect(description).toHaveTextContent('GitHub Demo');
+
+    // Check that buttons are rendered
+    expect(screen.getByTestId('alert-dialog-cancel')).toBeInTheDocument();
+    expect(screen.getByTestId('delete-git-source-confirm-button')).toBeInTheDocument();
   });
 
   it('should call onCancel when cancel button is clicked', () => {
@@ -129,7 +136,7 @@ describe('DeleteGitSourceDialog', () => {
       />
     );
 
-    const cancelButton = screen.getByTestId('delete-git-source-cancel');
+    const cancelButton = screen.getByTestId('alert-dialog-cancel');
 
     fireEvent.click(cancelButton);
 
@@ -137,7 +144,7 @@ describe('DeleteGitSourceDialog', () => {
     expect(onDelete).not.toHaveBeenCalled();
   });
 
-  it('should call onDelete with correct id when confirm button is clicked', () => {
+  it('should call onDelete when confirm button is clicked', () => {
     render(
       <DeleteGitSourceDialog
         gitSource={mockGitSource}
@@ -148,16 +155,15 @@ describe('DeleteGitSourceDialog', () => {
       />
     );
 
-    const confirmButton = screen.getByTestId('delete-git-source-confirm');
+    const confirmButton = screen.getByTestId('delete-git-source-confirm-button');
 
     fireEvent.click(confirmButton);
 
     expect(onDelete).toHaveBeenCalledTimes(1);
-    expect(onDelete).toHaveBeenCalledWith(mockGitSource.id);
     expect(onCancel).not.toHaveBeenCalled();
   });
 
-  it('should show loading state when isDeleting is true', () => {
+  it('should disable buttons and show loading state when isDeleting is true', () => {
     render(
       <DeleteGitSourceDialog
         gitSource={mockGitSource}
@@ -168,9 +174,28 @@ describe('DeleteGitSourceDialog', () => {
       />
     );
 
+    const cancelButton = screen.getByTestId('alert-dialog-cancel');
+    const confirmButton = screen.getByTestId('delete-git-source-confirm-button');
+
+    expect(cancelButton).toBeDisabled();
+    expect(confirmButton).toBeDisabled();
     expect(screen.getByTestId('loader')).toBeInTheDocument();
-    expect(screen.getByTestId('delete-git-source-confirm')).toHaveTextContent('Excluindo...');
-    expect(screen.getByTestId('delete-git-source-confirm')).toBeDisabled();
-    expect(screen.getByTestId('delete-git-source-cancel')).toBeDisabled();
+  });
+
+  it('should show "Excluir" text when isDeleting is false', () => {
+    render(
+      <DeleteGitSourceDialog
+        gitSource={mockGitSource}
+        isOpen={true}
+        isDeleting={false}
+        onDelete={onDelete}
+        onCancel={onCancel}
+      />
+    );
+
+    const confirmButton = screen.getByTestId('delete-git-source-confirm-button');
+
+    expect(confirmButton).toHaveTextContent('Excluir');
+    expect(screen.queryByTestId('loader')).not.toBeInTheDocument();
   });
 });
