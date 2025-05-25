@@ -1,21 +1,17 @@
 // components/environments/environments-page.tsx
 'use client';
 
-import { PlusCircle, RefreshCw } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { Layers } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { GenericEntityModal } from '@/components/entities/generic-entity-modal';
+import { GenericEntityPage } from '@/components/entities/generic-entity-page';
 import { useEnvironmentModal } from '@/contexts/modal-manager-context';
 import { useEnvironments } from '@/hooks/use-environments';
-import type { Environment } from '@/types/environment';
 
-import { CreateEnvironmentModal } from './create-environment-modal';
+import { EnvironmentForm } from './environment-form';
 import { EnvironmentsTable } from './environments-table';
 
 export function EnvironmentsPage() {
-  const pathname = usePathname();
-  const isInSettings = pathname.includes('/settings');
-
   const {
     environments,
     isLoading,
@@ -27,68 +23,47 @@ export function EnvironmentsPage() {
     deleteEnvironment,
   } = useEnvironments();
 
-  const { isOpen, environmentToEdit, openModal, openEditModal, closeModal } = useEnvironmentModal();
+  const modalState = useEnvironmentModal();
 
-  const handleEdit = (environment: Environment) => {
-    openEditModal(environment);
-  };
+  // Componente de modal usando nossa abstração genérica
+  const EnvironmentModal = (props: any) => (
+    <GenericEntityModal
+      EntityForm={EnvironmentForm}
+      entityName={{
+        singular: 'Ambiente',
+        createTitle: 'Novo Ambiente',
+        editTitle: 'Editar Ambiente',
+        createDescription: 'Configure um novo ambiente para implantação',
+        editDescription: 'Modifique as configurações do ambiente',
+      }}
+      createIcon={Layers}
+      testId="create-environment-modal"
+      {...props}
+    />
+  );
 
   return (
-    <div className="space-y-4" data-testid="environments-page">
-      {/* Ocultar cabeçalho quando estiver dentro de Settings */}
-      {!isInSettings && (
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold">Ambientes</h2>
-            <p className="text-muted-foreground">Gerencie seus ambientes de implantação</p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-end gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={refreshEnvironments}
-          disabled={isLoading || isRefreshing}
-          data-testid="environments-page-refresh-button"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span className="sr-only">Atualizar</span>
-        </Button>
-        <Button onClick={openModal} className="gap-2" data-testid="environments-page-add-button">
-          <PlusCircle className="h-4 w-4" />
-          Adicionar Ambiente
-        </Button>
-      </div>
-
-      {error && (
-        <div
-          className="rounded-md bg-destructive/10 p-4 text-destructive"
-          data-testid="environments-page-error-alert"
-        >
-          {error}
-        </div>
-      )}
-
-      <EnvironmentsTable
-        environments={environments}
-        entities={environments}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onEdit={handleEdit}
-        onDelete={deleteEnvironment}
-        data-testid="environments-table"
-      />
-
-      <CreateEnvironmentModal
-        isOpen={isOpen}
-        onClose={closeModal}
-        createEnvironment={createEnvironment}
-        updateEnvironment={updateEnvironment}
-        environmentToEdit={environmentToEdit}
-        onCreateSuccess={refreshEnvironments}
-      />
-    </div>
+    <GenericEntityPage
+      entities={environments}
+      isLoading={isLoading}
+      isRefreshing={isRefreshing}
+      error={error}
+      refreshEntities={refreshEnvironments}
+      createEntity={createEnvironment}
+      updateEntity={updateEnvironment}
+      deleteEntity={deleteEnvironment}
+      EntityTable={EnvironmentsTable}
+      EntityModal={EnvironmentModal}
+      entityName={{
+        singular: 'Ambiente',
+        plural: 'Ambientes',
+        description: 'Gerencie seus ambientes de implantação',
+      }}
+      modalState={modalState}
+      testIdPrefix="environments"
+      tableProps={{
+        environments: environments, // Manter compatibilidade com a implementação atual da tabela
+      }}
+    />
   );
 }

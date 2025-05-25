@@ -1,20 +1,16 @@
 'use client';
 
-import { PlusCircle, RefreshCw } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { MapPin } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { GenericEntityModal } from '@/components/entities/generic-entity-modal';
+import { GenericEntityPage } from '@/components/entities/generic-entity-page';
 import { useLocationModal } from '@/contexts/modal-manager-context';
 import { useLocations } from '@/hooks/use-locations';
-import type { Location } from '@/types/location';
 
-import { CreateLocationModal } from './create-location-modal';
+import { LocationForm } from './location-form';
 import { LocationsTable } from './locations-table';
 
 export function LocationsPage() {
-  const pathname = usePathname();
-  const isInSettings = pathname.includes('/settings');
-
   const {
     locations,
     isLoading,
@@ -26,68 +22,47 @@ export function LocationsPage() {
     deleteLocation,
   } = useLocations();
 
-  const { isOpen, locationToEdit, openModal, openEditModal, closeModal } = useLocationModal();
+  const modalState = useLocationModal();
 
-  const handleEdit = (location: Location) => {
-    openEditModal(location);
-  };
+  // Componente de modal usando nossa abstração genérica
+  const LocationModal = (props: any) => (
+    <GenericEntityModal
+      EntityForm={LocationForm}
+      entityName={{
+        singular: 'Localidade',
+        createTitle: 'Nova Localidade',
+        editTitle: 'Editar Localidade',
+        createDescription: 'Configure uma nova localidade para implantação',
+        editDescription: 'Modifique as configurações da localidade',
+      }}
+      createIcon={MapPin}
+      testId="create-location-modal"
+      {...props}
+    />
+  );
 
   return (
-    <div className="space-y-4" data-testid="locations-page-container">
-      {/* Ocultar cabeçalho quando estiver dentro de Settings */}
-      {!isInSettings && (
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold">Localidades</h2>
-            <p className="text-muted-foreground">Gerencie suas localidades de implantação</p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-end gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={refreshLocations}
-          disabled={isLoading || isRefreshing}
-          data-testid="locations-page-refresh-button"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span className="sr-only">Atualizar</span>
-        </Button>
-        <Button onClick={openModal} className="gap-2" data-testid="locations-page-add-button">
-          <PlusCircle className="h-4 w-4" />
-          Adicionar Localidade
-        </Button>
-      </div>
-
-      {error && (
-        <div
-          className="rounded-md bg-destructive/10 p-4 text-destructive"
-          data-testid="locations-page-error-alert"
-        >
-          {error}
-        </div>
-      )}
-
-      <LocationsTable
-        locations={locations}
-        entities={locations}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onEdit={handleEdit}
-        onDelete={deleteLocation}
-        data-testid="locations-table"
-      />
-
-      <CreateLocationModal
-        isOpen={isOpen}
-        onClose={closeModal}
-        createLocation={createLocation}
-        updateLocation={updateLocation}
-        locationToEdit={locationToEdit}
-        onCreateSuccess={refreshLocations}
-      />
-    </div>
+    <GenericEntityPage
+      entities={locations}
+      isLoading={isLoading}
+      isRefreshing={isRefreshing}
+      error={error}
+      refreshEntities={refreshLocations}
+      createEntity={createLocation}
+      updateEntity={updateLocation}
+      deleteEntity={deleteLocation}
+      EntityTable={LocationsTable}
+      EntityModal={LocationModal}
+      entityName={{
+        singular: 'Localidade',
+        plural: 'Localidades',
+        description: 'Gerencie suas localidades de implantação',
+      }}
+      modalState={modalState}
+      testIdPrefix="locations"
+      tableProps={{
+        locations: locations, // Manter compatibilidade com a implementação atual da tabela
+      }}
+    />
   );
 }
