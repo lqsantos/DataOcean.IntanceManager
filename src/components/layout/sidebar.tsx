@@ -1,18 +1,7 @@
 // components/layout/sidebar.tsx
 'use client';
 
-import {
-  BarChart3,
-  Cloud,
-  Cog,
-  Database,
-  GitBranch,
-  Layers,
-  LayoutDashboard,
-  MapPin,
-  Package,
-  X,
-} from 'lucide-react';
+import { BarChart3, Cloud, Database, GitBranch, LayoutDashboard, Settings, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -40,24 +29,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       icon: Cloud,
     },
     {
-      name: 'Environments',
-      href: '/environments',
-      icon: Layers,
-    },
-    {
-      name: 'Locations',
-      href: '/locations',
-      icon: MapPin,
-    },
-    {
       name: 'Clusters',
       href: '/clusters',
       icon: Database,
-    },
-    {
-      name: 'Applications',
-      href: '/applications',
-      icon: Package,
     },
     {
       name: 'Git Sources',
@@ -72,7 +46,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     {
       name: 'Settings',
       href: '/settings',
-      icon: Cog,
+      icon: Settings,
     },
   ];
 
@@ -122,10 +96,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <Link
                   key={route.href}
                   href={route.href}
-                  data-testid={`sidebar-link-${route.name.toLowerCase()}`}
+                  data-testid={`sidebar-link-${route.name.toLowerCase().replace(/\s+/g, '-')}`}
                   className={cn(
                     'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
-                    pathname === route.href
+                    pathname.startsWith(route.href)
                       ? 'bg-primary/10 text-primary shadow-sm'
                       : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
                   )}
@@ -133,7 +107,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   <route.icon
                     className={cn(
                       'h-5 w-5',
-                      pathname === route.href ? 'text-primary' : 'text-muted-foreground'
+                      pathname.startsWith(route.href) ? 'text-primary' : 'text-muted-foreground'
                     )}
                   />
                   {route.name}

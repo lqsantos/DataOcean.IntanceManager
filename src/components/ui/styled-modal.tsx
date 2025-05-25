@@ -52,6 +52,10 @@ interface StyledModalProps {
    * Propriedades adicionais que serão passadas para o DialogContent
    */
   dialogProps?: React.ComponentPropsWithoutRef<typeof DialogContent>;
+  /**
+   * Se true, impede o fechamento do modal quando clicado fora
+   */
+  preventClose?: boolean;
 }
 
 /**
@@ -70,6 +74,7 @@ export function StyledModal({
   maxWidth = '2xl',
   isEditMode = false,
   dialogProps,
+  preventClose = false,
 }: StyledModalProps) {
   // Use o ícone fornecido ou um ícone padrão se não for fornecido
   const IconComponent = icon || AlertCircle;
@@ -100,13 +105,36 @@ export function StyledModal({
     );
   }, [maxWidth]);
 
+  const handleOpenChange = (value: boolean) => {
+    if (preventClose && !value) {
+      // Se preventClose for true e estiverem tentando fechar o modal, não faz nada
+      return;
+    }
+    onOpenChange(value);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className={dialogContentClasses}
         data-testid={testId}
         data-modal-title={title}
         data-modal-type={isEditMode ? 'edit' : 'create'}
+        // Prevenir comportamento padrão para garantir que eventos do formulário funcionem corretamente
+        onPointerDownOutside={(e) => {
+          if (preventClose) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (preventClose) {
+            e.preventDefault();
+          }
+        }}
+        onClick={(e) => {
+          // Impedir a propagação de cliques para garantir que o formulário não seja interrompido
+          e.stopPropagation();
+        }}
         {...dialogProps}
       >
         {/* Cabeçalho com gradiente e decoração */}
@@ -124,20 +152,17 @@ export function StyledModal({
             <DialogHeader className="flex flex-row items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
                 {/* Usar sempre o componente ícone, que já está garantido não ser undefined */}
-                <IconComponent 
+                <IconComponent
                   className={`h-4 w-4 ${isEditMode ? 'text-indigo-500' : 'text-primary'}`}
                   data-testid={`${testId}-icon`}
                 />
               </div>
               <div>
-                <DialogTitle 
-                  className="text-xl font-medium" 
-                  data-testid={`${testId}-title`}
-                >
+                <DialogTitle className="text-xl font-medium" data-testid={`${testId}-title`}>
                   {title}
                 </DialogTitle>
                 {description && (
-                  <p 
+                  <p
                     className="mt-0.5 text-sm text-muted-foreground"
                     data-testid={`${testId}-description`}
                   >

@@ -1,7 +1,8 @@
 // components/environments/environments-page.tsx
 'use client';
 
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, RefreshCw } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { useEnvironmentModal } from '@/contexts/modal-manager-context';
@@ -12,6 +13,9 @@ import { CreateEnvironmentModal } from './create-environment-modal';
 import { EnvironmentsTable } from './environments-table';
 
 export function EnvironmentsPage() {
+  const pathname = usePathname();
+  const isInSettings = pathname.includes('/settings');
+
   const {
     environments,
     isLoading,
@@ -31,11 +35,27 @@ export function EnvironmentsPage() {
 
   return (
     <div className="space-y-4" data-testid="environments-page">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Ambientes</h2>
-          <p className="text-muted-foreground">Gerencie seus ambientes de implantação</p>
+      {/* Ocultar cabeçalho quando estiver dentro de Settings */}
+      {!isInSettings && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">Ambientes</h2>
+            <p className="text-muted-foreground">Gerencie seus ambientes de implantação</p>
+          </div>
         </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={refreshEnvironments}
+          disabled={isLoading || isRefreshing}
+          data-testid="environments-page-refresh-button"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span className="sr-only">Atualizar</span>
+        </Button>
         <Button onClick={openModal} className="gap-2" data-testid="environments-page-add-button">
           <PlusCircle className="h-4 w-4" />
           Adicionar Ambiente

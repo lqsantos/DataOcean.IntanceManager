@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, Layers } from 'lucide-react';
+import { FileCode, Layers } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -36,6 +36,7 @@ export function CreateEnvironmentModal({
   // Handler para submissão do formulário
   const handleSubmit = useCallback(
     async (values: CreateEnvironmentDto | UpdateEnvironmentDto) => {
+      console.log('Environment form submitted with values:', values);
       setIsSubmitting(true);
 
       try {
@@ -66,6 +67,7 @@ export function CreateEnvironmentModal({
               : 'Erro ao criar ambiente';
 
         toast.error(errorMessage);
+        console.error('Error submitting environment form:', error);
       } finally {
         setIsSubmitting(false);
       }
@@ -81,13 +83,14 @@ export function CreateEnvironmentModal({
       description={
         isEditMode
           ? 'Modifique as configurações do ambiente'
-          : 'Configure um novo ambiente para aplicações'
+          : 'Configure um novo ambiente para implantação'
       }
-      icon={isEditMode ? Layers : Globe}
-      backgroundIcon={Globe}
+      icon={isEditMode ? FileCode : Layers}
+      backgroundIcon={Layers}
       testId="create-environment-modal"
       maxWidth="xl"
       isEditMode={isEditMode}
+      preventClose={true}
     >
       <EnvironmentForm
         environment={environmentToEdit || undefined}

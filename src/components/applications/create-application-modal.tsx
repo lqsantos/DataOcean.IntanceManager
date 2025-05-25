@@ -36,6 +36,7 @@ export function CreateApplicationModal({
   // Handler para submissão do formulário
   const handleSubmit = useCallback(
     async (values: CreateApplicationDto | UpdateApplicationDto) => {
+      console.log('Form submitted with values:', values);
       setIsSubmitting(true);
 
       try {
@@ -66,6 +67,7 @@ export function CreateApplicationModal({
               : 'Erro ao criar aplicação';
 
         toast.error(errorMessage);
+        console.error('Error submitting form:', error);
       } finally {
         setIsSubmitting(false);
       }
@@ -88,6 +90,8 @@ export function CreateApplicationModal({
       testId="create-application-modal"
       maxWidth="xl"
       isEditMode={isEditMode}
+      // Impedir fechamento do modal quando o formulário for submetido
+      preventClose={true}
     >
       <ApplicationForm
         application={applicationToEdit || undefined}

@@ -1,6 +1,7 @@
 'use client';
 
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, RefreshCw } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { useLocationModal } from '@/contexts/modal-manager-context';
@@ -11,6 +12,9 @@ import { CreateLocationModal } from './create-location-modal';
 import { LocationsTable } from './locations-table';
 
 export function LocationsPage() {
+  const pathname = usePathname();
+  const isInSettings = pathname.includes('/settings');
+
   const {
     locations,
     isLoading,
@@ -21,7 +25,7 @@ export function LocationsPage() {
     updateLocation,
     deleteLocation,
   } = useLocations();
-  
+
   const { isOpen, locationToEdit, openModal, openEditModal, closeModal } = useLocationModal();
 
   const handleEdit = (location: Location) => {
@@ -30,30 +34,42 @@ export function LocationsPage() {
 
   return (
     <div className="space-y-4" data-testid="locations-page-container">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Localidades</h2>
-          <p className="text-muted-foreground">Gerencie suas localidades de implantação</p>
+      {/* Ocultar cabeçalho quando estiver dentro de Settings */}
+      {!isInSettings && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">Localidades</h2>
+            <p className="text-muted-foreground">Gerencie suas localidades de implantação</p>
+          </div>
         </div>
-        <Button 
-          onClick={openModal} 
-          className="gap-2"
-          data-testid="locations-page-add-button"
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={refreshLocations}
+          disabled={isLoading || isRefreshing}
+          data-testid="locations-page-refresh-button"
         >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span className="sr-only">Atualizar</span>
+        </Button>
+        <Button onClick={openModal} className="gap-2" data-testid="locations-page-add-button">
           <PlusCircle className="h-4 w-4" />
           Adicionar Localidade
         </Button>
       </div>
-      
+
       {error && (
-        <div 
-          className="rounded-md bg-destructive/10 p-4 text-destructive" 
+        <div
+          className="rounded-md bg-destructive/10 p-4 text-destructive"
           data-testid="locations-page-error-alert"
         >
           {error}
         </div>
       )}
-      
+
       <LocationsTable
         locations={locations}
         entities={locations}
@@ -63,7 +79,7 @@ export function LocationsPage() {
         onDelete={deleteLocation}
         data-testid="locations-table"
       />
-      
+
       <CreateLocationModal
         isOpen={isOpen}
         onClose={closeModal}

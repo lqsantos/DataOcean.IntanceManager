@@ -2,6 +2,7 @@
 'use client';
 
 import { PlusCircle, RefreshCw } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { useApplicationModal } from '@/contexts/modal-manager-context';
@@ -12,6 +13,9 @@ import { ApplicationsTable } from './applications-table';
 import { CreateApplicationModal } from './create-application-modal';
 
 export function ApplicationsPage() {
+  const pathname = usePathname();
+  const isInSettings = pathname.includes('/settings');
+
   const {
     applications,
     isLoading,
@@ -31,27 +35,31 @@ export function ApplicationsPage() {
 
   return (
     <div className="space-y-4" data-testid="applications-container">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Aplicações</h2>
-          <p className="text-muted-foreground">Gerencie suas aplicações</p>
+      {/* Ocultar cabeçalho quando estiver dentro de Settings */}
+      {!isInSettings && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">Aplicações</h2>
+            <p className="text-muted-foreground">Gerencie suas aplicações</p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={refreshApplications}
-            disabled={isLoading || isRefreshing}
-            data-testid="applications-page-refresh-button"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Atualizar</span>
-          </Button>
-          <Button onClick={openModal} className="gap-2" data-testid="applications-page-add-button">
-            <PlusCircle className="h-4 w-4" />
-            Adicionar Aplicação
-          </Button>
-        </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={refreshApplications}
+          disabled={isLoading || isRefreshing}
+          data-testid="applications-page-refresh-button"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span className="sr-only">Atualizar</span>
+        </Button>
+        <Button onClick={openModal} className="gap-2" data-testid="applications-page-add-button">
+          <PlusCircle className="h-4 w-4" />
+          Adicionar Aplicação
+        </Button>
       </div>
 
       {error && (
