@@ -76,6 +76,8 @@ export function StyledModal({
   dialogProps,
   preventClose = false,
 }: StyledModalProps) {
+  console.log('[DIAGNOSTIC] StyledModal rendered', { open, title, preventClose });
+
   // Use o ícone fornecido ou um ícone padrão se não for fornecido
   const IconComponent = icon || AlertCircle;
   const BackgroundIconComponent = backgroundIcon;
@@ -105,41 +107,48 @@ export function StyledModal({
     );
   }, [maxWidth]);
 
-  const handleOpenChange = (value: boolean) => {
-    if (preventClose && !value) {
-      // Se preventClose for true e estiverem tentando fechar o modal, não faz nada
-      return;
-    }
-    onOpenChange(value);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        console.log('[DIAGNOSTIC] Dialog onOpenChange called', { current: open, new: value });
+
+        // Se estiver tentando fechar (value = false) mas preventClose for true, não fazer nada
+        if (!value && preventClose) {
+          console.log('[DIAGNOSTIC] Preventing dialog close due to preventClose=true');
+          return;
+        }
+
+        // Caso contrário, propagar o evento
+        onOpenChange(value);
+      }}
+    >
       <DialogContent
         className={dialogContentClasses}
         data-testid={testId}
         data-modal-title={title}
         data-modal-type={isEditMode ? 'edit' : 'create'}
-        // Prevenir comportamento padrão para garantir que eventos do formulário funcionem corretamente
         onPointerDownOutside={(e) => {
+          console.log('[DIAGNOSTIC] DialogContent onPointerDownOutside');
           if (preventClose) {
             e.preventDefault();
           }
         }}
         onInteractOutside={(e) => {
+          console.log('[DIAGNOSTIC] DialogContent onInteractOutside');
+          e.preventDefault();
+        }}
+        // Remover qualquer tratamento especial para eventos de teclado para prevenir interferência
+        onEscapeKeyDown={(e) => {
+          console.log('[DIAGNOSTIC] DialogContent onEscapeKeyDown');
           if (preventClose) {
             e.preventDefault();
           }
-        }}
-        onClick={(e) => {
-          // Impedir a propagação de cliques para garantir que o formulário não seja interrompido
-          e.stopPropagation();
         }}
         {...dialogProps}
       >
         {/* Cabeçalho com gradiente e decoração */}
         <div className="relative overflow-hidden border-b border-border">
-          {/* Decoração de fundo */}
           <div
             className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent"
             aria-hidden="true"
@@ -151,7 +160,6 @@ export function StyledModal({
           <div className="relative p-5">
             <DialogHeader className="flex flex-row items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
-                {/* Usar sempre o componente ícone, que já está garantido não ser undefined */}
                 <IconComponent
                   className={`h-4 w-4 ${isEditMode ? 'text-indigo-500' : 'text-primary'}`}
                   data-testid={`${testId}-icon`}
@@ -165,6 +173,7 @@ export function StyledModal({
                   <p
                     className="mt-0.5 text-sm text-muted-foreground"
                     data-testid={`${testId}-description`}
+                    id={`${testId}-description`}
                   >
                     {description}
                   </p>
@@ -175,10 +184,17 @@ export function StyledModal({
         </div>
 
         {/* Conteúdo do formulário com elementos decorativos */}
-        <div className="relative px-6 py-3" data-testid={`${testId}-content`}>
+        <div
+          className="relative px-6 py-3"
+          data-testid={`${testId}-content`}
+          onClick={(e) => {
+            // Evitar propagação de eventos para os elementos pai que podem estar interferindo
+            e.stopPropagation();
+          }}
+        >
           {/* Ícone decorativo no canto */}
           {BackgroundIconComponent && (
-            <div className="absolute -bottom-2 -right-2 opacity-5">
+            <div className="pointer-events-none absolute -bottom-2 -right-2 opacity-5">
               <BackgroundIconComponent className="h-24 w-24 text-primary" />
             </div>
           )}

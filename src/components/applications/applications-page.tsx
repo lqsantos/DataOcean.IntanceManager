@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useApplicationModal } from '@/contexts/modal-manager-context';
 import { useApplications } from '@/hooks/use-applications';
-import type { Application } from '@/types/application';
+import type { Application, CreateApplicationDto } from '@/types/application';
 
 import { ApplicationsTable } from './applications-table';
 import { CreateApplicationModal } from './create-application-modal';
@@ -16,20 +16,64 @@ export function ApplicationsPage() {
   const pathname = usePathname();
   const isInSettings = pathname.includes('/settings');
 
+  console.log('[DIAGNOSTIC] ApplicationsPage rendered', { isInSettings, pathname });
+
   const {
     applications,
     isLoading,
     isRefreshing,
     error,
     refreshApplications,
-    createApplication,
-    updateApplication,
+    createApplication: originalCreateApplication,
+    updateApplication: originalUpdateApplication,
     deleteApplication,
   } = useApplications();
+
+  // Wrapper para adicionar logs de diagnóstico à função createApplication
+  const createApplication = async (data: CreateApplicationDto): Promise<Application> => {
+    console.log('[CRITICAL-DIAGNOSTIC] createApplication called with data:', data);
+
+    try {
+      const result = await originalCreateApplication(data);
+
+      console.log('[CRITICAL-DIAGNOSTIC] createApplication succeeded with result:', result);
+
+      return result;
+    } catch (error) {
+      console.error('[CRITICAL-DIAGNOSTIC] createApplication failed with error:', error);
+      throw error;
+    }
+  };
+
+  // Wrapper para adicionar logs de diagnóstico à função updateApplication
+  const updateApplication = async (id: string, data: any): Promise<Application> => {
+    console.log('[CRITICAL-DIAGNOSTIC] updateApplication called with id:', id, 'and data:', data);
+
+    try {
+      const result = await originalUpdateApplication(id, data);
+
+      console.log('[CRITICAL-DIAGNOSTIC] updateApplication succeeded with result:', result);
+
+      return result;
+    } catch (error) {
+      console.error('[CRITICAL-DIAGNOSTIC] updateApplication failed with error:', error);
+      throw error;
+    }
+  };
+
+  console.log('[DIAGNOSTIC] ApplicationsPage useApplications hook result', {
+    applicationsCount: applications.length,
+    isLoading,
+    isRefreshing,
+    hasError: !!error,
+  });
 
   const { isOpen, applicationToEdit, openModal, openEditModal, closeModal } = useApplicationModal();
 
   const handleEdit = (application: Application) => {
+    console.log('[DIAGNOSTIC] ApplicationsPage handleEdit called', {
+      applicationId: application.id,
+    });
     openEditModal(application);
   };
 
@@ -49,14 +93,24 @@ export function ApplicationsPage() {
         <Button
           variant="outline"
           size="icon"
-          onClick={refreshApplications}
+          onClick={() => {
+            console.log('[DIAGNOSTIC] ApplicationsPage refresh button clicked');
+            refreshApplications();
+          }}
           disabled={isLoading || isRefreshing}
           data-testid="applications-page-refresh-button"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span className="sr-only">Atualizar</span>
         </Button>
-        <Button onClick={openModal} className="gap-2" data-testid="applications-page-add-button">
+        <Button
+          onClick={() => {
+            console.log('[DIAGNOSTIC] ApplicationsPage add button clicked');
+            openModal();
+          }}
+          className="gap-2"
+          data-testid="applications-page-add-button"
+        >
           <PlusCircle className="h-4 w-4" />
           Adicionar Aplicação
         </Button>
@@ -77,17 +131,28 @@ export function ApplicationsPage() {
         isLoading={isLoading}
         isRefreshing={isRefreshing}
         onEdit={handleEdit}
-        onDelete={deleteApplication}
+        onDelete={(id) => {
+          console.log('[DIAGNOSTIC] ApplicationsPage onDelete called', { applicationId: id });
+          deleteApplication(id);
+        }}
         data-testid="applications-table"
       />
 
       <CreateApplicationModal
         isOpen={isOpen}
-        onClose={closeModal}
+        onClose={() => {
+          console.log('[DIAGNOSTIC] ApplicationsPage closing CreateApplicationModal');
+          closeModal();
+        }}
         createApplication={createApplication}
         updateApplication={updateApplication}
         applicationToEdit={applicationToEdit}
-        onCreateSuccess={refreshApplications}
+        onCreateSuccess={(application) => {
+          console.log('[DIAGNOSTIC] ApplicationsPage onCreateSuccess called', {
+            applicationId: application.id,
+          });
+          refreshApplications();
+        }}
       />
     </div>
   );

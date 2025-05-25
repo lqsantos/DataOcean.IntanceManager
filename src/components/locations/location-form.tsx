@@ -25,6 +25,7 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
   const [slug, setSlug] = useState(location?.slug || '');
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isSubmittingLocal, setIsSubmittingLocal] = useState(false);
 
   // Gerar slug automaticamente a partir do nome
   useEffect(() => {
@@ -50,7 +51,7 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
     } else if (!/^[a-z0-9-]+$/.test(slug)) {
       newErrors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
     }
-
+    
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
@@ -58,23 +59,39 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Marcar todos os campos como tocados para mostrar erros, se houver
+    setTouched({
+      name: true,
+      slug: true,
+    });
 
     if (!validateForm()) {
       return;
     }
-
+    
+    setIsSubmittingLocal(true);
     const formData: CreateLocationDto | UpdateLocationDto = {
       name,
       slug,
     };
-
-    await onSubmit(formData);
+    
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      console.error('Error submitting location form:', error);
+    } finally {
+      setIsSubmittingLocal(false);
+    }
   };
 
   const handleBlur = (field: keyof FormErrors) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
     validateForm();
   };
+
+  // Combinação de estado local e prop para evitar problemas de sincronização
+  const isFormSubmitting = isSubmitting || isSubmittingLocal;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" data-testid="location-form">
@@ -85,11 +102,11 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={() => handleBlur('name')}
-          disabled={isSubmitting}
-          className={errors.name ? 'border-destructive' : ''}
+          disabled={isFormSubmitting}
+          className={errors.name && touched.name ? 'border-destructive' : ''}
           data-testid="location-form-name-input"
         />
-        {errors.name && (
+        {errors.name && touched.name && (
           <p className="text-sm text-destructive" data-testid="location-form-name-error">
             {errors.name}
           </p>
@@ -101,13 +118,13 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
         <Input
           id="slug"
           value={slug}
-          onChange={(e) => setSlug(e.target.value)}
+          onChange={(e) => setSlug(e.target.value.toLowerCase())}
           onBlur={() => handleBlur('slug')}
-          disabled={isSubmitting}
-          className={errors.slug ? 'border-destructive' : ''}
+          disabled={isFormSubmitting}
+          className={errors.slug && touched.slug ? 'border-destructive' : ''}
           data-testid="location-form-slug-input"
         />
-        {errors.slug && (
+        {errors.slug && touched.slug && (
           <p className="text-sm text-destructive" data-testid="location-form-slug-error">
             {errors.slug}
           </p>
@@ -118,21 +135,21 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel} 
-          disabled={isSubmitting}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isFormSubmitting}
           data-testid="location-form-cancel-button"
         >
           Cancelar
         </Button>
-        <Button 
-          type="submit" 
-          disabled={isSubmitting}
+        <Button
+          type="submit"
+          disabled={isFormSubmitting}
           data-testid="location-form-submit-button"
         >
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isFormSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {location ? 'Salvar' : 'Criar'}
         </Button>
       </div>

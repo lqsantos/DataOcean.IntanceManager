@@ -30,33 +30,46 @@ export function CreateApplicationModal({
   updateApplication,
   applicationToEdit,
 }: CreateApplicationModalProps) {
+  console.log('[DIAGNOSTIC] CreateApplicationModal rendered', {
+    isOpen,
+    hasApplicationToEdit: !!applicationToEdit,
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!applicationToEdit;
 
-  // Handler para submissão do formulário
+  // Handler para submissão do formulário - simplificado e direto
   const handleSubmit = useCallback(
-    async (values: CreateApplicationDto | UpdateApplicationDto) => {
-      console.log('Form submitted with values:', values);
+    async (data: CreateApplicationDto | UpdateApplicationDto) => {
+      console.log('[DIAGNOSTIC] CreateApplicationModal.handleSubmit called with data:', data);
       setIsSubmitting(true);
 
       try {
         if (isEditMode && applicationToEdit && updateApplication) {
-          const updated = await updateApplication(applicationToEdit.id, values);
+          console.log('[DIAGNOSTIC] Updating application:', applicationToEdit.id);
+          const updated = await updateApplication(applicationToEdit.id, data);
 
+          console.log('[DIAGNOSTIC] Application updated successfully:', updated);
           toast.success('Aplicação atualizada com sucesso');
 
           if (onCreateSuccess) {
+            console.log('[DIAGNOSTIC] Calling onCreateSuccess after update');
             onCreateSuccess(updated);
           }
         } else {
-          const created = await createApplication(values as CreateApplicationDto);
+          console.log('[DIAGNOSTIC] Creating new application');
+          const created = await createApplication(data as CreateApplicationDto);
 
+          console.log('[DIAGNOSTIC] Application created successfully:', created);
           toast.success('Aplicação criada com sucesso');
 
           if (onCreateSuccess) {
+            console.log('[DIAGNOSTIC] Calling onCreateSuccess after creation');
             onCreateSuccess(created);
           }
         }
+
+        console.log('[DIAGNOSTIC] Closing modal after success');
         onClose();
       } catch (error) {
         const errorMessage =
@@ -66,9 +79,10 @@ export function CreateApplicationModal({
               ? 'Erro ao atualizar aplicação'
               : 'Erro ao criar aplicação';
 
+        console.error('[DIAGNOSTIC] Error in CreateApplicationModal.handleSubmit:', error);
         toast.error(errorMessage);
-        console.error('Error submitting form:', error);
       } finally {
+        console.log('[DIAGNOSTIC] Setting isSubmitting to false');
         setIsSubmitting(false);
       }
     },
@@ -78,7 +92,14 @@ export function CreateApplicationModal({
   return (
     <StyledModal
       open={isOpen}
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open) => {
+        console.log('[DIAGNOSTIC] StyledModal onOpenChange called:', open);
+
+        // Só fechar o modal quando o open for false (modal fechando)
+        if (!open) {
+          onClose();
+        }
+      }}
       title={isEditMode ? 'Editar Aplicação' : 'Nova Aplicação'}
       description={
         isEditMode
@@ -90,15 +111,29 @@ export function CreateApplicationModal({
       testId="create-application-modal"
       maxWidth="xl"
       isEditMode={isEditMode}
-      // Impedir fechamento do modal quando o formulário for submetido
-      preventClose={true}
+      // Permitir interação com o formulário mesmo ao clicar fora
+      preventClose={isSubmitting}
     >
-      <ApplicationForm
-        application={applicationToEdit || undefined}
-        onSubmit={handleSubmit}
-        onCancel={onClose}
-        isSubmitting={isSubmitting}
-      />
+      <div
+        onClick={(e) => {
+          // Prevenir propagação de cliques no conteúdo do modal para não fechar acidentalmente
+          e.stopPropagation();
+        }}
+      >
+        <ApplicationForm
+          application={applicationToEdit || undefined}
+          onSubmit={handleSubmit}
+          onCancel={() => {
+            console.log('[DIAGNOSTIC] ApplicationForm.onCancel called');
+
+            // Não fechar o modal se estiver submetendo
+            if (!isSubmitting) {
+              onClose();
+            }
+          }}
+          isSubmitting={isSubmitting}
+        />
+      </div>
     </StyledModal>
   );
 }

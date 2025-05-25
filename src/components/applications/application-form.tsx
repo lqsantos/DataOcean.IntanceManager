@@ -1,38 +1,14 @@
 // components/applications/application-form.tsx
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Application, CreateApplicationDto, UpdateApplicationDto } from '@/types/application';
-
-// Schema for form validation
-const applicationFormSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Nome deve ter no máximo 100 caracteres'),
-  slug: z
-    .string()
-    .min(2, 'Slug deve ter pelo menos 2 caracteres')
-    .max(100, 'Slug deve ter no máximo 100 caracteres')
-    .regex(/^[a-z0-9-]+$/, 'Slug deve conter apenas letras minúsculas, números e hífens'),
-  description: z.string().max(500, 'Descrição deve ter no máximo 500 caracteres').optional(),
-});
 
 interface ApplicationFormProps {
   application?: Application;
@@ -47,109 +23,247 @@ export function ApplicationForm({
   onCancel,
   isSubmitting,
 }: ApplicationFormProps) {
-  // Set up form with default values
-  const form = useForm<z.infer<typeof applicationFormSchema>>({
-    resolver: zodResolver(applicationFormSchema),
-    defaultValues: {
-      name: application?.name || '',
-      slug: application?.slug || '',
-      description: application?.description || '',
-    },
-  });
+  // Form state
+  const [name, setName] = useState(application?.name || '');
+  const [slug, setSlug] = useState(application?.slug || '');
+  const [description, setDescription] = useState(application?.description || '');
 
-  const handleSubmit = async (data: z.infer<typeof applicationFormSchema>) => {
-    await onSubmit(data);
+  // Form validation
+  const [errors, setErrors] = useState<{
+    name?: string;
+    slug?: string;
+    description?: string;
+  }>({});
+
+  const [touched, setTouched] = useState<{
+    name?: boolean;
+    slug?: boolean;
+    description?: boolean;
+  }>({});
+
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Debug logs for monitoring state
+  useEffect(() => {
+    console.log('[DIAGNOSTIC] ApplicationForm mounted/updated', {
+      name,
+      slug,
+      description,
+      isSubmitting,
+      hasErrors: Object.keys(errors).length > 0,
+      touched,
+    });
+  }, [name, slug, description, isSubmitting, errors, touched]);
+
+  // Auto-generate slug from name
+  useEffect(() => {
+    if (name && !touched.slug && !application?.slug) {
+      setSlug(
+        name
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+      );
+    }
+  }, [name, touched.slug, application?.slug]);
+
+  const validateForm = () => {
+    console.log('[DIAGNOSTIC] Validating form', { name, slug, description });
+    const newErrors: {
+      name?: string;
+      slug?: string;
+      description?: string;
+    } = {};
+
+    if (!name.trim()) {
+      newErrors.name = 'Nome é obrigatório';
+    } else if (name.length < 2) {
+      newErrors.name = 'Nome deve ter pelo menos 2 caracteres';
+    }
+
+    if (!slug.trim()) {
+      newErrors.slug = 'Slug é obrigatório';
+    } else if (!/^[a-z0-9-]+$/.test(slug)) {
+      newErrors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
+    }
+
+    if (description && description.length > 500) {
+      newErrors.description = 'Descrição deve ter no máximo 500 caracteres';
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleFieldChange = (
+    field: 'name' | 'slug' | 'description',
+    value: string,
+    markAsTouched = true
+  ) => {
+    switch (field) {
+      case 'name':
+        setName(value);
+        break;
+      case 'slug':
+        setSlug(value.toLowerCase());
+        break;
+      case 'description':
+        setDescription(value);
+        break;
+    }
+
+    if (markAsTouched) {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+    }
+  };
+
+  const handleBlur = (field: 'name' | 'slug' | 'description') => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    validateForm();
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log('[DIAGNOSTIC] Form submit triggered');
+
+    // Mark all fields as touched to show validation errors
+    setTouched({
+      name: true,
+      slug: true,
+      description: true,
+    });
+
+    if (!validateForm()) {
+      console.log('[DIAGNOSTIC] Form validation failed', errors);
+
+      return;
+    }
+
+    console.log('[DIAGNOSTIC] Form validation passed, submitting data', {
+      name,
+      slug,
+      description,
+    });
+
+    const data: CreateApplicationDto | UpdateApplicationDto = {
+      name,
+      slug,
+      ...(description ? { description } : {}),
+    };
+
+    try {
+      await onSubmit(data);
+      console.log('[DIAGNOSTIC] Form submission completed successfully');
+    } catch (error) {
+      console.error('[DIAGNOSTIC] Error in form submission:', error);
+    }
   };
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-4"
-        data-testid="application-form"
-      >
-        <FormField
-          control={form.control}
+    <form
+      ref={formRef}
+      onSubmit={handleFormSubmit}
+      className="space-y-4"
+      data-testid="application-form"
+      id="application-form"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="name" className="required">
+          Nome <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="name"
           name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Minha Aplicação"
-                  {...field}
-                  data-testid="application-form-name"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          value={name}
+          onChange={(e) => handleFieldChange('name', e.target.value)}
+          onBlur={() => handleBlur('name')}
+          placeholder="Nome da aplicação"
+          disabled={isSubmitting}
+          className={errors.name && touched.name ? 'border-destructive' : ''}
+          data-testid="application-name-input"
+          required
         />
+        {errors.name && touched.name && (
+          <p className="text-sm text-destructive" data-testid="name-error">
+            {errors.name}
+          </p>
+        )}
+      </div>
 
-        <FormField
-          control={form.control}
+      <div className="space-y-2">
+        <Label htmlFor="slug" className="required">
+          Slug <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="slug"
           name="slug"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Slug</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="minha-aplicacao"
-                  {...field}
-                  data-testid="application-form-slug"
-                />
-              </FormControl>
-              <FormDescription>
-                Identificador único para a aplicação, usado em URLs e integrações
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
+          value={slug}
+          onChange={(e) => handleFieldChange('slug', e.target.value.toLowerCase())}
+          onBlur={() => handleBlur('slug')}
+          placeholder="identificador-único"
+          disabled={isSubmitting}
+          className={errors.slug && touched.slug ? 'border-destructive' : ''}
+          data-testid="application-slug-input"
+          required
         />
+        {errors.slug && touched.slug ? (
+          <p className="text-sm text-destructive" data-testid="slug-error">
+            {errors.slug}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground" data-testid="slug-help">
+            Identificador único usado em URLs. Apenas letras minúsculas, números e hífens.
+          </p>
+        )}
+      </div>
 
-        <FormField
-          control={form.control}
+      <div className="space-y-2">
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea
+          id="description"
           name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Descrição da aplicação"
-                  className="resize-none"
-                  {...field}
-                  data-testid="application-form-description"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          value={description}
+          onChange={(e) => handleFieldChange('description', e.target.value)}
+          onBlur={() => handleBlur('description')}
+          placeholder="Descrição da aplicação (opcional)"
+          disabled={isSubmitting}
+          className={errors.description && touched.description ? 'border-destructive' : ''}
+          data-testid="application-description-input"
+          rows={4}
         />
+        {errors.description && touched.description && (
+          <p className="text-sm text-destructive" data-testid="description-error">
+            {errors.description}
+          </p>
+        )}
+      </div>
 
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            data-testid="application-form-cancel"
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting} data-testid="application-form-submit">
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {application ? 'Salvando...' : 'Criando...'}
-              </>
-            ) : application ? (
-              'Salvar'
-            ) : (
-              'Criar'
-            )}
-          </Button>
-        </div>
-      </form>
-    </Form>
+      <div className="flex justify-end gap-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            console.log('[DIAGNOSTIC] Cancel button clicked');
+            onCancel();
+          }}
+          disabled={isSubmitting}
+          data-testid="application-cancel-button"
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          data-testid="application-submit-button"
+          className="relative"
+        >
+          {isSubmitting && (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="loading-spinner" />
+          )}
+          <span>{application ? 'Salvar' : 'Criar'}</span>
+        </Button>
+      </div>
+    </form>
   );
 }

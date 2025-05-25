@@ -33,6 +33,7 @@ export function EnvironmentForm({
   const [order, setOrder] = useState(environment?.order?.toString() || '');
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isSubmittingLocal, setIsSubmittingLocal] = useState(false);
 
   // Gerar slug automaticamente a partir do nome
   useEffect(() => {
@@ -93,19 +94,29 @@ export function EnvironmentForm({
       return;
     }
 
+    setIsSubmittingLocal(true);
     const formData: CreateEnvironmentDto | UpdateEnvironmentDto = {
       name,
       slug,
       ...(order ? { order: Number(order) } : {}),
     };
 
-    await onSubmit(formData);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      console.error('Error submitting environment form:', error);
+    } finally {
+      setIsSubmittingLocal(false);
+    }
   };
 
   const handleBlur = (field: keyof FormErrors) => {
     setTouched((prev) => ({ ...prev, [field]: true }));
     validateForm();
   };
+
+  // Combinação de estado local e prop para evitar problemas de sincronização
+  const isFormSubmitting = isSubmitting || isSubmittingLocal;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" data-testid="environment-form">
@@ -123,7 +134,7 @@ export function EnvironmentForm({
           }}
           onBlur={() => handleBlur('name')}
           placeholder="ex: Desenvolvimento"
-          disabled={isSubmitting}
+          disabled={isFormSubmitting}
           className={errors.name && touched.name ? 'border-destructive' : ''}
         />
         {errors.name && touched.name && (
@@ -147,7 +158,7 @@ export function EnvironmentForm({
           }}
           onBlur={() => handleBlur('slug')}
           placeholder="ex: dev"
-          disabled={isSubmitting}
+          disabled={isFormSubmitting}
           className={errors.slug && touched.slug ? 'border-destructive' : ''}
         />
         {errors.slug && touched.slug ? (
@@ -174,7 +185,7 @@ export function EnvironmentForm({
           }}
           onBlur={() => handleBlur('order')}
           placeholder="ex: 1"
-          disabled={isSubmitting}
+          disabled={isFormSubmitting}
           className={errors.order && touched.order ? 'border-destructive' : ''}
         />
         {errors.order && touched.order ? (
@@ -193,13 +204,13 @@ export function EnvironmentForm({
           type="button"
           variant="outline"
           onClick={onCancel}
-          disabled={isSubmitting}
+          disabled={isFormSubmitting}
           data-testid="cancel-button"
         >
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting} data-testid="submit-button">
-          {isSubmitting && (
+        <Button type="submit" disabled={isFormSubmitting} data-testid="submit-button">
+          {isFormSubmitting && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="loading-spinner" />
           )}
           {environment ? 'Atualizar' : 'Criar'}
