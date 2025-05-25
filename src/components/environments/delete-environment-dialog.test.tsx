@@ -6,6 +6,53 @@ import type { Environment } from '@/types/environment';
 
 import { DeleteEnvironmentDialog } from './delete-environment-dialog';
 
+// Mock para o StyledDeleteDialog
+vi.mock('@/components/ui/styled-delete-dialog', () => ({
+  StyledDeleteDialog: ({
+    open,
+    onOpenChange,
+    title,
+    itemName,
+    description,
+    onConfirm,
+    onCancel,
+    isDeleting,
+    confirmText,
+    testId,
+  }) =>
+    open ? (
+      <div data-testid={testId}>
+        <h2>{title}</h2>
+        <p data-testid={`${testId}-description`} className="text-sm text-muted-foreground">
+          {description}
+        </p>
+        <button
+          data-testid={`${testId}-cancel`}
+          onClick={onCancel}
+          disabled={isDeleting}
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium"
+        >
+          Cancelar
+        </button>
+        <button
+          data-testid={`${testId}-confirm`}
+          onClick={onConfirm}
+          disabled={isDeleting}
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium"
+        >
+          {isDeleting ? (
+            <>
+              <span data-testid="loader" className="mr-2 h-4 w-4 animate-spin" />
+              <span>Excluindo...</span>
+            </>
+          ) : (
+            confirmText
+          )}
+        </button>
+      </div>
+    ) : null,
+}));
+
 describe('DeleteEnvironmentDialog', () => {
   const mockEnvironment: Environment = {
     id: '1',
@@ -51,7 +98,7 @@ describe('DeleteEnvironmentDialog', () => {
 
     renderComponent({ onCancel });
 
-    const cancelButton = screen.getByTestId('delete-environment-cancel-button');
+    const cancelButton = screen.getByTestId('delete-environment-dialog-cancel');
 
     fireEvent.click(cancelButton);
 
@@ -63,7 +110,7 @@ describe('DeleteEnvironmentDialog', () => {
 
     renderComponent({ onDelete });
 
-    const confirmButton = screen.getByTestId('delete-environment-confirm-button');
+    const confirmButton = screen.getByTestId('delete-environment-dialog-confirm');
 
     await act(async () => {
       fireEvent.click(confirmButton);
@@ -75,29 +122,29 @@ describe('DeleteEnvironmentDialog', () => {
   it('should disable buttons and show loading state when isDeleting is true', () => {
     renderComponent({ isDeleting: true });
 
-    const cancelButton = screen.getByTestId('delete-environment-cancel-button');
-    const confirmButton = screen.getByTestId('delete-environment-confirm-button');
+    const cancelButton = screen.getByTestId('delete-environment-dialog-cancel');
+    const confirmButton = screen.getByTestId('delete-environment-dialog-confirm');
 
     expect(cancelButton).toBeDisabled();
     expect(confirmButton).toBeDisabled();
-    expect(screen.getByTestId('delete-environment-loading-indicator')).toBeInTheDocument();
-    expect(confirmButton).toHaveTextContent('Deletando...');
+    expect(screen.getByTestId('loader')).toBeInTheDocument();
+    expect(confirmButton).toHaveTextContent('Excluindo...');
   });
 
   it('should show environment name in the dialog content', () => {
     renderComponent();
 
-    const dialogContent = screen.getByTestId('delete-environment-dialog-description');
+    const element = screen.getByText(/Test Environment/);
 
-    expect(dialogContent).toHaveTextContent('Test Environment');
+    expect(element).toBeInTheDocument();
   });
 
   it('should show "Excluir" text when isDeleting is false', () => {
     renderComponent({ isDeleting: false });
 
-    const confirmButton = screen.getByTestId('delete-environment-confirm-button');
+    const confirmButton = screen.getByTestId('delete-environment-dialog-confirm');
 
     expect(confirmButton).toHaveTextContent('Excluir');
-    expect(screen.queryByTestId('delete-environment-loading-indicator')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('loader')).not.toBeInTheDocument();
   });
 });

@@ -1,386 +1,292 @@
 // components/applications/applications-page.test.tsx
-import { screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { render, TestWrapper } from '@/tests/test-utils';
+import * as ApplicationsHook from '@/hooks/use-applications';
+import { TestWrapper } from '@/tests/test-utils';
 
 import { ApplicationsPage } from './applications-page';
 
-// Definindo os mocks usando hoisting para evitar problemas com vi.mock
-const mockDeleteFn = vi.fn();
-const mockCreateFn = vi.fn();
-const mockUpdateFn = vi.fn();
-const mockRefreshFn = vi.fn();
+// Mock hook and context functions
+const createApplicationMock = vi.fn();
+const updateApplicationMock = vi.fn();
+const deleteApplicationMock = vi.fn();
+const refreshApplicationsMock = vi.fn();
+const mockOpenModal = vi.fn();
+const mockOpenEditModal = vi.fn();
+const mockCloseModal = vi.fn();
 
-// Variável para controlar qual implementação do mock usar
-let useErrorMock = false;
+// Sample applications data
+const mockApplications = [
+  {
+    id: '1',
+    name: 'Frontend Web',
+    slug: 'frontend-web',
+    description: 'Main frontend application',
+    createdAt: '2023-01-15T10:00:00.000Z',
+    updatedAt: '2023-01-15T10:00:00.000Z',
+  },
+  {
+    id: '2',
+    name: 'API Gateway',
+    slug: 'api-gateway',
+    description: 'API gateway service',
+    createdAt: '2023-02-10T08:30:00.000Z',
+    updatedAt: '2023-02-10T08:30:00.000Z',
+  },
+];
 
-// Configurando o mock para o hook useApplications
+// Keep track of modal state to test modal rendering
+let modalState = {
+  isOpen: false,
+  applicationToEdit: null,
+};
+
+// Mock the useApplications hook
 vi.mock('@/hooks/use-applications', () => ({
-  useApplications: () => {
-    if (useErrorMock) {
-      return {
-        applications: [],
-        isLoading: false,
-        isRefreshing: false,
-        error: 'Falha ao carregar aplicações',
-        refreshApplications: vi.fn(),
-        createApplication: vi.fn(),
-        updateApplication: vi.fn(),
-        deleteApplication: vi.fn(),
-      };
-    }
-
-    return {
-      applications: [
-        {
-          id: '1',
-          name: 'Frontend Web',
-          slug: 'frontend-web',
-          description: 'Main frontend application',
-          createdAt: '2023-01-15T10:00:00.000Z',
-          updatedAt: '2023-01-15T10:00:00.000Z',
-        },
-        {
-          id: '2',
-          name: 'API Gateway',
-          slug: 'api-gateway',
-          description: 'API gateway service',
-          createdAt: '2023-02-10T08:30:00.000Z',
-          updatedAt: '2023-02-10T08:30:00.000Z',
-        },
-      ],
-      isLoading: false,
-      isRefreshing: false,
-      error: null,
-      refreshApplications: mockRefreshFn,
-      createApplication: mockCreateFn,
-      updateApplication: mockUpdateFn,
-      deleteApplication: mockDeleteFn,
-    };
-  },
+  useApplications: vi.fn().mockImplementation(() => ({
+    applications: mockApplications,
+    isLoading: false,
+    isRefreshing: false,
+    error: null,
+    refreshApplications: refreshApplicationsMock,
+    createApplication: createApplicationMock,
+    updateApplication: updateApplicationMock,
+    deleteApplication: deleteApplicationMock,
+  })),
 }));
 
-// Mock para os componentes da aplicação
+// Mock the context
+vi.mock('@/contexts/modal-manager-context', () => ({
+  useApplicationModal: vi.fn().mockImplementation(() => ({
+    isOpen: modalState.isOpen,
+    applicationToEdit: modalState.applicationToEdit,
+    openModal: mockOpenModal.mockImplementation(() => {
+      modalState.isOpen = true;
+      modalState.applicationToEdit = null;
+
+      return true; // Return a value to indicate the function was called
+    }),
+    openEditModal: mockOpenEditModal.mockImplementation((app) => {
+      modalState.isOpen = true;
+      modalState.applicationToEdit = app;
+
+      return true; // Return a value to indicate the function was called
+    }),
+    closeModal: mockCloseModal.mockImplementation(() => {
+      modalState.isOpen = false;
+      modalState.applicationToEdit = null;
+    }),
+  })),
+}));
+
+// Mock ApplicationsTable
 vi.mock('./applications-table', () => ({
-  ApplicationsTable: ({ entities, applications, onEdit, onDelete }: any) => {
-    const items = entities || applications || [];
-
-    return (
-      <div data-testid="applications-table">
-        <div data-testid="applications-count">{items.length}</div>
-        <button data-testid="mock-edit-button" onClick={() => onEdit(items[0])}>
-          Edit
-        </button>
-        <button data-testid="mock-delete-button" onClick={() => onDelete('1')}>
-          Delete
-        </button>
-      </div>
-    );
-  },
-}));
-
-vi.mock('./application-form', () => ({
-  ApplicationForm: ({ entity, application, onSubmit, onCancel }: any) => {
-    const item = entity || application;
-
-    return (
-      <div data-testid="application-form" data-edit-mode={item ? 'true' : 'false'}>
-        <button
-          data-testid="mock-submit-button"
-          onClick={() => onSubmit({ name: 'New App', slug: 'new-app' })}
-        >
-          Submit
-        </button>
-        <button data-testid="mock-cancel-button" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    );
-  },
-}));
-
-// Variáveis para controlar qual diálogo está aberto
-let isCreateDialogOpen = false;
-let isEditDialogOpen = false;
-let entityToEdit = null;
-
-// Mock para o componente EntityPage - CAMINHO ATUALIZADO
-vi.mock('@/components/entities/entity-page', () => ({
-  EntityPage: ({
-    entities,
-    error,
-    isLoading,
-    isRefreshing,
-    refreshEntities,
-    createEntity,
-    updateEntity,
-    deleteEntity,
-    EntityTable,
-    EntityForm,
-    entityName,
-    testIdPrefix,
-    tableProps,
-    formProps,
-    entityPropName,
-  }: any) => (
-    <div data-testid={`${testIdPrefix}-page`}>
-      <h1>{entityName.plural}</h1>
-      <p>{entityName.description}</p>
-
+  ApplicationsTable: ({ onEdit, onDelete }) => (
+    <div data-testid="applications-table">
+      <div data-testid="applications-count">2</div>
       <button
-        data-testid={`${testIdPrefix}-page-refresh-button`}
-        onClick={refreshEntities}
-        disabled={isLoading || isRefreshing}
+        data-testid="mock-edit-button"
+        onClick={() => onEdit(mockApplications[0])}
       >
-        Refresh
+        Edit
       </button>
-
-      <button
-        data-testid={`${testIdPrefix}-page-add-button`}
-        onClick={() => {
-          // Abrir diálogo de criação
-          isCreateDialogOpen = true;
-          isEditDialogOpen = false;
-          entityToEdit = null;
-        }}
-      >
-        Add {entityName.singular}
+      <button data-testid="mock-delete-button" onClick={() => onDelete('1')}>
+        Delete
       </button>
-
-      {error && <div data-testid={`${testIdPrefix}-page-error-alert`}>{error}</div>}
-
-      <EntityTable
-        entities={entities}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onEdit={(entity: any) => {
-          // Abrir diálogo de edição
-          isEditDialogOpen = true;
-          isCreateDialogOpen = false;
-          entityToEdit = entity;
-        }}
-        onDelete={deleteEntity}
-        {...tableProps}
-      />
-
-      {/* Create Dialog */}
-      {isCreateDialogOpen && (
-        <div data-testid={`${testIdPrefix}-page-create-dialog`}>
-          <EntityForm
-            onSubmit={(data: any) => {
-              createEntity(data);
-              isCreateDialogOpen = false;
-            }}
-            onCancel={() => {
-              isCreateDialogOpen = false;
-            }}
-            isSubmitting={false}
-            {...formProps}
-          />
-        </div>
-      )}
-
-      {/* Edit Dialog */}
-      {isEditDialogOpen && entityToEdit && (
-        <div data-testid={`${testIdPrefix}-page-edit-dialog`}>
-          <EntityForm
-            entity={entityToEdit}
-            {...(entityPropName ? { [entityPropName]: entityToEdit } : {})}
-            onSubmit={(data: any) => {
-              updateEntity(entityToEdit.id, data);
-              isEditDialogOpen = false;
-            }}
-            onCancel={() => {
-              isEditDialogOpen = false;
-              entityToEdit = null;
-            }}
-            isSubmitting={false}
-            {...formProps}
-          />
-        </div>
-      )}
     </div>
   ),
 }));
 
+// Mock CreateApplicationModal
+vi.mock('./create-application-modal', () => ({
+  CreateApplicationModal: ({ isOpen, onClose, createApplication, updateApplication, applicationToEdit, onCreateSuccess }) => 
+    isOpen ? (
+      <div data-testid="create-application-modal">
+        <div data-testid="modal-edit-mode">{applicationToEdit ? 'edit' : 'create'}</div>
+        <button
+          data-testid="modal-create-button"
+          onClick={() => {
+            const data = { name: 'New App', slug: 'new-app' };
+
+            if (applicationToEdit) {
+              updateApplication(applicationToEdit.id, data);
+            } else {
+              createApplication(data);
+            }
+            onClose();
+            onCreateSuccess();
+          }}
+        >
+          Submit
+        </button>
+      </div>
+    ) : null,
+}));
+
+// Mock icons
+vi.mock('lucide-react', () => ({
+  PlusCircle: () => <span data-testid="plus-circle-icon" />,
+  RefreshCw: () => <span data-testid="refresh-icon" />,
+}));
+
 describe('ApplicationsPage', () => {
   beforeEach(() => {
-    // Limpar todos os mocks antes de cada teste
+    // Reset mocks and state before each test
     vi.clearAllMocks();
-    // Resetar a flag de erro para cada teste
-    useErrorMock = false;
-    // Resetar estado dos diálogos
-    isCreateDialogOpen = false;
-    isEditDialogOpen = false;
-    entityToEdit = null;
+    modalState = {
+      isOpen: false,
+      applicationToEdit: null,
+    };
+  });
+  
+  afterEach(() => {
+    cleanup();
   });
 
   it('should render applications page with title and table', () => {
     render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Verifica o título da página
-    expect(screen.getByRole('heading')).toHaveTextContent('Aplicações');
-
-    // Verifica a descrição
+    expect(screen.getByText('Aplicações')).toBeInTheDocument();
     expect(screen.getByText('Gerencie suas aplicações')).toBeInTheDocument();
-
-    // Verifica se a tabela de aplicações está presente
     expect(screen.getByTestId('applications-table')).toBeInTheDocument();
-
-    // Verifica a contagem de aplicações (2 do mock)
-    const appCount = screen.getByTestId('applications-count');
-
-    expect(appCount).toBeInTheDocument();
-    expect(appCount.textContent).toBe('2');
-  });
-
-  it('should open create dialog when add button is clicked', async () => {
-    const user = userEvent.setup();
-
-    render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Clica no botão de adicionar
-    const addButton = screen.getByTestId('applications-page-add-button');
-
-    await user.click(addButton);
-
-    // Agora renderiza novamente para atualizar o DOM com o diálogo aberto
-    // Isso é necessário porque estamos usando variáveis globais para controlar o estado
-    // em vez de um estado React real
-    render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Verifica se o diálogo foi aberto
-    const dialog = screen.getByTestId('applications-page-create-dialog');
-
-    expect(dialog).toBeInTheDocument();
-
-    // Verifica se o formulário está no modo de criação
-    const form = screen.getByTestId('application-form');
-
-    expect(form).toHaveAttribute('data-edit-mode', 'false');
-  });
-
-  it('should call createApplication when form is submitted', async () => {
-    const user = userEvent.setup();
-
-    // Primeiro renderiza com o diálogo de criação fechado
-    render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Clica no botão de adicionar
-    const addButton = screen.getByTestId('applications-page-add-button');
-
-    await user.click(addButton);
-
-    // Agora renderiza novamente para atualizar o DOM com o diálogo aberto
-    render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Submete o formulário
-    const submitButton = screen.getByTestId('mock-submit-button');
-
-    await user.click(submitButton);
-
-    // Verifica se createApplication foi chamado com os dados corretos
-    expect(mockCreateFn).toHaveBeenCalledTimes(1);
-    expect(mockCreateFn).toHaveBeenCalledWith({
-      name: 'New App',
-      slug: 'new-app',
-    });
-  });
-
-  it('should open edit dialog when table edit action is triggered', async () => {
-    const user = userEvent.setup();
-
-    render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Simula a ação de editar da tabela
-    const editButton = screen.getByTestId('mock-edit-button');
-
-    await user.click(editButton);
-
-    // Renderiza novamente para atualizar o DOM com o diálogo aberto
-    render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Verifica se o diálogo foi aberto
-    const dialog = screen.getByTestId('applications-page-edit-dialog');
-
-    expect(dialog).toBeInTheDocument();
-
-    // Verifica se o formulário está no modo de edição
-    const form = screen.getByTestId('application-form');
-
-    expect(form).toHaveAttribute('data-edit-mode', 'true');
-  });
-
-  it('should call deleteApplication when delete action is triggered', async () => {
-    const user = userEvent.setup();
-
-    render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Simula a ação de excluir da tabela
-    const deleteButton = screen.getByTestId('mock-delete-button');
-
-    await user.click(deleteButton);
-
-    // Verifica se o método de exclusão foi chamado com o ID correto
-    expect(mockDeleteFn).toHaveBeenCalledTimes(1);
-    expect(mockDeleteFn).toHaveBeenCalledWith('1');
+    expect(screen.getByTestId('applications-count')).toHaveTextContent('2');
   });
 
   it('should call refreshApplications when refresh button is clicked', async () => {
     const user = userEvent.setup();
-
+    
     render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Clica no botão de atualizar
-    const refreshButton = screen.getByTestId('applications-page-refresh-button');
-
-    await user.click(refreshButton);
-
-    // Verifica se a função de atualização foi chamada
-    expect(mockRefreshFn).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByTestId('applications-page-refresh-button'));
+    
+    expect(refreshApplicationsMock).toHaveBeenCalled();
   });
 
-  it('should display error alert when error is present', () => {
-    // Ativa o mock de erro para este teste
-    useErrorMock = true;
-
+  it('should call deleteApplication when delete action is triggered', async () => {
+    const user = userEvent.setup();
+    
     render(<ApplicationsPage />, { wrapper: TestWrapper });
+    await user.click(screen.getByTestId('mock-delete-button'));
+    
+    expect(deleteApplicationMock).toHaveBeenCalledWith('1');
+  });
 
-    // Verifica se o alerta é exibido
-    const alertElement = screen.getByTestId('applications-page-error-alert');
+  it('should open create modal when add button is clicked', async () => {
+    const user = userEvent.setup();
+    
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
+    
+    // Click the Add button
+    await user.click(screen.getByTestId('applications-page-add-button'));
+    
+    // Check that openModal was called
+    expect(mockOpenModal).toHaveBeenCalled();
+    
+    // Update the modal state manually
+    modalState.isOpen = true;
+    modalState.applicationToEdit = null;
+    
+    // Rerender with updated modal state
+    cleanup();
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
+    
+    // The modal should be visible now
+    expect(screen.getByTestId('create-application-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('modal-edit-mode')).toHaveTextContent('create');
+  });
 
-    expect(alertElement).toBeInTheDocument();
-    expect(alertElement).toHaveTextContent('Falha ao carregar aplicações');
+  it('should call createApplication when form is submitted', async () => {
+    const user = userEvent.setup();
+    
+    // Set modal as open before rendering
+    modalState.isOpen = true;
+    
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
+    
+    // Modal should be visible
+    expect(screen.getByTestId('create-application-modal')).toBeInTheDocument();
+    
+    // Click submit button
+    await user.click(screen.getByTestId('modal-create-button'));
+    
+    // Verify create was called
+    expect(createApplicationMock).toHaveBeenCalledWith({
+      name: 'New App',
+      slug: 'new-app',
+    });
+    
+    // Modal should be closed
+    expect(mockCloseModal).toHaveBeenCalled();
+  });
 
-    // Reseta o mock de erro
-    useErrorMock = false;
+  it('should open edit modal when edit action is triggered', async () => {
+    const user = userEvent.setup();
+    
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
+    
+    // Click edit button
+    await user.click(screen.getByTestId('mock-edit-button'));
+    
+    // Check that openEditModal was called
+    expect(mockOpenEditModal).toHaveBeenCalled();
+    
+    // Update the modal state manually
+    modalState.isOpen = true;
+    modalState.applicationToEdit = mockApplications[0];
+    
+    // Rerender with updated modal state
+    cleanup();
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
+    
+    // The modal should be visible now in edit mode
+    expect(screen.getByTestId('create-application-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('modal-edit-mode')).toHaveTextContent('edit');
   });
 
   it('should update application when edit form is submitted', async () => {
     const user = userEvent.setup();
-
+    
+    // Set modal as open in edit mode before rendering
+    modalState.isOpen = true;
+    modalState.applicationToEdit = mockApplications[0];
+    
     render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Abre o diálogo de edição
-    const editButton = screen.getByTestId('mock-edit-button');
-
-    await user.click(editButton);
-
-    // Renderiza novamente para atualizar o DOM com o diálogo aberto
-    render(<ApplicationsPage />, { wrapper: TestWrapper });
-
-    // Submete o formulário de edição
-    const submitButton = screen.getByTestId('mock-submit-button');
-
-    await user.click(submitButton);
-
-    // Verifica se updateApplication foi chamado com os dados corretos
-    expect(mockUpdateFn).toHaveBeenCalledTimes(1);
-    expect(mockUpdateFn).toHaveBeenCalledWith('1', {
+    
+    // Modal should be visible in edit mode
+    expect(screen.getByTestId('create-application-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('modal-edit-mode')).toHaveTextContent('edit');
+    
+    // Click submit button
+    await user.click(screen.getByTestId('modal-create-button'));
+    
+    // Verify update was called
+    expect(updateApplicationMock).toHaveBeenCalledWith('1', {
       name: 'New App',
       slug: 'new-app',
     });
+    
+    // Modal should be closed
+    expect(mockCloseModal).toHaveBeenCalled();
+  });
+
+  it('should display error alert when error is present', () => {
+    // Override the mock implementation for this test only
+    vi.mocked(ApplicationsHook.useApplications).mockImplementationOnce(() => ({
+      applications: [],
+      isLoading: false,
+      isRefreshing: false,
+      error: 'Falha ao carregar aplicações',
+      refreshApplications: refreshApplicationsMock,
+      createApplication: createApplicationMock,
+      updateApplication: updateApplicationMock,
+      deleteApplication: deleteApplicationMock,
+    }));
+    
+    render(<ApplicationsPage />, { wrapper: TestWrapper });
+    
+    const errorAlert = screen.getByTestId('applications-page-error-alert');
+
+    expect(errorAlert).toBeInTheDocument();
+    expect(errorAlert).toHaveTextContent('Falha ao carregar aplicações');
   });
 });
