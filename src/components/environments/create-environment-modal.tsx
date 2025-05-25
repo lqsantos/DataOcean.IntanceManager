@@ -36,7 +36,6 @@ export function CreateEnvironmentModal({
   // Handler para submissão do formulário
   const handleSubmit = useCallback(
     async (values: CreateEnvironmentDto | UpdateEnvironmentDto) => {
-      console.log('Environment form submitted with values:', values);
       setIsSubmitting(true);
 
       try {
@@ -67,7 +66,6 @@ export function CreateEnvironmentModal({
               : 'Erro ao criar ambiente';
 
         toast.error(errorMessage);
-        console.error('Error submitting environment form:', error);
       } finally {
         setIsSubmitting(false);
       }
@@ -90,7 +88,7 @@ export function CreateEnvironmentModal({
       testId="create-environment-modal"
       maxWidth="xl"
       isEditMode={isEditMode}
-      preventClose={true}
+      preventClose={isSubmitting}
     >
       <EnvironmentForm
         environment={environmentToEdit || undefined}

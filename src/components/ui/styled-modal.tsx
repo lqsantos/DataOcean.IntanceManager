@@ -76,8 +76,6 @@ export function StyledModal({
   dialogProps,
   preventClose = false,
 }: StyledModalProps) {
-  console.log('[DIAGNOSTIC] StyledModal rendered', { open, title, preventClose });
-
   // Use o ícone fornecido ou um ícone padrão se não for fornecido
   const IconComponent = icon || AlertCircle;
   const BackgroundIconComponent = backgroundIcon;
@@ -111,11 +109,8 @@ export function StyledModal({
     <Dialog
       open={open}
       onOpenChange={(value) => {
-        console.log('[DIAGNOSTIC] Dialog onOpenChange called', { current: open, new: value });
-
         // Se estiver tentando fechar (value = false) mas preventClose for true, não fazer nada
         if (!value && preventClose) {
-          console.log('[DIAGNOSTIC] Preventing dialog close due to preventClose=true');
           return;
         }
 
@@ -129,18 +124,15 @@ export function StyledModal({
         data-modal-title={title}
         data-modal-type={isEditMode ? 'edit' : 'create'}
         onPointerDownOutside={(e) => {
-          console.log('[DIAGNOSTIC] DialogContent onPointerDownOutside');
           if (preventClose) {
             e.preventDefault();
           }
         }}
         onInteractOutside={(e) => {
-          console.log('[DIAGNOSTIC] DialogContent onInteractOutside');
           e.preventDefault();
         }}
         // Remover qualquer tratamento especial para eventos de teclado para prevenir interferência
         onEscapeKeyDown={(e) => {
-          console.log('[DIAGNOSTIC] DialogContent onEscapeKeyDown');
           if (preventClose) {
             e.preventDefault();
           }

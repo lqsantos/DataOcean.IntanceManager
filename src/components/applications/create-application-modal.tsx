@@ -30,46 +30,33 @@ export function CreateApplicationModal({
   updateApplication,
   applicationToEdit,
 }: CreateApplicationModalProps) {
-  console.log('[DIAGNOSTIC] CreateApplicationModal rendered', {
-    isOpen,
-    hasApplicationToEdit: !!applicationToEdit,
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!applicationToEdit;
 
   // Handler para submissão do formulário - simplificado e direto
   const handleSubmit = useCallback(
     async (data: CreateApplicationDto | UpdateApplicationDto) => {
-      console.log('[DIAGNOSTIC] CreateApplicationModal.handleSubmit called with data:', data);
       setIsSubmitting(true);
 
       try {
         if (isEditMode && applicationToEdit && updateApplication) {
-          console.log('[DIAGNOSTIC] Updating application:', applicationToEdit.id);
           const updated = await updateApplication(applicationToEdit.id, data);
 
-          console.log('[DIAGNOSTIC] Application updated successfully:', updated);
           toast.success('Aplicação atualizada com sucesso');
 
           if (onCreateSuccess) {
-            console.log('[DIAGNOSTIC] Calling onCreateSuccess after update');
             onCreateSuccess(updated);
           }
         } else {
-          console.log('[DIAGNOSTIC] Creating new application');
           const created = await createApplication(data as CreateApplicationDto);
 
-          console.log('[DIAGNOSTIC] Application created successfully:', created);
           toast.success('Aplicação criada com sucesso');
 
           if (onCreateSuccess) {
-            console.log('[DIAGNOSTIC] Calling onCreateSuccess after creation');
             onCreateSuccess(created);
           }
         }
 
-        console.log('[DIAGNOSTIC] Closing modal after success');
         onClose();
       } catch (error) {
         const errorMessage =
@@ -79,10 +66,8 @@ export function CreateApplicationModal({
               ? 'Erro ao atualizar aplicação'
               : 'Erro ao criar aplicação';
 
-        console.error('[DIAGNOSTIC] Error in CreateApplicationModal.handleSubmit:', error);
         toast.error(errorMessage);
       } finally {
-        console.log('[DIAGNOSTIC] Setting isSubmitting to false');
         setIsSubmitting(false);
       }
     },
@@ -93,8 +78,6 @@ export function CreateApplicationModal({
     <StyledModal
       open={isOpen}
       onOpenChange={(open) => {
-        console.log('[DIAGNOSTIC] StyledModal onOpenChange called:', open);
-
         // Só fechar o modal quando o open for false (modal fechando)
         if (!open) {
           onClose();
@@ -124,8 +107,6 @@ export function CreateApplicationModal({
           application={applicationToEdit || undefined}
           onSubmit={handleSubmit}
           onCancel={() => {
-            console.log('[DIAGNOSTIC] ApplicationForm.onCancel called');
-
             // Não fechar o modal se estiver submetendo
             if (!isSubmitting) {
               onClose();

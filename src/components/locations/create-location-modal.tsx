@@ -36,7 +36,6 @@ export function CreateLocationModal({
   // Handler para submissão do formulário
   const handleSubmit = useCallback(
     async (values: CreateLocationDto | UpdateLocationDto) => {
-      console.log('Location form submitted with values:', values);
       setIsSubmitting(true);
 
       try {
@@ -67,7 +66,6 @@ export function CreateLocationModal({
               : 'Erro ao criar localidade';
 
         toast.error(errorMessage);
-        console.error('Error submitting location form:', error);
       } finally {
         setIsSubmitting(false);
       }
@@ -90,7 +88,7 @@ export function CreateLocationModal({
       testId="create-location-modal"
       maxWidth="xl"
       isEditMode={isEditMode}
-      preventClose={true}
+      preventClose={isSubmitting}
     >
       <LocationForm
         location={locationToEdit || undefined}
