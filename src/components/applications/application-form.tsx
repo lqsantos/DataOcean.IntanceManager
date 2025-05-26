@@ -35,17 +35,17 @@ export function ApplicationForm({
     if (!values.name?.trim()) {
       errors.name = t('common:messages.requiredField');
     } else if (values.name.length < 2) {
-      errors.name = 'Nome deve ter pelo menos 2 caracteres';
+      errors.name = t('common:messages.minLength', { count: 2 });
     }
 
     if (!values.slug?.trim()) {
       errors.slug = t('common:messages.requiredField');
     } else if (!/^[a-z0-9-]+$/.test(values.slug)) {
-      errors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
+      errors.slug = t('common:form.errors.invalidSlug');
     }
 
     if (values.description && values.description.length > 500) {
-      errors.description = 'Descrição deve ter no máximo 500 caracteres';
+      errors.description = t('common:messages.maxLength', { count: 500 });
     }
 
     return errors;
@@ -69,11 +69,11 @@ export function ApplicationForm({
     },
     {
       name: 'slug' as const,
-      label: 'Slug',
+      label: t('common:form.fields.slug.label'),
       required: true,
       component: InputAdapter,
-      placeholder: 'identificador-único',
-      helpText: 'Identificador único usado em URLs. Apenas letras minúsculas, números e hífens.',
+      placeholder: t('common:form.fields.slug.placeholder'),
+      helpText: t('common:form.fields.slug.helpText'),
     },
     {
       name: 'description' as const,

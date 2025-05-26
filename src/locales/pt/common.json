@@ -7,7 +7,8 @@
     "create": "Criar",
     "add": "Adicionar",
     "edit": "Editar",
-    "close": "Fechar"
+    "close": "Fechar",
+    "refresh": "Atualizar"
   },
   "messages": {
     "loading": "Carregando...",
@@ -15,11 +16,25 @@
     "success": "Operação realizada com sucesso",
     "confirmDelete": "Tem certeza que deseja excluir este item?",
     "requiredField": "Este campo é obrigatório",
-    "invalidInput": "Entrada inválida"
+    "invalidInput": "Entrada inválida",
+    "minLength": "Deve ter pelo menos {{count}} caracteres",
+    "maxLength": "Deve ter no máximo {{count}} caracteres"
   },
   "form": {
     "required": "Obrigatório",
-    "optional": "Opcional"
+    "optional": "Opcional",
+    "fields": {
+      "slug": {
+        "label": "Slug",
+        "placeholder": "identificador-unico",
+        "helpText": "Use apenas letras minúsculas, números e hífens."
+      }
+    },
+    "errors": {
+      "invalidSlug": "Slug deve conter apenas letras minúsculas, números e hífens",
+      "invalidNumber": "Valor deve ser um número válido",
+      "positiveNumberRequired": "Valor deve ser um número positivo"
+    }
   },
   "table": {
     "actions": "Ações"

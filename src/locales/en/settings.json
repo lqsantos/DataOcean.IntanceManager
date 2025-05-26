@@ -105,6 +105,11 @@
         "description": {
           "label": "Description",
           "placeholder": "Enter environment description"
+        },
+        "order": {
+          "label": "Order",
+          "placeholder": "e.g., 1",
+          "helpText": "Determines the display order of environments."
         }
       }
     },

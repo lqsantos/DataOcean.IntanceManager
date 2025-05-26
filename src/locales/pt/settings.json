@@ -105,6 +105,11 @@
         "description": {
           "label": "Descrição",
           "placeholder": "Digite uma descrição para o ambiente"
+        },
+        "order": {
+          "label": "Ordem",
+          "placeholder": "ex: 1",
+          "helpText": "Determina a ordem de exibição dos ambientes."
         }
       }
     },

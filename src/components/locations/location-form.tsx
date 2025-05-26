@@ -38,7 +38,7 @@ export function LocationForm({
     if (!values.slug?.trim()) {
       errors.slug = t('common:messages.requiredField');
     } else if (!/^[a-z0-9-]+$/.test(values.slug)) {
-      errors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
+      errors.slug = t('common:form.errors.invalidSlug');
     }
 
     return errors;
@@ -61,11 +61,11 @@ export function LocationForm({
     },
     {
       name: 'slug' as const,
-      label: 'Slug',
+      label: t('common:form.fields.slug.label'),
       required: true,
       component: InputAdapter,
-      placeholder: 'identificador-unico',
-      helpText: 'Identificador único usado em URLs. Apenas letras minúsculas, números e hífens.',
+      placeholder: t('common:form.fields.slug.placeholder'),
+      helpText: t('common:form.fields.slug.helpText'),
     },
   ];
 

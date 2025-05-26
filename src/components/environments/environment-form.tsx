@@ -50,28 +50,28 @@ export function EnvironmentForm({
     if (!values.name?.trim()) {
       errors.name = t('common:messages.requiredField');
     } else if (values.name.length < 3) {
-      errors.name = 'Nome deve ter pelo menos 3 caracteres';
+      errors.name = t('common:messages.minLength', { count: 3 });
     } else if (values.name.length > 50) {
-      errors.name = 'Nome deve ter no máximo 50 caracteres';
+      errors.name = t('common:messages.maxLength', { count: 50 });
     }
 
     if (!values.slug?.trim()) {
       errors.slug = t('common:messages.requiredField');
     } else if (!/^[a-z0-9-]+$/.test(values.slug)) {
-      errors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
+      errors.slug = t('common:form.errors.invalidSlug');
     } else if (values.slug.length < 2) {
-      errors.slug = 'Slug deve ter pelo menos 2 caracteres';
+      errors.slug = t('common:messages.minLength', { count: 2 });
     } else if (values.slug.length > 30) {
-      errors.slug = 'Slug deve ter no máximo 30 caracteres';
+      errors.slug = t('common:messages.maxLength', { count: 30 });
     }
 
     if (values.order) {
       const orderValue = Number(values.order);
 
       if (isNaN(orderValue)) {
-        errors.order = 'Ordem deve ser um número';
+        errors.order = t('common:form.errors.invalidNumber');
       } else if (orderValue < 0) {
-        errors.order = 'Ordem deve ser um número positivo';
+        errors.order = t('common:form.errors.positiveNumberRequired');
       }
     }
 
@@ -101,20 +101,19 @@ export function EnvironmentForm({
     },
     {
       name: 'slug' as keyof EnvironmentFormValues,
-      label: 'Slug',
+      label: t('common:form.fields.slug.label'),
       required: true,
       component: InputAdapter,
-      placeholder: 'ex: dev',
-      helpText:
-        'Usado em URLs e requisições de API. Use apenas letras minúsculas, números e hífens.',
+      placeholder: t('common:form.fields.slug.placeholder'),
+      helpText: t('common:form.fields.slug.helpText'),
     },
     {
       name: 'order' as keyof EnvironmentFormValues,
-      label: 'Ordem',
+      label: t('environments.modal.form.order.label'),
       component: (props: React.ComponentProps<typeof InputAdapter>) =>
         InputAdapter({ ...props, type: 'number' }),
-      placeholder: 'ex: 1',
-      helpText: 'Determina a ordem de exibição dos ambientes.',
+      placeholder: t('environments.modal.form.order.placeholder'),
+      helpText: t('environments.modal.form.order.helpText'),
     },
   ];
 
