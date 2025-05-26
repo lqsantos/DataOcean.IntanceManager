@@ -5,6 +5,31 @@ import { render, screen } from '@/tests/test-utils';
 
 import { LocationForm } from '../location-form';
 
+// Mock the i18n translation
+vi.mock('react-i18next', () => ({
+  // This mock makes t('messages.requiredField') actually return "This field is required"
+  useTranslation: () => {
+    return {
+      t: (key) => {
+        const translations = {
+          'messages.requiredField': 'This field is required',
+          'messages.invalidSlug': 'Invalid slug format',
+        };
+
+        return translations[key] || key;
+      },
+      i18n: {
+        changeLanguage: () => new Promise(() => {}),
+      },
+    };
+  },
+  // Adding the missing initReactI18next export
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
+}));
+
 describe('LocationForm', () => {
   const mockOnSubmit = vi.fn();
 
@@ -14,9 +39,9 @@ describe('LocationForm', () => {
 
   it('renders the form with empty fields when no default values', () => {
     render(<LocationForm onSubmit={mockOnSubmit} />);
-
     expect(screen.getByTestId('input-name')).toBeInTheDocument();
     expect(screen.getByTestId('input-slug')).toBeInTheDocument();
+    expect(screen.getByTestId('textarea-description')).toBeInTheDocument();
     expect(screen.getByTestId('location-form-submit-button')).toBeInTheDocument();
   });
 
@@ -29,14 +54,17 @@ describe('LocationForm', () => {
 
     render(<LocationForm onSubmit={mockOnSubmit} defaultValues={defaultValues} />);
 
-    // Set values using fireEvent for controlled inputs
     act(() => {
       fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Test Location' } });
       fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'test-loc' } });
+      fireEvent.change(screen.getByTestId('textarea-description'), {
+        target: { value: 'This is a test location' },
+      });
     });
 
     expect(screen.getByTestId('input-name')).toHaveValue('Test Location');
     expect(screen.getByTestId('input-slug')).toHaveValue('test-loc');
+    expect(screen.getByTestId('textarea-description')).toHaveValue('This is a test location');
   });
 
   it('submits the form with entered values', async () => {
@@ -45,6 +73,9 @@ describe('LocationForm', () => {
     await act(async () => {
       fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'New Location' } });
       fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'new-loc' } });
+      fireEvent.change(screen.getByTestId('textarea-description'), {
+        target: { value: 'New location description' },
+      });
     });
 
     await act(async () => {
@@ -55,6 +86,7 @@ describe('LocationForm', () => {
       expect.objectContaining({
         name: 'New Location',
         slug: 'new-loc',
+        description: 'New location description',
       })
     );
   });
@@ -68,7 +100,7 @@ describe('LocationForm', () => {
       });
     });
 
-    // Wait for slug to be auto-generated
+    // Check that the slug was auto-generated correctly
     expect(screen.getByTestId('input-slug')).toHaveValue('test-location-with-spaces');
   });
 
@@ -84,11 +116,11 @@ describe('LocationForm', () => {
       fireEvent.submit(screen.getByTestId('location-form-submit-button'));
     });
 
-    // Check for validation error message by testId rather than text content
+    // Check for validation error message
     const errorElement = screen.getByTestId('location-form-error-name');
 
     expect(errorElement).toBeInTheDocument();
-    expect(errorElement.textContent).toContain('messages.requiredField');
+    expect(errorElement.textContent).toContain('This field is required');
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
@@ -99,11 +131,11 @@ describe('LocationForm', () => {
       fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Test Location' } });
     });
 
-    // Wait for slug to be auto-generated
+    // Check that the slug was auto-generated correctly
     expect(screen.getByTestId('input-slug')).toHaveValue('test-location');
 
     await act(async () => {
-      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'custom-loc-slug' } });
+      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'custom-slug' } });
     });
 
     await act(async () => {
@@ -113,7 +145,7 @@ describe('LocationForm', () => {
     expect(mockOnSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Test Location',
-        slug: 'custom-loc-slug',
+        slug: 'custom-slug',
       })
     );
   });

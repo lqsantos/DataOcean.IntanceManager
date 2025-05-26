@@ -2,6 +2,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/tests/test-utils';
 
+// Mock GenericEntityPage component first
+vi.mock('@/components/entities/generic-entity-page', () => ({
+  GenericEntityPage: vi.fn(({ entities, EntityTable, EntityModal, testIdPrefix }) => (
+    <div data-testid={`${testIdPrefix}-page`}>
+      <EntityTable entities={entities} />
+      <div data-testid={`${testIdPrefix}-add-button`}>Add Button</div>
+      <div data-testid={`${testIdPrefix}-refresh-button`}>Refresh Button</div>
+    </div>
+  )),
+}));
+
+// Mock GenericEntityModal component
+vi.mock('@/components/entities/generic-entity-modal', () => ({
+  GenericEntityModal: vi.fn(({ EntityForm, testId }) => (
+    <div data-testid={testId}>
+      <EntityForm />
+    </div>
+  )),
+}));
+
 // Mock the components and hooks used in the ApplicationsPage
 vi.mock('@/hooks/use-applications', () => ({
   useApplications: () => ({
@@ -46,28 +66,11 @@ vi.mock('../applications-table', () => ({
   )),
 }));
 
-// Mock GenericEntityPage component
-vi.mock('@/components/entities/generic-entity-page', () => ({
-  GenericEntityPage: vi.fn(({ entities, EntityTable, EntityModal, testIdPrefix }) => (
-    <div data-testid={`${testIdPrefix}-page`}>
-      <EntityTable entities={entities} />
-      <div data-testid={`${testIdPrefix}-add-button`}>Add Button</div>
-      <div data-testid={`${testIdPrefix}-refresh-button`}>Refresh Button</div>
-    </div>
-  )),
-}));
-
-// Mock GenericEntityModal component
-vi.mock('@/components/entities/generic-entity-modal', () => ({
-  GenericEntityModal: vi.fn(({ EntityForm, testId }) => (
-    <div data-testid={testId}>
-      <EntityForm />
-    </div>
-  )),
-}));
-
 // Import the component under test after all mocks are set up
 import { ApplicationsPage } from '../applications-page';
+
+// Import GenericEntityPage for mocking in the test
+import * as genericEntityPageModule from '@/components/entities/generic-entity-page';
 
 describe('ApplicationsPage', () => {
   beforeEach(() => {
@@ -76,13 +79,11 @@ describe('ApplicationsPage', () => {
 
   it('renders the applications page with GenericEntityPage', () => {
     render(<ApplicationsPage />);
-
     expect(screen.getByTestId('applications-page')).toBeInTheDocument();
   });
 
   it('renders applications in the table', () => {
     render(<ApplicationsPage />);
-
     expect(screen.getByTestId('application-1')).toBeInTheDocument();
     expect(screen.getByTestId('application-2')).toBeInTheDocument();
     expect(screen.getByText('Application 1')).toBeInTheDocument();
@@ -91,13 +92,13 @@ describe('ApplicationsPage', () => {
 
   it('renders the add and refresh buttons', () => {
     render(<ApplicationsPage />);
-
     expect(screen.getByTestId('applications-add-button')).toBeInTheDocument();
     expect(screen.getByTestId('applications-refresh-button')).toBeInTheDocument();
   });
 
   it('passes correct props to GenericEntityPage', () => {
-    const { GenericEntityPage } = require('@/components/entities/generic-entity-page');
+    // Get the mocked GenericEntityPage directly without await
+    const { GenericEntityPage } = genericEntityPageModule as any;
 
     render(<ApplicationsPage />);
 

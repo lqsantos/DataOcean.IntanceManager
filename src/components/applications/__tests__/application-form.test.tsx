@@ -5,6 +5,31 @@ import { render, screen } from '@/tests/test-utils';
 
 import { ApplicationForm } from '../application-form';
 
+// Mock the i18n translation
+vi.mock('react-i18next', () => ({
+  // This mock makes t('messages.requiredField') actually return "This field is required"
+  useTranslation: () => {
+    return {
+      t: (key) => {
+        const translations = {
+          'messages.requiredField': 'This field is required',
+          'messages.invalidSlug': 'Invalid slug format',
+        };
+
+        return translations[key] || key;
+      },
+      i18n: {
+        changeLanguage: () => new Promise(() => {}),
+      },
+    };
+  },
+  // Adding the missing initReactI18next export
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
+}));
+
 describe('ApplicationForm', () => {
   const mockOnSubmit = vi.fn();
 
@@ -97,7 +122,7 @@ describe('ApplicationForm', () => {
     const errorElement = screen.getByTestId('application-form-error-name');
 
     expect(errorElement).toBeInTheDocument();
-    expect(errorElement.textContent).toContain('messages.requiredField');
+    expect(errorElement.textContent).toContain('This field is required');
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 

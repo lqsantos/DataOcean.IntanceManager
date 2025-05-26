@@ -1,4 +1,4 @@
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -8,20 +8,36 @@ import { GenericEntityPage } from '../generic-entity-page';
 
 // Setup MSW server with error responses
 const server = setupServer(
-  rest.get('/api/test-entities', (req, res, ctx) => {
-    return res(ctx.status(500), ctx.json({ message: 'Internal Server Error' }));
+  http.get('/api/test-entities', () => {
+    return HttpResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }),
-  rest.post('/api/test-entities', (req, res, ctx) => {
-    return res(ctx.status(422), ctx.json({ message: 'Validation Error' }));
+  http.post('/api/test-entities', () => {
+    return HttpResponse.json({ message: 'Validation Error' }, { status: 422 });
   }),
-  rest.delete('/api/test-entities/:id', (req, res, ctx) => {
-    return res(ctx.status(403), ctx.json({ message: 'Forbidden' }));
+  http.delete('/api/test-entities/:id', () => {
+    return HttpResponse.json({ message: 'Forbidden' }, { status: 403 });
   })
 );
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+// Add initReactI18next to react-i18next mock to avoid issues
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key) => (key.includes(':') ? key.split(':')[1] : key),
+  }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
+}));
+
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn().mockReturnValue('/settings/applications'),
+}));
 
 describe('Entity Error Handling', () => {
   // Mock components

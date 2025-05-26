@@ -2,6 +2,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/tests/test-utils';
 
+// Mock GenericEntityPage component first
+vi.mock('@/components/entities/generic-entity-page', () => ({
+  GenericEntityPage: vi.fn(({ entities, EntityTable, EntityModal, testIdPrefix }) => (
+    <div data-testid={`${testIdPrefix}-page`}>
+      <EntityTable entities={entities} />
+      <div data-testid={`${testIdPrefix}-add-button`}>Add Button</div>
+      <div data-testid={`${testIdPrefix}-refresh-button`}>Refresh Button</div>
+    </div>
+  )),
+}));
+
+// Mock GenericEntityModal component
+vi.mock('@/components/entities/generic-entity-modal', () => ({
+  GenericEntityModal: vi.fn(({ EntityForm, testId }) => (
+    <div data-testid={testId}>
+      <EntityForm />
+    </div>
+  )),
+}));
+
 // Mock the components and hooks used in the EnvironmentsPage
 vi.mock('@/hooks/use-environments', () => ({
   useEnvironments: () => ({
@@ -46,28 +66,11 @@ vi.mock('../environments-table', () => ({
   )),
 }));
 
-// Mock GenericEntityPage component
-vi.mock('@/components/entities/generic-entity-page', () => ({
-  GenericEntityPage: vi.fn(({ entities, EntityTable, EntityModal, testIdPrefix }) => (
-    <div data-testid={`${testIdPrefix}-page`}>
-      <EntityTable entities={entities} />
-      <div data-testid={`${testIdPrefix}-add-button`}>Add Button</div>
-      <div data-testid={`${testIdPrefix}-refresh-button`}>Refresh Button</div>
-    </div>
-  )),
-}));
-
-// Mock GenericEntityModal component
-vi.mock('@/components/entities/generic-entity-modal', () => ({
-  GenericEntityModal: vi.fn(({ EntityForm, testId }) => (
-    <div data-testid={testId}>
-      <EntityForm />
-    </div>
-  )),
-}));
-
 // Import the component under test after all mocks are set up
 import { EnvironmentsPage } from '../environments-page';
+
+// Import GenericEntityPage for mocking in the test
+import * as genericEntityPageModule from '@/components/entities/generic-entity-page';
 
 describe('EnvironmentsPage', () => {
   beforeEach(() => {
@@ -94,7 +97,8 @@ describe('EnvironmentsPage', () => {
   });
 
   it('passes correct props to GenericEntityPage', () => {
-    const { GenericEntityPage } = require('@/components/entities/generic-entity-page');
+    // Get the mocked GenericEntityPage directly without await
+    const { GenericEntityPage } = genericEntityPageModule as any;
 
     render(<EnvironmentsPage />);
 
