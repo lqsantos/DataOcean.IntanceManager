@@ -8,7 +8,9 @@ const reactI18nextMock = {
     t: (key: string) => {
       const translations: Record<string, string> = {
         'messages.requiredField': 'This field is required',
+        'common:messages.requiredField': 'This field is required',
         'messages.invalidSlug': 'Invalid slug format',
+        'common:form.errors.invalidSlug': 'Invalid slug format',
         'messages.error': 'An error occurred',
         'messages.success': 'Operation successful',
         'settings.title': 'Settings',
@@ -21,6 +23,9 @@ const reactI18nextMock = {
         'tabs.applications': 'Applications',
         'tabs.environments': 'Environments',
         'tabs.locations': 'Locations',
+        // Adicionando mensagens de erro específicas para os testes
+        'Failed to load entities': 'Failed to load entities',
+        'Failed to refresh entities': 'Failed to refresh entities',
       };
 
       return translations[key] || key;

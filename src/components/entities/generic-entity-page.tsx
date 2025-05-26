@@ -206,8 +206,10 @@ export function GenericEntityPage({
         <div
           className="rounded-md bg-destructive/10 p-4 text-destructive"
           data-testid={`${testIdPrefix}-page-error-alert`}
+          data-error={error.toString()}
         >
-          {error}
+          {/* Renderizando a mensagem de erro diretamente, para garantir que ela apareça nos testes */}
+          {error.toString()}
         </div>
       )}
 

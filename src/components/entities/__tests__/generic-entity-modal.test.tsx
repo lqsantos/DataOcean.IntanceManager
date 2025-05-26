@@ -5,12 +5,46 @@ import { render, screen } from '@/tests/test-utils';
 
 import { GenericEntityModal } from '../generic-entity-modal';
 
-// Mock Radix UI Slot component
+// Mock Radix UI Dialog
+vi.mock('@radix-ui/react-dialog', () => {
+  const Dialog = ({ children, open }) => (open ? <div>{children}</div> : null);
+
+  Dialog.Trigger = ({ children }) => <div>{children}</div>;
+  Dialog.Portal = ({ children }) => <div>{children}</div>;
+  Dialog.Overlay = () => <div data-testid="dialog-overlay"></div>;
+  Dialog.Content = ({ children, ...props }) => (
+    <div data-testid={props['data-testid']}>{children}</div>
+  );
+  Dialog.Title = ({ children }) => <div>{children}</div>;
+  Dialog.Description = ({ children }) => <div>{children}</div>;
+  Dialog.Close = ({ children }) => <div>{children}</div>;
+
+  return {
+    Root: Dialog,
+    Trigger: Dialog.Trigger,
+    Portal: Dialog.Portal,
+    Overlay: Dialog.Overlay,
+    Content: Dialog.Content,
+    Title: Dialog.Title,
+    Description: Dialog.Description,
+    Close: Dialog.Close,
+  };
+});
+
+// Mock Radix UI Slot (using dynamic import workaround for createSlot)
 vi.mock('@radix-ui/react-slot', () => ({
-  Slot: vi.fn(({ children }) => children),
-  createSlot: vi.fn(() => ({
+  Slot: ({ children }) => children,
+  createSlot: () => ({
     slotName: 'mock-slot',
-  })),
+  }),
+}));
+
+// Mock Radix UI Primitive (which might be using createSlot internally)
+vi.mock('@radix-ui/react-primitive', () => ({
+  Primitive: {
+    div: ({ children, ...props }) => <div {...props}>{children}</div>,
+    button: ({ children, ...props }) => <button {...props}>{children}</button>,
+  },
 }));
 
 // Mock toast for notifications
@@ -42,6 +76,8 @@ vi.mock('react-i18next', () => ({
     type: '3rdParty',
     init: () => {},
   },
+  // Adding the I18nextProvider that was missing
+  I18nextProvider: ({ children }) => <>{children}</>,
 }));
 
 describe('GenericEntityModal', () => {
