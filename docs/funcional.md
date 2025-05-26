@@ -73,22 +73,30 @@ A funcionalidade de **Cadastro de Templates** permite que os usuários registrem
 
 O objetivo do cadastro de templates é garantir que todas as aplicações que serão implantadas estejam devidamente registradas e disponíveis para uso no contexto de deploy de instâncias. Cada template representa um conjunto de configurações reutilizáveis para deploy de uma aplicação.
 
-#### 2. **Fluxo de Uso**
+#### 2. **Valores Padrão nos Templates**
 
-1. O usuário acessa a funcionalidade de **Cadastro de Templates**.
-2. Informa os seguintes dados:
-   - **Nome do Template**: Nome descritivo para identificação.
-   - **Repositório Git**: URL do repositório onde o Helm Chart está versionado.
-   - **Caminho no Repositório**: Caminho dentro do repositório onde o Helm Chart está localizado.
-   - **Versão**: Versão específica do Helm Chart (ex.: `v1.0.0`).
-3. O sistema valida as informações fornecidas e registra o template.
-4. O template fica disponível para seleção durante a criação de novas instâncias.
+Os templates (Helm Charts) possuem arquivos `values.yaml` que definem os valores padrão para a aplicação. Esses valores podem ser customizados em dois níveis:
+1. **No Blueprint**: Durante a criação de um Blueprint, os valores padrão podem ser ajustados e valores comuns podem ser definidos.
+2. **Na Instância**: Durante a criação de uma instância, os valores podem ser customizados para atender às necessidades específicas da instância.
 
-#### 3. **Regras para o MVP**
-
-- Todos os templates devem estar empacotados como **Helm Charts**.
-- O repositório Git deve ser acessível e conter os arquivos necessários para o deploy.
-- No futuro, será possível adicionar suporte a outros tipos de deploys além de Helm Charts.
+##### Exemplo de Valores Padrão:
+- **Helm Chart do Banco de Dados** (`values.yaml`):
+  ```yaml
+  nome: banco1
+  resources:
+    request:
+      memory: 1Gi
+  serviceName: app1.banco
+  ```
+- **Helm Chart da Aplicação** (`values.yaml`):
+  ```yaml
+  nome: app1
+  resources:
+    request:
+      memory: 1Gi
+  config:
+    db_host_name: local.host
+  ```
 
 ---
 
@@ -102,21 +110,44 @@ A funcionalidade de **Cadastro de Blueprints** permite que os usuários definam 
 
 O objetivo do cadastro de Blueprints é permitir que os usuários agrupem templates relacionados, criando um pacote reutilizável que pode ser utilizado para o deploy de instâncias completas de uma aplicação.
 
-#### 2. **Fluxo de Uso**
+#### 2. **Valores Comuns no Blueprint**
+
+Durante a criação de um Blueprint, o usuário pode definir **valores comuns reutilizáveis** que podem ser referenciados por vários templates associados ao Blueprint. Esses valores comuns funcionam como um "contexto compartilhado" e podem incluir lógica avançada para resolução dinâmica.
+
+##### Exemplo de Valores Comuns:
+```yaml
+valores_comuns:
+  app_name: app1
+  db_service_name: app1.banco
+  resources:
+    memory: 1Gi
+```
+
+##### Exemplo de Referência nos Templates:
+- **Helm Chart do Banco de Dados**:
+  ```yaml
+  nome: {{ .valores_comuns.app_name }}-db
+  resources:
+    request:
+      memory: {{ .valores_comuns.resources.memory }}
+  serviceName: {{ .valores_comuns.db_service_name }}
+  ```
+- **Helm Chart do Backend**:
+  ```yaml
+  nome: {{ .valores_comuns.app_name }}-backend
+  config:
+    db_host_name: {{ .valores_comuns.db_service_name }}
+  resources:
+    request:
+      memory: {{ .valores_comuns.resources.memory }}
+  ```
+
+#### 3. **Fluxo de Uso**
 
 1. O usuário acessa a funcionalidade de **Cadastro de Blueprints**.
-2. Informa os seguintes dados:
-   - **Nome do Blueprint**: Nome descritivo para identificação.
-   - **Descrição**: Informações adicionais sobre o propósito do Blueprint.
-   - **Templates Associados**: Seleção de um ou mais templates previamente cadastrados (ex.: backend, banco de dados, volumes, etc.).
-3. O sistema valida as informações fornecidas e registra o Blueprint.
-4. O Blueprint fica disponível para seleção durante a criação de novas instâncias.
-
-#### 3. **Regras para o MVP**
-
-- Um Blueprint deve conter pelo menos um template associado.
-- Os templates associados devem estar previamente cadastrados na funcionalidade **Cadastro de Templates**.
-- No futuro, será possível adicionar configurações específicas ao Blueprint, como valores padrão para os templates.
+2. Define os valores comuns reutilizáveis no nível do Blueprint.
+3. Associa os templates ao Blueprint e configura os placeholders nos templates para referenciar os valores comuns.
+4. O sistema valida os valores e registra o Blueprint.
 
 ---
 
@@ -126,9 +157,37 @@ A funcionalidade de **Criação de Instâncias** permite que os usuários utiliz
 
 ### 📝 Detalhes da Funcionalidade
 
-#### 1. **Objetivo**
+#### 1. **Customização de Valores na Instância**
 
-O objetivo da criação de instâncias é permitir que os usuários definam como um Blueprint será implementado no Kubernetes, com a possibilidade de customizar valores específicos para atender às necessidades de cada instância. Além disso, o sistema cria automaticamente o aplicativo **AppOfApps** no ArgoCD para gerenciar o deploy da instância.
+Durante a criação de uma instância:
+1. Os valores comuns definidos no Blueprint são herdados automaticamente.
+2. O usuário pode customizar os valores comuns ou adicionar novos valores específicos para a instância.
+
+##### Exemplo de Herança e Customização:
+- **Valores Comuns no Blueprint**:
+  ```yaml
+  valores_comuns:
+    app_name: app1
+    db_service_name: app1.banco
+    resources:
+      memory: 1Gi
+  ```
+- **Customização na Instância**:
+  ```yaml
+  valores_comuns:
+    resources:
+      memory: 2Gi
+  ```
+
+- Resultado Final no Template do Backend:
+  ```yaml
+  nome: app1-backend
+  config:
+    db_host_name: app1.banco
+  resources:
+    request:
+      memory: 2Gi
+  ```
 
 #### 2. **Fluxo de Uso**
 
@@ -187,10 +246,18 @@ O objetivo da criação de instâncias é permitir que os usuários definam como
      - `Backend Template`
      - `Database Template`
      - `Volume Template`
+   - Valores Comuns:
+     ```yaml
+     valores_comuns:
+       app_name: insights
+       db_service_name: insights.db
+       resources:
+         memory: 1Gi
+     ```
 3. O sistema valida as informações e registra o Blueprint.
 4. O Blueprint fica disponível para uso no deploy de instâncias.
 
-### Exemplo 5: Criação de uma Instância com Valores Padrão
+### Exemplo 5: Criação de uma Instância com Customização de Valores
 
 1. O usuário acessa a funcionalidade de **Criação de Instâncias**.
 2. Preenche os seguintes dados:
@@ -198,7 +265,13 @@ O objetivo da criação de instâncias é permitir que os usuários definam como
    - Localidade: `Brasil`
    - Ambiente: `Produção`
    - Blueprint: `Insights Application`
-3. O sistema utiliza os valores padrão definidos no Blueprint para gerar o Helm Chart.
+   - Customização de Valores:
+     ```yaml
+     valores_comuns:
+       resources:
+         memory: 2Gi
+     ```
+3. O sistema utiliza os valores customizados para gerar o Helm Chart.
 4. O Helm Chart é armazenado no repositório Git na estrutura correta:
    ```
    producao/
@@ -212,32 +285,6 @@ O objetivo da criação de instâncias é permitir que os usuários definam como
    ```
 5. O sistema cria o aplicativo **AppOfApps** no ArgoCD, apontando para o Helm Chart gerado.
 6. O ArgoCD detecta as mudanças e realiza o deploy da instância no Kubernetes.
-
-### Exemplo 6: Criação de uma Instância com Valores Customizados
-
-1. O usuário acessa a funcionalidade de **Criação de Instâncias**.
-2. Preenche os seguintes dados:
-   - Nome da Instância: `Insights-Dev-US`
-   - Localidade: `Estados Unidos`
-   - Ambiente: `Desenvolvimento`
-   - Blueprint: `Insights Application`
-3. O usuário customiza os valores (values) dos templates associados ao Blueprint, como:
-   - Alterar o número de réplicas do backend.
-   - Configurar credenciais específicas para o banco de dados.
-4. O sistema utiliza os valores customizados para gerar o Helm Chart.
-5. O Helm Chart é armazenado no repositório Git na estrutura correta:
-   ```
-   desenvolvimento/
-   └── eua/
-       └── insights/
-           └── chart/
-               ├── templates/
-               │   ├── app.yaml
-               │   └── bd.yaml
-               └── values.yaml
-   ```
-6. O sistema cria o aplicativo **AppOfApps** no ArgoCD, apontando para o Helm Chart gerado.
-7. O ArgoCD detecta as mudanças e realiza o deploy da instância no Kubernetes.
 
 ---
 
@@ -257,55 +304,6 @@ O componente `PATChecker` verifica o estado de configuração do Personal Access
 <PATChecker onStatusChange={(isConfigured) => console.log(isConfigured)}>
   <span>Verificando o estado do PAT...</span>
 </PATChecker>
-```
-
-### **Estrutura de Pastas**
-
-A estrutura de pastas para a funcionalidade **Settings** segue o padrão modular da plataforma:
-
-```
-src/
-├── app/
-│   └── settings/
-│       ├── __tests__/          # Testes unitários
-│       ├── components/         # Componentes específicos da página
-│       └── page.tsx            # Página principal
-├── components/
-│   └── templates/
-│       └── pat-checker.tsx     # Componente PATChecker
-└── tests/
-    └── msw/
-        └── handlers.ts         # Handlers do MSW para mock de APIs
-```
-
----
-
-## 🧪 Testes Unitários
-
-### **Cenários de Teste para Settings**
-
-1. **Renderização Inicial**:
-   - Verificar se as abas `Applications`, `Environments` e `Locations` são exibidas corretamente.
-2. **Navegação entre Abas**:
-   - Garantir que os dados mockados sejam carregados ao navegar entre as abas.
-3. **Mensagens de Erro**:
-   - Exibir mensagens de erro ao falhar no carregamento de dados.
-4. **Atualização de Dados**:
-   - Validar a atualização de dados ao clicar no botão de "Refresh".
-
-### **Exemplo de Teste para PATChecker**
-
-```tsx
-import { render, screen } from '@testing-library/react';
-import { PATChecker } from '@/components/templates/pat-checker';
-
-describe('PATChecker', () => {
-  it('should render with the correct status', () => {
-    render(<PATChecker />);
-    const element = screen.getByTestId('pat-checker');
-    expect(element).toHaveAttribute('data-pat-status', 'loading');
-  });
-});
 ```
 
 ---
