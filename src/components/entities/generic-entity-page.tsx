@@ -181,10 +181,7 @@ export function GenericEntityPage({
           data-testid={`${testIdPrefix}-page-add-button`}
         >
           <PlusCircle className="h-4 w-4" />
-          {isInSettings
-            ? t('settings:actions.add', { entity: entityName.singular })
-            : t('common:buttons.add')}{' '}
-          {isInSettings ? '' : entityName.singular}
+          {t('common:buttons.add')}
         </Button>
       </div>
 
