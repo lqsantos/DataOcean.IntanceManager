@@ -13,5 +13,8 @@
     "showing": "Showing",
     "of": "of",
     "entries": "entries"
+  },
+  "columns": {
+    "createdAt": "Created at"
   }
 }

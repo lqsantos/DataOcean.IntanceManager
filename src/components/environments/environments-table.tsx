@@ -45,7 +45,7 @@ export function EnvironmentsTable({
     },
     {
       key: 'createdAt',
-      title: 'Criado em',
+      title: t('entityTable:columns.createdAt'),
       sortable: true,
     },
   ];

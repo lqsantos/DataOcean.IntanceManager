@@ -13,5 +13,8 @@
     "showing": "Mostrando",
     "of": "de",
     "entries": "registros"
+  },
+  "columns": {
+    "createdAt": "Criado em"
   }
 }

@@ -46,7 +46,7 @@ export function LocationsTable({
     },
     {
       key: 'createdAt',
-      title: 'Criado em',
+      title: t('entityTable:columns.createdAt'),
       sortable: true,
     },
   ];
