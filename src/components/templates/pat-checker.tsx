@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
-import { usePATModal } from '@/contexts/pat-modal-context';
+import { usePATModal } from '@/contexts/modal-manager-context';
 import { usePAT } from '@/hooks/use-pat';
 
 interface PATCheckerProps {
