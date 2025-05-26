@@ -6,20 +6,22 @@ import { render, screen } from '@/tests/test-utils';
 
 import SettingsLayout from '../layout';
 
-// Mock the next/navigation hooks
+// Create a spy for the router push function
 const mockPush = vi.fn();
 
+// Mock the next/navigation hooks
 vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(() => ({
+  useRouter: () => ({
     push: mockPush,
-  })),
+  }),
   usePathname: vi.fn(),
 }));
 
 describe('SettingsLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (usePathname as ReturnType<typeof vi.fn>).mockImplementation(() => '/settings/applications');
+    // Default to applications tab being active
+    (usePathname as any).mockReturnValue('/settings/applications');
   });
 
   it('renders the settings layout with title and description', () => {
@@ -42,10 +44,11 @@ describe('SettingsLayout', () => {
     render(<SettingsLayout>Test Content</SettingsLayout>);
     const user = userEvent.setup();
 
-    const applicationsTab = screen.getByTestId('settings-tab-applications');
+    const applicationsTab = screen.getByRole('tab', { name: /Applications/i });
 
     await user.click(applicationsTab);
 
+    // Check if push was called with the correct path
     expect(mockPush).toHaveBeenCalledWith('/settings/applications');
   });
 
@@ -53,7 +56,7 @@ describe('SettingsLayout', () => {
     render(<SettingsLayout>Test Content</SettingsLayout>);
     const user = userEvent.setup();
 
-    const environmentsTab = screen.getByTestId('settings-tab-environments');
+    const environmentsTab = screen.getByRole('tab', { name: /Environments/i });
 
     await user.click(environmentsTab);
 
@@ -64,7 +67,7 @@ describe('SettingsLayout', () => {
     render(<SettingsLayout>Test Content</SettingsLayout>);
     const user = userEvent.setup();
 
-    const locationsTab = screen.getByTestId('settings-tab-locations');
+    const locationsTab = screen.getByRole('tab', { name: /Locations/i });
 
     await user.click(locationsTab);
 
@@ -72,13 +75,17 @@ describe('SettingsLayout', () => {
   });
 
   it('displays the correct active tab based on URL', () => {
-    (usePathname as ReturnType<typeof vi.fn>).mockImplementation(() => '/settings/environments');
+    // For this test, mock the pathname to be the environments path
+    (usePathname as any).mockReturnValue('/settings/environments');
 
     render(<SettingsLayout>Test Content</SettingsLayout>);
 
-    const environmentsTab = screen.getByTestId('settings-tab-environments');
+    // When using the Tabs component from shadcn-ui, the active tab gets a data-state="active" attribute
+    const applicationsTab = screen.getByRole('tab', { name: /Applications/i });
+    const environmentsTab = screen.getByRole('tab', { name: /Environments/i });
 
     expect(environmentsTab).toHaveAttribute('data-state', 'active');
+    expect(applicationsTab).toHaveAttribute('data-state', 'inactive');
   });
 
   it('renders children content', () => {

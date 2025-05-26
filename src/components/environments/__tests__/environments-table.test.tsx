@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@/tests/test-utils';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { render, screen } from '@/tests/test-utils';
 
 import { EnvironmentsTable } from '../environments-table';
 
@@ -75,6 +76,7 @@ describe('EnvironmentsTable', () => {
   it('calls onDelete when delete button is clicked and confirmed', async () => {
     // Mock the window.confirm to always return true
     const originalConfirm = window.confirm;
+
     window.confirm = vi.fn(() => true);
 
     render(
@@ -102,6 +104,7 @@ describe('EnvironmentsTable', () => {
   it('does not call onDelete when delete is not confirmed', async () => {
     // Mock the window.confirm to always return false
     const originalConfirm = window.confirm;
+
     window.confirm = vi.fn(() => false);
 
     render(

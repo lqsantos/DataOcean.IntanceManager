@@ -7,7 +7,7 @@ import { StyledDeleteDialog } from '@/components/ui/styled-delete-dialog';
 import type { Location } from '@/types/location';
 
 interface DeleteLocationDialogProps {
-  location: Location | null;
+  entity: Location | null;
   isOpen: boolean;
   isDeleting: boolean;
   onDelete: () => Promise<void>;
@@ -15,7 +15,7 @@ interface DeleteLocationDialogProps {
 }
 
 export function DeleteLocationDialog({
-  location,
+  entity,
   isOpen,
   isDeleting,
   onDelete,
@@ -23,7 +23,7 @@ export function DeleteLocationDialog({
 }: DeleteLocationDialogProps) {
   const { t } = useTranslation('settings');
 
-  if (!location) {
+  if (!entity) {
     return null;
   }
 
@@ -32,12 +32,12 @@ export function DeleteLocationDialog({
       open={isOpen}
       onOpenChange={(open) => !open && onCancel()}
       title={t('locations.modal.delete.title')}
-      itemName={location.name}
+      itemName={entity.name}
       description={
         <>
           {t('locations.modal.delete.confirmation')}{' '}
           <span className="font-semibold" data-testid="delete-location-dialog-name">
-            {location.name}
+            {entity.name}
           </span>
           ?
         </>

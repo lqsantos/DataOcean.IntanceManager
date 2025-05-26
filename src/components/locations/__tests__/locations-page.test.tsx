@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { render, screen } from '@/tests/test-utils';
 
 // Mock the components and hooks used in the LocationsPage
@@ -94,9 +95,9 @@ describe('LocationsPage', () => {
 
   it('passes correct props to GenericEntityPage', () => {
     const { GenericEntityPage } = require('@/components/entities/generic-entity-page');
-    
+
     render(<LocationsPage />);
-    
+
     expect(GenericEntityPage).toHaveBeenCalledWith(
       expect.objectContaining({
         testIdPrefix: 'locations',

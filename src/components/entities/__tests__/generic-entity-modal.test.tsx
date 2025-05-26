@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@/tests/test-utils';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { render, screen } from '@/tests/test-utils';
 
 import { GenericEntityModal } from '../generic-entity-modal';
 

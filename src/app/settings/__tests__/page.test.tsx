@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { describe, expect, it, vi } from 'vitest';
 
 import { render } from '@/tests/test-utils';
@@ -6,14 +5,16 @@ import { render } from '@/tests/test-utils';
 import SettingsPage from '../page';
 
 // Mock the redirect function from next/navigation
+const mockRedirect = vi.fn();
+
 vi.mock('next/navigation', () => ({
-  redirect: vi.fn(),
+  redirect: mockRedirect,
 }));
 
 describe('SettingsPage', () => {
   it('redirects to the applications settings page', () => {
     render(<SettingsPage />);
 
-    expect(redirect).toHaveBeenCalledWith('/settings/applications');
+    expect(mockRedirect).toHaveBeenCalledWith('/settings/applications');
   });
 });

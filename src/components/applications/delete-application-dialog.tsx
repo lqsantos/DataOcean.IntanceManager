@@ -8,7 +8,7 @@ import { StyledDeleteDialog } from '@/components/ui/styled-delete-dialog';
 import type { Application } from '@/types/application';
 
 interface DeleteApplicationDialogProps {
-  application: Application | null;
+  entity: Application | null;
   isOpen: boolean;
   isDeleting: boolean;
   onDelete: () => Promise<void>;
@@ -16,7 +16,7 @@ interface DeleteApplicationDialogProps {
 }
 
 export function DeleteApplicationDialog({
-  application,
+  entity,
   isOpen,
   isDeleting,
   onDelete,
@@ -24,7 +24,7 @@ export function DeleteApplicationDialog({
 }: DeleteApplicationDialogProps) {
   const { t } = useTranslation('settings');
 
-  if (!application) {
+  if (!entity) {
     return null;
   }
 
@@ -33,11 +33,11 @@ export function DeleteApplicationDialog({
       open={isOpen}
       onOpenChange={(open) => !open && onCancel()}
       title={t('applications.modal.delete.title')}
-      itemName={application.name}
+      itemName={entity.name}
       description={
         <>
           {t('applications.modal.delete.confirmation')}{' '}
-          <span className="font-semibold">{application.name}</span>?
+          <span className="font-semibold">{entity.name}</span>?
         </>
       }
       onConfirm={onDelete}

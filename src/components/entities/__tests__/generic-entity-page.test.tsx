@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@/tests/test-utils';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { render, screen } from '@/tests/test-utils';
 
 import { GenericEntityPage } from '../generic-entity-page';
 
@@ -151,11 +152,9 @@ describe('GenericEntityPage', () => {
 
   it('shows error message when there is an error', () => {
     const ErrorGenericEntityPage = vi.fn(({ error }) => (
-      <div>
-        {error && <div data-testid="test-entity-page-error-alert">{error}</div>}
-      </div>
+      <div>{error && <div data-testid="test-entity-page-error-alert">{error}</div>}</div>
     ));
-    
+
     vi.mock('../generic-entity-page', () => ({
       GenericEntityPage: ErrorGenericEntityPage,
     }));
@@ -164,7 +163,7 @@ describe('GenericEntityPage', () => {
 
     // Mock our component to verify error logic
     expect(ErrorGenericEntityPage).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "Failed to load entities" }),
+      expect.objectContaining({ error: 'Failed to load entities' }),
       expect.anything()
     );
   });
@@ -174,7 +173,9 @@ describe('GenericEntityPage', () => {
       <GenericEntityPage
         {...defaultProps}
         modalState={{ ...defaultProps.modalState, isOpen: true }}
-        EntityModal={({ isOpen }) => isOpen ? <div data-testid="entity-modal">Modal Content</div> : null}
+        EntityModal={({ isOpen }) =>
+          isOpen ? <div data-testid="entity-modal">Modal Content</div> : null
+        }
       />
     );
 
@@ -247,8 +248,8 @@ describe('GenericEntityPage', () => {
     // Using mock component approach for this test scenario since DOM might be complex
     expect(defaultProps.EntityTable).toHaveBeenCalledWith(
       expect.objectContaining({
-        isLoading: true
-      }), 
+        isLoading: true,
+      }),
       expect.anything()
     );
   });
@@ -259,8 +260,8 @@ describe('GenericEntityPage', () => {
     // Using mock component approach for this test scenario since DOM might be complex
     expect(defaultProps.EntityTable).toHaveBeenCalledWith(
       expect.objectContaining({
-        isRefreshing: true
-      }), 
+        isRefreshing: true,
+      }),
       expect.anything()
     );
   });

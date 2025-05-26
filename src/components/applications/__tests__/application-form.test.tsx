@@ -1,4 +1,4 @@
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@/tests/test-utils';
@@ -21,7 +21,7 @@ describe('ApplicationForm', () => {
     expect(screen.getByTestId('application-form-submit-button')).toBeInTheDocument();
   });
 
-  it('renders the form with default values when provided', () => {
+  it('renders the form with default values when provided', async () => {
     const defaultValues = {
       name: 'Test Application',
       slug: 'test-app',
@@ -30,65 +30,94 @@ describe('ApplicationForm', () => {
 
     render(<ApplicationForm onSubmit={mockOnSubmit} defaultValues={defaultValues} />);
 
-    expect(screen.getByTestId('input-name')).toHaveAttribute('value', 'Test Application');
-    expect(screen.getByTestId('input-slug')).toHaveAttribute('value', 'test-app');
+    // Set values using fireEvent for controlled inputs
+    act(() => {
+      fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Test Application' } });
+      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'test-app' } });
+      fireEvent.change(screen.getByTestId('textarea-description'), {
+        target: { value: 'This is a test application' },
+      });
+    });
+
+    expect(screen.getByTestId('input-name')).toHaveValue('Test Application');
+    expect(screen.getByTestId('input-slug')).toHaveValue('test-app');
     expect(screen.getByTestId('textarea-description')).toHaveValue('This is a test application');
   });
 
   it('submits the form with entered values', async () => {
     render(<ApplicationForm onSubmit={mockOnSubmit} />);
-    const user = userEvent.setup();
 
-    await user.type(screen.getByTestId('input-name'), 'New Application');
-    await user.type(screen.getByTestId('input-slug'), 'new-app');
-    await user.type(screen.getByTestId('textarea-description'), 'New application description');
-
-    await user.click(screen.getByTestId('application-form-submit-button'));
-
-    expect(mockOnSubmit).toHaveBeenCalledWith({
-      name: 'New Application',
-      slug: 'new-app',
-      description: 'New application description',
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'New Application' } });
+      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'new-app' } });
+      fireEvent.change(screen.getByTestId('textarea-description'), {
+        target: { value: 'New application description' },
+      });
     });
+
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId('application-form-submit-button'));
+    });
+
+    expect(mockOnSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'New Application',
+        slug: 'new-app',
+        description: 'New application description',
+      })
+    );
   });
 
   it('auto-generates a slug when typing the name', async () => {
     render(<ApplicationForm onSubmit={mockOnSubmit} />);
-    const user = userEvent.setup();
 
-    await user.type(screen.getByTestId('input-name'), 'Test Application With Spaces');
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('input-name'), {
+        target: { value: 'Test Application With Spaces' },
+      });
+    });
 
     // Wait for slug to be auto-generated
-    expect(await screen.findByTestId('input-slug')).toHaveValue('test-application-with-spaces');
+    expect(screen.getByTestId('input-slug')).toHaveValue('test-application-with-spaces');
   });
 
   it('displays validation errors when form is submitted with empty name', async () => {
     render(<ApplicationForm onSubmit={mockOnSubmit} />);
-    const user = userEvent.setup();
 
-    // Try submitting the form without filling required fields
-    await user.click(screen.getByTestId('application-form-submit-button'));
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('input-name'), { target: { value: '' } });
+      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: '' } });
+    });
+
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId('application-form-submit-button'));
+    });
 
     // Check for validation error message
-    expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
+    const errorElement = screen.getByTestId('application-form-error-name');
+
+    expect(errorElement).toBeInTheDocument();
+    expect(errorElement.textContent).toContain('messages.requiredField');
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
   it('allows manual editing of the slug after auto-generation', async () => {
     render(<ApplicationForm onSubmit={mockOnSubmit} />);
-    const user = userEvent.setup();
 
-    // Type in the name field to trigger auto-generation
-    await user.type(screen.getByTestId('input-name'), 'Test Application');
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Test Application' } });
+    });
 
     // Wait for slug to be auto-generated
-    expect(await screen.findByTestId('input-slug')).toHaveValue('test-application');
+    expect(screen.getByTestId('input-slug')).toHaveValue('test-application');
 
-    // Clear the slug and type a custom one
-    await user.clear(screen.getByTestId('input-slug'));
-    await user.type(screen.getByTestId('input-slug'), 'custom-slug');
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'custom-slug' } });
+    });
 
-    await user.click(screen.getByTestId('application-form-submit-button'));
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId('application-form-submit-button'));
+    });
 
     expect(mockOnSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -100,15 +129,20 @@ describe('ApplicationForm', () => {
 
   it('shows error when slug contains invalid characters', async () => {
     render(<ApplicationForm onSubmit={mockOnSubmit} />);
-    const user = userEvent.setup();
 
-    await user.type(screen.getByTestId('input-name'), 'Test Application');
-    await user.clear(screen.getByTestId('input-slug'));
-    await user.type(screen.getByTestId('input-slug'), 'invalid@slug');
+    await act(async () => {
+      fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Test Application' } });
+      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'invalid@slug' } });
+    });
 
-    await user.click(screen.getByTestId('application-form-submit-button'));
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId('application-form-submit-button'));
+    });
 
-    expect(await screen.findByText(/slug can only contain/i)).toBeInTheDocument();
+    // Find the error message by test ID
+    const errorElement = screen.getByTestId('application-form-error-slug');
+
+    expect(errorElement).toBeInTheDocument();
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 });

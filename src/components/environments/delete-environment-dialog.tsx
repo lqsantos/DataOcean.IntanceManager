@@ -8,7 +8,7 @@ import { StyledDeleteDialog } from '@/components/ui/styled-delete-dialog';
 import type { Environment } from '@/types/environment';
 
 interface DeleteEnvironmentDialogProps {
-  environment: Environment | null;
+  entity: Environment | null;
   isOpen: boolean;
   isDeleting: boolean;
   onDelete: () => Promise<void>;
@@ -16,7 +16,7 @@ interface DeleteEnvironmentDialogProps {
 }
 
 export function DeleteEnvironmentDialog({
-  environment,
+  entity,
   isOpen,
   isDeleting,
   onDelete,
@@ -24,7 +24,7 @@ export function DeleteEnvironmentDialog({
 }: DeleteEnvironmentDialogProps) {
   const { t } = useTranslation('settings');
 
-  if (!environment) {
+  if (!entity) {
     return null;
   }
 
@@ -33,11 +33,11 @@ export function DeleteEnvironmentDialog({
       open={isOpen}
       onOpenChange={(open) => !open && onCancel()}
       title={t('environments.modal.delete.title')}
-      itemName={environment.name}
+      itemName={entity.name}
       description={
         <>
           {t('environments.modal.delete.confirmation')}{' '}
-          <span className="font-semibold">{environment.name}</span>?
+          <span className="font-semibold">{entity.name}</span>?
         </>
       }
       onConfirm={onDelete}

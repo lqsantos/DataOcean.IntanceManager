@@ -29,6 +29,13 @@ i18n.use(initReactI18next).init({
           title: 'Application',
           table: {
             title: 'Applications',
+            columns: {
+              name: 'Name',
+              description: 'Description',
+            },
+            searchPlaceholder: 'Search applications...',
+            emptyMessage: 'No applications found',
+            emptySearchMessage: 'No applications match your search',
           },
           description: 'Manage your applications',
           modal: {
@@ -44,6 +51,13 @@ i18n.use(initReactI18next).init({
           title: 'Environment',
           table: {
             title: 'Environments',
+            columns: {
+              name: 'Name',
+              description: 'Description',
+            },
+            searchPlaceholder: 'Search environments...',
+            emptyMessage: 'No environments found',
+            emptySearchMessage: 'No environments match your search',
           },
           description: 'Manage your environments',
           modal: {
@@ -59,6 +73,12 @@ i18n.use(initReactI18next).init({
           title: 'Location',
           table: {
             title: 'Locations',
+            columns: {
+              name: 'Name',
+            },
+            searchPlaceholder: 'Search locations...',
+            emptyMessage: 'No locations found',
+            emptySearchMessage: 'No locations match your search',
           },
           description: 'Manage your locations',
           modal: {
@@ -71,6 +91,16 @@ i18n.use(initReactI18next).init({
           },
         },
       },
+      entityTable: {
+        searchPlaceholder: 'Search...',
+        emptyMessage: 'No items found',
+        emptySearchMessage: 'No items match your search',
+        actions: {
+          view: 'View actions',
+          edit: 'Edit',
+          delete: 'Delete',
+        },
+      },
       common: {
         buttons: {
           add: 'Add',
@@ -79,6 +109,13 @@ i18n.use(initReactI18next).init({
           cancel: 'Cancel',
           delete: 'Delete',
           edit: 'Edit',
+        },
+        validation: {
+          required: 'This field is required',
+          invalidSlug: 'Slug can only contain lowercase letters, numbers, and hyphens',
+        },
+        messages: {
+          requiredField: 'This field is required',
         },
       },
     },
@@ -153,6 +190,7 @@ vi.mock('lucide-react', () => {
     MapPin: () => <span data-testid="map-pin-icon" />,
     Menu: () => <span data-testid="menu-icon" />,
     Moon: () => <span data-testid="moon-icon" />,
+    MoreHorizontal: () => <span data-testid="more-horizontal-icon" />,
     MoreVertical: () => <span data-testid="more-vertical-icon" />,
     Plus: () => <span data-testid="plus-icon" />,
     PlusCircle: () => <span data-testid="plus-circle-icon" />,
@@ -181,6 +219,13 @@ if (!navigator.clipboard) {
     configurable: true,
   });
 }
+
+// Mock date functions to avoid "Invalid time value" errors
+vi.mock('date-fns', () => ({
+  format: vi.fn().mockImplementation(() => '2023-01-01'),
+  formatDistanceToNow: vi.fn().mockReturnValue('1 day ago'),
+  parseISO: vi.fn().mockImplementation((date) => new Date(date || '2023-01-01')),
+}));
 
 // Create a mock ModalManagerContext for our tests
 const createMockModalManagerContext = () => {
@@ -251,7 +296,7 @@ vi.mock('sonner', () => ({
 
 // Mock UI components that could cause issues in tests
 vi.mock('@radix-ui/react-slot', () => ({
-  Slot: ({ children, ...props }) => <div {...props}>{children}</div>,
+  Slot: ({ children, ...props }) => <div>{children}</div>,
 }));
 
 // Mock module resolution for common components
@@ -261,6 +306,7 @@ vi.mock('@/components/entities/generic-entity-page', () => ({
       <EntityTable entities={entities} />
       <div data-testid={`${testIdPrefix}-add-button`}>Add Button</div>
       <div data-testid={`${testIdPrefix}-refresh-button`}>Refresh Button</div>
+      <div data-testid={`${testIdPrefix}-page-error-alert`}>{entities.error || null}</div>
     </div>
   )),
 }));
@@ -271,15 +317,21 @@ const MockModalManagerContext = React.createContext(createMockModalManagerContex
 // TestWrapper component that provides necessary context providers
 export const TestWrapper = ({ children }) => {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
-    </ThemeProvider>
+    <MockModalManagerContext.Provider value={createMockModalManagerContext()}>
+      {children}
+    </MockModalManagerContext.Provider>
   );
 };
 
 // Provider for wrapping components in tests
 const AllTheProviders = ({ children }) => {
-  return <TestWrapper>{children}</TestWrapper>;
+  return (
+    <I18nextProvider i18n={i18n}>
+      <ThemeProvider defaultTheme="light" storageKey="theme">
+        <TestWrapper>{children}</TestWrapper>
+      </ThemeProvider>
+    </I18nextProvider>
+  );
 };
 
 // Create properly initialized test screen object
