@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { StyledModal } from '@/components/ui/styled-modal';
@@ -104,6 +105,7 @@ export function GenericEntityModal({
   formProps = {},
   maxWidth = 'xl',
 }: GenericEntityModalProps) {
+  const { t } = useTranslation('common');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!entityToEdit;
 
@@ -130,7 +132,7 @@ export function GenericEntityModal({
         if (isEditMode && entityToEdit && onUpdate) {
           const updated = await onUpdate(entityToEdit.id, data);
 
-          toast.success(`${entityName.singular} atualizado com sucesso`);
+          toast.success(t('messages.success'));
 
           if (onCreateSuccess) {
             onCreateSuccess(updated);
@@ -138,7 +140,7 @@ export function GenericEntityModal({
         } else {
           const created = await onCreate(data);
 
-          toast.success(`${entityName.singular} criado com sucesso`);
+          toast.success(t('messages.success'));
 
           if (onCreateSuccess) {
             onCreateSuccess(created);
@@ -146,19 +148,14 @@ export function GenericEntityModal({
         }
         onClose();
       } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : isEditMode
-              ? `Erro ao atualizar ${entityName.singular.toLowerCase()}`
-              : `Erro ao criar ${entityName.singular.toLowerCase()}`;
+        const errorMessage = error instanceof Error ? error.message : t('messages.error');
 
         toast.error(errorMessage);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [isEditMode, entityToEdit, onUpdate, onCreate, onCreateSuccess, onClose, entityName.singular]
+    [isEditMode, entityToEdit, onUpdate, onCreate, onCreateSuccess, onClose, t]
   );
 
   return (

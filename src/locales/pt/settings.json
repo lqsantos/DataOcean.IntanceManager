@@ -1,0 +1,165 @@
+{
+  "title": "Configurações",
+  "description": "Gerencie as configurações da sua plataforma DataOcean",
+  "tabs": {
+    "applications": "Aplicações",
+    "environments": "Ambientes",
+    "locations": "Localizações"
+  },
+  "actions": {
+    "add": "Adicionar {{entity}}"
+  },
+  "applications": {
+    "title": "Gerenciar Aplicações",
+    "description": "Visualize e gerencie as aplicações disponíveis na sua instância",
+    "table": {
+      "title": "Aplicações",
+      "searchPlaceholder": "Buscar por nome...",
+      "emptyMessage": "Nenhuma aplicação encontrada",
+      "emptySearchMessage": "Nenhuma aplicação corresponde à sua busca",
+      "columns": {
+        "name": "Nome",
+        "description": "Descrição",
+        "actions": "Ações"
+      }
+    },
+    "actions": {
+      "create": "Nova Aplicação",
+      "edit": "Editar",
+      "delete": "Excluir"
+    },
+    "modal": {
+      "create": {
+        "title": "Criar Nova Aplicação",
+        "button": "Criar"
+      },
+      "edit": {
+        "title": "Editar Aplicação",
+        "button": "Salvar"
+      },
+      "delete": {
+        "title": "Excluir Aplicação",
+        "confirmation": "Tem certeza que deseja excluir esta aplicação?",
+        "button": "Confirmar"
+      },
+      "form": {
+        "name": {
+          "label": "Nome",
+          "placeholder": "Digite o nome da aplicação"
+        },
+        "description": {
+          "label": "Descrição",
+          "placeholder": "Digite uma descrição para a aplicação"
+        }
+      }
+    },
+    "feedback": {
+      "createSuccess": "Aplicação criada com sucesso!",
+      "updateSuccess": "Aplicação atualizada com sucesso!",
+      "deleteSuccess": "Aplicação excluída com sucesso!",
+      "error": "Ocorreu um erro ao processar sua solicitação."
+    }
+  },
+  "environments": {
+    "title": "Gerenciar Ambientes",
+    "description": "Visualize e gerencie os ambientes disponíveis na sua instância",
+    "table": {
+      "title": "Ambientes",
+      "searchPlaceholder": "Buscar por nome...",
+      "emptyMessage": "Nenhum ambiente encontrado",
+      "emptySearchMessage": "Nenhum ambiente corresponde à sua busca",
+      "columns": {
+        "name": "Nome",
+        "description": "Descrição",
+        "actions": "Ações"
+      }
+    },
+    "actions": {
+      "create": "Novo Ambiente",
+      "edit": "Editar",
+      "delete": "Excluir"
+    },
+    "modal": {
+      "create": {
+        "title": "Criar Novo Ambiente",
+        "button": "Criar"
+      },
+      "edit": {
+        "title": "Editar Ambiente",
+        "button": "Salvar"
+      },
+      "delete": {
+        "title": "Excluir Ambiente",
+        "confirmation": "Tem certeza que deseja excluir este ambiente?",
+        "button": "Confirmar"
+      },
+      "form": {
+        "name": {
+          "label": "Nome",
+          "placeholder": "Digite o nome do ambiente"
+        },
+        "description": {
+          "label": "Descrição",
+          "placeholder": "Digite uma descrição para o ambiente"
+        }
+      }
+    },
+    "feedback": {
+      "createSuccess": "Ambiente criado com sucesso!",
+      "updateSuccess": "Ambiente atualizado com sucesso!",
+      "deleteSuccess": "Ambiente excluído com sucesso!",
+      "error": "Ocorreu um erro ao processar sua solicitação."
+    }
+  },
+  "locations": {
+    "title": "Gerenciar Localizações",
+    "description": "Visualize e gerencie as localizações disponíveis na sua instância",
+    "table": {
+      "title": "Localizações",
+      "searchPlaceholder": "Buscar por nome...",
+      "emptyMessage": "Nenhuma localização encontrada",
+      "emptySearchMessage": "Nenhuma localização corresponde à sua busca",
+      "columns": {
+        "name": "Nome",
+        "description": "Descrição",
+        "actions": "Ações"
+      }
+    },
+    "actions": {
+      "create": "Nova Localização",
+      "edit": "Editar",
+      "delete": "Excluir"
+    },
+    "modal": {
+      "create": {
+        "title": "Criar Nova Localização",
+        "button": "Criar"
+      },
+      "edit": {
+        "title": "Editar Localização",
+        "button": "Salvar"
+      },
+      "delete": {
+        "title": "Excluir Localização",
+        "confirmation": "Tem certeza que deseja excluir esta localização?",
+        "button": "Confirmar"
+      },
+      "form": {
+        "name": {
+          "label": "Nome",
+          "placeholder": "Digite o nome da localização"
+        },
+        "description": {
+          "label": "Descrição",
+          "placeholder": "Digite uma descrição para a localização"
+        }
+      }
+    },
+    "feedback": {
+      "createSuccess": "Localização criada com sucesso!",
+      "updateSuccess": "Localização atualizada com sucesso!",
+      "deleteSuccess": "Localização excluída com sucesso!",
+      "error": "Ocorreu um erro ao processar sua solicitação."
+    }
+  }
+}

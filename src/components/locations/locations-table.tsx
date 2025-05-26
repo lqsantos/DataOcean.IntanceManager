@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import type { Column } from '@/components/entities/entity-table';
 import { EntityTable } from '@/components/entities/entity-table';
 import type { Location } from '@/types/location';
@@ -25,6 +27,8 @@ export function LocationsTable({
   onEdit,
   onDelete,
 }: LocationsTableProps) {
+  const { t } = useTranslation(['settings', 'entityTable']);
+
   // Usar entities se locations não for fornecido
   const items = locations || entities || [];
 
@@ -32,7 +36,7 @@ export function LocationsTable({
   const columns: Column<Location>[] = [
     {
       key: 'name',
-      title: 'Nome',
+      title: t('locations.table.columns.name'),
       sortable: true,
     },
     {
@@ -56,9 +60,9 @@ export function LocationsTable({
       onDelete={onDelete}
       columns={columns}
       DeleteDialog={DeleteLocationDialog}
-      searchPlaceholder="Buscar localidades..."
-      emptySearchMessage="Nenhuma localidade encontrada para a pesquisa atual."
-      emptyMessage="Nenhuma localidade cadastrada."
+      searchPlaceholder={t('locations.table.searchPlaceholder')}
+      emptySearchMessage={t('locations.table.emptySearchMessage')}
+      emptyMessage={t('locations.table.emptyMessage')}
       testIdPrefix="locations-table"
     />
   );

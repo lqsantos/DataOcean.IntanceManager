@@ -4,6 +4,7 @@
 import { Bell, Key, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -113,6 +114,9 @@ export function Header({ onMenuClick }: HeaderProps) {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
 
           {/* Theme toggle button */}
           <Button

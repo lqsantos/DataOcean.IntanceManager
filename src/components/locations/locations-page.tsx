@@ -1,6 +1,7 @@
 'use client';
 
 import { MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { GenericEntityModal } from '@/components/entities/generic-entity-modal';
 import { GenericEntityPage } from '@/components/entities/generic-entity-page';
@@ -11,6 +12,8 @@ import { LocationForm } from './location-form';
 import { LocationsTable } from './locations-table';
 
 export function LocationsPage() {
+  const { t } = useTranslation(['settings']);
+
   const {
     locations,
     isLoading,
@@ -29,11 +32,11 @@ export function LocationsPage() {
     <GenericEntityModal
       EntityForm={LocationForm}
       entityName={{
-        singular: 'Localidade',
-        createTitle: 'Nova Localidade',
-        editTitle: 'Editar Localidade',
-        createDescription: 'Configure uma nova localidade para implantação',
-        editDescription: 'Modifique as configurações da localidade',
+        singular: t('locations.title'),
+        createTitle: t('locations.modal.create.title'),
+        editTitle: t('locations.modal.edit.title'),
+        createDescription: t('locations.description'),
+        editDescription: t('locations.description'),
       }}
       createIcon={MapPin}
       testId="create-location-modal"
@@ -54,9 +57,9 @@ export function LocationsPage() {
       EntityTable={LocationsTable}
       EntityModal={LocationModal}
       entityName={{
-        singular: 'Localidade',
-        plural: 'Localidades',
-        description: 'Gerencie suas localidades de implantação',
+        singular: t('locations.title'),
+        plural: t('locations.table.title'),
+        description: t('locations.description'),
       }}
       modalState={modalState}
       testIdPrefix="locations"

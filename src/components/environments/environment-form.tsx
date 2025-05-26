@@ -1,6 +1,8 @@
 // components/environments/environment-form.tsx
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import { InputAdapter } from '@/components/form/form-adapters';
 import { FormBuilder } from '@/components/form/form-builder';
 import type { FormErrors } from '@/hooks/use-form-state';
@@ -19,12 +21,14 @@ export function EnvironmentForm({
   onCancel,
   isSubmitting,
 }: EnvironmentFormProps) {
+  const { t } = useTranslation(['settings', 'common']);
+
   // Validação de formulário
   const validateForm = (values: Partial<Environment>): FormErrors<Partial<Environment>> => {
     const errors: FormErrors<Partial<Environment>> = {};
 
     if (!values.name?.trim()) {
-      errors.name = 'Nome é obrigatório';
+      errors.name = t('common:messages.requiredField');
     } else if (values.name.length < 3) {
       errors.name = 'Nome deve ter pelo menos 3 caracteres';
     } else if (values.name.length > 50) {
@@ -32,7 +36,7 @@ export function EnvironmentForm({
     }
 
     if (!values.slug?.trim()) {
-      errors.slug = 'Slug é obrigatório';
+      errors.slug = t('common:messages.requiredField');
     } else if (!/^[a-z0-9-]+$/.test(values.slug)) {
       errors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
     } else if (values.slug.length < 2) {
@@ -65,10 +69,10 @@ export function EnvironmentForm({
   const fields = [
     {
       name: 'name' as const,
-      label: 'Nome',
+      label: t('environments.modal.form.name.label'),
       required: true,
       component: InputAdapter,
-      placeholder: 'ex: Desenvolvimento',
+      placeholder: t('environments.modal.form.name.placeholder'),
     },
     {
       name: 'slug' as const,
@@ -96,8 +100,8 @@ export function EnvironmentForm({
       onSubmit={onSubmit}
       onCancel={onCancel}
       isLoading={isSubmitting}
-      submitLabel={environment ? 'Atualizar' : 'Criar'}
-      cancelLabel="Cancelar"
+      submitLabel={environment ? t('common:buttons.save') : t('common:buttons.create')}
+      cancelLabel={t('common:buttons.cancel')}
       testId="environment-form"
       transform={{
         slug: (value) => value.toLowerCase(),

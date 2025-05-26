@@ -2,6 +2,7 @@
 'use client';
 
 import { AppWindow } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { GenericEntityModal } from '@/components/entities/generic-entity-modal';
 import { GenericEntityPage } from '@/components/entities/generic-entity-page';
@@ -12,6 +13,8 @@ import { ApplicationForm } from './application-form';
 import { ApplicationsTable } from './applications-table';
 
 export function ApplicationsPage() {
+  const { t } = useTranslation(['settings']);
+
   const {
     applications,
     isLoading,
@@ -30,11 +33,11 @@ export function ApplicationsPage() {
     <GenericEntityModal
       EntityForm={ApplicationForm}
       entityName={{
-        singular: 'Aplicação',
-        createTitle: 'Nova Aplicação',
-        editTitle: 'Editar Aplicação',
-        createDescription: 'Configure uma nova aplicação para implantação',
-        editDescription: 'Modifique as configurações da aplicação',
+        singular: t('applications.title'),
+        createTitle: t('applications.modal.create.title'),
+        editTitle: t('applications.modal.edit.title'),
+        createDescription: t('applications.description'),
+        editDescription: t('applications.description'),
       }}
       createIcon={AppWindow}
       testId="create-application-modal"
@@ -55,9 +58,9 @@ export function ApplicationsPage() {
       EntityTable={ApplicationsTable}
       EntityModal={ApplicationModal}
       entityName={{
-        singular: 'Aplicação',
-        plural: 'Aplicações',
-        description: 'Gerencie suas aplicações',
+        singular: t('applications.title'),
+        plural: t('applications.table.title'),
+        description: t('applications.description'),
       }}
       modalState={modalState}
       testIdPrefix="applications"

@@ -2,6 +2,7 @@
 'use client';
 
 import { Layers } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { GenericEntityModal } from '@/components/entities/generic-entity-modal';
 import { GenericEntityPage } from '@/components/entities/generic-entity-page';
@@ -12,6 +13,8 @@ import { EnvironmentForm } from './environment-form';
 import { EnvironmentsTable } from './environments-table';
 
 export function EnvironmentsPage() {
+  const { t } = useTranslation(['settings']);
+
   const {
     environments,
     isLoading,
@@ -30,11 +33,11 @@ export function EnvironmentsPage() {
     <GenericEntityModal
       EntityForm={EnvironmentForm}
       entityName={{
-        singular: 'Ambiente',
-        createTitle: 'Novo Ambiente',
-        editTitle: 'Editar Ambiente',
-        createDescription: 'Configure um novo ambiente para implantação',
-        editDescription: 'Modifique as configurações do ambiente',
+        singular: t('environments.title'),
+        createTitle: t('environments.modal.create.title'),
+        editTitle: t('environments.modal.edit.title'),
+        createDescription: t('environments.description'),
+        editDescription: t('environments.description'),
       }}
       createIcon={Layers}
       testId="create-environment-modal"
@@ -55,9 +58,9 @@ export function EnvironmentsPage() {
       EntityTable={EnvironmentsTable}
       EntityModal={EnvironmentModal}
       entityName={{
-        singular: 'Ambiente',
-        plural: 'Ambientes',
-        description: 'Gerencie seus ambientes de implantação',
+        singular: t('environments.title'),
+        plural: t('environments.table.title'),
+        description: t('environments.description'),
       }}
       modalState={modalState}
       testIdPrefix="environments"

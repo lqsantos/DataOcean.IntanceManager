@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import { InputAdapter } from '@/components/form/form-adapters';
 import { FormBuilder } from '@/components/form/form-builder';
 import type { FormErrors } from '@/hooks/use-form-state';
@@ -13,16 +15,18 @@ interface LocationFormProps {
 }
 
 export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: LocationFormProps) {
+  const { t } = useTranslation(['settings', 'common']);
+
   // Validação de formulário
   const validateForm = (values: Partial<Location>): FormErrors<Partial<Location>> => {
     const errors: FormErrors<Partial<Location>> = {};
 
     if (!values.name?.trim()) {
-      errors.name = 'Nome é obrigatório';
+      errors.name = t('common:messages.requiredField');
     }
 
     if (!values.slug?.trim()) {
-      errors.slug = 'Slug é obrigatório';
+      errors.slug = t('common:messages.requiredField');
     } else if (!/^[a-z0-9-]+$/.test(values.slug)) {
       errors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
     }
@@ -40,10 +44,10 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
   const fields = [
     {
       name: 'name' as const,
-      label: 'Nome',
+      label: t('locations.modal.form.name.label'),
       required: true,
       component: InputAdapter,
-      placeholder: 'Nome da localidade',
+      placeholder: t('locations.modal.form.name.placeholder'),
     },
     {
       name: 'slug' as const,
@@ -63,8 +67,8 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
       onSubmit={onSubmit}
       onCancel={onCancel}
       isLoading={isSubmitting}
-      submitLabel={location ? 'Salvar' : 'Criar'}
-      cancelLabel="Cancelar"
+      submitLabel={location ? t('common:buttons.save') : t('common:buttons.create')}
+      cancelLabel={t('common:buttons.cancel')}
       testId="location-form"
       transform={{
         slug: (value) => value.toLowerCase(),

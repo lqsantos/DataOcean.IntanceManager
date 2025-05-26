@@ -1,6 +1,8 @@
 // components/applications/application-form.tsx
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import { InputAdapter, TextareaAdapter } from '@/components/form/form-adapters';
 import { FormBuilder } from '@/components/form/form-builder';
 import type { FormErrors } from '@/hooks/use-form-state';
@@ -19,18 +21,20 @@ export function ApplicationForm({
   onCancel,
   isSubmitting,
 }: ApplicationFormProps) {
+  const { t } = useTranslation(['settings', 'common']);
+
   // Validação de formulário
   const validateForm = (values: Partial<Application>): FormErrors<Partial<Application>> => {
     const errors: FormErrors<Partial<Application>> = {};
 
     if (!values.name?.trim()) {
-      errors.name = 'Nome é obrigatório';
+      errors.name = t('common:messages.requiredField');
     } else if (values.name.length < 2) {
       errors.name = 'Nome deve ter pelo menos 2 caracteres';
     }
 
     if (!values.slug?.trim()) {
-      errors.slug = 'Slug é obrigatório';
+      errors.slug = t('common:messages.requiredField');
     } else if (!/^[a-z0-9-]+$/.test(values.slug)) {
       errors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
     }
@@ -53,10 +57,10 @@ export function ApplicationForm({
   const fields = [
     {
       name: 'name' as const,
-      label: 'Nome',
+      label: t('applications.modal.form.name.label'),
       required: true,
       component: InputAdapter,
-      placeholder: 'Nome da aplicação',
+      placeholder: t('applications.modal.form.name.placeholder'),
     },
     {
       name: 'slug' as const,
@@ -68,9 +72,9 @@ export function ApplicationForm({
     },
     {
       name: 'description' as const,
-      label: 'Descrição',
+      label: t('applications.modal.form.description.label'),
       component: TextareaAdapter,
-      placeholder: 'Descrição da aplicação (opcional)',
+      placeholder: t('applications.modal.form.description.placeholder'),
     },
   ];
 
@@ -82,8 +86,8 @@ export function ApplicationForm({
       onSubmit={onSubmit}
       onCancel={onCancel}
       isLoading={isSubmitting}
-      submitLabel={application ? 'Salvar' : 'Criar'}
-      cancelLabel="Cancelar"
+      submitLabel={application ? t('common:buttons.save') : t('common:buttons.create')}
+      cancelLabel={t('common:buttons.cancel')}
       testId="application-form"
       transform={{
         slug: (value) => value.toLowerCase(),

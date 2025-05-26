@@ -1,0 +1,27 @@
+{
+  "buttons": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Excluir",
+    "create": "Criar",
+    "add": "Adicionar",
+    "edit": "Editar",
+    "close": "Fechar"
+  },
+  "messages": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "success": "Operação realizada com sucesso",
+    "confirmDelete": "Tem certeza que deseja excluir este item?",
+    "requiredField": "Este campo é obrigatório",
+    "invalidInput": "Entrada inválida"
+  },
+  "form": {
+    "required": "Obrigatório",
+    "optional": "Opcional"
+  },
+  "table": {
+    "actions": "Ações"
+  }
+}

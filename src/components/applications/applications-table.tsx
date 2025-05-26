@@ -1,6 +1,8 @@
 // components/applications/applications-table.tsx
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import type { Column } from '@/components/entities/entity-table';
 import { EntityTable } from '@/components/entities/entity-table';
 import type { Application } from '@/types/application';
@@ -24,6 +26,8 @@ export function ApplicationsTable({
   onEdit,
   onDelete,
 }: ApplicationsTableProps) {
+  const { t } = useTranslation(['settings', 'entityTable']);
+
   // Usar entities se applications não for fornecido
   const items = applications || entities || [];
 
@@ -31,7 +35,7 @@ export function ApplicationsTable({
   const columns: Column<Application>[] = [
     {
       key: 'name',
-      title: 'Nome',
+      title: t('applications.table.columns.name'),
       sortable: true,
     },
     {
@@ -41,7 +45,7 @@ export function ApplicationsTable({
     },
     {
       key: 'description',
-      title: 'Descrição',
+      title: t('applications.table.columns.description'),
       render: (application) => (
         <div className="max-w-[300px] truncate">{application.description}</div>
       ),
@@ -62,9 +66,9 @@ export function ApplicationsTable({
       onDelete={onDelete}
       columns={columns}
       DeleteDialog={DeleteApplicationDialog}
-      searchPlaceholder="Buscar aplicações..."
-      emptySearchMessage="Nenhuma aplicação encontrada para a pesquisa atual."
-      emptyMessage="Nenhuma aplicação cadastrada."
+      searchPlaceholder={t('applications.table.searchPlaceholder')}
+      emptySearchMessage={t('applications.table.emptySearchMessage')}
+      emptyMessage={t('applications.table.emptyMessage')}
       testIdPrefix="application"
     />
   );

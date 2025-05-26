@@ -1,0 +1,27 @@
+{
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "create": "Create",
+    "add": "Add",
+    "edit": "Edit",
+    "close": "Close"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Operation completed successfully",
+    "confirmDelete": "Are you sure you want to delete this item?",
+    "requiredField": "This field is required",
+    "invalidInput": "Invalid input"
+  },
+  "form": {
+    "required": "Required",
+    "optional": "Optional"
+  },
+  "table": {
+    "actions": "Actions"
+  }
+}

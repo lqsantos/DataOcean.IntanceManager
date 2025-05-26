@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +11,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState('applications');
+  const { t } = useTranslation('settings');
 
   // Determinar a aba ativa com base na URL
   useEffect(() => {
@@ -31,23 +33,20 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   return (
     <div className="space-y-6" data-testid="settings-layout">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-muted-foreground">
-          Gerencie as configurações da sua plataforma DataOcean.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+        <p className="text-muted-foreground">{t('description')}</p>
       </div>
-
       <Card>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-6 grid w-full grid-cols-3 rounded-none border-b">
             <TabsTrigger value="applications" data-testid="settings-tab-applications">
-              Aplicações
+              {t('tabs.applications')}
             </TabsTrigger>
             <TabsTrigger value="environments" data-testid="settings-tab-environments">
-              Ambientes
+              {t('tabs.environments')}
             </TabsTrigger>
             <TabsTrigger value="locations" data-testid="settings-tab-locations">
-              Localidades
+              {t('tabs.locations')}
             </TabsTrigger>
           </TabsList>
           <CardContent>

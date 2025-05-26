@@ -1,7 +1,7 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { enUS, ptBR } from 'date-fns/locale';
 import {
   ArrowUpDown,
   ChevronDown,
@@ -11,7 +11,9 @@ import {
   Search,
   Trash2,
 } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -89,18 +91,28 @@ export function EntityTable<
   DeleteDialog,
 
   // Textos e tradução
-  searchPlaceholder = 'Buscar...',
-  emptySearchMessage = 'Nenhum item encontrado para a pesquisa atual.',
-  emptyMessage = 'Nenhum item cadastrado.',
+  searchPlaceholder,
+  emptySearchMessage,
+  emptyMessage,
 
   // IDs para testes
   testIdPrefix,
 }: EntityTableProps<T>) {
+  const { t, i18n } = useTranslation(['entityTable']);
+
+  // Define default values from translations
+  const defaultSearchPlaceholder = t('searchPlaceholder');
+  const defaultEmptySearchMessage = t('emptySearchMessage');
+  const defaultEmptyMessage = t('emptyMessage');
+
   const [entityToDelete, setEntityToDelete] = useState<T | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Use the appropriate date-fns locale based on the current i18n language
+  const dateLocale = i18n.language === 'pt' ? ptBR : enUS;
 
   // Função para ordenar as entidades
   const handleSort = (field: string) => {
@@ -130,7 +142,9 @@ export function EntityTable<
 
   // Filtrar entidades com base no termo de pesquisa
   const filteredEntities = entities.filter((entity) => {
-    if (!searchTerm) return true;
+    if (!searchTerm) {
+      return true;
+    }
 
     const searchLower = searchTerm.toLowerCase();
 
@@ -185,7 +199,7 @@ export function EntityTable<
           <div className="relative flex-1">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder={searchPlaceholder}
+              placeholder={searchPlaceholder || defaultSearchPlaceholder}
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -246,7 +260,9 @@ export function EntityTable<
                   {sortedEntities.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={columns.length + 1} className="h-24 text-center">
-                        {searchTerm ? emptySearchMessage : emptyMessage}
+                        {searchTerm
+                          ? emptySearchMessage || defaultEmptySearchMessage
+                          : emptyMessage || defaultEmptyMessage}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -277,7 +293,7 @@ export function EntityTable<
                             ) : column.key === 'createdAt' ? (
                               formatDistanceToNow(new Date((entity as any)[column.key]), {
                                 addSuffix: true,
-                                locale: ptBR,
+                                locale: dateLocale,
                               })
                             ) : (
                               (entity as any)[column.key]
@@ -295,7 +311,7 @@ export function EntityTable<
                                   data-testid={`${testIdPrefix}-actions-${entity.id}`}
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Ações</span>
+                                  <span className="sr-only">{t('actions.view')}</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
@@ -304,7 +320,7 @@ export function EntityTable<
                                   onClick={() => onEdit(entity)}
                                 >
                                   <Edit className="mr-2 h-4 w-4" />
-                                  <span>Editar</span>
+                                  <span>{t('actions.edit')}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   data-testid={`delete-button-${entity.id}`}
@@ -312,7 +328,7 @@ export function EntityTable<
                                   className="text-destructive focus:text-destructive"
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  <span>Excluir</span>
+                                  <span>{t('actions.delete')}</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>

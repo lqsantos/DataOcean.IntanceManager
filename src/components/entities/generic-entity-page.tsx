@@ -3,6 +3,7 @@
 import { PlusCircle, RefreshCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 
@@ -139,6 +140,7 @@ export function GenericEntityPage({
   modalProps = {},
   customHeader,
 }: GenericEntityPageProps) {
+  const { t } = useTranslation(['settings', 'common']);
   const pathname = usePathname();
   const isInSettings = pathname.includes('/settings');
   const { isOpen, entityToEdit, openModal, openEditModal, closeModal } = modalState;
@@ -171,7 +173,7 @@ export function GenericEntityPage({
           data-testid={`${testIdPrefix}-page-refresh-button`}
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span className="sr-only">Atualizar</span>
+          <span className="sr-only">{t('common:buttons.refresh')}</span>
         </Button>
         <Button
           onClick={openModal}
@@ -179,7 +181,10 @@ export function GenericEntityPage({
           data-testid={`${testIdPrefix}-page-add-button`}
         >
           <PlusCircle className="h-4 w-4" />
-          Adicionar {entityName.singular}
+          {isInSettings
+            ? t('settings:actions.add', { entity: entityName.singular })
+            : t('common:buttons.add')}{' '}
+          {isInSettings ? '' : entityName.singular}
         </Button>
       </div>
 
