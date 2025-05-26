@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { toast } from 'sonner';
 
-import { usePATModal } from '@/contexts/modal-manager-context';
 import { usePAT } from '@/hooks/use-pat';
 
 interface PATCheckerProps {
@@ -17,10 +15,9 @@ export function PATChecker({
   onStatusChange,
   'data-testid': dataTestId = 'pat-checker',
 }: PATCheckerProps) {
-  const { open: openPATModal } = usePATModal();
-  const { isConfigured, fetchStatus, isLoading } = usePAT({
+  const { isConfigured, isLoading } = usePAT({
     autoFetch: true,
-    pollingInterval: 30, // Check every 30 seconds
+    pollingInterval: 30,
   });
 
   useEffect(() => {
@@ -29,28 +26,16 @@ export function PATChecker({
     }
   }, [isConfigured, isLoading, onStatusChange]);
 
-  useEffect(() => {
-    if (!isLoading && !isConfigured) {
-      toast.warning(
-        'Personal Access Token (PAT) não configurado. Configure para acessar repositórios privados.',
-        {
-          id: 'pat-missing-toast',
-          duration: 6000,
-          action: {
-            label: 'Configurar',
-            onClick: openPATModal,
-          },
-        }
-      );
-    }
-  }, [isConfigured, isLoading, openPATModal]);
+  let patStatus = 'not-configured';
+
+  if (isLoading) {
+    patStatus = 'loading';
+  } else if (isConfigured) {
+    patStatus = 'configured';
+  }
 
   return (
-    <div
-      data-testid={dataTestId}
-      data-pat-status={isLoading ? 'loading' : isConfigured ? 'configured' : 'not-configured'}
-      className="sr-only"
-    >
+    <div data-testid={dataTestId} data-pat-status={patStatus} className="sr-only">
       {children}
     </div>
   );

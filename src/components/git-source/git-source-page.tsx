@@ -5,8 +5,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { useGitSourceModal } from '@/contexts/modal-manager-context';
-import { usePATModal } from '@/contexts/pat-modal-context';
+import { useGitSourceModal, usePATModal } from '@/contexts/modal-manager-context';
 import { useGitSource } from '@/hooks/use-git-source';
 import type { GitSource } from '@/types/git-source';
 
