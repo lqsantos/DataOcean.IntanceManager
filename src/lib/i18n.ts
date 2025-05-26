@@ -6,9 +6,11 @@ import { initReactI18next } from 'react-i18next';
 // Import translation files
 import enCommon from '../locales/en/common.json';
 import enEntityTable from '../locales/en/entityTable.json';
+import enPat from '../locales/en/pat.json';
 import enSettings from '../locales/en/settings.json';
 import ptCommon from '../locales/pt/common.json';
 import ptEntityTable from '../locales/pt/entityTable.json';
+import ptPat from '../locales/pt/pat.json';
 import ptSettings from '../locales/pt/settings.json';
 
 const resources = {
@@ -16,11 +18,13 @@ const resources = {
     common: ptCommon,
     settings: ptSettings,
     entityTable: ptEntityTable,
+    pat: ptPat,
   },
   en: {
     common: enCommon,
     settings: enSettings,
     entityTable: enEntityTable,
+    pat: enPat,
   },
 };
 

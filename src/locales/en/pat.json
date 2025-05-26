@@ -1,0 +1,32 @@
+{
+  "modal": {
+    "titleCreate": "Configure Access Token",
+    "titleUpdate": "Update Access Token"
+  },
+  "description": {
+    "create": "Enter your personal access token to interact with APIs.",
+    "update": "Enter a new token to replace the current one.",
+    "lastUpdated": "Last updated: {{date}}"
+  },
+  "form": {
+    "tokenLabel": "Access Token",
+    "tokenPlaceholder": "Enter your token",
+    "showToken": "Show token",
+    "hideToken": "Hide token",
+    "configuring": "Configuring...",
+    "updating": "Updating...",
+    "configure": "Configure",
+    "update": "Update"
+  },
+  "validation": {
+    "minLength": "Token must have at least {{count}} characters",
+    "maxLength": "Token must have at most {{count}} characters"
+  },
+  "toast": {
+    "createSuccess": "Token configured successfully!",
+    "updateSuccess": "Token updated successfully!"
+  },
+  "errors": {
+    "generic": "Error processing request"
+  }
+}
