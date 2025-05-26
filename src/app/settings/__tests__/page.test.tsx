@@ -1,22 +1,34 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+// First, we set up the mock before any imports
 import { describe, expect, it, vi } from 'vitest';
 
-// Define the redirect mock before importing any modules that use it
-const mockRedirect = vi.fn();
-
-// Define the mock for next/navigation BEFORE importing the component
+// Mock next/navigation before importing the component
 vi.mock('next/navigation', () => ({
-  redirect: mockRedirect,
+  redirect: vi.fn()
 }));
 
-// Import the component AFTER all mocks are set up
+// Import the redirect function after the mock is set up
+import { redirect } from 'next/navigation';
+
+// Import the component after all mocks
 import SettingsPage from '../page';
 
 describe('SettingsPage', () => {
   it('redirects to the applications settings page', () => {
-    // The component calls redirect immediately on instantiation
-    new SettingsPage();
-
-    // Check that the redirect was called with the correct path
-    expect(mockRedirect).toHaveBeenCalledWith('/settings/applications');
+    // Clear mock before test
+    vi.clearAllMocks();
+    
+    // Render the component (it will trigger the redirect)
+    try {
+      SettingsPage();
+    } catch (e) {
+      // The component might throw after redirect, which is fine for our test
+    }
+    
+    // Check that redirect was called with the correct path
+    expect(redirect).toHaveBeenCalledWith('/settings/applications');
   });
 });

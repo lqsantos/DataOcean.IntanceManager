@@ -5,6 +5,14 @@ import { render, screen } from '@/tests/test-utils';
 
 import { GenericEntityModal } from '../generic-entity-modal';
 
+// Mock Radix UI Slot component
+vi.mock('@radix-ui/react-slot', () => ({
+  Slot: vi.fn(({ children }) => children),
+  createSlot: vi.fn(() => ({
+    slotName: 'mock-slot',
+  })),
+}));
+
 // Mock toast for notifications
 vi.mock('sonner', () => ({
   toast: {
