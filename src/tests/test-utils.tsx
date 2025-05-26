@@ -1,22 +1,109 @@
 // src/tests/test-utils.tsx
-import type { RenderOptions } from '@testing-library/react';
-import { render as reactRender } from '@testing-library/react';
-import { ThemeProvider } from 'next-themes';
+import '@testing-library/jest-dom';
+import {
+  render as rtlRender,
+  screen as rtlScreen,
+  waitFor as rtlWaitFor,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import i18n from 'i18next';
 import React from 'react';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { vi } from 'vitest';
+
+import { ThemeProvider } from '@/components/theme-provider';
+
+// Initialize i18n for tests
+i18n.use(initReactI18next).init({
+  resources: {
+    en: {
+      settings: {
+        title: 'Settings',
+        description: 'Manage your application settings',
+        tabs: {
+          applications: 'Applications',
+          environments: 'Environments',
+          locations: 'Locations',
+        },
+        applications: {
+          title: 'Application',
+          table: {
+            title: 'Applications',
+          },
+          description: 'Manage your applications',
+          modal: {
+            create: {
+              title: 'Create Application',
+            },
+            edit: {
+              title: 'Edit Application',
+            },
+          },
+        },
+        environments: {
+          title: 'Environment',
+          table: {
+            title: 'Environments',
+          },
+          description: 'Manage your environments',
+          modal: {
+            create: {
+              title: 'Create Environment',
+            },
+            edit: {
+              title: 'Edit Environment',
+            },
+          },
+        },
+        locations: {
+          title: 'Location',
+          table: {
+            title: 'Locations',
+          },
+          description: 'Manage your locations',
+          modal: {
+            create: {
+              title: 'Create Location',
+            },
+            edit: {
+              title: 'Edit Location',
+            },
+          },
+        },
+      },
+      common: {
+        buttons: {
+          add: 'Add',
+          refresh: 'Refresh',
+          save: 'Save',
+          cancel: 'Cancel',
+          delete: 'Delete',
+          edit: 'Edit',
+        },
+      },
+    },
+  },
+  lng: 'en',
+  fallbackLng: 'en',
+  interpolation: {
+    escapeValue: false,
+  },
+  react: {
+    useSuspense: false,
+  },
+});
 
 // Mock for window.matchMedia
 if (typeof window !== 'undefined') {
-  window.matchMedia = window.matchMedia || function() {
-    return {
-      matches: false,
-      addListener: function() {},
-      removeListener: function() {},
-      addEventListener: function() {},
-      removeEventListener: function() {},
-      dispatchEvent: function() { return true; },
+  window.matchMedia =
+    window.matchMedia ||
+    function () {
+      return {
+        matches: false,
+        addListener: () => {},
+        removeListener: () => {},
+      };
     };
-  };
 }
 
 // Since the react-responsive module is imported directly in files instead of using our mock,
@@ -34,6 +121,7 @@ vi.mock('next/navigation', () => ({
     pathname: '/',
   }),
   usePathname: () => '/',
+  redirect: vi.fn(),
 }));
 
 // Mock Lucide icons - expanded with all icons used in the app
@@ -41,24 +129,26 @@ vi.mock('lucide-react', () => {
   return {
     AlertCircle: () => <span data-testid="alert-icon" />,
     AppWindow: () => <span data-testid="app-window-icon" />,
+    ArrowUpDown: () => <span data-testid="arrow-up-down-icon" />,
     Bell: () => <span data-testid="bell-icon" />,
     Check: () => <span data-testid="check-icon" />,
     CheckCircle2: () => <span data-testid="checkcircle-icon" />,
     ChevronDown: () => <span data-testid="chevron-down-icon" />,
     ChevronRight: () => <span data-testid="chevron-right-icon" />,
+    ChevronUp: () => <span data-testid="chevron-up-icon" />,
     Copy: () => <span data-testid="copy-icon" />,
-    Database: ({ className }: any) => <span data-testid="icon-database" className={className} />,
-    Edit: ({ className }: any) => <span data-testid="icon-edit" className={className} />,
+    Database: ({ className }) => <span data-testid="icon-database" className={className} />,
+    Edit: ({ className }) => <span data-testid="icon-edit" className={className} />,
     Eye: () => <span data-testid="eye-icon" />,
     EyeOff: () => <span data-testid="eye-off-icon" />,
     Git: () => <span data-testid="git-icon" />,
-    GitBranch: ({ className }: any) => <span data-testid="icon-git-branch" className={className} />,
+    GitBranch: ({ className }) => <span data-testid="icon-git-branch" className={className} />,
     GitBranchPlus: () => <span data-testid="gitbranchplus-icon" />,
     Github: () => <span data-testid="github-icon" />,
     Gitlab: () => <span data-testid="gitlab-icon" />,
     Globe: () => <span data-testid="globe-icon" />,
     Key: () => <span data-testid="key-icon" />,
-    Loader2: ({ className }: any) => <span data-testid="loader" className={className} />,
+    Loader2: ({ className }) => <span data-testid="loader" className={className} />,
     LogOut: () => <span data-testid="logout-icon" />,
     MapPin: () => <span data-testid="map-pin-icon" />,
     Menu: () => <span data-testid="menu-icon" />,
@@ -71,16 +161,15 @@ vi.mock('lucide-react', () => {
     Server: () => <span data-testid="server-icon" />,
     Settings: () => <span data-testid="settings-icon" />,
     Sun: () => <span data-testid="sun-icon" />,
-    Trash2: ({ className }: any) => <span data-testid="icon-trash" className={className} />,
+    Trash2: ({ className }) => <span data-testid="icon-trash" className={className} />,
     User: () => <span data-testid="user-icon" />,
     XCircle: () => <span data-testid="xcircle-icon" />,
     XIcon: () => <span data-testid="x-icon" />,
   };
 });
 
-// Clipboard API mock - fixed to avoid property redefinition
+// Clipboard API mock
 if (typeof navigator === 'undefined') {
-  // Define global navigator object if it's not defined
   global.navigator = {} as any;
 }
 
@@ -111,91 +200,43 @@ const createMockModalManagerContext = () => {
     gitSource: { isOpen: false, editItem: null },
     template: { isOpen: false },
   };
-  
+
   return {
     modals: mockModalState,
     openModal: mockOpenModal,
     closeModal: mockCloseModal,
     openEditModal: mockOpenEditModal,
-    setPatCallback: mockSetPatCallback
+    setPatCallback: mockSetPatCallback,
   };
 };
 
 // Mock the modal manager context module
 vi.mock('@/contexts/modal-manager-context', () => {
   const mockContext = createMockModalManagerContext();
-  const mockPatModalOpen = vi.fn();
-  
+
   return {
-    ModalManagerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    ModalManagerContext: {
-      Provider: ({ children, value }: { children: React.ReactNode, value?: any }) => <>{children}</>,
-      Consumer: ({ children }: { children: (context: any) => React.ReactNode }) => children(mockContext),
-      displayName: 'ModalManagerContext',
-    },
-    useModalManager: () => mockContext,
-    usePATModal: () => ({
-      open: mockPatModalOpen,
-      openModal: mockPatModalOpen,
+    useApplicationModal: vi.fn(() => ({
       isOpen: false,
-      status: {
-        configured: true,
-        lastUpdated: '2023-06-15T10:30:00Z',
-      },
-    }),
-    useEnvironmentModal: () => ({
+      entityToEdit: null,
+      openModal: vi.fn(),
+      openEditModal: vi.fn(),
+      closeModal: vi.fn(),
+    })),
+    useEnvironmentModal: vi.fn(() => ({
       isOpen: false,
-      environmentToEdit: null,
-      openModal: mockContext.openModal,
-      openEditModal: mockContext.openEditModal,
-      closeModal: mockContext.closeModal,
-    }),
-    useLocationModal: () => ({
+      entityToEdit: null,
+      openModal: vi.fn(),
+      openEditModal: vi.fn(),
+      closeModal: vi.fn(),
+    })),
+    useLocationModal: vi.fn(() => ({
       isOpen: false,
-      locationToEdit: null,
-      openModal: mockContext.openModal,
-      openEditModal: mockContext.openEditModal,
-      closeModal: mockContext.closeModal,
-    }),
-    useApplicationModal: () => ({
-      isOpen: false,
-      applicationToEdit: null,
-      openModal: mockContext.openModal,
-      openEditModal: mockContext.openEditModal,
-      closeModal: mockContext.closeModal,
-    }),
-    useClusterModal: () => ({
-      isOpen: false,
-      clusterToEdit: null,
-      openModal: mockContext.openModal,
-      openEditModal: mockContext.openEditModal,
-      closeModal: mockContext.closeModal,
-    }),
-    useGitSourceModal: () => ({
-      isOpen: false,
-      gitSourceToEdit: null,
-      openModal: mockContext.openModal,
-      openEditModal: mockContext.openEditModal,
-      closeModal: mockContext.closeModal,
-    }),
-    useTemplateModal: () => ({
-      isOpen: false,
-      openModal: mockContext.openModal,
-      closeModal: mockContext.closeModal,
-    }),
-    CreateEnvironmentModalProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    useCreateEnvironmentModal: () => ({
-      isOpen: false,
-      openModal: mockContext.openModal,
-      closeModal: mockContext.closeModal,
-    }),
-    CreateTemplateModalProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    useCreateTemplateModal: () => ({
-      isOpen: false,
-      openModal: mockContext.openModal,
-      closeModal: mockContext.closeModal,
-    }),
-    PATModalProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      entityToEdit: null,
+      openModal: vi.fn(),
+      openEditModal: vi.fn(),
+      closeModal: vi.fn(),
+    })),
+    useModalManager: vi.fn(() => mockContext),
   };
 });
 
@@ -210,32 +251,62 @@ vi.mock('sonner', () => ({
 
 // Mock UI components that could cause issues in tests
 vi.mock('@radix-ui/react-slot', () => ({
-  Slot: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  Slot: ({ children, ...props }) => <div {...props}>{children}</div>,
+}));
+
+// Mock module resolution for common components
+vi.mock('@/components/entities/generic-entity-page', () => ({
+  GenericEntityPage: vi.fn(({ entities, EntityTable, testIdPrefix }) => (
+    <div data-testid={`${testIdPrefix}-page`}>
+      <EntityTable entities={entities} />
+      <div data-testid={`${testIdPrefix}-add-button`}>Add Button</div>
+      <div data-testid={`${testIdPrefix}-refresh-button`}>Refresh Button</div>
+    </div>
+  )),
 }));
 
 // Create a proper ModalManagerContext for the TestWrapper
-const MockModalManagerContext = React.createContext<any>(createMockModalManagerContext());
+const MockModalManagerContext = React.createContext(createMockModalManagerContext());
 
 // TestWrapper component that provides necessary context providers
-export const TestWrapper = ({ children }: { children: React.ReactNode }) => {
-  const mockModalContext = createMockModalManagerContext();
-  
+export const TestWrapper = ({ children }) => {
   return (
-    <ThemeProvider defaultTheme="light" attribute="class">
-      <MockModalManagerContext.Provider value={mockModalContext}>
-        {children}
-      </MockModalManagerContext.Provider>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
     </ThemeProvider>
   );
 };
 
+// Provider for wrapping components in tests
+const AllTheProviders = ({ children }) => {
+  return <TestWrapper>{children}</TestWrapper>;
+};
+
+// Create properly initialized test screen object
+const screen = {
+  ...rtlScreen,
+  getByTestId: (...args) => rtlScreen.getByTestId(...args),
+  getByText: (...args) => rtlScreen.getByText(...args),
+  getByLabelText: (...args) => rtlScreen.getByLabelText(...args),
+  getByRole: (...args) => rtlScreen.getByRole(...args),
+  queryByTestId: (...args) => rtlScreen.queryByTestId(...args),
+  findByText: (...args) => rtlScreen.findByText(...args),
+  getAllByTestId: (...args) => rtlScreen.getAllByTestId(...args),
+  debug: rtlScreen.debug,
+};
+
+// Initialize userEvent properly
+const user = userEvent.setup();
+
 // Custom render function that includes providers
-export function render(
-  ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) {
-  return reactRender(ui, { wrapper: TestWrapper, ...options });
+export function render(ui, options = {}) {
+  return rtlRender(ui, {
+    wrapper: AllTheProviders,
+    ...options,
+  });
 }
 
-// Re-export everything from testing library
-export * from '@testing-library/react';
+// Helper function to wait for data to load
+const waitFor = rtlWaitFor;
+
+export { screen, user, userEvent, waitFor };
