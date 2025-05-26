@@ -45,7 +45,7 @@ interface UseFormStateOptions<T> {
  * Hook que fornece gerenciamento completo do estado de um formulário,
  * incluindo valores, erros, estados de toque e submissão.
  */
-export function useFormState<T extends Record<string, any>>({
+export function useFormState<T extends Record<string, unknown>>({
   initialValues,
   validator,
   onSubmit: externalOnSubmit,
@@ -62,13 +62,23 @@ export function useFormState<T extends Record<string, any>>({
 
   // Log para diagnóstico
   const logDebug = useCallback(
-    (message: string, data?: any) => {
+    (message: string, data?: unknown) => {
       if (debug) {
+        // eslint-disable-next-line no-console
         console.log(`[FormState] ${message}`, data);
       }
     },
     [debug]
   );
+
+  // Atualizar valores quando initialValues mudam (importante para modo de edição)
+  useEffect(() => {
+    setValues(initialValues);
+    setErrors({});
+    setTouched({});
+    setAttemptedSubmit(false);
+    logDebug('Valores iniciais atualizados', { initialValues });
+  }, [initialValues, logDebug]);
 
   // Validar formulário usando a função validator fornecida
   const validateForm = useCallback(() => {
@@ -91,9 +101,9 @@ export function useFormState<T extends Record<string, any>>({
 
   // Aplicar transformações automaticamente
   const applyTransform = useCallback(
-    (field: keyof T, value: any): any => {
-      if (transform && transform[field]) {
-        return transform[field]!(value);
+    (field: keyof T, value: unknown): unknown => {
+      if (transform?.[field]) {
+        return transform[field]?.(value as T[keyof T]) as unknown;
       }
 
       return value;
@@ -112,10 +122,12 @@ export function useFormState<T extends Record<string, any>>({
 
     Object.entries(derivedFields).forEach(([fieldName, config]) => {
       const field = fieldName as keyof T;
-
       // Verificar se alguma dependência foi alterada
       const shouldCompute =
-        config.dependsOn.some((dep) => touched[dep]) && (!config.skipIfTouched || !touched[field]);
+        config.dependsOn.some((dep: keyof T) => touched[dep]) &&
+        (!config.skipIfTouched || !touched[field]) &&
+        // Não sobrescrever se o campo já tem um valor e não foi tocado (cenário de edição)
+        !(initialValues[field] && !touched[field]);
 
       if (shouldCompute) {
         const computedValue = config.compute(values);
@@ -123,6 +135,7 @@ export function useFormState<T extends Record<string, any>>({
         if (newValues[field] !== computedValue) {
           newValues[field] = computedValue;
           shouldUpdate = true;
+
           logDebug(`Campo derivado "${String(field)}" atualizado`, { computedValue });
         }
       }
@@ -131,11 +144,11 @@ export function useFormState<T extends Record<string, any>>({
     if (shouldUpdate) {
       setValues(newValues);
     }
-  }, [values, touched, derivedFields, logDebug]);
+  }, [values, touched, derivedFields, initialValues, logDebug]);
 
   // Definir o valor de um campo
   const setValue = useCallback(
-    (field: keyof T, value: any, markAsTouched = true) => {
+    (field: keyof T, value: unknown, markAsTouched = true) => {
       const transformedValue = applyTransform(field, value);
 
       logDebug(`Definindo valor para "${String(field)}"`, {
@@ -146,7 +159,7 @@ export function useFormState<T extends Record<string, any>>({
 
       setValues((prev) => ({
         ...prev,
-        [field]: transformedValue,
+        [field]: transformedValue as T[keyof T],
       }));
 
       if (markAsTouched) {

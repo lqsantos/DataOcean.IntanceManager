@@ -109,6 +109,13 @@ export function GenericEntityModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!entityToEdit;
 
+  // Log para debug - vamos ver o que está sendo passado
+  console.warn('[GenericEntityModal] Renderizando com:', {
+    isOpen,
+    entityToEdit,
+    isEditMode,
+  });
+
   // Usar o ícone de edição fornecido ou recair para o ícone de criação
   const DisplayIcon = isEditMode && EditIcon ? EditIcon : CreateIcon;
 

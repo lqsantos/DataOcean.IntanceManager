@@ -11,9 +11,17 @@ import { useLocations } from '@/hooks/use-locations';
 import { LocationForm } from './location-form';
 import { LocationsTable } from './locations-table';
 
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  entityToEdit: unknown;
+  onCreate: (data: unknown) => Promise<unknown>;
+  onUpdate?: (id: string, data: unknown) => Promise<unknown>;
+  onCreateSuccess?: (entity: unknown) => void;
+}
+
 export function LocationsPage() {
   const { t } = useTranslation(['settings']);
-
   const {
     locations,
     isLoading,
@@ -27,20 +35,33 @@ export function LocationsPage() {
 
   const modalState = useLocationModal();
 
-  // Componente de modal usando nossa abstração genérica
-  const LocationModal = (props: any) => (
+  // Componente de modal simplificado
+  const LocationModal = ({
+    isOpen,
+    onClose,
+    entityToEdit,
+    onCreate,
+    onUpdate,
+    onCreateSuccess,
+  }: ModalProps) => (
     <GenericEntityModal
+      isOpen={isOpen}
+      onClose={onClose}
+      entityToEdit={entityToEdit}
+      onCreate={onCreate}
+      onUpdate={onUpdate}
+      onCreateSuccess={onCreateSuccess}
       EntityForm={LocationForm}
       entityName={{
         singular: t('locations.title'),
         createTitle: t('locations.modal.create.title'),
         editTitle: t('locations.modal.edit.title'),
-        createDescription: t('locations.description'),
-        editDescription: t('locations.description'),
+        createDescription: t('locations.modal.create.description'),
+        editDescription: t('locations.modal.edit.description'),
       }}
       createIcon={MapPin}
+      editIcon={MapPin}
       testId="create-location-modal"
-      {...props}
     />
   );
 
@@ -49,7 +70,7 @@ export function LocationsPage() {
       entities={locations}
       isLoading={isLoading}
       isRefreshing={isRefreshing}
-      error={error}
+      error={error || null}
       refreshEntities={refreshLocations}
       createEntity={createLocation}
       updateEntity={updateLocation}
@@ -64,7 +85,7 @@ export function LocationsPage() {
       modalState={modalState}
       testIdPrefix="locations"
       tableProps={{
-        locations: locations, // Manter compatibilidade com a implementação atual da tabela
+        locations: locations,
       }}
     />
   );

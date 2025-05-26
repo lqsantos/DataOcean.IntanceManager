@@ -78,6 +78,23 @@ interface GenericEntityPageProps {
   EntityModal: React.ComponentType<EntityModalProps>;
 
   /**
+   * Configurações específicas do modal
+   */
+  modalConfig?: {
+    EntityForm: React.ComponentType<any>;
+    entityName: {
+      singular: string;
+      createTitle?: string;
+      editTitle?: string;
+      createDescription?: string;
+      editDescription?: string;
+    };
+    createIcon: any;
+    editIcon?: any;
+    testId?: string;
+  };
+
+  /**
    * Informações sobre o nome da entidade (singular e plural)
    */
   entityName: {

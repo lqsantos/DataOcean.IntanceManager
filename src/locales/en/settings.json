@@ -31,10 +31,12 @@
     "modal": {
       "create": {
         "title": "Create New Application",
+        "description": "Configure a new application for deployment",
         "button": "Create"
       },
       "edit": {
         "title": "Edit Application",
+        "description": "Modify the application settings",
         "button": "Save"
       },
       "delete": {
@@ -82,10 +84,12 @@
     "modal": {
       "create": {
         "title": "Create New Environment",
+        "description": "Configure a new environment for deployment",
         "button": "Create"
       },
       "edit": {
         "title": "Edit Environment",
+        "description": "Modify the environment settings",
         "button": "Save"
       },
       "delete": {
@@ -133,10 +137,12 @@
     "modal": {
       "create": {
         "title": "Create New Location",
+        "description": "Configure a new location for deployment",
         "button": "Create"
       },
       "edit": {
         "title": "Edit Location",
+        "description": "Modify the location settings",
         "button": "Save"
       },
       "delete": {

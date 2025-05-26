@@ -10,6 +10,7 @@ import type { Application, CreateApplicationDto, UpdateApplicationDto } from '@/
 
 interface ApplicationFormProps {
   application?: Application;
+  entity?: Application; // Adicionar suporte para a prop genérica
   onSubmit: (data: CreateApplicationDto | UpdateApplicationDto) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -17,11 +18,15 @@ interface ApplicationFormProps {
 
 export function ApplicationForm({
   application,
+  entity,
   onSubmit,
   onCancel,
   isSubmitting,
 }: ApplicationFormProps) {
   const { t } = useTranslation(['settings', 'common']);
+
+  // Usar entity se fornecido, senão usar application (compatibilidade com código existente)
+  const currentApplication = entity || application;
 
   // Validação de formulário
   const validateForm = (values: Partial<Application>): FormErrors<Partial<Application>> => {
@@ -48,9 +53,9 @@ export function ApplicationForm({
 
   // Valor inicial do formulário
   const initialValues = {
-    name: application?.name || '',
-    slug: application?.slug || '',
-    description: application?.description || '',
+    name: currentApplication?.name || '',
+    slug: currentApplication?.slug || '',
+    description: currentApplication?.description || '',
   };
 
   // Campos do formulário
@@ -86,17 +91,17 @@ export function ApplicationForm({
       onSubmit={onSubmit}
       onCancel={onCancel}
       isLoading={isSubmitting}
-      submitLabel={application ? t('common:buttons.save') : t('common:buttons.create')}
+      submitLabel={currentApplication ? t('common:buttons.save') : t('common:buttons.create')}
       cancelLabel={t('common:buttons.cancel')}
       testId="application-form"
       transform={{
-        slug: (value) => value.toLowerCase(),
+        slug: (value) => value?.toLowerCase() || '',
       }}
       derivedFields={{
         slug: {
           dependsOn: ['name'],
           compute: (values) => {
-            return values.name
+            return (values.name || '')
               .toLowerCase()
               .replace(/\s+/g, '-')
               .replace(/[^a-z0-9-]/g, '');

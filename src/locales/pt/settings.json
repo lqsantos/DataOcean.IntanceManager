@@ -31,10 +31,12 @@
     "modal": {
       "create": {
         "title": "Criar Nova Aplicação",
+        "description": "Configure uma nova aplicação para implantação",
         "button": "Criar"
       },
       "edit": {
         "title": "Editar Aplicação",
+        "description": "Modifique as configurações da aplicação",
         "button": "Salvar"
       },
       "delete": {
@@ -82,10 +84,12 @@
     "modal": {
       "create": {
         "title": "Criar Novo Ambiente",
+        "description": "Configure um novo ambiente para implantação",
         "button": "Criar"
       },
       "edit": {
         "title": "Editar Ambiente",
+        "description": "Modifique as configurações do ambiente",
         "button": "Salvar"
       },
       "delete": {
@@ -133,10 +137,12 @@
     "modal": {
       "create": {
         "title": "Criar Nova Localização",
+        "description": "Configure uma nova localização para implantação",
         "button": "Criar"
       },
       "edit": {
         "title": "Editar Localização",
+        "description": "Modifique as configurações da localização",
         "button": "Salvar"
       },
       "delete": {

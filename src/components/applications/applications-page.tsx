@@ -12,9 +12,17 @@ import { useApplications } from '@/hooks/use-applications';
 import { ApplicationForm } from './application-form';
 import { ApplicationsTable } from './applications-table';
 
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  entityToEdit: unknown;
+  onCreate: (data: unknown) => Promise<unknown>;
+  onUpdate?: (id: string, data: unknown) => Promise<unknown>;
+  onCreateSuccess?: (entity: unknown) => void;
+}
+
 export function ApplicationsPage() {
   const { t } = useTranslation(['settings']);
-
   const {
     applications,
     isLoading,
@@ -28,20 +36,33 @@ export function ApplicationsPage() {
 
   const modalState = useApplicationModal();
 
-  // Componente de modal usando nossa abstração genérica
-  const ApplicationModal = (props: any) => (
+  // Componente de modal simplificado
+  const ApplicationModal = ({
+    isOpen,
+    onClose,
+    entityToEdit,
+    onCreate,
+    onUpdate,
+    onCreateSuccess,
+  }: ModalProps) => (
     <GenericEntityModal
+      isOpen={isOpen}
+      onClose={onClose}
+      entityToEdit={entityToEdit}
+      onCreate={onCreate}
+      onUpdate={onUpdate}
+      onCreateSuccess={onCreateSuccess}
       EntityForm={ApplicationForm}
       entityName={{
         singular: t('applications.title'),
         createTitle: t('applications.modal.create.title'),
         editTitle: t('applications.modal.edit.title'),
-        createDescription: t('applications.description'),
-        editDescription: t('applications.description'),
+        createDescription: t('applications.modal.create.description'),
+        editDescription: t('applications.modal.edit.description'),
       }}
       createIcon={AppWindow}
+      editIcon={AppWindow}
       testId="create-application-modal"
-      {...props}
     />
   );
 
@@ -50,7 +71,7 @@ export function ApplicationsPage() {
       entities={applications}
       isLoading={isLoading}
       isRefreshing={isRefreshing}
-      error={error}
+      error={error || null}
       refreshEntities={refreshApplications}
       createEntity={createApplication}
       updateEntity={updateApplication}
@@ -65,7 +86,7 @@ export function ApplicationsPage() {
       modalState={modalState}
       testIdPrefix="applications"
       tableProps={{
-        applications: applications, // Manter compatibilidade com a implementação atual da tabela
+        applications: applications,
       }}
     />
   );

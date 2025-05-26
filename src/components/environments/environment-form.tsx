@@ -10,22 +10,42 @@ import type { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/
 
 interface EnvironmentFormProps {
   environment?: Environment;
+  entity?: Environment; // Adicionar suporte para a prop genérica
   onSubmit: (data: CreateEnvironmentDto | UpdateEnvironmentDto) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
 }
 
+// Tipo para os valores do formulário (compatível com FormBuilder)
+interface EnvironmentFormValues {
+  name: string;
+  slug: string;
+  order: string;
+}
+
 export function EnvironmentForm({
   environment,
+  entity,
   onSubmit,
   onCancel,
   isSubmitting,
 }: EnvironmentFormProps) {
   const { t } = useTranslation(['settings', 'common']);
 
+  // Usar entity se fornecido, senão usar environment (compatibilidade com código existente)
+  const currentEnvironment = entity || environment;
+
+  // Log para debug - vamos ver o que está sendo passado
+  console.warn('[EnvironmentForm] Renderizando com:', {
+    environment,
+    entity,
+    currentEnvironment,
+    isSubmitting,
+  });
+
   // Validação de formulário
-  const validateForm = (values: Partial<Environment>): FormErrors<Partial<Environment>> => {
-    const errors: FormErrors<Partial<Environment>> = {};
+  const validateForm = (values: EnvironmentFormValues): FormErrors<EnvironmentFormValues> => {
+    const errors: FormErrors<EnvironmentFormValues> = {};
 
     if (!values.name?.trim()) {
       errors.name = t('common:messages.requiredField');
@@ -45,7 +65,7 @@ export function EnvironmentForm({
       errors.slug = 'Slug deve ter no máximo 30 caracteres';
     }
 
-    if (values.order !== undefined) {
+    if (values.order) {
       const orderValue = Number(values.order);
 
       if (isNaN(orderValue)) {
@@ -55,27 +75,32 @@ export function EnvironmentForm({
       }
     }
 
+    console.warn('[EnvironmentForm] Erros de validação:', errors);
+
     return errors;
   };
 
   // Valor inicial do formulário
-  const initialValues = {
-    name: environment?.name || '',
-    slug: environment?.slug || '',
-    order: environment?.order?.toString() || '',
+  const initialValues: EnvironmentFormValues = {
+    name: currentEnvironment?.name || '',
+    slug: currentEnvironment?.slug || '',
+    order: currentEnvironment?.order?.toString() || '',
   };
+
+  // Log para debug dos valores iniciais
+  console.warn('[EnvironmentForm] Valores iniciais calculados:', initialValues);
 
   // Campos do formulário
   const fields = [
     {
-      name: 'name' as const,
+      name: 'name' as keyof EnvironmentFormValues,
       label: t('environments.modal.form.name.label'),
       required: true,
       component: InputAdapter,
       placeholder: t('environments.modal.form.name.placeholder'),
     },
     {
-      name: 'slug' as const,
+      name: 'slug' as keyof EnvironmentFormValues,
       label: 'Slug',
       required: true,
       component: InputAdapter,
@@ -84,33 +109,48 @@ export function EnvironmentForm({
         'Usado em URLs e requisições de API. Use apenas letras minúsculas, números e hífens.',
     },
     {
-      name: 'order' as const,
+      name: 'order' as keyof EnvironmentFormValues,
       label: 'Ordem',
-      component: (props: any) => InputAdapter({ ...props, type: 'number' }),
+      component: (props: React.ComponentProps<typeof InputAdapter>) =>
+        InputAdapter({ ...props, type: 'number' }),
       placeholder: 'ex: 1',
       helpText: 'Determina a ordem de exibição dos ambientes.',
     },
   ];
+
+  console.warn('[EnvironmentForm] Campos do formulário:', fields);
+
+  // Função wrapper para converter os valores do formulário
+  const handleSubmit = async (values: EnvironmentFormValues) => {
+    const convertedData = {
+      name: values.name,
+      slug: values.slug,
+      order: values.order ? Number(values.order) : undefined,
+    };
+
+    await onSubmit(convertedData);
+  };
 
   return (
     <FormBuilder
       initialValues={initialValues}
       fields={fields}
       validator={validateForm}
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       onCancel={onCancel}
       isLoading={isSubmitting}
-      submitLabel={environment ? t('common:buttons.save') : t('common:buttons.create')}
+      submitLabel={currentEnvironment ? t('common:buttons.save') : t('common:buttons.create')}
       cancelLabel={t('common:buttons.cancel')}
       testId="environment-form"
+      debug={true}
       transform={{
-        slug: (value) => value.toLowerCase(),
+        slug: (value?: string) => value?.toLowerCase() || '',
       }}
       derivedFields={{
         slug: {
           dependsOn: ['name'],
           compute: (values) => {
-            return values.name
+            return (values.name || '')
               .toLowerCase()
               .replace(/\s+/g, '-')
               .replace(/[^a-z0-9-]/g, '');

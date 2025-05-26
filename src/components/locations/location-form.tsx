@@ -9,13 +9,23 @@ import type { CreateLocationDto, Location, UpdateLocationDto } from '@/types/loc
 
 interface LocationFormProps {
   location?: Location;
+  entity?: Location; // Adicionar suporte para a prop genérica
   onSubmit: (data: CreateLocationDto | UpdateLocationDto) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
 }
 
-export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: LocationFormProps) {
+export function LocationForm({
+  location,
+  entity,
+  onSubmit,
+  onCancel,
+  isSubmitting,
+}: LocationFormProps) {
   const { t } = useTranslation(['settings', 'common']);
+
+  // Usar entity se fornecido, senão usar location (compatibilidade com código existente)
+  const currentLocation = entity || location;
 
   // Validação de formulário
   const validateForm = (values: Partial<Location>): FormErrors<Partial<Location>> => {
@@ -36,8 +46,8 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
 
   // Valor inicial do formulário
   const initialValues = {
-    name: location?.name || '',
-    slug: location?.slug || '',
+    name: currentLocation?.name || '',
+    slug: currentLocation?.slug || '',
   };
 
   // Campos do formulário
@@ -67,17 +77,17 @@ export function LocationForm({ location, onSubmit, onCancel, isSubmitting }: Loc
       onSubmit={onSubmit}
       onCancel={onCancel}
       isLoading={isSubmitting}
-      submitLabel={location ? t('common:buttons.save') : t('common:buttons.create')}
+      submitLabel={currentLocation ? t('common:buttons.save') : t('common:buttons.create')}
       cancelLabel={t('common:buttons.cancel')}
       testId="location-form"
       transform={{
-        slug: (value) => value.toLowerCase(),
+        slug: (value) => value?.toLowerCase() || '',
       }}
       derivedFields={{
         slug: {
           dependsOn: ['name'],
           compute: (values) => {
-            return values.name
+            return (values.name || '')
               .toLowerCase()
               .replace(/\s+/g, '-')
               .replace(/[^a-z0-9-]/g, '');
