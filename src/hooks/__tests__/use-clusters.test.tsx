@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ClusterService } from '@/services/cluster-service';
 import type { Cluster } from '@/types/cluster';
 
-import { useClusters } from './use-clusters';
+import { useClusters } from '../use-clusters';
 
 // Mock the ClusterService
 vi.mock('@/services/cluster-service', () => ({

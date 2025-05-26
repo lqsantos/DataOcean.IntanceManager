@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import type { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
 
-import { useEnvironments } from './use-environments';
+import { useEnvironments } from '../use-environments';
 
 // Mock data para testes
 const mockEnvironments: Environment[] = [

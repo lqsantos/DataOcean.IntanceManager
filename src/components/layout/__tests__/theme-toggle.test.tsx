@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { useTheme } from 'next-themes';
 import { vi } from 'vitest';
 
-import { ThemeToggle } from './theme-toggle';
+import { ThemeToggle } from '../theme-toggle';
 
 // Mock completo para o DropdownMenu do Radix UI
 vi.mock('@/components/ui/dropdown-menu', () => {

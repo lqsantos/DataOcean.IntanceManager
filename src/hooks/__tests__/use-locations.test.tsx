@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import type { CreateLocationDto, Location, UpdateLocationDto } from '@/types/location';
 
-import { useLocations } from './use-locations';
+import { useLocations } from '../use-locations';
 
 // Mock data para testes
 const mockLocations: Location[] = [

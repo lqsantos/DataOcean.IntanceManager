@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { GitSourceService } from '@/services/git-source-service';
 import type { GitSource, TestConnectionResult } from '@/types/git-source';
 
-import { useGitSource } from './use-git-source';
+import { useGitSource } from '../use-git-source';
 
 // Mock do serviço GitSourceService
 vi.mock('@/services/git-source-service', () => ({

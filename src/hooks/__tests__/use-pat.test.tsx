@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PATService } from '@/services/pat-service';
 
-import { usePAT } from './use-pat';
+import { usePAT } from '../use-pat';
 
 // Mock do PAT Service
 vi.mock('@/services/pat-service', () => ({
