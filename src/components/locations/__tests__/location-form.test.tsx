@@ -1,81 +1,62 @@
 import { act, fireEvent } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Use the centralized mock for react-i18next before importing test-utils
+import reactI18nextMock from '@/tests/mocks/i18next';
+vi.mock('react-i18next', () => reactI18nextMock);
+
+// Now import render and screen from test-utils
 import { render, screen } from '@/tests/test-utils';
 
 import { LocationForm } from '../location-form';
 
-// Mock the i18n translation
-vi.mock('react-i18next', () => ({
-  // This mock makes t('messages.requiredField') actually return "This field is required"
-  useTranslation: () => {
-    return {
-      t: (key) => {
-        const translations = {
-          'messages.requiredField': 'This field is required',
-          'messages.invalidSlug': 'Invalid slug format',
-        };
-
-        return translations[key] || key;
-      },
-      i18n: {
-        changeLanguage: () => new Promise(() => {}),
-      },
-    };
-  },
-  // Adding the missing initReactI18next export
-  initReactI18next: {
-    type: '3rdParty',
-    init: () => {},
-  },
-}));
-
 describe('LocationForm', () => {
-  const mockOnSubmit = vi.fn();
+  const mockOnSubmit = vi.fn().mockResolvedValue(undefined);
+  const mockOnCancel = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('renders the form with empty fields when no default values', () => {
-    render(<LocationForm onSubmit={mockOnSubmit} />);
+    render(<LocationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} isSubmitting={false} />);
+
     expect(screen.getByTestId('input-name')).toBeInTheDocument();
     expect(screen.getByTestId('input-slug')).toBeInTheDocument();
-    expect(screen.getByTestId('textarea-description')).toBeInTheDocument();
     expect(screen.getByTestId('location-form-submit-button')).toBeInTheDocument();
   });
 
   it('renders the form with default values when provided', async () => {
     const defaultValues = {
       name: 'Test Location',
-      slug: 'test-loc',
-      description: 'This is a test location',
+      slug: 'test-location',
     };
 
-    render(<LocationForm onSubmit={mockOnSubmit} defaultValues={defaultValues} />);
+    render(
+      <LocationForm
+        location={defaultValues}
+        onSubmit={mockOnSubmit}
+        onCancel={mockOnCancel}
+        isSubmitting={false}
+      />
+    );
 
+    // Set values using fireEvent for controlled inputs
     act(() => {
       fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Test Location' } });
-      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'test-loc' } });
-      fireEvent.change(screen.getByTestId('textarea-description'), {
-        target: { value: 'This is a test location' },
-      });
+      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'test-location' } });
     });
 
     expect(screen.getByTestId('input-name')).toHaveValue('Test Location');
-    expect(screen.getByTestId('input-slug')).toHaveValue('test-loc');
-    expect(screen.getByTestId('textarea-description')).toHaveValue('This is a test location');
+    expect(screen.getByTestId('input-slug')).toHaveValue('test-location');
   });
 
   it('submits the form with entered values', async () => {
-    render(<LocationForm onSubmit={mockOnSubmit} />);
+    render(<LocationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} isSubmitting={false} />);
 
     await act(async () => {
       fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'New Location' } });
-      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'new-loc' } });
-      fireEvent.change(screen.getByTestId('textarea-description'), {
-        target: { value: 'New location description' },
-      });
+      fireEvent.change(screen.getByTestId('input-slug'), { target: { value: 'new-location' } });
     });
 
     await act(async () => {
@@ -85,14 +66,13 @@ describe('LocationForm', () => {
     expect(mockOnSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'New Location',
-        slug: 'new-loc',
-        description: 'New location description',
+        slug: 'new-location',
       })
     );
   });
 
   it('auto-generates a slug when typing the name', async () => {
-    render(<LocationForm onSubmit={mockOnSubmit} />);
+    render(<LocationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} isSubmitting={false} />);
 
     await act(async () => {
       fireEvent.change(screen.getByTestId('input-name'), {
@@ -100,12 +80,12 @@ describe('LocationForm', () => {
       });
     });
 
-    // Check that the slug was auto-generated correctly
+    // Wait for slug to be auto-generated
     expect(screen.getByTestId('input-slug')).toHaveValue('test-location-with-spaces');
   });
 
   it('displays validation errors when form is submitted with empty name', async () => {
-    render(<LocationForm onSubmit={mockOnSubmit} />);
+    render(<LocationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} isSubmitting={false} />);
 
     await act(async () => {
       fireEvent.change(screen.getByTestId('input-name'), { target: { value: '' } });
@@ -120,18 +100,18 @@ describe('LocationForm', () => {
     const errorElement = screen.getByTestId('location-form-error-name');
 
     expect(errorElement).toBeInTheDocument();
-    expect(errorElement.textContent).toContain('This field is required');
+    expect(errorElement).toHaveTextContent('This field is required');
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
   it('allows manual editing of the slug after auto-generation', async () => {
-    render(<LocationForm onSubmit={mockOnSubmit} />);
+    render(<LocationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} isSubmitting={false} />);
 
     await act(async () => {
       fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Test Location' } });
     });
 
-    // Check that the slug was auto-generated correctly
+    // Wait for slug to be auto-generated
     expect(screen.getByTestId('input-slug')).toHaveValue('test-location');
 
     await act(async () => {
@@ -151,7 +131,7 @@ describe('LocationForm', () => {
   });
 
   it('shows error when slug contains invalid characters', async () => {
-    render(<LocationForm onSubmit={mockOnSubmit} />);
+    render(<LocationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} isSubmitting={false} />);
 
     await act(async () => {
       fireEvent.change(screen.getByTestId('input-name'), { target: { value: 'Test Location' } });

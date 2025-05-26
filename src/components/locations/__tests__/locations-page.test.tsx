@@ -102,15 +102,18 @@ describe('LocationsPage', () => {
 
     render(<LocationsPage />);
 
-    expect(GenericEntityPage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        testIdPrefix: 'locations',
-        entities: expect.arrayContaining([
-          expect.objectContaining({ id: '1', name: 'Location 1' }),
-          expect.objectContaining({ id: '2', name: 'Location 2' }),
-        ]),
-      }),
-      expect.anything()
-    );
+    // Check that GenericEntityPage was called
+    expect(GenericEntityPage).toHaveBeenCalled();
+
+    // Get the first call arguments
+    const callArgs = GenericEntityPage.mock.calls[0][0];
+
+    // Test specific properties instead of the entire object structure
+    expect(callArgs.testIdPrefix).toBe('locations');
+    expect(callArgs.entities).toHaveLength(2);
+    expect(callArgs.entities[0].id).toBe('1');
+    expect(callArgs.entities[0].name).toBe('Location 1');
+    expect(callArgs.entities[1].id).toBe('2');
+    expect(callArgs.entities[1].name).toBe('Location 2');
   });
 });

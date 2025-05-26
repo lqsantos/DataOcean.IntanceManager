@@ -102,15 +102,18 @@ describe('EnvironmentsPage', () => {
 
     render(<EnvironmentsPage />);
 
-    expect(GenericEntityPage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        testIdPrefix: 'environments',
-        entities: expect.arrayContaining([
-          expect.objectContaining({ id: '1', name: 'Environment 1' }),
-          expect.objectContaining({ id: '2', name: 'Environment 2' }),
-        ]),
-      }),
-      expect.anything()
-    );
+    // Check that GenericEntityPage was called
+    expect(GenericEntityPage).toHaveBeenCalled();
+
+    // Get the first call arguments
+    const callArgs = GenericEntityPage.mock.calls[0][0];
+
+    // Test specific properties instead of the entire object structure
+    expect(callArgs.testIdPrefix).toBe('environments');
+    expect(callArgs.entities).toHaveLength(2);
+    expect(callArgs.entities[0].id).toBe('1');
+    expect(callArgs.entities[0].name).toBe('Environment 1');
+    expect(callArgs.entities[1].id).toBe('2');
+    expect(callArgs.entities[1].name).toBe('Environment 2');
   });
 });

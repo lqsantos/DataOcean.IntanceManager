@@ -1,40 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
 
-// Define the vi.mock before any imports that use it
-vi.mock('next/navigation', () => {
-  // Define RedirectError inside the mock factory to avoid hoisting issues
-  class RedirectError extends Error {
-    constructor() {
-      super('NEXT_REDIRECT');
-      this.name = 'RedirectError';
-    }
-  }
+// Define the redirect mock before importing any modules that use it
+const mockRedirect = vi.fn();
 
-  // Define mockRedirect inside the factory function
-  const mockRedirect = vi.fn().mockImplementation(() => {
-    throw new RedirectError();
-  });
+// Define the mock for next/navigation BEFORE importing the component
+vi.mock('next/navigation', () => ({
+  redirect: mockRedirect,
+}));
 
-  return {
-    redirect: mockRedirect,
-  };
-});
-
-// Import the component after mocks are set up
+// Import the component AFTER all mocks are set up
 import SettingsPage from '../page';
 
 describe('SettingsPage', () => {
   it('redirects to the applications settings page', () => {
-    // The redirect function is called during render, so we need to handle the error
-    expect(() => {
-      // We're not using render here because it will catch the error
-      // Just instantiate the component directly
-      new SettingsPage();
-    }).toThrow('NEXT_REDIRECT');
+    // The component calls redirect immediately on instantiation
+    new SettingsPage();
 
-    // Access the mocked function through the imported module
-    const { redirect } = require('next/navigation');
-
-    expect(redirect).toHaveBeenCalledWith('/settings/applications');
+    // Check that the redirect was called with the correct path
+    expect(mockRedirect).toHaveBeenCalledWith('/settings/applications');
   });
 });
