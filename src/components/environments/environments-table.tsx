@@ -44,13 +44,6 @@ export function EnvironmentsTable({
       sortable: true,
     },
     {
-      key: 'description',
-      title: t('environments.table.columns.description'),
-      render: (environment) => (
-        <div className="max-w-[300px] truncate">{environment.description}</div>
-      ),
-    },
-    {
       key: 'createdAt',
       title: 'Criado em',
       sortable: true,

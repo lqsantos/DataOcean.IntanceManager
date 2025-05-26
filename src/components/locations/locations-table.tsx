@@ -45,13 +45,6 @@ export function LocationsTable({
       sortable: true,
     },
     {
-      key: 'description',
-      title: 'Description',
-      render: (location) => (
-        <div className="max-w-[300px] truncate">{location.description || '-'}</div>
-      ),
-    },
-    {
       key: 'createdAt',
       title: 'Criado em',
       sortable: true,
