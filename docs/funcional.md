@@ -4,12 +4,99 @@
 
 A **DataOcean Instance Manager** é uma plataforma projetada para simplificar e padronizar a gestão de instâncias no Kubernetes utilizando **ArgoCD**, **Helm** e **GitOps**. Seu objetivo principal é automatizar a criação e manutenção de artefatos no repositório Git, que são monitorados pelo ArgoCD para realizar deploys consistentes e rastreáveis.
 
-### 🌟 Objetivos Principais
+---
 
-1. **Padronizar Configurações**: Garantir que todas as instâncias sigam padrões definidos para localidades, ambientes e aplicações.
-2. **Automatizar Artefatos Git**: Gerar automaticamente os artefatos necessários no repositório Git para integração com o ArgoCD.
-3. **Facilitar a Escalabilidade**: Permitir a criação e gestão de múltiplas instâncias de forma eficiente e rastreável.
-4. **Monitoramento e Conformidade**: Utilizar ferramentas como o **PATChecker** para verificar o estado de configurações críticas.
+## 🌐 Proposta de Estrutura de Navegação
+
+### 1. Dashboard Principal
+- **Descrição**: Tela inicial da aplicação, com uma visão geral e atalhos para as principais funcionalidades.
+- **Elementos**:
+  - Resumo de Configurações (Localidades, Ambientes, Aplicações, Templates, Blueprints, Instâncias).
+  - Status de Deploys (ex.: instâncias em progresso, erros recentes).
+  - Atalhos Rápidos para ações frequentes (ex.: "Criar Instância", "Cadastrar Template").
+
+---
+
+### 2. Configurações
+- **Descrição**: Agrupamento de funcionalidades relacionadas à configuração básica da plataforma.
+- **Submenus**:
+  - **Localidades**: Cadastro e edição de localidades (ex.: Brasil, EUA, EMEA).
+  - **Ambientes**: Cadastro e edição de ambientes (ex.: Desenvolvimento, Homologação, Produção).
+  - **Aplicações**: Cadastro e edição de aplicações gerenciadas pela plataforma.
+
+---
+
+### 3. Recursos
+- **Descrição**: Funcionalidades relacionadas aos recursos necessários para o deploy de aplicações.
+- **Submenus**:
+  - **Templates**:
+    - Cadastro de Templates (Helm Charts).
+    - Listagem e edição de Templates.
+  - **Blueprints**:
+    - Cadastro de Blueprints (agrupamento de templates).
+    - Listagem e edição de Blueprints.
+
+---
+
+### 4. Instâncias
+- **Descrição**: Funcionalidades relacionadas à criação e gerenciamento de instâncias no Kubernetes.
+- **Submenus**:
+  - **Criar Instância**:
+    - Processo guiado para criar uma nova instância utilizando Blueprints e customizando valores.
+  - **Listagem de Instâncias**:
+    - Exibição de todas as instâncias criadas, com informações sobre status, localidade, ambiente e blueprint utilizado.
+  - **Detalhes da Instância**:
+    - Visualização detalhada de uma instância, incluindo valores customizados e status do deploy no ArgoCD.
+
+---
+
+### 5. Configurações de Usuário
+- **Descrição**: Funcionalidades relacionadas ao gerenciamento de configurações do usuário.
+- **Submenus**:
+  - **Personal Access Token (PAT)**:
+    - Cadastro e validação de PAT para integração com o repositório Git.
+    - Exibição do estado atual da PAT (configurada, não configurada, inválida).
+
+---
+
+### 6. Relatórios e Auditoria
+- **Descrição**: Funcionalidades para visualizar relatórios e histórico de ações realizadas na plataforma.
+- **Submenus**:
+  - **Histórico de Ações**:
+    - Registro de todas as ações realizadas pelos usuários (ex.: criação de instâncias, edição de templates).
+  - **Relatórios de Deploy**:
+    - Relatórios sobre o status dos deploys realizados no Kubernetes.
+
+---
+
+### 7. Administração
+- **Descrição**: Funcionalidades avançadas para administração da plataforma.
+- **Submenus**:
+  - **Gerenciamento de Usuários**:
+    - Cadastro, edição e remoção de usuários.
+  - **Configurações Globais**:
+    - Configurações gerais da plataforma, como intervalos de polling e permissões.
+
+---
+
+## 🔗 Fluxo de Navegação Proposto
+
+O fluxo de navegação descreve como o usuário interage com as principais funcionalidades da plataforma:
+
+1. **Dashboard Principal**:
+   - Acesso rápido às informações gerais e atalhos para as principais ações.
+2. **Configurações**:
+   - Agrupamento de funcionalidades básicas (Localidades, Ambientes, Aplicações).
+3. **Recursos**:
+   - Gerenciamento de Templates e Blueprints.
+4. **Instâncias**:
+   - Criação e gerenciamento de instâncias.
+5. **Configurações de Usuário**:
+   - Gerenciamento de PAT e configurações pessoais.
+6. **Relatórios e Auditoria**:
+   - Histórico de ações e relatórios de deploy.
+7. **Administração**:
+   - Funcionalidades avançadas para administradores.
 
 ---
 
