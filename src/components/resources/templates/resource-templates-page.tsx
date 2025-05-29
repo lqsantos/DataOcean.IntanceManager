@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { EntityPage } from '@/components/entities/entity-page';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,8 @@ export function ResourceTemplatesPage() {
 
 // Create a separate component that uses the contexts
 function ResourceTemplatesContent() {
+  const { t } = useTranslation('templates');
+
   const {
     templates,
     isLoading,
@@ -52,7 +55,7 @@ function ResourceTemplatesContent() {
   const CustomHeaderAction = () => (
     <Button onClick={openModal} className="gap-2" data-testid="new-resource-template-button">
       <Plus className="h-4 w-4" />
-      Novo Template
+      {t('newButton')}
     </Button>
   );
 
@@ -86,9 +89,9 @@ function ResourceTemplatesContent() {
         EntityTable={ResourceTemplatesTable}
         EntityForm={ResourceTemplateForm}
         entityName={{
-          singular: 'Template',
-          plural: 'Templates',
-          description: 'Gerencie seus templates Helm para padronização de implantações',
+          singular: t('pageTitle', { count: 1 }),
+          plural: t('pageTitle', { count: 2 }),
+          description: t('description'),
         }}
         testIdPrefix="resource-templates"
         tableProps={{

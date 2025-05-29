@@ -1,0 +1,132 @@
+{
+  "pageTitle": "Blueprints",
+  "description": "Gerencie seus blueprints para criação de instâncias padronizadas",
+
+  "createBlueprint": {
+    "title": "Criar Novo Blueprint",
+    "description": "Crie um novo blueprint para padronização de instâncias",
+    "fields": {
+      "name": {
+        "label": "Nome",
+        "placeholder": "Nome do blueprint",
+        "description": "Nome único para identificar este blueprint."
+      },
+      "category": {
+        "label": "Categoria",
+        "placeholder": "Selecione uma categoria",
+        "description": "Categoria para organização dos blueprints."
+      },
+      "description": {
+        "label": "Descrição",
+        "placeholder": "Descrição detalhada do blueprint",
+        "description": "Informações adicionais sobre este blueprint."
+      },
+      "templateId": {
+        "label": "Template",
+        "placeholder": "Selecione um template",
+        "description": "Template Helm que será usado como base para este blueprint."
+      },
+      "variables": {
+        "label": "Variáveis",
+        "description": "Variáveis que podem ser configuradas para instâncias deste blueprint.",
+        "add": "Adicionar variável",
+        "item": {
+          "name": "Nome da variável",
+          "description": "Descrição da variável",
+          "type": "Tipo",
+          "defaultValue": "Valor padrão",
+          "required": "Obrigatório",
+          "options": "Opções (separadas por vírgula)"
+        }
+      }
+    },
+    "steps": {
+      "info": "Informações",
+      "template": "Template",
+      "variables": "Variáveis",
+      "review": "Revisão"
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "back": "Voltar",
+      "next": "Avançar",
+      "create": "Criar Blueprint",
+      "creating": "Criando..."
+    }
+  },
+
+  "editBlueprint": {
+    "title": "Editar Blueprint",
+    "description": "Edite as informações do blueprint",
+    "buttons": {
+      "save": "Salvar Alterações",
+      "saving": "Salvando..."
+    }
+  },
+
+  "deleteBlueprint": {
+    "title": "Excluir Blueprint",
+    "description": "Você tem certeza que deseja excluir o blueprint <strong>{{name}}</strong>?",
+    "warning": "Esta ação não pode ser desfeita. Todas as instâncias criadas a partir deste blueprint continuarão existindo, mas não será possível criar novas instâncias baseadas neste blueprint.",
+    "buttons": {
+      "cancel": "Cancelar",
+      "delete": "Excluir"
+    }
+  },
+
+  "blueprintCard": {
+    "template": "Template:",
+    "variables": "Variáveis:",
+    "createInstance": "Criar Instância",
+    "actions": {
+      "edit": "Editar",
+      "duplicate": "Duplicar",
+      "delete": "Excluir"
+    },
+    "noDescription": "Sem descrição"
+  },
+
+  "search": {
+    "placeholder": "Buscar blueprints...",
+    "filterByCategory": "Filtrar por categoria",
+    "allCategories": "Todas categorias",
+    "noResults": {
+      "title": "Nenhum blueprint encontrado",
+      "description": {
+        "withFilters": "Tente ajustar seus filtros de busca",
+        "noFilters": "Crie um novo blueprint para começar"
+      }
+    },
+    "loading": "Carregando blueprints..."
+  },
+
+  "viewMode": {
+    "grid": "Visualização em grade",
+    "list": "Visualização em lista"
+  },
+
+  "newButton": "Novo Blueprint",
+
+  "toast": {
+    "created": {
+      "title": "Sucesso",
+      "description": "Blueprint {{name}} criado com sucesso"
+    },
+    "updated": {
+      "title": "Sucesso",
+      "description": "Blueprint atualizado com sucesso"
+    },
+    "deleted": {
+      "title": "Sucesso",
+      "description": "Blueprint excluído com sucesso"
+    },
+    "duplicated": {
+      "title": "Sucesso",
+      "description": "Blueprint \"{{name}}\" duplicado com sucesso"
+    },
+    "error": {
+      "title": "Erro",
+      "description": "Ocorreu um erro ao processar a solicitação"
+    }
+  }
+}

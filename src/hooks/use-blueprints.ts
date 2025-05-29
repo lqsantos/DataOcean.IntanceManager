@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,6 +10,7 @@ import type { Blueprint, CreateBlueprintDto, UpdateBlueprintDto } from '@/types/
 import { useTemplates } from './use-templates';
 
 export function useBlueprintStore() {
+  const { t } = useTranslation('blueprints');
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -74,8 +76,8 @@ export function useBlueprintStore() {
         }
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch blueprints'));
-        toast.error('Erro', {
-          description: 'Falha ao carregar blueprints',
+        toast.error(t('toast.error.title'), {
+          description: t('toast.error.description'),
         });
       } finally {
         setIsLoading(false);
@@ -83,7 +85,7 @@ export function useBlueprintStore() {
     };
 
     fetchBlueprints();
-  }, []);
+  }, [t]);
 
   // Fix: Update template names separately to avoid infinite loops
   useEffect(() => {
@@ -145,15 +147,15 @@ export function useBlueprintStore() {
 
       saveBlueprints(newBlueprints);
 
-      toast.success('Sucesso', {
-        description: `Blueprint ${data.name} criado com sucesso`,
+      toast.success(t('toast.created.title'), {
+        description: t('toast.created.description', { name: data.name }),
       });
 
       return newBlueprint;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to create blueprint');
 
-      toast.error('Erro', {
+      toast.error(t('toast.error.title'), {
         description: error.message,
       });
 
@@ -181,15 +183,15 @@ export function useBlueprintStore() {
       newBlueprints[index] = updatedBlueprint;
       saveBlueprints(newBlueprints);
 
-      toast.success('Sucesso', {
-        description: 'Blueprint atualizado com sucesso',
+      toast.success(t('toast.updated.title'), {
+        description: t('toast.updated.description'),
       });
 
       return updatedBlueprint;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to update blueprint');
 
-      toast.error('Erro', {
+      toast.error(t('toast.error.title'), {
         description: error.message,
       });
 
@@ -210,13 +212,13 @@ export function useBlueprintStore() {
 
       saveBlueprints(newBlueprints);
 
-      toast.success('Sucesso', {
-        description: 'Blueprint excluído com sucesso',
+      toast.success(t('toast.deleted.title'), {
+        description: t('toast.deleted.description'),
       });
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to delete blueprint');
 
-      toast.error('Erro', {
+      toast.error(t('toast.error.title'), {
         description: error.message,
       });
 
@@ -245,15 +247,15 @@ export function useBlueprintStore() {
 
       saveBlueprints(newBlueprints);
 
-      toast.success('Sucesso', {
-        description: `Blueprint "${blueprint.name}" duplicado com sucesso`,
+      toast.success(t('toast.duplicated.title'), {
+        description: t('toast.duplicated.description', { name: blueprint.name }),
       });
 
       return newBlueprint;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to duplicate blueprint');
 
-      toast.error('Erro', {
+      toast.error(t('toast.error.title'), {
         description: error.message,
       });
 

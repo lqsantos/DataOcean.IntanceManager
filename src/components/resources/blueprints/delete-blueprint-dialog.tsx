@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,40 +14,48 @@ import {
 } from '@/components/ui/alert-dialog';
 
 interface DeleteBlueprintDialogProps {
+  blueprintId: string;
+  blueprintName: string;
   isOpen: boolean;
   onClose: () => void;
   onDelete: () => void;
-  blueprintId: string;
-  blueprintName: string;
 }
 
 export function DeleteBlueprintDialog({
+  blueprintId,
+  blueprintName,
   isOpen,
   onClose,
   onDelete,
-  blueprintId,
-  blueprintName,
 }: DeleteBlueprintDialogProps) {
+  const { t } = useTranslation('blueprints');
+
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <AlertDialogContent data-testid={`delete-blueprint-dialog-${blueprintId}`}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir Blueprint</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteBlueprint.title')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Você tem certeza que deseja excluir o blueprint <strong>{blueprintName}</strong>?
+            <div
+              dangerouslySetInnerHTML={{
+                __html: t('deleteBlueprint.description', { name: blueprintName }),
+              }}
+            />
             <br />
             <br />
-            Esta ação não pode ser desfeita. Este blueprint não poderá mais ser usado para criar
-            instâncias.
+            {t('deleteBlueprint.warning')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel data-testid="delete-blueprint-cancel-button">
+            {t('deleteBlueprint.buttons.cancel')}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={onDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            data-testid="delete-blueprint-confirm-button"
           >
-            Excluir
+            {t('deleteBlueprint.buttons.delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

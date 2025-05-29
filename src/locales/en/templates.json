@@ -1,0 +1,171 @@
+{
+  "pageTitle": "Templates",
+  "description": "Manage your Helm templates for deployment standardization",
+
+  "createTemplate": {
+    "title": "Create New Template",
+    "description": "Create a new Helm template for deployment standardization",
+    "fields": {
+      "name": {
+        "label": "Name",
+        "placeholder": "Template name",
+        "description": "Unique name to identify this template.",
+        "validation": {
+          "tooShort": "Name must be at least {{min}} characters"
+        }
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "Select a category",
+        "description": "Category for organizing templates.",
+        "validation": {
+          "required": "Category is required"
+        },
+        "options": {
+          "application": "Application",
+          "infrastructure": "Infrastructure",
+          "database": "Database",
+          "monitoring": "Monitoring",
+          "security": "Security",
+          "storage": "Storage",
+          "other": "Other"
+        }
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Detailed template description",
+        "description": "Additional information about this template."
+      },
+      "repositoryUrl": {
+        "label": "Repository URL",
+        "placeholder": "https://github.com/organization/repo.git",
+        "description": "Git repository URL containing the Helm chart.",
+        "validation": {
+          "invalidUrl": "Repository URL must be a valid URL"
+        }
+      },
+      "chartPath": {
+        "label": "Chart Path",
+        "placeholder": "charts/my-chart",
+        "description": "Relative path to the chart within the repository.",
+        "validation": {
+          "required": "Chart path is required"
+        }
+      },
+      "version": {
+        "label": "Version",
+        "placeholder": "1.0.0",
+        "description": "Template version."
+      },
+      "isActive": {
+        "label": "Status",
+        "description": "Enable or disable this template."
+      },
+      "valuesYaml": {
+        "label": "Values YAML (Default)",
+        "placeholder": "# Default YAML values for the chart\nreplicas: 1\nimage:\n  repository: nginx\n  tag: latest",
+        "description": "Default values for the chart in YAML format."
+      }
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "create": "Create Template",
+      "creating": "Creating..."
+    }
+  },
+
+  "editTemplate": {
+    "title": "Edit Template",
+    "description": "Edit template information",
+    "buttons": {
+      "save": "Save Changes",
+      "saving": "Saving..."
+    }
+  },
+
+  "deleteTemplate": {
+    "title": "Delete Template",
+    "description": "Are you sure you want to delete the template <strong>{{name}}</strong>?",
+    "warning": "This action cannot be undone. If there are blueprints dependent on this template, they will also be affected.",
+    "buttons": {
+      "cancel": "Cancel",
+      "delete": "Delete"
+    }
+  },
+
+  "validateTemplate": {
+    "title": "Template Validation",
+    "description": "Validation result for template {{name}}",
+    "loading": "Validating template...",
+    "noResults": {
+      "title": "No results",
+      "description": "No validation results available for this template."
+    },
+    "valid": {
+      "title": "Valid template",
+      "description": "The template has been successfully validated and can be used."
+    },
+    "invalid": {
+      "title": "Invalid template",
+      "description": "The template contains errors that need to be fixed."
+    },
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "buttons": {
+      "close": "Close",
+      "understand": "I understand"
+    }
+  },
+
+  "table": {
+    "columns": {
+      "name": "Name",
+      "category": "Category",
+      "repository": "Repository",
+      "chartPath": "Chart Path",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "emptyMessage": "No templates found.",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "validate": "Validate",
+      "validating": "Validating...",
+      "copyUrl": "Copy repository URL",
+      "openRepository": "Open repository in new tab"
+    },
+    "toast": {
+      "urlCopied": {
+        "title": "URL copied",
+        "description": "Repository URL copied to clipboard"
+      }
+    }
+  },
+
+  "toast": {
+    "created": {
+      "title": "Template created",
+      "description": "{{name}} was created successfully."
+    },
+    "updated": {
+      "title": "Template updated",
+      "description": "{{name}} was updated successfully."
+    },
+    "deleted": {
+      "title": "Template deleted",
+      "description": "The template was deleted successfully."
+    },
+    "error": {
+      "title": "Error",
+      "description": "An error occurred while processing the request.",
+      "refreshFailed": "Failed to refresh templates"
+    }
+  },
+
+  "newButton": "New Template"
+}

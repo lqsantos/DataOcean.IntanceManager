@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { templateService } from '@/services/template-service';
 import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
 
 export function useTemplates() {
+  const { t } = useTranslation('templates');
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -22,13 +24,13 @@ export function useTemplates() {
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to fetch templates'));
-      toast.error('Erro', {
-        description: 'Falha ao atualizar templates',
+      toast.error(t('toast.error.title'), {
+        description: t('toast.error.refreshFailed'),
       });
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -54,15 +56,15 @@ export function useTemplates() {
       const newTemplate = await templateService.createTemplate(template);
 
       setTemplates((prev) => [...prev, newTemplate]);
-      toast.success('Template criado', {
-        description: `${template.name} foi criado com sucesso.`,
+      toast.success(t('toast.created.title'), {
+        description: t('toast.created.description', { name: template.name }),
       });
 
       return newTemplate;
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Failed to create template');
 
-      toast.error('Erro', {
+      toast.error(t('toast.error.title'), {
         description: error.message,
       });
       throw error;
@@ -74,15 +76,15 @@ export function useTemplates() {
       const updatedTemplate = await templateService.updateTemplate(template);
 
       setTemplates((prev) => prev.map((t) => (t.id === updatedTemplate.id ? updatedTemplate : t)));
-      toast.success('Template atualizado', {
-        description: `${updatedTemplate.name} foi atualizado com sucesso.`,
+      toast.success(t('toast.updated.title'), {
+        description: t('toast.updated.description', { name: updatedTemplate.name }),
       });
 
       return updatedTemplate;
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Failed to update template');
 
-      toast.error('Erro', {
+      toast.error(t('toast.error.title'), {
         description: error.message,
       });
       throw error;
@@ -93,13 +95,13 @@ export function useTemplates() {
     try {
       await templateService.deleteTemplate(id);
       setTemplates((prev) => prev.filter((t) => t.id !== id));
-      toast.success('Template excluído', {
-        description: 'O template foi excluído com sucesso.',
+      toast.success(t('toast.deleted.title'), {
+        description: t('toast.deleted.description'),
       });
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Failed to delete template');
 
-      toast.error('Erro', {
+      toast.error(t('toast.error.title'), {
         description: error.message,
       });
       throw error;
@@ -114,7 +116,7 @@ export function useTemplates() {
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Failed to validate template');
 
-      toast.error('Erro', {
+      toast.error(t('toast.error.title'), {
         description: error.message,
       });
       throw error;

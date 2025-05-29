@@ -3,6 +3,7 @@
 import { Plus, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ export function ResourceBlueprintsPage() {
 }
 
 function BlueprintsPageContent() {
+  const { t } = useTranslation('blueprints');
   const router = useRouter();
   const {
     blueprints,
@@ -116,7 +118,7 @@ function BlueprintsPageContent() {
           <div className="relative flex-1">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar blueprints..."
+              placeholder={t('search.placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8"
@@ -128,10 +130,10 @@ function BlueprintsPageContent() {
         <div className="flex flex-wrap items-center gap-2">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por categoria" />
+              <SelectValue placeholder={t('search.filterByCategory')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas categorias</SelectItem>
+              <SelectItem value="all">{t('search.allCategories')}</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
@@ -145,7 +147,7 @@ function BlueprintsPageContent() {
             onValueChange={(value) => setViewMode(value as 'grid' | 'list')}
           >
             <TabsList>
-              <TabsTrigger value="grid">
+              <TabsTrigger value="grid" aria-label={t('viewMode.grid')}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -163,7 +165,7 @@ function BlueprintsPageContent() {
                   <rect width="7" height="7" x="3" y="14" rx="1" />
                 </svg>
               </TabsTrigger>
-              <TabsTrigger value="list">
+              <TabsTrigger value="list" aria-label={t('viewMode.list')}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -192,7 +194,7 @@ function BlueprintsPageContent() {
             data-testid="create-blueprint-button"
           >
             <Plus className="h-4 w-4" />
-            Novo Blueprint
+            {t('newButton')}
           </Button>
         </div>
       </div>
@@ -218,18 +220,16 @@ function BlueprintsPageContent() {
           </div>
         ) : error ? (
           <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-            <div className="text-destructive">Erro ao carregar blueprints</div>
-            <p className="text-sm text-muted-foreground">
-              Ocorreu um erro ao carregar os blueprints. Tente novamente mais tarde.
-            </p>
+            <div className="text-destructive">{t('toast.error.title')}</div>
+            <p className="text-sm text-muted-foreground">{t('toast.error.description')}</p>
           </div>
         ) : filteredBlueprints.length === 0 ? (
           <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-            <div className="text-muted-foreground">Nenhum blueprint encontrado</div>
+            <div className="text-muted-foreground">{t('search.noResults.title')}</div>
             <p className="text-sm text-muted-foreground">
               {searchQuery || categoryFilter !== 'all'
-                ? 'Tente ajustar seus filtros de busca'
-                : 'Crie um novo blueprint para começar'}
+                ? t('search.noResults.description.withFilters')
+                : t('search.noResults.description.noFilters')}
             </p>
           </div>
         ) : (
@@ -255,7 +255,6 @@ function BlueprintsPageContent() {
         )}
       </div>
 
-      {/* Removendo o modal direto do JSX e apenas usando o contexto */}
       {deleteDialogState.isOpen && (
         <DeleteBlueprintDialog
           isOpen={deleteDialogState.isOpen}

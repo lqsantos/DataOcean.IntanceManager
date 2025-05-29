@@ -1,0 +1,132 @@
+{
+  "pageTitle": "Blueprints",
+  "description": "Manage your blueprints for standardized instance creation",
+
+  "createBlueprint": {
+    "title": "Create New Blueprint",
+    "description": "Create a new blueprint for instance standardization",
+    "fields": {
+      "name": {
+        "label": "Name",
+        "placeholder": "Blueprint name",
+        "description": "Unique name to identify this blueprint."
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "Select a category",
+        "description": "Category for organizing blueprints."
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Detailed blueprint description",
+        "description": "Additional information about this blueprint."
+      },
+      "templateId": {
+        "label": "Template",
+        "placeholder": "Select a template",
+        "description": "Helm template that will be used as the base for this blueprint."
+      },
+      "variables": {
+        "label": "Variables",
+        "description": "Variables that can be configured for instances of this blueprint.",
+        "add": "Add variable",
+        "item": {
+          "name": "Variable name",
+          "description": "Variable description",
+          "type": "Type",
+          "defaultValue": "Default value",
+          "required": "Required",
+          "options": "Options (comma-separated)"
+        }
+      }
+    },
+    "steps": {
+      "info": "Information",
+      "template": "Template",
+      "variables": "Variables",
+      "review": "Review"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "back": "Back",
+      "next": "Next",
+      "create": "Create Blueprint",
+      "creating": "Creating..."
+    }
+  },
+
+  "editBlueprint": {
+    "title": "Edit Blueprint",
+    "description": "Edit blueprint information",
+    "buttons": {
+      "save": "Save Changes",
+      "saving": "Saving..."
+    }
+  },
+
+  "deleteBlueprint": {
+    "title": "Delete Blueprint",
+    "description": "Are you sure you want to delete the blueprint <strong>{{name}}</strong>?",
+    "warning": "This action cannot be undone. All instances created from this blueprint will continue to exist, but it will not be possible to create new instances based on this blueprint.",
+    "buttons": {
+      "cancel": "Cancel",
+      "delete": "Delete"
+    }
+  },
+
+  "blueprintCard": {
+    "template": "Template:",
+    "variables": "Variables:",
+    "createInstance": "Create Instance",
+    "actions": {
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete"
+    },
+    "noDescription": "No description"
+  },
+
+  "search": {
+    "placeholder": "Search blueprints...",
+    "filterByCategory": "Filter by category",
+    "allCategories": "All categories",
+    "noResults": {
+      "title": "No blueprints found",
+      "description": {
+        "withFilters": "Try adjusting your search filters",
+        "noFilters": "Create a new blueprint to get started"
+      }
+    },
+    "loading": "Loading blueprints..."
+  },
+
+  "viewMode": {
+    "grid": "Grid view",
+    "list": "List view"
+  },
+
+  "newButton": "New Blueprint",
+
+  "toast": {
+    "created": {
+      "title": "Success",
+      "description": "Blueprint {{name}} created successfully"
+    },
+    "updated": {
+      "title": "Success",
+      "description": "Blueprint updated successfully"
+    },
+    "deleted": {
+      "title": "Success",
+      "description": "Blueprint deleted successfully"
+    },
+    "duplicated": {
+      "title": "Success",
+      "description": "Blueprint \"{{name}}\" duplicated successfully"
+    },
+    "error": {
+      "title": "Error",
+      "description": "An error occurred while processing the request"
+    }
+  }
+}

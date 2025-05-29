@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -36,30 +37,31 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateTemplateModal } from '@/contexts/create-template-modal-context';
 
-// Define schema for form validation
-const templateFormSchema = z.object({
-  name: z.string().min(3, {
-    message: 'Nome deve ter pelo menos 3 caracteres',
-  }),
-  description: z.string().optional(),
-  category: z.string().min(1, {
-    message: 'Categoria é obrigatória',
-  }),
-  repositoryUrl: z.string().url({
-    message: 'URL do repositório deve ser uma URL válida',
-  }),
-  chartPath: z.string().min(1, {
-    message: 'Caminho do chart é obrigatório',
-  }),
-  version: z.string().optional(),
-  isActive: z.boolean().default(true),
-  valuesYaml: z.string().optional(),
-});
-
-type TemplateFormValues = z.infer<typeof templateFormSchema>;
-
 export function CreateTemplateModal() {
+  const { t } = useTranslation('templates');
   const { isOpen, isLoading, closeModal, createTemplate } = useCreateTemplateModal();
+
+  // Define schema for form validation
+  const templateFormSchema = z.object({
+    name: z.string().min(3, {
+      message: t('createTemplate.fields.name.validation.tooShort', { min: 3 }),
+    }),
+    description: z.string().optional(),
+    category: z.string().min(1, {
+      message: t('createTemplate.fields.category.validation.required'),
+    }),
+    repositoryUrl: z.string().url({
+      message: t('createTemplate.fields.repositoryUrl.validation.invalidUrl'),
+    }),
+    chartPath: z.string().min(1, {
+      message: t('createTemplate.fields.chartPath.validation.required'),
+    }),
+    version: z.string().optional(),
+    isActive: z.boolean().default(true),
+    valuesYaml: z.string().optional(),
+  });
+
+  type TemplateFormValues = z.infer<typeof templateFormSchema>;
 
   // Initialize form
   const form = useForm<TemplateFormValues>({
@@ -110,31 +112,35 @@ export function CreateTemplateModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px]" data-testid="create-template-modal">
         <DialogHeader>
-          <DialogTitle>Criar Novo Template</DialogTitle>
+          <DialogTitle>{t('createTemplate.title')}</DialogTitle>
           <DialogDescription>
-            Crie um novo template Helm para padronização de implantações
+            {t('createTemplate.description')}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6"
+            data-testid="create-template-form"
+          >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel>{t('createTemplate.fields.name.label')}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Nome do template"
+                        placeholder={t('createTemplate.fields.name.placeholder')}
                         {...field}
                         data-testid="template-name-input"
                       />
                     </FormControl>
-                    <FormDescription>Nome único para identificar este template.</FormDescription>
+                    <FormDescription>{t('createTemplate.fields.name.description')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -145,22 +151,26 @@ export function CreateTemplateModal() {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Categoria</FormLabel>
+                    <FormLabel>{t('createTemplate.fields.category.label')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma categoria" />
+                        <SelectTrigger data-testid="template-category-select">
+                          <SelectValue placeholder={t('createTemplate.fields.category.placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {templateCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
+                          <SelectItem
+                            key={category}
+                            value={category}
+                            data-testid={`template-category-option-${category.toLowerCase()}`}
+                          >
+                            {t(`createTemplate.fields.category.options.${category.toLowerCase()}`)}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>Categoria para organização dos templates.</FormDescription>
+                    <FormDescription>{t('createTemplate.fields.category.description')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -172,11 +182,15 @@ export function CreateTemplateModal() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>{t('createTemplate.fields.description.label')}</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Descrição detalhada do template" {...field} />
+                    <Textarea
+                      placeholder={t('createTemplate.fields.description.placeholder')}
+                      {...field}
+                      data-testid="template-description-input"
+                    />
                   </FormControl>
-                  <FormDescription>Informações adicionais sobre este template.</FormDescription>
+                  <FormDescription>{t('createTemplate.fields.description.description')}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -188,11 +202,15 @@ export function CreateTemplateModal() {
                 name="repositoryUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL do Repositório</FormLabel>
+                    <FormLabel>{t('createTemplate.fields.repositoryUrl.label')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://github.com/organization/repo.git" {...field} />
+                      <Input
+                        placeholder={t('createTemplate.fields.repositoryUrl.placeholder')}
+                        {...field}
+                        data-testid="template-repository-url-input"
+                      />
                     </FormControl>
-                    <FormDescription>URL do repositório Git contendo o chart Helm.</FormDescription>
+                    <FormDescription>{t('createTemplate.fields.repositoryUrl.description')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -203,12 +221,16 @@ export function CreateTemplateModal() {
                 name="chartPath"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Caminho do Chart</FormLabel>
+                    <FormLabel>{t('createTemplate.fields.chartPath.label')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="charts/my-chart" {...field} />
+                      <Input
+                        placeholder={t('createTemplate.fields.chartPath.placeholder')}
+                        {...field}
+                        data-testid="template-chart-path-input"
+                      />
                     </FormControl>
                     <FormDescription>
-                      Caminho relativo ao chart dentro do repositório.
+                      {t('createTemplate.fields.chartPath.description')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -222,11 +244,15 @@ export function CreateTemplateModal() {
                 name="version"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Versão</FormLabel>
+                    <FormLabel>{t('createTemplate.fields.version.label')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="1.0.0" {...field} />
+                      <Input
+                        placeholder={t('createTemplate.fields.version.placeholder')}
+                        {...field}
+                        data-testid="template-version-input"
+                      />
                     </FormControl>
-                    <FormDescription>Versão do template.</FormDescription>
+                    <FormDescription>{t('createTemplate.fields.version.description')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -238,14 +264,15 @@ export function CreateTemplateModal() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
-                      <FormLabel>Status</FormLabel>
-                      <FormDescription>Ativar ou desativar este template.</FormDescription>
+                      <FormLabel>{t('createTemplate.fields.isActive.label')}</FormLabel>
+                      <FormDescription>{t('createTemplate.fields.isActive.description')}</FormDescription>
                     </div>
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         aria-readonly={field.disabled}
+                        data-testid="template-is-active-checkbox"
                       />
                     </FormControl>
                   </FormItem>
@@ -258,32 +285,42 @@ export function CreateTemplateModal() {
               name="valuesYaml"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Values YAML (Padrão)</FormLabel>
+                  <FormLabel>{t('createTemplate.fields.valuesYaml.label')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="# Valores YAML padrão para o chart\nreplicas: 1\nimage:\n  repository: nginx\n  tag: latest"
+                      placeholder={t('createTemplate.fields.valuesYaml.placeholder')}
                       className="h-[200px] font-mono"
                       {...field}
+                      data-testid="template-values-yaml-input"
                     />
                   </FormControl>
-                  <FormDescription>Valores padrão do chart em formato YAML.</FormDescription>
+                  <FormDescription>{t('createTemplate.fields.valuesYaml.description')}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeModal}>
-                Cancelar
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeModal}
+                data-testid="create-template-cancel-button"
+              >
+                {t('createTemplate.buttons.cancel')}
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                data-testid="create-template-submit-button"
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Criando...
+                    {t('createTemplate.buttons.creating')}
                   </>
                 ) : (
-                  'Criar Template'
+                  t('createTemplate.buttons.create')
                 )}
               </Button>
             </DialogFooter>

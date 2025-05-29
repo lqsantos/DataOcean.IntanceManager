@@ -1,9 +1,9 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -28,28 +28,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
 
-// Define schema for form validation
-const templateFormSchema = z.object({
-  name: z.string().min(3, {
-    message: 'Nome deve ter pelo menos 3 caracteres',
-  }),
-  description: z.string().optional(),
-  category: z.string().min(1, {
-    message: 'Categoria é obrigatória',
-  }),
-  repositoryUrl: z.string().url({
-    message: 'URL do repositório deve ser uma URL válida',
-  }),
-  chartPath: z.string().min(1, {
-    message: 'Caminho do chart é obrigatório',
-  }),
-  version: z.string().optional(),
-  isActive: z.boolean().default(true),
-  valuesYaml: z.string().optional(),
-});
-
-type TemplateFormValues = z.infer<typeof templateFormSchema>;
-
 interface ResourceTemplateFormProps {
   template?: Template;
   onSubmit: (data: CreateTemplateDto | UpdateTemplateDto) => Promise<void>;
@@ -63,14 +41,38 @@ export function ResourceTemplateForm({
   isSubmitting = false,
   'data-testid': dataTestId,
 }: ResourceTemplateFormProps) {
-  // Initialize form with template data or defaults
+  const { t } = useTranslation('templates');
+
+  // Define schema for form validation
+  const templateFormSchema = z.object({
+    name: z.string().min(3, {
+      message: t('createTemplate.fields.name.validation.tooShort', { min: 3 }),
+    }),
+    description: z.string().optional(),
+    category: z.string().min(1, {
+      message: t('createTemplate.fields.category.validation.required'),
+    }),
+    repositoryUrl: z.string().url({
+      message: t('createTemplate.fields.repositoryUrl.validation.invalidUrl'),
+    }),
+    chartPath: z.string().min(1, {
+      message: t('createTemplate.fields.chartPath.validation.required'),
+    }),
+    version: z.string().optional(),
+    isActive: z.boolean().default(true),
+    valuesYaml: z.string().optional(),
+  });
+
+  type TemplateFormValues = z.infer<typeof templateFormSchema>;
+
+  // Initialize form
   const form = useForm<TemplateFormValues>({
     resolver: zodResolver(templateFormSchema),
     defaultValues: {
       name: template?.name || '',
       description: template?.description || '',
       category: template?.category || '',
-      repositoryUrl: template?.repositoryUrl || '',
+      repositoryUrl: template?.repositoryUrl || 'https://github.com/',
       chartPath: template?.chartPath || '',
       version: template?.version || '1.0.0',
       isActive: template?.isActive ?? true,
@@ -78,7 +80,7 @@ export function ResourceTemplateForm({
     },
   });
 
-  // Reset form when template changes
+  // Update form when template changes
   useEffect(() => {
     if (template) {
       form.reset({
@@ -87,7 +89,7 @@ export function ResourceTemplateForm({
         category: template.category || '',
         repositoryUrl: template.repositoryUrl || '',
         chartPath: template.chartPath || '',
-        version: template.version || '1.0.0',
+        version: template.version || '',
         isActive: template.isActive ?? true,
         valuesYaml: template.valuesYaml || '',
       });
@@ -96,7 +98,7 @@ export function ResourceTemplateForm({
         name: '',
         description: '',
         category: '',
-        repositoryUrl: '',
+        repositoryUrl: 'https://github.com/',
         chartPath: '',
         version: '1.0.0',
         isActive: true,
@@ -138,7 +140,7 @@ export function ResourceTemplateForm({
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
         className="space-y-6"
-        data-testid={dataTestId}
+        data-testid={dataTestId || 'edit-template-form'}
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
@@ -146,15 +148,15 @@ export function ResourceTemplateForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel>{t('createTemplate.fields.name.label')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Nome do template"
+                    placeholder={t('createTemplate.fields.name.placeholder')}
                     {...field}
-                    data-testid="template-name-input"
+                    data-testid="edit-template-name-input"
                   />
                 </FormControl>
-                <FormDescription>Nome único para identificar este template.</FormDescription>
+                <FormDescription>{t('createTemplate.fields.name.description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -165,22 +167,26 @@ export function ResourceTemplateForm({
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Categoria</FormLabel>
+                <FormLabel>{t('createTemplate.fields.category.label')}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma categoria" />
+                    <SelectTrigger data-testid="edit-template-category-select">
+                      <SelectValue placeholder={t('createTemplate.fields.category.placeholder')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {templateCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                      <SelectItem
+                        key={category}
+                        value={category}
+                        data-testid={`edit-template-category-option-${category.toLowerCase()}`}
+                      >
+                        {t(`createTemplate.fields.category.options.${category.toLowerCase()}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FormDescription>Categoria para organização dos templates.</FormDescription>
+                <FormDescription>{t('createTemplate.fields.category.description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -192,11 +198,17 @@ export function ResourceTemplateForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descrição</FormLabel>
+              <FormLabel>{t('createTemplate.fields.description.label')}</FormLabel>
               <FormControl>
-                <Textarea placeholder="Descrição detalhada do template" {...field} />
+                <Textarea
+                  placeholder={t('createTemplate.fields.description.placeholder')}
+                  {...field}
+                  data-testid="edit-template-description-input"
+                />
               </FormControl>
-              <FormDescription>Informações adicionais sobre este template.</FormDescription>
+              <FormDescription>
+                {t('createTemplate.fields.description.description')}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -208,11 +220,17 @@ export function ResourceTemplateForm({
             name="repositoryUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>URL do Repositório</FormLabel>
+                <FormLabel>{t('createTemplate.fields.repositoryUrl.label')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="https://github.com/organization/repo.git" {...field} />
+                  <Input
+                    placeholder={t('createTemplate.fields.repositoryUrl.placeholder')}
+                    {...field}
+                    data-testid="edit-template-repository-url-input"
+                  />
                 </FormControl>
-                <FormDescription>URL do repositório Git contendo o chart Helm.</FormDescription>
+                <FormDescription>
+                  {t('createTemplate.fields.repositoryUrl.description')}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -223,11 +241,17 @@ export function ResourceTemplateForm({
             name="chartPath"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Caminho do Chart</FormLabel>
+                <FormLabel>{t('createTemplate.fields.chartPath.label')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="charts/my-chart" {...field} />
+                  <Input
+                    placeholder={t('createTemplate.fields.chartPath.placeholder')}
+                    {...field}
+                    data-testid="edit-template-chart-path-input"
+                  />
                 </FormControl>
-                <FormDescription>Caminho relativo ao chart dentro do repositório.</FormDescription>
+                <FormDescription>
+                  {t('createTemplate.fields.chartPath.description')}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -240,11 +264,15 @@ export function ResourceTemplateForm({
             name="version"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Versão</FormLabel>
+                <FormLabel>{t('createTemplate.fields.version.label')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="1.0.0" {...field} />
+                  <Input
+                    placeholder={t('createTemplate.fields.version.placeholder')}
+                    {...field}
+                    data-testid="edit-template-version-input"
+                  />
                 </FormControl>
-                <FormDescription>Versão do template.</FormDescription>
+                <FormDescription>{t('createTemplate.fields.version.description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -256,14 +284,17 @@ export function ResourceTemplateForm({
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                 <div className="space-y-0.5">
-                  <FormLabel>Status</FormLabel>
-                  <FormDescription>Ativar ou desativar este template.</FormDescription>
+                  <FormLabel>{t('createTemplate.fields.isActive.label')}</FormLabel>
+                  <FormDescription>
+                    {t('createTemplate.fields.isActive.description')}
+                  </FormDescription>
                 </div>
                 <FormControl>
                   <Checkbox
                     checked={field.value}
                     onCheckedChange={field.onChange}
                     aria-readonly={field.disabled}
+                    data-testid="edit-template-is-active-checkbox"
                   />
                 </FormControl>
               </FormItem>
@@ -276,35 +307,41 @@ export function ResourceTemplateForm({
           name="valuesYaml"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Values YAML (Padrão)</FormLabel>
+              <FormLabel>{t('createTemplate.fields.valuesYaml.label')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="# Valores YAML padrão para o chart\nreplicas: 1\nimage:\n  repository: nginx\n  tag: latest"
+                  placeholder={t('createTemplate.fields.valuesYaml.placeholder')}
                   className="h-[200px] font-mono"
                   {...field}
+                  data-testid="edit-template-values-yaml-input"
                 />
               </FormControl>
-              <FormDescription>Valores padrão do chart em formato YAML.</FormDescription>
+              <FormDescription>{t('createTemplate.fields.valuesYaml.description')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full"
+          data-testid="edit-template-submit-button"
+        >
           {isSubmitting ? (
             <>
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
-              Salvando...
+              {t('editTemplate.buttons.saving')}
             </>
           ) : template ? (
             <>
               <CheckIcon className="mr-2 h-4 w-4" />
-              Atualizar Template
+              {t('editTemplate.buttons.save')}
             </>
           ) : (
             <>
               <CheckIcon className="mr-2 h-4 w-4" />
-              Criar Template
+              {t('createTemplate.buttons.create')}
             </>
           )}
         </Button>
