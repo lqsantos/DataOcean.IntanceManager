@@ -1,8 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -25,8 +24,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useTemplateValidation } from '@/contexts/template-validation-context';
 import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
+
+import { DirectValidateButton } from './direct-validate-button';
 
 interface ResourceTemplateFormProps {
   template?: Template;
@@ -35,8 +35,6 @@ interface ResourceTemplateFormProps {
 
 export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFormProps) {
   const { t } = useTranslation('templates');
-  const { validateTemplate } = useTemplateValidation();
-  const [isValidating, setIsValidating] = useState(false);
 
   // Define schema for form validation
   const templateFormSchema = z.object({
@@ -91,37 +89,6 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
       });
     } else {
       onSubmit(values);
-    }
-  };
-
-  // Handle validation button click
-  const handleValidateClick = async () => {
-    // Get form values
-    const { repositoryUrl, chartPath, name } = form.getValues();
-
-    // Validate required fields
-    const isRepoValid = form.trigger('repositoryUrl');
-    const isChartPathValid = form.trigger('chartPath');
-    const isNameValid = form.trigger('name');
-
-    if (!isRepoValid || !isChartPathValid || !isNameValid) {
-      return;
-    }
-
-    setIsValidating(true);
-
-    try {
-      if (template) {
-        // Use existing template ID if available
-        await validateTemplate(template.id, template.name);
-      } else {
-        // Generate a temporary ID for validation
-        const tempId = `temp-${Date.now()}`;
-
-        await validateTemplate(tempId, name || 'New Template');
-      }
-    } finally {
-      setIsValidating(false);
     }
   };
 
@@ -231,23 +198,12 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
             />
           </div>
           <div className="flex items-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleValidateClick}
-              disabled={isValidating}
-              className="w-full gap-2"
-              data-testid="validate-chart-button"
-            >
-              {isValidating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t('table.actions.validating')}
-                </>
-              ) : (
-                t('table.actions.validate')
-              )}
-            </Button>
+            <DirectValidateButton
+              templateName={form.watch('name') || template?.name || 'Template'}
+              templateId={template?.id}
+              repositoryUrl={form.watch('repositoryUrl')}
+              chartPath={form.watch('chartPath')}
+            />
           </div>
         </div>
 

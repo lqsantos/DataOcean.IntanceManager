@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -34,13 +34,12 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateTemplateModal } from '@/contexts/create-template-modal-context';
-import { useTemplateValidation } from '@/contexts/template-validation-context';
+
+import { DirectValidateButton } from './direct-validate-button';
 
 export function CreateTemplateModal() {
   const { t } = useTranslation('templates');
   const { isOpen, isLoading, closeModal, createTemplate } = useCreateTemplateModal();
-  const { validateTemplate } = useTemplateValidation();
-  const [isValidating, setIsValidating] = useState(false);
 
   // Define schema for form validation
   const templateFormSchema = z.object({
@@ -83,39 +82,12 @@ export function CreateTemplateModal() {
         repositoryUrl: 'https://github.com/',
         chartPath: '',
       });
-      setIsValidating(false);
     }
   }, [isOpen, form]);
 
   // Form submission handler
   const handleSubmit = async (values: TemplateFormValues) => {
     await createTemplate(values);
-  };
-
-  // Handle validation button click
-  const handleValidateClick = async () => {
-    // Get form values
-    const { repositoryUrl, chartPath, name } = form.getValues();
-
-    // Validate required fields
-    const isRepoValid = form.trigger('repositoryUrl');
-    const isChartPathValid = form.trigger('chartPath');
-    const isNameValid = form.trigger('name');
-
-    if (!isRepoValid || !chartPath || !isNameValid) {
-      return;
-    }
-
-    setIsValidating(true);
-
-    // Generate a temporary ID for validation
-    const tempId = `temp-${Date.now()}`;
-
-    try {
-      await validateTemplate(tempId, name || 'New Template');
-    } finally {
-      setIsValidating(false);
-    }
   };
 
   // Predefined template categories
@@ -233,23 +205,12 @@ export function CreateTemplateModal() {
                 />
               </div>
               <div className="flex items-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleValidateClick}
-                  disabled={isValidating}
-                  className="w-full gap-2"
-                  data-testid="validate-chart-button"
-                >
-                  {isValidating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t('table.actions.validating')}
-                    </>
-                  ) : (
-                    t('table.actions.validate')
-                  )}
-                </Button>
+                <DirectValidateButton
+                  templateName={form.watch('name') || 'Novo Template'}
+                  templateId={null}
+                  repositoryUrl={form.watch('repositoryUrl')}
+                  chartPath={form.watch('chartPath')}
+                />
               </div>
             </div>
 

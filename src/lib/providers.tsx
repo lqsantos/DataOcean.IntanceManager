@@ -4,8 +4,10 @@ import { useEffect } from 'react';
 
 import { I18nProvider } from '@/components/i18n-provider';
 import { PATModal } from '@/components/pat/pat-modal';
+import { ValidationDialogs } from '@/components/resources/templates/validation-dialogs';
 import { ThemeProvider } from '@/components/theme-provider';
 import { CreateBlueprintProvider } from '@/contexts/create-blueprint-context';
+import { CreateTemplateModalProvider } from '@/contexts/create-template-modal-context';
 import { ModalManagerProvider } from '@/contexts/modal-manager-context';
 import { TemplateValidationProvider } from '@/contexts/template-validation-context';
 
@@ -22,11 +24,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <I18nProvider>
         <ModalManagerProvider>
           <TemplateValidationProvider>
-            <CreateBlueprintProvider>
-              {/* Renderizar o PATModal aqui garante que ele está disponível em toda a aplicação */}
-              <PATModal />
-              {children}
-            </CreateBlueprintProvider>
+            <CreateTemplateModalProvider>
+              <CreateBlueprintProvider>
+                {/* Renderizar o PATModal aqui garante que ele está disponível em toda a aplicação */}
+                <PATModal />
+
+                {/* Renderizar o ValidationDialogs para habilitar a validação de templates */}
+                <ValidationDialogs />
+
+                {children}
+              </CreateBlueprintProvider>
+            </CreateTemplateModalProvider>
           </TemplateValidationProvider>
         </ModalManagerProvider>
       </I18nProvider>

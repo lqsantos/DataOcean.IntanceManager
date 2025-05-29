@@ -1,5 +1,12 @@
 import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
 
+// Interface para validação direta com dados
+interface ValidateTemplateDataParams {
+  repositoryUrl: string;
+  chartPath: string;
+  branch: string;
+}
+
 export const templateService = {
   async getAllTemplates(): Promise<Template[]> {
     const response = await fetch('/api/templates');
@@ -63,7 +70,10 @@ export const templateService = {
     }
   },
 
-  async validateTemplate(id: string): Promise<{
+  async validateTemplate(
+    id: string,
+    branch: string = 'main'
+  ): Promise<{
     isValid: boolean;
     message?: string;
     errors?: string[];
@@ -71,10 +81,35 @@ export const templateService = {
   }> {
     const response = await fetch(`/api/templates/${id}/validate`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ branch }),
     });
 
     if (!response.ok) {
       throw new Error(`Failed to validate template with id ${id}`);
+    }
+
+    return response.json();
+  },
+
+  async validateTemplateData(params: ValidateTemplateDataParams): Promise<{
+    isValid: boolean;
+    message?: string;
+    errors?: string[];
+    warnings?: string[];
+  }> {
+    const response = await fetch('/api/templates/validate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to validate template data');
     }
 
     return response.json();

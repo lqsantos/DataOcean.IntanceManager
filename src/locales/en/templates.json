@@ -117,6 +117,23 @@
     }
   },
 
+  "branchSelection": {
+    "title": "Select Branch",
+    "description": "Select the branch to be used for validating template {{name}}",
+    "branchName": "Branch name",
+    "commonBranch": "Common branch",
+    "customBranch": "Custom branch",
+    "selectPlaceholder": "Select a branch",
+    "customPlaceholder": "Enter branch name",
+    "validation": {
+      "required": "Branch name is required"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "validate": "Validate"
+    }
+  },
+
   "table": {
     "columns": {
       "name": "Name",
