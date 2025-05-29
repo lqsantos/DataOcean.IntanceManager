@@ -6,9 +6,7 @@ export interface Template {
   category?: string;
   repositoryUrl: string;
   chartPath: string;
-  version?: string;
-  isActive: boolean;
-  valuesYaml?: string;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -19,9 +17,7 @@ export interface CreateTemplateDto {
   category?: string;
   repositoryUrl: string;
   chartPath: string;
-  version?: string;
   isActive?: boolean;
-  valuesYaml?: string;
 }
 
 export interface UpdateTemplateDto {
@@ -31,9 +27,7 @@ export interface UpdateTemplateDto {
   category?: string;
   repositoryUrl?: string;
   chartPath?: string;
-  version?: string;
   isActive?: boolean;
-  valuesYaml?: string;
 }
 
 export interface TemplateChartInfo {
@@ -44,10 +38,11 @@ export interface TemplateChartInfo {
   validationMessage?: string;
 }
 
-export interface TemplatePreview {
-  chartYaml?: string;
-  valuesSchemaJson?: string;
-  valuesYaml?: string;
+export interface TemplateValidationResult {
+  isValid: boolean;
+  message?: string;
+  errors?: string[];
+  warnings?: string[];
 }
 
 export interface GitTreeItem {
@@ -55,15 +50,4 @@ export interface GitTreeItem {
   name: string;
   type: 'file' | 'directory';
   isHelmChart?: boolean;
-}
-
-export interface GitRepository {
-  id: string;
-  name: string;
-  url: string;
-}
-
-export interface GitBranch {
-  name: string;
-  isDefault: boolean;
 }

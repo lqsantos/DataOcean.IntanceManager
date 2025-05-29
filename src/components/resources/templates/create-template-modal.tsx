@@ -2,13 +2,12 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +19,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -36,10 +34,13 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateTemplateModal } from '@/contexts/create-template-modal-context';
+import { useTemplateValidation } from '@/contexts/template-validation-context';
 
 export function CreateTemplateModal() {
   const { t } = useTranslation('templates');
   const { isOpen, isLoading, closeModal, createTemplate } = useCreateTemplateModal();
+  const { validateTemplate } = useTemplateValidation();
+  const [isValidating, setIsValidating] = useState(false);
 
   // Define schema for form validation
   const templateFormSchema = z.object({
@@ -56,9 +57,6 @@ export function CreateTemplateModal() {
     chartPath: z.string().min(1, {
       message: t('createTemplate.fields.chartPath.validation.required'),
     }),
-    version: z.string().optional(),
-    isActive: z.boolean().default(true),
-    valuesYaml: z.string().optional(),
   });
 
   type TemplateFormValues = z.infer<typeof templateFormSchema>;
@@ -72,9 +70,6 @@ export function CreateTemplateModal() {
       category: '',
       repositoryUrl: 'https://github.com/',
       chartPath: '',
-      version: '1.0.0',
-      isActive: true,
-      valuesYaml: '',
     },
   });
 
@@ -87,16 +82,40 @@ export function CreateTemplateModal() {
         category: '',
         repositoryUrl: 'https://github.com/',
         chartPath: '',
-        version: '1.0.0',
-        isActive: true,
-        valuesYaml: '',
       });
+      setIsValidating(false);
     }
   }, [isOpen, form]);
 
   // Form submission handler
   const handleSubmit = async (values: TemplateFormValues) => {
     await createTemplate(values);
+  };
+
+  // Handle validation button click
+  const handleValidateClick = async () => {
+    // Get form values
+    const { repositoryUrl, chartPath, name } = form.getValues();
+
+    // Validate required fields
+    const isRepoValid = form.trigger('repositoryUrl');
+    const isChartPathValid = form.trigger('chartPath');
+    const isNameValid = form.trigger('name');
+
+    if (!isRepoValid || !chartPath || !isNameValid) {
+      return;
+    }
+
+    setIsValidating(true);
+
+    // Generate a temporary ID for validation
+    const tempId = `temp-${Date.now()}`;
+
+    try {
+      await validateTemplate(tempId, name || 'New Template');
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   // Predefined template categories
@@ -115,15 +134,13 @@ export function CreateTemplateModal() {
       <DialogContent className="sm:max-w-[600px]" data-testid="create-template-modal">
         <DialogHeader>
           <DialogTitle>{t('createTemplate.title')}</DialogTitle>
-          <DialogDescription>
-            {t('createTemplate.description')}
-          </DialogDescription>
+          <DialogDescription>{t('createTemplate.description')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6"
+            className="space-y-4"
             data-testid="create-template-form"
           >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -140,7 +157,6 @@ export function CreateTemplateModal() {
                         data-testid="template-name-input"
                       />
                     </FormControl>
-                    <FormDescription>{t('createTemplate.fields.name.description')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -155,7 +171,9 @@ export function CreateTemplateModal() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="template-category-select">
-                          <SelectValue placeholder={t('createTemplate.fields.category.placeholder')} />
+                          <SelectValue
+                            placeholder={t('createTemplate.fields.category.placeholder')}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -170,11 +188,69 @@ export function CreateTemplateModal() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>{t('createTemplate.fields.category.description')}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="repositoryUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('createTemplate.fields.repositoryUrl.label')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('createTemplate.fields.repositoryUrl.placeholder')}
+                      {...field}
+                      data-testid="template-repository-url-input"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="chartPath"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('createTemplate.fields.chartPath.label')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={t('createTemplate.fields.chartPath.placeholder')}
+                          {...field}
+                          data-testid="template-chart-path-input"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleValidateClick}
+                  disabled={isValidating}
+                  className="w-full gap-2"
+                  data-testid="validate-chart-button"
+                >
+                  {isValidating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t('table.actions.validating')}
+                    </>
+                  ) : (
+                    t('table.actions.validate')
+                  )}
+                </Button>
+              </div>
             </div>
 
             <FormField
@@ -182,125 +258,24 @@ export function CreateTemplateModal() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('createTemplate.fields.description.label')}</FormLabel>
+                  <FormLabel>
+                    {t('createTemplate.fields.description.label')}{' '}
+                    <span className="text-sm text-muted-foreground">(opcional)</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder={t('createTemplate.fields.description.placeholder')}
                       {...field}
                       data-testid="template-description-input"
+                      className="h-20"
                     />
                   </FormControl>
-                  <FormDescription>{t('createTemplate.fields.description.description')}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="repositoryUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('createTemplate.fields.repositoryUrl.label')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t('createTemplate.fields.repositoryUrl.placeholder')}
-                        {...field}
-                        data-testid="template-repository-url-input"
-                      />
-                    </FormControl>
-                    <FormDescription>{t('createTemplate.fields.repositoryUrl.description')}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="chartPath"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('createTemplate.fields.chartPath.label')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t('createTemplate.fields.chartPath.placeholder')}
-                        {...field}
-                        data-testid="template-chart-path-input"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('createTemplate.fields.chartPath.description')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="version"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('createTemplate.fields.version.label')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t('createTemplate.fields.version.placeholder')}
-                        {...field}
-                        data-testid="template-version-input"
-                      />
-                    </FormControl>
-                    <FormDescription>{t('createTemplate.fields.version.description')}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>{t('createTemplate.fields.isActive.label')}</FormLabel>
-                      <FormDescription>{t('createTemplate.fields.isActive.description')}</FormDescription>
-                    </div>
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        aria-readonly={field.disabled}
-                        data-testid="template-is-active-checkbox"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="valuesYaml"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('createTemplate.fields.valuesYaml.label')}</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder={t('createTemplate.fields.valuesYaml.placeholder')}
-                      className="h-[200px] font-mono"
-                      {...field}
-                      data-testid="template-values-yaml-input"
-                    />
-                  </FormControl>
-                  <FormDescription>{t('createTemplate.fields.valuesYaml.description')}</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
+            <DialogFooter className="mt-6">
               <Button
                 type="button"
                 variant="outline"

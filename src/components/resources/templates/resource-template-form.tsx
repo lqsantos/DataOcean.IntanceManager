@@ -1,17 +1,16 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,22 +25,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useTemplateValidation } from '@/contexts/template-validation-context';
 import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
 
 interface ResourceTemplateFormProps {
   template?: Template;
-  onSubmit: (data: CreateTemplateDto | UpdateTemplateDto) => Promise<void>;
-  isSubmitting?: boolean;
-  'data-testid'?: string;
+  onSubmit: (data: CreateTemplateDto | UpdateTemplateDto) => void;
 }
 
-export function ResourceTemplateForm({
-  template,
-  onSubmit,
-  isSubmitting = false,
-  'data-testid': dataTestId,
-}: ResourceTemplateFormProps) {
+export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFormProps) {
   const { t } = useTranslation('templates');
+  const { validateTemplate } = useTemplateValidation();
+  const [isValidating, setIsValidating] = useState(false);
 
   // Define schema for form validation
   const templateFormSchema = z.object({
@@ -58,9 +53,6 @@ export function ResourceTemplateForm({
     chartPath: z.string().min(1, {
       message: t('createTemplate.fields.chartPath.validation.required'),
     }),
-    version: z.string().optional(),
-    isActive: z.boolean().default(true),
-    valuesYaml: z.string().optional(),
   });
 
   type TemplateFormValues = z.infer<typeof templateFormSchema>;
@@ -74,9 +66,6 @@ export function ResourceTemplateForm({
       category: template?.category || '',
       repositoryUrl: template?.repositoryUrl || 'https://github.com/',
       chartPath: template?.chartPath || '',
-      version: template?.version || '1.0.0',
-      isActive: template?.isActive ?? true,
-      valuesYaml: template?.valuesYaml || '',
     },
   });
 
@@ -89,38 +78,50 @@ export function ResourceTemplateForm({
         category: template.category || '',
         repositoryUrl: template.repositoryUrl || '',
         chartPath: template.chartPath || '',
-        version: template.version || '',
-        isActive: template.isActive ?? true,
-        valuesYaml: template.valuesYaml || '',
-      });
-    } else {
-      form.reset({
-        name: '',
-        description: '',
-        category: '',
-        repositoryUrl: 'https://github.com/',
-        chartPath: '',
-        version: '1.0.0',
-        isActive: true,
-        valuesYaml: '',
       });
     }
   }, [template, form]);
 
   // Form submission handler
-  const handleSubmit = async (values: TemplateFormValues) => {
-    try {
-      await onSubmit({
+  const handleSubmit = (values: TemplateFormValues) => {
+    if (template) {
+      onSubmit({
+        id: template.id,
         ...values,
-        id: template?.id,
       });
+    } else {
+      onSubmit(values);
+    }
+  };
 
-      if (!template) {
-        // If we're creating a new template, reset the form
-        form.reset();
+  // Handle validation button click
+  const handleValidateClick = async () => {
+    // Get form values
+    const { repositoryUrl, chartPath, name } = form.getValues();
+
+    // Validate required fields
+    const isRepoValid = form.trigger('repositoryUrl');
+    const isChartPathValid = form.trigger('chartPath');
+    const isNameValid = form.trigger('name');
+
+    if (!isRepoValid || !isChartPathValid || !isNameValid) {
+      return;
+    }
+
+    setIsValidating(true);
+
+    try {
+      if (template) {
+        // Use existing template ID if available
+        await validateTemplate(template.id, template.name);
+      } else {
+        // Generate a temporary ID for validation
+        const tempId = `temp-${Date.now()}`;
+
+        await validateTemplate(tempId, name || 'New Template');
       }
-    } catch (error) {
-      console.error('Error submitting template form:', error);
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -139,8 +140,8 @@ export function ResourceTemplateForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-6"
-        data-testid={dataTestId || 'edit-template-form'}
+        className="space-y-4"
+        data-testid="edit-template-form"
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
@@ -156,7 +157,6 @@ export function ResourceTemplateForm({
                     data-testid="edit-template-name-input"
                   />
                 </FormControl>
-                <FormDescription>{t('createTemplate.fields.name.description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -168,7 +168,7 @@ export function ResourceTemplateForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('createTemplate.fields.category.label')}</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || undefined}>
                   <FormControl>
                     <SelectTrigger data-testid="edit-template-category-select">
                       <SelectValue placeholder={t('createTemplate.fields.category.placeholder')} />
@@ -186,11 +186,69 @@ export function ResourceTemplateForm({
                     ))}
                   </SelectContent>
                 </Select>
-                <FormDescription>{t('createTemplate.fields.category.description')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="repositoryUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t('createTemplate.fields.repositoryUrl.label')}</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={t('createTemplate.fields.repositoryUrl.placeholder')}
+                  {...field}
+                  data-testid="edit-template-repository-url-input"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <FormField
+              control={form.control}
+              name="chartPath"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('createTemplate.fields.chartPath.label')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('createTemplate.fields.chartPath.placeholder')}
+                      {...field}
+                      data-testid="edit-template-chart-path-input"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleValidateClick}
+              disabled={isValidating}
+              className="w-full gap-2"
+              data-testid="validate-chart-button"
+            >
+              {isValidating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('table.actions.validating')}
+                </>
+              ) : (
+                t('table.actions.validate')
+              )}
+            </Button>
+          </div>
         </div>
 
         <FormField
@@ -198,153 +256,28 @@ export function ResourceTemplateForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('createTemplate.fields.description.label')}</FormLabel>
+              <FormLabel>
+                {t('createTemplate.fields.description.label')}{' '}
+                <span className="text-sm text-muted-foreground">(opcional)</span>
+              </FormLabel>
               <FormControl>
                 <Textarea
                   placeholder={t('createTemplate.fields.description.placeholder')}
                   {...field}
                   data-testid="edit-template-description-input"
+                  className="h-20"
                 />
               </FormControl>
-              <FormDescription>
-                {t('createTemplate.fields.description.description')}
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="repositoryUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('createTemplate.fields.repositoryUrl.label')}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t('createTemplate.fields.repositoryUrl.placeholder')}
-                    {...field}
-                    data-testid="edit-template-repository-url-input"
-                  />
-                </FormControl>
-                <FormDescription>
-                  {t('createTemplate.fields.repositoryUrl.description')}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="chartPath"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('createTemplate.fields.chartPath.label')}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t('createTemplate.fields.chartPath.placeholder')}
-                    {...field}
-                    data-testid="edit-template-chart-path-input"
-                  />
-                </FormControl>
-                <FormDescription>
-                  {t('createTemplate.fields.chartPath.description')}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="flex justify-end pt-4">
+          <Button type="submit" data-testid="edit-template-submit-button">
+            {template ? t('editTemplate.buttons.save') : t('createTemplate.buttons.create')}
+          </Button>
         </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="version"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('createTemplate.fields.version.label')}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t('createTemplate.fields.version.placeholder')}
-                    {...field}
-                    data-testid="edit-template-version-input"
-                  />
-                </FormControl>
-                <FormDescription>{t('createTemplate.fields.version.description')}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="isActive"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                <div className="space-y-0.5">
-                  <FormLabel>{t('createTemplate.fields.isActive.label')}</FormLabel>
-                  <FormDescription>
-                    {t('createTemplate.fields.isActive.description')}
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    aria-readonly={field.disabled}
-                    data-testid="edit-template-is-active-checkbox"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="valuesYaml"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('createTemplate.fields.valuesYaml.label')}</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder={t('createTemplate.fields.valuesYaml.placeholder')}
-                  className="h-[200px] font-mono"
-                  {...field}
-                  data-testid="edit-template-values-yaml-input"
-                />
-              </FormControl>
-              <FormDescription>{t('createTemplate.fields.valuesYaml.description')}</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full"
-          data-testid="edit-template-submit-button"
-        >
-          {isSubmitting ? (
-            <>
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
-              {t('editTemplate.buttons.saving')}
-            </>
-          ) : template ? (
-            <>
-              <CheckIcon className="mr-2 h-4 w-4" />
-              {t('editTemplate.buttons.save')}
-            </>
-          ) : (
-            <>
-              <CheckIcon className="mr-2 h-4 w-4" />
-              {t('createTemplate.buttons.create')}
-            </>
-          )}
-        </Button>
       </form>
     </Form>
   );
