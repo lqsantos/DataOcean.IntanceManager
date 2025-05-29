@@ -1,125 +1,80 @@
-import type {
-  CreateTemplateDto,
-  Template,
-  TemplateChartInfo,
-  TemplatePreview,
-  UpdateTemplateDto,
-} from '@/types/template';
+import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
 
-const API_BASE_URL = '/api';
-
-export const TemplateService = {
-  async getAll(): Promise<Template[]> {
-    const response = await fetch(`${API_BASE_URL}/templates`);
+export const templateService = {
+  async getAllTemplates(): Promise<Template[]> {
+    const response = await fetch('/api/templates');
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-
-      throw new Error(error.message || 'Falha ao buscar templates');
+      throw new Error('Failed to fetch templates');
     }
 
     return response.json();
   },
 
-  async getById(id: string): Promise<Template> {
-    const response = await fetch(`${API_BASE_URL}/templates/${id}`);
+  async getTemplate(id: string): Promise<Template> {
+    const response = await fetch(`/api/templates/${id}`);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-
-      throw new Error(error.message || 'Falha ao buscar template');
+      throw new Error(`Failed to fetch template with id ${id}`);
     }
 
     return response.json();
   },
 
-  async create(data: CreateTemplateDto): Promise<Template> {
-    const response = await fetch(`${API_BASE_URL}/templates`, {
+  async createTemplate(template: CreateTemplateDto): Promise<Template> {
+    const response = await fetch('/api/templates', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(template),
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-
-      throw new Error(error.message || 'Falha ao criar template');
+      throw new Error('Failed to create template');
     }
 
     return response.json();
   },
 
-  async update(id: string, data: UpdateTemplateDto): Promise<Template> {
-    const response = await fetch(`${API_BASE_URL}/templates/${id}`, {
+  async updateTemplate(template: UpdateTemplateDto): Promise<Template> {
+    const response = await fetch(`/api/templates/${template.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(template),
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-
-      throw new Error(error.message || 'Falha ao atualizar template');
+      throw new Error(`Failed to update template with id ${template.id}`);
     }
 
     return response.json();
   },
 
-  async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/templates/${id}`, {
+  async deleteTemplate(id: string): Promise<void> {
+    const response = await fetch(`/api/templates/${id}`, {
       method: 'DELETE',
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-
-      throw new Error(error.message || 'Falha ao excluir template');
+      throw new Error(`Failed to delete template with id ${id}`);
     }
   },
 
-  async validate(
-    gitRepositoryId: string,
-    branch: string,
-    path: string
-  ): Promise<TemplateChartInfo> {
-    const response = await fetch(`${API_BASE_URL}/templates/validate`, {
+  async validateTemplate(id: string): Promise<{
+    isValid: boolean;
+    message?: string;
+    errors?: string[];
+    warnings?: string[];
+  }> {
+    const response = await fetch(`/api/templates/${id}/validate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ gitRepositoryId, branch, path }),
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-
-      throw new Error(error.message || 'Falha ao validar template');
-    }
-
-    return response.json();
-  },
-
-  async previewFiles(
-    gitRepositoryId: string,
-    branch: string,
-    path: string
-  ): Promise<TemplatePreview> {
-    const response = await fetch(`${API_BASE_URL}/templates/preview`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ gitRepositoryId, branch, path }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-
-      throw new Error(error.message || 'Falha ao carregar a pré-visualização do template');
+      throw new Error(`Failed to validate template with id ${id}`);
     }
 
     return response.json();

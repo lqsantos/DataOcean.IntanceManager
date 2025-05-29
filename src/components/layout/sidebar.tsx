@@ -1,7 +1,16 @@
 // components/layout/sidebar.tsx
 'use client';
 
-import { BarChart3, Cloud, Database, GitBranch, LayoutDashboard, Settings, X } from 'lucide-react';
+import {
+  Archive,
+  BarChart3,
+  Cloud,
+  Database,
+  GitBranch,
+  LayoutDashboard,
+  Settings,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -37,6 +46,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       name: 'Git Sources',
       href: '/git-sources',
       icon: GitBranch,
+    },
+    {
+      name: 'Resources',
+      href: '/resources',
+      icon: Archive,
     },
     {
       name: 'Templates',

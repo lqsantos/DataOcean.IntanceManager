@@ -2,31 +2,38 @@
 export interface Template {
   id: string;
   name: string;
-  version: string;
   description?: string;
-  gitRepositoryUrl: string;
-  gitRepositoryId: string;
-  branch: string;
-  path: string;
-  createdAt: string;
-  updatedAt: string;
-  hasBlueprints: boolean;
+  category?: string;
+  repositoryUrl: string;
+  chartPath: string;
+  version?: string;
+  isActive: boolean;
+  valuesYaml?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateTemplateDto {
   name: string;
   description?: string;
-  gitRepositoryId: string;
-  branch: string;
-  path: string;
+  category?: string;
+  repositoryUrl: string;
+  chartPath: string;
+  version?: string;
+  isActive?: boolean;
+  valuesYaml?: string;
 }
 
 export interface UpdateTemplateDto {
+  id: string;
   name?: string;
   description?: string;
-  gitRepositoryId?: string;
-  branch?: string;
-  path?: string;
+  category?: string;
+  repositoryUrl?: string;
+  chartPath?: string;
+  version?: string;
+  isActive?: boolean;
+  valuesYaml?: string;
 }
 
 export interface TemplateChartInfo {

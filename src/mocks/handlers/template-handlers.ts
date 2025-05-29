@@ -184,4 +184,66 @@ export const templateHandlers = [
       valuesYaml: valuesYamlFile?.content,
     });
   }),
+
+  // POST /templates/:id/validate - Validate template
+  http.post('/api/templates/:id/validate', async ({ params }) => {
+    await delay(1500); // Longer delay to simulate validation process
+    const { id } = params;
+
+    const template = templates.find((t) => t.id === id);
+
+    if (!template) {
+      return new HttpResponse(null, { status: 404 });
+    }
+
+    // Simulate validation results - we'll randomly succeed or fail for demonstration purposes
+    const randomResult = Math.random();
+
+    if (randomResult > 0.3) {
+      // Success case
+      return HttpResponse.json({
+        isValid: true,
+        message: 'Template validation successful. No errors found.',
+      });
+    } else {
+      // Error case with random errors
+      const possibleErrors = [
+        'Invalid YAML syntax at line 12',
+        'Missing required field "name" in chart.yaml',
+        'Invalid value for "replicas": must be a positive integer',
+        'Chart dependency "redis" not found in requirements.yaml',
+        'Unable to parse template at templates/deployment.yaml',
+      ];
+
+      // Select 1-3 random errors
+      const errorCount = Math.floor(Math.random() * 3) + 1;
+      const errors = [];
+
+      for (let i = 0; i < errorCount; i++) {
+        const randomIndex = Math.floor(Math.random() * possibleErrors.length);
+
+        errors.push(possibleErrors[randomIndex]);
+        possibleErrors.splice(randomIndex, 1);
+
+        if (possibleErrors.length === 0) {
+          break;
+        }
+      }
+
+      // Add some warnings in some cases
+      const warnings = [];
+
+      if (Math.random() > 0.5) {
+        warnings.push('Resource requests/limits not specified for container');
+        warnings.push('No ingress defined, service might not be accessible');
+      }
+
+      return HttpResponse.json({
+        isValid: false,
+        message: 'Template validation failed. Please fix the errors below.',
+        errors,
+        warnings,
+      });
+    }
+  }),
 ];
