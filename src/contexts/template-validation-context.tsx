@@ -98,8 +98,12 @@ export function TemplateValidationProvider({ children }: { children: ReactNode }
 
       setValidationResult(result);
 
+      // Não exibimos toast de sucesso ou erro aqui - o resultado da validação
+      // será exibido no modal de validação
+
       return result.isValid;
     } catch (error) {
+      // Exibimos apenas um toast para erros críticos que impedem a validação
       toast.error('Erro de validação', {
         description: error instanceof Error ? error.message : 'Falha ao validar o template',
       });

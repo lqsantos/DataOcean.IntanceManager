@@ -100,18 +100,29 @@ export const templateService = {
     errors?: string[];
     warnings?: string[];
   }> {
-    const response = await fetch('/api/templates/validate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    });
+    try {
+      const response = await fetch('/api/templates/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to validate template data');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message || `Falha na validação do template (${response.status})`;
+
+        throw new Error(errorMessage);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Ocorreu um erro desconhecido durante a validação do template');
     }
-
-    return response.json();
   },
 };

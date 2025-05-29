@@ -173,7 +173,13 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
         <Alert variant="destructive" data-testid={`${testIdPrefix}-page-error-alert`}>
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            {typeof error === 'object'
+              ? error instanceof Error
+                ? error.message
+                : JSON.stringify(error)
+              : error}
+          </AlertDescription>
         </Alert>
       )}
 

@@ -2,19 +2,19 @@
 export interface Template {
   id: string;
   name: string;
-  description?: string;
-  category?: string;
+  description: string;
+  category: string;
   repositoryUrl: string;
   chartPath: string;
+  createdAt: string;
+  updatedAt: string;
   isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface CreateTemplateDto {
   name: string;
   description?: string;
-  category?: string;
+  category: string;
   repositoryUrl: string;
   chartPath: string;
   isActive?: boolean;
@@ -38,11 +38,42 @@ export interface TemplateChartInfo {
   validationMessage?: string;
 }
 
+// Expandindo o tipo para validação de templates com os requisitos detalhados
 export interface TemplateValidationResult {
   isValid: boolean;
+  status?: 'none' | 'success' | 'error' | 'generic-error';
   message?: string;
   errors?: string[];
   warnings?: string[];
+
+  // Novos campos para detalhes do Chart.yaml
+  chartInfo?: {
+    name?: string;
+    version?: string;
+    apiVersion?: string;
+    description?: string;
+  };
+
+  // Informações sobre arquivos encontrados
+  files?: {
+    chartYaml: boolean;
+    valuesYaml: boolean;
+    valuesSchemaJson: boolean;
+  };
+
+  // Branch usada para validação (já temos via selectedBranch no componente)
+  branch?: string;
+}
+
+export enum TemplateTab {
+  DETAILS = 'details',
+  VALUES = 'values',
+}
+
+// Para criação de uma instância baseada em template
+export interface TemplateInstance {
+  templateId: string;
+  customValues?: Record<string, unknown>;
 }
 
 export interface GitTreeItem {

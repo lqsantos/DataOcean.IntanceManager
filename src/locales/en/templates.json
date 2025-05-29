@@ -102,18 +102,39 @@
       "description": "No validation results available for this template."
     },
     "valid": {
-      "title": "Valid template",
+      "title": "Validation successful!",
       "description": "The template has been successfully validated and can be used."
     },
     "invalid": {
-      "title": "Invalid template",
+      "title": "Validation failed",
       "description": "The template contains errors that need to be fixed."
     },
     "errors": "Errors",
     "warnings": "Warnings",
     "buttons": {
       "close": "Close",
-      "understand": "I understand"
+      "understand": "I understand",
+      "validateAgain": "Validate Again"
+    },
+    "chartInfo": {
+      "title": "Chart.yaml Details",
+      "name": "Name",
+      "version": "Version",
+      "apiVersion": "API Version",
+      "description": "Description"
+    },
+    "files": {
+      "title": "Files Found",
+      "chartYaml": "Chart.yaml",
+      "valuesYaml": "values.yaml",
+      "valuesSchemaJson": "values.schema.json",
+      "ok": "OK",
+      "notFound": "Not found",
+      "optional": "Not found (optional)"
+    },
+    "branch": {
+      "validated": "Branch validated",
+      "used": "Branch used"
     }
   },
 
