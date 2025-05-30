@@ -1,27 +1,36 @@
 import { delay, http, HttpResponse } from 'msw';
 
-import { createRandomId } from '../../lib/utils';
+import { createRandomId } from '@/lib/id-utils';
+
 import { templates } from '../data/templates';
 
 // Permite controlar se o comportamento do mock será aleatório ou previsível
 // Usar process.env.NODE_ENV === 'test' para detectar se está em teste automaticamente
-const USE_PREDICTABLE_MOCK = process.env.USE_PREDICTABLE_MOCK === 'true' || process.env.NODE_ENV === 'test';
+const USE_PREDICTABLE_MOCK =
+  process.env.USE_PREDICTABLE_MOCK === 'true' || process.env.NODE_ENV === 'test';
 
 // Função para criar respostas de validação aleatórias ou previsíveis para testes
-const generateValidationResponse = (branch: string, forceResult?: 'success' | 'error' | 'generic-error') => {
+const generateValidationResponse = (
+  branch: string,
+  forceResult?: 'success' | 'error' | 'generic-error'
+) => {
   // Se estamos em ambiente de teste, usamos resultados previsíveis baseados no branch
   if (USE_PREDICTABLE_MOCK) {
     // No ambiente de teste, o resultado é determinado pelo branch ou pelo parâmetro forceResult
-    const resultType = forceResult || (
-      branch === 'main' ? 'success' :
-      branch === 'error' ? 'error' :
-      branch === 'generic-error' ? 'generic-error' : 'success'
-    );
-    
+    const resultType =
+      forceResult ||
+      (branch === 'main'
+        ? 'success'
+        : branch === 'error'
+          ? 'error'
+          : branch === 'generic-error'
+            ? 'generic-error'
+            : 'success');
+
     // Base para todos os resultados
     const baseResult = {
       branch,
-      status: resultType
+      status: resultType,
     };
 
     if (resultType === 'success') {
@@ -40,10 +49,13 @@ const generateValidationResponse = (branch: string, forceResult?: 'success' | 'e
           valuesYaml: true,
           valuesSchemaJson: branch === 'with-schema',
         },
-        warnings: branch === 'with-warnings' ? [
-          'Adicione um arquivo values.schema.json para habilitar o editor visual de valores.',
-          'Considere adicionar mais documentação no README.md.'
-        ] : []
+        warnings:
+          branch === 'with-warnings'
+            ? [
+                'Adicione um arquivo values.schema.json para habilitar o editor visual de valores.',
+                'Considere adicionar mais documentação no README.md.',
+              ]
+            : [],
       };
     } else if (resultType === 'error') {
       return {
@@ -55,27 +67,29 @@ const generateValidationResponse = (branch: string, forceResult?: 'success' | 'e
           chartYaml: false,
           valuesYaml: true,
           valuesSchemaJson: false,
-        }
+        },
       };
     } else {
       return {
         ...baseResult,
         isValid: false,
         message: 'Verifique se o repositório e o caminho estão corretos.',
-        errors: ['Erro inesperado durante a validação.']
+        errors: ['Erro inesperado durante a validação.'],
       };
     }
-  } 
+  }
   // Em ambiente de desenvolvimento, usamos resultados aleatórios para testes manuais
   else {
     // Determinar o resultado: success (60%), error (30%), generic-error (10%) por padrão
     // ou usar o resultado forçado se fornecido
-    const resultType = forceResult || (Math.random() < 0.6 ? 'success' : Math.random() < 0.9 ? 'error' : 'generic-error');
-    
+    const resultType =
+      forceResult ||
+      (Math.random() < 0.6 ? 'success' : Math.random() < 0.9 ? 'error' : 'generic-error');
+
     // Base para todos os resultados
     const baseResult = {
       branch,
-      status: resultType
+      status: resultType,
     };
 
     // Exemplo de erros que podem ocorrer
@@ -104,15 +118,14 @@ const generateValidationResponse = (branch: string, forceResult?: 'success' | 'e
     if (resultType === 'success') {
       // Randomizar se alguns arquivos estão presentes
       const hasValuesSchema = Math.random() > 0.5;
-      
+
       // Adicionar algumas recomendações aleatoriamente
       const warningCount = Math.floor(Math.random() * 3); // 0 a 2 recomendações
-      const warnings = warningCount > 0 
-        ? possibleWarnings
-            .sort(() => 0.5 - Math.random())
-            .slice(0, warningCount)
-        : [];
-      
+      const warnings =
+        warningCount > 0
+          ? possibleWarnings.sort(() => 0.5 - Math.random()).slice(0, warningCount)
+          : [];
+
       return {
         ...baseResult,
         isValid: true,
@@ -121,22 +134,23 @@ const generateValidationResponse = (branch: string, forceResult?: 'success' | 'e
           name: `example-chart-${Math.floor(Math.random() * 100)}`,
           version: `${Math.floor(Math.random() * 10)}.${Math.floor(Math.random() * 10)}.${Math.floor(Math.random() * 10)}`,
           apiVersion: Math.random() > 0.3 ? 'v2' : 'v1',
-          description: Math.random() > 0.3 ? 'Um chart exemplo para demonstração da validação' : undefined,
+          description:
+            Math.random() > 0.3 ? 'Um chart exemplo para demonstração da validação' : undefined,
         },
         files: {
           chartYaml: true, // Sempre verdadeiro para sucesso
           valuesYaml: true, // Sempre verdadeiro para sucesso
           valuesSchemaJson: hasValuesSchema,
         },
-        warnings
+        warnings,
       };
-    } 
+    }
     // Para erros de validação específicos
     else if (resultType === 'error') {
       // Escolher um erro aleatório
       const errorIndex = Math.floor(Math.random() * possibleErrors.length);
       const error = possibleErrors[errorIndex];
-      
+
       return {
         ...baseResult,
         isValid: false,
@@ -147,7 +161,7 @@ const generateValidationResponse = (branch: string, forceResult?: 'success' | 'e
           chartYaml: errorIndex !== 0, // Se o erro for "Chart.yaml não encontrado", então é falso
           valuesYaml: Math.random() > 0.3, // 70% de chance de ter values.yaml
           valuesSchemaJson: Math.random() > 0.7, // 30% de chance de ter values.schema.json
-        }
+        },
       };
     }
     // Para erros genéricos/inesperados
@@ -156,7 +170,7 @@ const generateValidationResponse = (branch: string, forceResult?: 'success' | 'e
         ...baseResult,
         isValid: false,
         message: 'Verifique se o repositório e o caminho estão corretos.',
-        errors: ['Erro inesperado durante a validação.']
+        errors: ['Erro inesperado durante a validação.'],
       };
     }
   }
@@ -193,7 +207,8 @@ export const templateHandlers = [
     const { branch } = data;
 
     // Gerar uma resposta baseada no ambiente (teste ou desenvolvimento)
-    const validationResult = generateValidationResponse(branch, 
+    const validationResult = generateValidationResponse(
+      branch
       // Você pode forçar um tipo específico descomentando uma das opções abaixo
       // 'success',
       // 'error',
@@ -224,7 +239,8 @@ export const templateHandlers = [
     }
 
     // Gerar uma resposta baseada no ambiente (teste ou desenvolvimento)
-    const validationResult = generateValidationResponse(branch, 
+    const validationResult = generateValidationResponse(
+      branch
       // Você pode forçar um tipo específico descomentando uma das opções abaixo
       // 'success',
       // 'error',
@@ -240,7 +256,7 @@ export const templateHandlers = [
 
     return HttpResponse.json(validationResult, { status: 200 });
   }),
-  
+
   // Get template by id
   http.get('/api/templates/:id', async ({ params }) => {
     const { id } = params;
