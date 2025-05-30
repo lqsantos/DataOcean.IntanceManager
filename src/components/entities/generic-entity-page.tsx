@@ -168,25 +168,41 @@ export function GenericEntityPage({
 
   return (
     <div className="flex flex-col gap-4" data-testid={`${testIdPrefix}-page`}>
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={refreshEntities}
-          disabled={isLoading || isRefreshing}
-          data-testid={`${testIdPrefix}-page-refresh-button`}
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span className="sr-only">{t('common:buttons.refresh')}</span>
-        </Button>
-        <Button
-          onClick={openModal}
-          className="gap-2"
-          data-testid={`${testIdPrefix}-page-add-button`}
-        >
-          <PlusCircle className="h-4 w-4" />
-          {t('common:buttons.add')}
-        </Button>
+      {/* Título e descrição da página */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium" data-testid={`${testIdPrefix}-page-title`}>
+            {entityName.plural}
+          </h2>
+          {entityName.description && (
+            <p
+              className="text-xs text-muted-foreground"
+              data-testid={`${testIdPrefix}-page-description`}
+            >
+              {entityName.description}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={refreshEntities}
+            disabled={isLoading || isRefreshing}
+            data-testid={`${testIdPrefix}-page-refresh-button`}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="sr-only">{t('common:buttons.refresh')}</span>
+          </Button>
+          <Button
+            onClick={openModal}
+            className="gap-2"
+            data-testid={`${testIdPrefix}-page-add-button`}
+          >
+            <PlusCircle className="h-4 w-4" />
+            {t('common:buttons.add')}
+          </Button>
+        </div>
       </div>
 
       {error && (

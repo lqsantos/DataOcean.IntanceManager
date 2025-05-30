@@ -61,6 +61,10 @@
   "resources": {
     "title": "Resources",
     "description": "Manage your resources for deployment",
+    "tabs": {
+      "templates": "Templates",
+      "blueprints": "Blueprints"
+    },
     "templates": {
       "description": "Manage your templates for deployment standardization"
     },
@@ -70,7 +74,52 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Configure your DataOcean settings"
+    "description": "Configure your DataOcean platform",
+    "applications": {
+      "title": "Applications",
+      "plural": "Applications",
+      "description": "Manage your applications and their resources",
+      "modal": {
+        "create": {
+          "title": "New Application",
+          "description": "Create a new application"
+        },
+        "edit": {
+          "title": "Edit Application",
+          "description": "Edit application details"
+        }
+      }
+    },
+    "environments": {
+      "title": "Environments",
+      "plural": "Environments",
+      "description": "Configure deployment environments",
+      "modal": {
+        "create": {
+          "title": "New Environment",
+          "description": "Create a new environment"
+        },
+        "edit": {
+          "title": "Edit Environment",
+          "description": "Edit environment details"
+        }
+      }
+    },
+    "locations": {
+      "title": "Locations",
+      "plural": "Locations",
+      "description": "Manage available locations",
+      "modal": {
+        "create": {
+          "title": "New Location",
+          "description": "Create a new location"
+        },
+        "edit": {
+          "title": "Edit Location",
+          "description": "Edit location details"
+        }
+      }
+    }
   },
   "common": {
     "search": "Search...",
@@ -86,5 +135,19 @@
     "profile": "Profile",
     "accessToken": "Access Token",
     "logout": "Log out"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "instances": "Instances",
+    "clusters": "Clusters",
+    "gitSources": "Git Sources",
+    "resources": "Resources",
+    "settings": "Settings",
+    "applications": "Applications",
+    "environments": "Environments",
+    "locations": "Locations",
+    "expandMenu": "Expand menu",
+    "collapseMenu": "Collapse menu",
+    "closeMenu": "Close menu"
   }
 }

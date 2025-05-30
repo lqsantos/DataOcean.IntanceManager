@@ -18,6 +18,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,50 +35,51 @@ interface SidebarProps {
 export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/settings'));
+  const { t } = useTranslation('common');
 
   const routes = [
     {
-      name: 'Dashboard',
+      name: t('navigation.dashboard'),
       href: '/',
       icon: LayoutDashboard,
     },
     {
-      name: 'Instances',
+      name: t('navigation.instances'),
       href: '/instances',
       icon: Cloud,
     },
     {
-      name: 'Clusters',
+      name: t('navigation.clusters'),
       href: '/clusters',
       icon: Database,
     },
     {
-      name: 'Git Sources',
+      name: t('navigation.gitSources'),
       href: '/git-sources',
       icon: GitBranch,
     },
     {
-      name: 'Resources',
+      name: t('navigation.resources'),
       href: '/resources',
       icon: Archive,
     },
     {
-      name: 'Settings',
+      name: t('navigation.settings'),
       href: '/settings',
       icon: Settings,
       children: [
         {
-          name: 'Applications',
+          name: t('navigation.applications'),
           href: '/settings/applications',
           icon: Building2,
         },
         {
-          name: 'Environments',
+          name: t('navigation.environments'),
           href: '/settings/environments',
           icon: Layers,
         },
         {
-          name: 'Locations',
+          name: t('navigation.locations'),
           href: '/settings/locations',
           icon: Globe2,
         },
@@ -137,7 +139,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
             data-testid="sidebar-close-button"
           >
             <X className="h-5 w-5" />
-            <span className="sr-only">Close menu</span>
+            <span className="sr-only">{t('navigation.closeMenu')}</span>
           </Button>
 
           <Button
@@ -148,7 +150,9 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
             data-testid="sidebar-collapse-button"
           >
             {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-            <span className="sr-only">{collapsed ? 'Expandir menu' : 'Colapsar menu'}</span>
+            <span className="sr-only">
+              {collapsed ? t('navigation.expandMenu') : t('navigation.collapseMenu')}
+            </span>
           </Button>
         </div>
 

@@ -2,15 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 
 export default function ResourcesLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useTranslation('common');
 
   const tabs = [
-    { name: 'Templates', href: '/resources/templates' },
-    { name: 'Blueprints', href: '/resources/blueprints' },
+    { name: t('resources.tabs.templates'), href: '/resources/templates' },
+    { name: t('resources.tabs.blueprints'), href: '/resources/blueprints' },
   ];
 
   return (

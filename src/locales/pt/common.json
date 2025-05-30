@@ -61,6 +61,10 @@
   "resources": {
     "title": "Recursos",
     "description": "Gerencie seus recursos para implantação",
+    "tabs": {
+      "templates": "Templates",
+      "blueprints": "Blueprints"
+    },
     "templates": {
       "description": "Gerencie seus templates para padronização de implantações"
     },
@@ -70,7 +74,52 @@
   },
   "settings": {
     "title": "Configurações",
-    "description": "Configure a sua plataforma DataOcean"
+    "description": "Configure a sua plataforma DataOcean",
+    "applications": {
+      "title": "Aplicações",
+      "plural": "Aplicações",
+      "description": "Gerencie suas aplicações e seus recursos",
+      "modal": {
+        "create": {
+          "title": "Nova Aplicação",
+          "description": "Crie uma nova aplicação"
+        },
+        "edit": {
+          "title": "Editar Aplicação",
+          "description": "Edite os detalhes da aplicação"
+        }
+      }
+    },
+    "environments": {
+      "title": "Ambientes",
+      "plural": "Ambientes",
+      "description": "Configure os ambientes de implantação",
+      "modal": {
+        "create": {
+          "title": "Novo Ambiente",
+          "description": "Crie um novo ambiente"
+        },
+        "edit": {
+          "title": "Editar Ambiente",
+          "description": "Edite os detalhes do ambiente"
+        }
+      }
+    },
+    "locations": {
+      "title": "Localidades",
+      "plural": "Localidades",
+      "description": "Gerencie as localidades disponíveis",
+      "modal": {
+        "create": {
+          "title": "Nova Localidade",
+          "description": "Crie uma nova localidade"
+        },
+        "edit": {
+          "title": "Editar Localidade",
+          "description": "Edite os detalhes da localidade"
+        }
+      }
+    }
   },
   "common": {
     "search": "Buscar...",
@@ -86,5 +135,19 @@
     "profile": "Perfil",
     "accessToken": "Token de Acesso",
     "logout": "Sair"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "instances": "Instâncias",
+    "clusters": "Clusters",
+    "gitSources": "Fontes Git",
+    "resources": "Recursos",
+    "settings": "Configurações",
+    "applications": "Aplicações",
+    "environments": "Ambientes",
+    "locations": "Localidades",
+    "expandMenu": "Expandir menu",
+    "collapseMenu": "Colapsar menu",
+    "closeMenu": "Fechar menu"
   }
 }
