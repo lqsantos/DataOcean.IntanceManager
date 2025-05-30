@@ -22,7 +22,6 @@ export function ClustersPage() {
     updateCluster,
     deleteCluster,
   } = useClusters();
-
   const { isOpen, clusterToEdit, openModal, openEditModal, closeModal } = useClusterModal();
 
   const handleEdit = (cluster: Cluster) => {
@@ -31,11 +30,7 @@ export function ClustersPage() {
 
   return (
     <div className="space-y-4" data-testid="clusters-container">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Clusters</h2>
-          <p className="text-muted-foreground">Gerencie seus clusters de infraestrutura</p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button onClick={openModal} className="gap-2" data-testid="clusters-page-add-button">
           <PlusCircle className="h-4 w-4" />
           Adicionar Cluster

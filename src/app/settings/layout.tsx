@@ -32,10 +32,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="space-y-6" data-testid="settings-layout">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-        <p className="text-muted-foreground">{t('description')}</p>
-      </div>
       <Card>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-6 grid w-full grid-cols-3 rounded-none border-b">

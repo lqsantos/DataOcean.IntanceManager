@@ -27,18 +27,12 @@ export function GitSourcePage() {
     deleteGitSource,
   } = useGitSource();
 
-  // Obter acesso ao modal de PAT
   const { status: patStatus, open: openPatModal } = usePATModal();
-
-  // Usar o hook do gerenciador de modais para Git Source
   const { isOpen, gitSourceToEdit, openModal, openEditModal, closeModal } = useGitSourceModal();
-
-  // Estados locais para controle da UI
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentGitSource, setCurrentGitSource] = useState<GitSource | null>(null);
 
-  // Manipuladores para diálogo de exclusão
   const openDeleteDialog = (source: GitSource) => {
     setCurrentGitSource(source);
     setIsDeleteDialogOpen(true);
@@ -46,7 +40,6 @@ export function GitSourcePage() {
 
   const closeDeleteDialog = () => setIsDeleteDialogOpen(false);
 
-  // Manipulador para alternar o status de uma fonte Git
   const handleToggleStatus = async (source: GitSource) => {
     try {
       if (source.status === 'active') {
@@ -65,7 +58,6 @@ export function GitSourcePage() {
     }
   };
 
-  // Manipulador para excluir uma fonte Git
   const handleDelete = async (id: string) => {
     try {
       setIsDeleting(true);
@@ -85,13 +77,7 @@ export function GitSourcePage() {
 
   return (
     <div className="container mx-auto py-6" data-testid="git-source-page">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fontes Git</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas fontes de código para integração com repositórios Git
-          </p>
-        </div>
+      <div className="mb-6 flex items-center justify-end">
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -136,10 +122,6 @@ export function GitSourcePage() {
         />
       ) : (
         <div className="flex h-40 w-full flex-col items-center justify-center rounded-lg border border-dashed text-center">
-          <h3 className="mb-1 text-lg font-medium">Nenhuma fonte Git configurada</h3>
-          <p className="mb-4 text-muted-foreground">
-            Adicione uma fonte Git para começar a integrar seus repositórios.
-          </p>
           <Button onClick={openModal} data-testid="git-source-empty-create-button">
             <Plus className="mr-2 h-4 w-4" />
             Nova Fonte Git
@@ -147,7 +129,6 @@ export function GitSourcePage() {
         </div>
       )}
 
-      {/* Usando o novo modal estilizado para criar/editar fonte Git */}
       <CreateGitSourceModal
         isOpen={isOpen}
         onClose={closeModal}
@@ -157,7 +138,6 @@ export function GitSourcePage() {
         onCreateSuccess={refreshGitSource}
       />
 
-      {/* Diálogo de Exclusão - mantido como está por enquanto */}
       <DeleteGitSourceDialog
         gitSource={currentGitSource}
         isOpen={isDeleteDialogOpen}
