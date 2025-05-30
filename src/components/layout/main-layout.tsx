@@ -85,7 +85,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
         {/* Conteúdo principal com rolagem independente e espaçamento para o header */}
         <main
-          className="flex-1 overflow-y-auto px-4 pb-8 pt-16 md:px-6"
+          className="flex-1 overflow-y-auto px-4 pb-8 pt-24 md:px-6"
           data-testid="main-layout-main"
         >
           <div className="mx-auto max-w-7xl" data-testid="main-layout-children-container">
