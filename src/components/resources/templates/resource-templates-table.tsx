@@ -97,6 +97,7 @@ export function ResourceTemplatesTable({
               <TableHead>Repositório</TableHead>
               <TableHead>Caminho do Chart</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Última Validação</TableHead>
               <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -104,7 +105,7 @@ export function ResourceTemplatesTable({
             {templates.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="h-24 text-center"
                   data-testid="resource-templates-empty-message"
                 >
@@ -209,6 +210,21 @@ export function ResourceTemplatesTable({
                         <XCircle className="h-3 w-3" />
                         Inativo
                       </span>
+                    )}
+                  </TableCell>
+                  <TableCell data-testid={`template-last-validated-${template.id}`}>
+                    {template.lastValidatedAt ? (
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(template.lastValidatedAt).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Nunca validado</span>
                     )}
                   </TableCell>
                   <TableCell>

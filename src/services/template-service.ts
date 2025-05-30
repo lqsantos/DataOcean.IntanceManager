@@ -103,7 +103,23 @@ export const templateService = {
         };
       }
 
-      return response.json();
+      const result = await response.json();
+
+      // Se a validação foi bem-sucedida, atualizamos a data da última validação
+      if (result.isValid) {
+        try {
+          // Atualiza o template com a nova data de validação
+          await this.updateTemplate({
+            id,
+            lastValidatedAt: new Date().toISOString(),
+          });
+        } catch (updateError) {
+          console.error('Erro ao atualizar data de validação:', updateError);
+          // Não falha a operação se não conseguir atualizar a data
+        }
+      }
+
+      return result;
     } catch (error) {
       // Return validation result with friendly error message
       return {

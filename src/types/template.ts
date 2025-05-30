@@ -8,6 +8,7 @@ export interface Template {
   chartPath: string;
   createdAt: string;
   updatedAt: string;
+  lastValidatedAt?: string; // Data da última validação bem-sucedida
   isActive?: boolean;
 }
 
