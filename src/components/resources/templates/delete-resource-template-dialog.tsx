@@ -1,7 +1,5 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,34 +25,30 @@ export function DeleteResourceTemplateDialog({
   isOpen,
   onClose,
 }: DeleteResourceTemplateDialogProps) {
-  const { t } = useTranslation('templates');
-
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent data-testid="delete-template-dialog">
         <AlertDialogHeader>
-          <AlertDialogTitle>{t('deleteTemplate.title')}</AlertDialogTitle>
+          <AlertDialogTitle>Excluir Template</AlertDialogTitle>
           <AlertDialogDescription>
-            <div
-              dangerouslySetInnerHTML={{
-                __html: t('deleteTemplate.description', { name: template.name }),
-              }}
-            />
+            Você tem certeza que deseja excluir o template{' '}
+            <strong className="font-semibold">{template.name}</strong>?
             <br />
             <br />
-            {t('deleteTemplate.warning')}
+            Esta ação não pode ser desfeita. Se houver blueprints dependentes deste template, eles
+            também serão afetados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel data-testid="delete-template-cancel-button">
-            {t('deleteTemplate.buttons.cancel')}
+            Cancelar
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={() => onDelete()}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             data-testid="delete-template-confirm-button"
           >
-            {t('deleteTemplate.buttons.delete')}
+            Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

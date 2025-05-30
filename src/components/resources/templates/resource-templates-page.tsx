@@ -35,7 +35,7 @@ export function ResourceTemplatesPage() {
 
 // Create a separate component that uses the contexts
 function ResourceTemplatesContent() {
-  const { t } = useTranslation('templates');
+  const { t: tTemplates } = useTranslation('templates');
 
   const {
     templates,
@@ -51,13 +51,25 @@ function ResourceTemplatesContent() {
   const { openModal } = useCreateTemplateModal();
   const { validateTemplate } = useTemplateValidation();
 
-  // Custom header action component
-  const CustomHeaderAction = () => (
-    <Button onClick={openModal} className="gap-2" data-testid="new-resource-template-button">
-      <Plus className="h-4 w-4" />
-      {t('newButton')}
-    </Button>
-  );
+  const getPageState = () => {
+    if (isLoading) {
+      return 'loading';
+    }
+
+    if (error) {
+      return 'error';
+    }
+
+    return 'loaded';
+  };
+
+  const handleEditTemplate = (templateId: string) => {
+    return templates.find((t) => t.id === templateId);
+  };
+
+  const handleUpdateTemplate = async (id: string, data: UpdateTemplateDto) => {
+    return updateTemplate({ ...data, id });
+  };
 
   const handleValidateTemplate = async (templateId: string) => {
     const template = templates.find((t) => t.id === templateId);
@@ -71,41 +83,57 @@ function ResourceTemplatesContent() {
     return false;
   };
 
+  // Type assertion to satisfy the EntityTable props
+  const ResourceTemplatesTableTyped = ResourceTemplatesTable as unknown as React.ComponentType<{
+    [key: string]: unknown;
+    entities: Template[];
+    isLoading: boolean;
+    isRefreshing: boolean;
+    onEdit: (id: string) => Template | undefined;
+    onDelete: (id: string) => Promise<void>;
+  }>;
+
   return (
     <div
       data-testid="resource-templates-page-container"
-      data-page-state={isLoading ? 'loading' : error ? 'error' : 'loaded'}
+      data-page-state={getPageState()}
       data-templates-count={templates.length}
     >
       <EntityPage<Template, CreateTemplateDto, UpdateTemplateDto>
         entities={templates}
         isLoading={isLoading}
         isRefreshing={isRefreshing}
-        error={error}
+        error={error ? error.message : undefined} // Only pass error message if error exists
         refreshEntities={refreshTemplates}
         createEntity={createTemplate}
-        updateEntity={updateTemplate}
+        updateEntity={handleUpdateTemplate}
         deleteEntity={deleteTemplate}
-        EntityTable={ResourceTemplatesTable}
+        EntityTable={ResourceTemplatesTableTyped}
         EntityForm={ResourceTemplateForm}
         entityName={{
-          singular: t('pageTitle', { count: 1 }),
-          plural: t('pageTitle', { count: 2 }),
-          description: t('description'),
+          singular: tTemplates('pageTitle'),
+          plural: tTemplates('pageTitle'),
+          description: tTemplates('description'),
         }}
         testIdPrefix="resource-templates"
         tableProps={{
           templates,
-          validateTemplate: handleValidateTemplate,
           'data-testid': 'resource-templates-table',
           DeleteDialog: DeleteResourceTemplateDialog,
+          onEdit: handleEditTemplate,
+          validateTemplate: handleValidateTemplate,
         }}
         formProps={{
           'data-testid': 'resource-template-form',
         }}
         entityPropName="template"
-        customHeaderAction={<CustomHeaderAction />}
         hideCreateButton={true}
+        customHeaderAction={
+          <Button onClick={openModal} className="gap-2" data-testid="new-resource-template-button">
+            <Plus className="h-4 w-4" />
+            {tTemplates('newButton')}
+          </Button>
+        }
       />
       <ValidateTemplateModal />
       <CreateTemplateModal />

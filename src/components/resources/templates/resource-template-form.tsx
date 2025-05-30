@@ -28,57 +28,80 @@ import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/tem
 
 import { DirectValidateButton } from './direct-validate-button';
 
+const CATEGORY_TRANSLATION_KEYS = {
+  APPLICATION: 'createTemplate.fields.category.options.application',
+  INFRASTRUCTURE: 'createTemplate.fields.category.options.infrastructure',
+  DATABASE: 'createTemplate.fields.category.options.database',
+  MONITORING: 'createTemplate.fields.category.options.monitoring',
+  SECURITY: 'createTemplate.fields.category.options.security',
+  STORAGE: 'createTemplate.fields.category.options.storage',
+  OTHER: 'createTemplate.fields.category.options.other',
+} as const;
+
 interface ResourceTemplateFormProps {
   template?: Template;
   onSubmit: (data: CreateTemplateDto | UpdateTemplateDto) => void;
 }
 
 export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFormProps) {
-  const { t } = useTranslation('templates');
+  const { t: tCommon } = useTranslation('common');
+  const { t: tTemplates } = useTranslation('templates');
 
   // Define schema for form validation
   const templateFormSchema = z.object({
     name: z.string().min(3, {
-      message: t('createTemplate.fields.name.validation.tooShort', { min: 3 }),
+      message: tTemplates('createTemplate.fields.name.validation.tooShort', { min: 3 }),
     }),
     description: z.string().optional(),
     category: z.string().min(1, {
-      message: t('createTemplate.fields.category.validation.required'),
+      message: tTemplates('createTemplate.fields.category.validation.required'),
     }),
     repositoryUrl: z.string().url({
-      message: t('createTemplate.fields.repositoryUrl.validation.invalidUrl'),
+      message: tTemplates('createTemplate.fields.repositoryUrl.validation.invalidUrl'),
     }),
     chartPath: z.string().min(1, {
-      message: t('createTemplate.fields.chartPath.validation.required'),
+      message: tTemplates('createTemplate.fields.chartPath.validation.required'),
     }),
   });
 
   type TemplateFormValues = z.infer<typeof templateFormSchema>;
 
-  // Initialize form
-  const form = useForm<TemplateFormValues>({
-    resolver: zodResolver(templateFormSchema),
-    defaultValues: {
-      name: template?.name || '',
-      description: template?.description || '',
-      category: template?.category || '',
-      repositoryUrl: template?.repositoryUrl || 'https://github.com/',
-      chartPath: template?.chartPath || '',
-    },
-  });
-
-  // Update form when template changes
-  useEffect(() => {
-    if (template) {
-      form.reset({
+  const defaultValues = template
+    ? {
         name: template.name || '',
         description: template.description || '',
         category: template.category || '',
-        repositoryUrl: template.repositoryUrl || '',
+        repositoryUrl: template.repositoryUrl || 'https://github.com/',
         chartPath: template.chartPath || '',
+      }
+    : {
+        name: '',
+        description: '',
+        category: '',
+        repositoryUrl: 'https://github.com/',
+        chartPath: '',
+      };
+
+  // Initialize form
+  const form = useForm<TemplateFormValues>({
+    resolver: zodResolver(templateFormSchema),
+    defaultValues,
+  });
+
+  // Reset form when template changes
+  useEffect(() => {
+    if (template) {
+      Object.entries({
+        name: template.name,
+        description: template.description || '',
+        category: template.category,
+        repositoryUrl: template.repositoryUrl,
+        chartPath: template.chartPath,
+      }).forEach(([field, value]) => {
+        form.setValue(field as keyof TemplateFormValues, value);
       });
     }
-  }, [template, form]);
+  }, [template?.id, form]);
 
   // Form submission handler
   const handleSubmit = (values: TemplateFormValues) => {
@@ -116,10 +139,10 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('createTemplate.fields.name.label')}</FormLabel>
+                <FormLabel>{tTemplates('createTemplate.fields.name.label')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder={t('createTemplate.fields.name.placeholder')}
+                    placeholder={tTemplates('createTemplate.fields.name.placeholder')}
                     {...field}
                     data-testid="edit-template-name-input"
                   />
@@ -134,23 +157,32 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('createTemplate.fields.category.label')}</FormLabel>
+                <FormLabel>{tTemplates('createTemplate.fields.category.label')}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value || undefined}>
                   <FormControl>
                     <SelectTrigger data-testid="edit-template-category-select">
-                      <SelectValue placeholder={t('createTemplate.fields.category.placeholder')} />
+                      <SelectValue
+                        placeholder={tTemplates('createTemplate.fields.category.placeholder')}
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {templateCategories.map((category) => (
-                      <SelectItem
-                        key={category}
-                        value={category}
-                        data-testid={`edit-template-category-option-${category.toLowerCase()}`}
-                      >
-                        {t(`createTemplate.fields.category.options.${category.toLowerCase()}`)}
-                      </SelectItem>
-                    ))}
+                    {templateCategories.map((category) => {
+                      const translationKey =
+                        CATEGORY_TRANSLATION_KEYS[
+                          category.toUpperCase() as keyof typeof CATEGORY_TRANSLATION_KEYS
+                        ];
+
+                      return (
+                        <SelectItem
+                          key={category}
+                          value={category}
+                          data-testid={`edit-template-category-option-${category.toLowerCase()}`}
+                        >
+                          {tTemplates(translationKey)}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -164,10 +196,10 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
           name="repositoryUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('createTemplate.fields.repositoryUrl.label')}</FormLabel>
+              <FormLabel>{tTemplates('createTemplate.fields.repositoryUrl.label')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder={t('createTemplate.fields.repositoryUrl.placeholder')}
+                  placeholder={tTemplates('createTemplate.fields.repositoryUrl.placeholder')}
                   {...field}
                   data-testid="edit-template-repository-url-input"
                 />
@@ -184,10 +216,10 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
               name="chartPath"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('createTemplate.fields.chartPath.label')}</FormLabel>
+                  <FormLabel>{tTemplates('createTemplate.fields.chartPath.label')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder={t('createTemplate.fields.chartPath.placeholder')}
+                      placeholder={tTemplates('createTemplate.fields.chartPath.placeholder')}
                       {...field}
                       data-testid="edit-template-chart-path-input"
                     />
@@ -213,12 +245,14 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                {t('createTemplate.fields.description.label')}{' '}
-                <span className="text-sm text-muted-foreground">(opcional)</span>
+                {tTemplates('createTemplate.fields.description.label')}
+                <span className="ml-1 text-sm text-muted-foreground">
+                  ({tCommon('form.optional')})
+                </span>
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder={t('createTemplate.fields.description.placeholder')}
+                  placeholder={tTemplates('createTemplate.fields.description.placeholder')}
                   {...field}
                   data-testid="edit-template-description-input"
                   className="h-20"
@@ -231,7 +265,9 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
 
         <div className="flex justify-end pt-4">
           <Button type="submit" data-testid="edit-template-submit-button">
-            {template ? t('editTemplate.buttons.save') : t('createTemplate.buttons.create')}
+            {template
+              ? tTemplates('editTemplate.buttons.save')
+              : tTemplates('createTemplate.buttons.create')}
           </Button>
         </div>
       </form>

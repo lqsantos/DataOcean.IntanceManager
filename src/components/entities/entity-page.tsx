@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -17,18 +17,24 @@ export interface EntityPageProps<T, CreateDto, UpdateDto> {
 
   // Funções de ação
   refreshEntities: () => Promise<void>;
-  createEntity: (data: CreateDto) => Promise<any>;
-  updateEntity: (id: string, data: UpdateDto) => Promise<any>;
+  createEntity: (data: CreateDto) => Promise<T>;
+  updateEntity: (id: string, data: UpdateDto) => Promise<T>;
   deleteEntity: (id: string) => Promise<void>;
 
   // Componentes específicos da entidade
-  EntityTable: React.ComponentType<any>;
+  EntityTable: React.ComponentType<{
+    entities: T[];
+    isLoading: boolean;
+    isRefreshing: boolean;
+    onEdit: (id: string) => T | undefined;
+    onDelete: (id: string) => Promise<void>;
+    [key: string]: unknown;
+  }>;
   EntityForm: React.ComponentType<{
-    entity?: T;
-    onSubmit: (data: any) => Promise<void>;
+    onSubmit: (data: CreateDto | UpdateDto) => Promise<void>;
     onCancel: () => void;
     isSubmitting: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
   }>;
 
   // Textos e tradução
@@ -41,9 +47,9 @@ export interface EntityPageProps<T, CreateDto, UpdateDto> {
   // IDs para testes
   testIdPrefix: string;
 
-  // Props opcionais adicionais
-  formProps?: Record<string, any>;
-  tableProps?: Record<string, any>;
+  // Props opcionais
+  formProps?: Record<string, unknown>;
+  tableProps?: Record<string, unknown>;
 
   // Nome da propriedade esperada pelo formulário específico
   entityPropName?: string;
@@ -96,39 +102,63 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
   const [entityToEdit, setEntityToEdit] = useState<T | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreateSubmit = async (data: CreateDto) => {
-    setIsSubmitting(true);
+  // Log para debug
+  console.warn('🔍 EntityPage - Render', {
+    entityToEditId: entityToEdit?.id,
+    entityToEditObject: entityToEdit,
+    entityPropName,
+  });
 
-    try {
-      await createEntity(data);
-      setIsCreateDialogOpen(false);
-    } catch (_err) {
-      // Error is already handled in the hook
-      void _err;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleCreateSubmit = useCallback(
+    async (data: CreateDto | UpdateDto) => {
+      setIsSubmitting(true);
 
-  const handleEditSubmit = async (data: UpdateDto) => {
-    if (!entityToEdit) {
-      return;
-    }
-    setIsSubmitting(true);
+      try {
+        await createEntity(data as CreateDto);
+        setIsCreateDialogOpen(false);
+      } catch (_err) {
+        // Error is already handled in the hook
+        void _err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [createEntity]
+  );
 
-    try {
-      await updateEntity(entityToEdit.id, data);
-      setEntityToEdit(null);
-    } catch (_err) {
-      // Error is already handled in the hook
-      void _err;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleEditSubmit = useCallback(
+    async (data: CreateDto | UpdateDto) => {
+      if (!entityToEdit) {
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        await updateEntity(entityToEdit.id, data as UpdateDto);
+        setEntityToEdit(null);
+      } catch (_err) {
+        // Error is already handled in the hook
+        void _err;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [entityToEdit, updateEntity]
+  );
+
+  const handleEdit = useCallback(
+    (id: string) => {
+      const entity = entities.find((e) => e.id === id);
+
+      setEntityToEdit(entity || null);
+
+      return entity;
+    },
+    [entities]
+  );
 
   // Cria as props específicas para o formulário de edição
-  // Distribui a entidade sob múltiplos nomes de propriedade
   const entityTypeFormProps = entityToEdit
     ? {
         // Sempre fornece com o nome genérico 'entity' para compatibilidade
@@ -137,6 +167,8 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
         ...(entityPropName ? { [entityPropName]: entityToEdit } : {}),
       }
     : {};
+
+  console.warn('🔍 Form props:', { entityTypeFormProps, formProps });
 
   return (
     <div className="space-y-6 animate-in" data-testid={`${testIdPrefix}-page`}>
@@ -169,17 +201,11 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
         </div>
       </div>
 
-      {error && (
+      {error && error.trim() !== '' && (
         <Alert variant="destructive" data-testid={`${testIdPrefix}-page-error-alert`}>
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>
-            {typeof error === 'object'
-              ? error instanceof Error
-                ? error.message
-                : JSON.stringify(error)
-              : error}
-          </AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
@@ -189,12 +215,12 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
         </CardHeader>
         <CardContent>
           <EntityTable
+            {...tableProps}
             entities={entities}
             isLoading={isLoading}
             isRefreshing={isRefreshing}
-            onEdit={setEntityToEdit}
+            onEdit={handleEdit}
             onDelete={deleteEntity}
-            {...tableProps}
           />
         </CardContent>
       </Card>

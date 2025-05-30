@@ -22,7 +22,7 @@ export function ValidateTemplateModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeModal()}>
-      <DialogContent className="sm:max-w-xl" data-testid="validate-template-modal">
+      <DialogContent className="sm:max-w-xl overflow-hidden" data-testid="validate-template-modal">
         <DialogHeader>
           <DialogTitle>{t('validateTemplate.title')}</DialogTitle>
           <DialogDescription>
@@ -55,7 +55,7 @@ export function ValidateTemplateModal() {
                     ? t('validateTemplate.valid.title')
                     : t('validateTemplate.invalid.title')}
                 </AlertTitle>
-                <AlertDescription>
+                <AlertDescription className="break-words">
                   {validationResult.message ||
                     (validationResult.isValid
                       ? t('validateTemplate.valid.description')
@@ -63,14 +63,17 @@ export function ValidateTemplateModal() {
                 </AlertDescription>
               </Alert>
               {validationResult.errors && validationResult.errors.length > 0 && (
-                <div className="space-y-2" data-testid="validate-template-errors">
-                  <h4 className="font-medium text-destructive">{t('validateTemplate.errors')}</h4>
-                  <ScrollArea className="h-[200px] rounded-md border p-4">
-                    <ul className="list-inside list-disc space-y-1">
+                <div className="mt-4 space-y-2" data-testid="validate-template-errors">
+                  <h4 className="flex items-center gap-2 font-medium text-destructive">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span className="break-words">{t('validateTemplate.errors')}</span>
+                  </h4>
+                  <ScrollArea className="h-auto max-h-[200px] rounded-md border border-destructive/20 bg-destructive/5 p-4">
+                    <ul className="list-inside list-disc space-y-2">
                       {validationResult.errors.map((error, index) => (
                         <li
                           key={index}
-                          className="text-sm text-destructive"
+                          className="text-sm text-destructive/90 break-words pl-4"
                           data-testid={`validate-template-error-${index}`}
                         >
                           {error}
@@ -82,13 +85,16 @@ export function ValidateTemplateModal() {
               )}
               {validationResult.warnings && validationResult.warnings.length > 0 && (
                 <div className="space-y-2" data-testid="validate-template-warnings">
-                  <h4 className="font-medium text-amber-500">{t('validateTemplate.warnings')}</h4>
-                  <ScrollArea className="h-[200px] rounded-md border p-4">
-                    <ul className="list-inside list-disc space-y-1">
+                  <h4 className="flex items-center gap-2 font-medium text-amber-500">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span className="break-words">{t('validateTemplate.warnings')}</span>
+                  </h4>
+                  <ScrollArea className="h-auto max-h-[200px] rounded-md border p-4">
+                    <ul className="list-inside list-disc space-y-2">
                       {validationResult.warnings.map((warning, index) => (
                         <li
                           key={index}
-                          className="text-sm text-amber-500"
+                          className="text-sm text-amber-500 break-words pl-4"
                           data-testid={`validate-template-warning-${index}`}
                         >
                           {warning}

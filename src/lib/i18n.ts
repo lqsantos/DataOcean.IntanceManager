@@ -17,6 +17,20 @@ import ptPat from '../locales/pt/pat.json';
 import ptSettings from '../locales/pt/settings.json';
 import ptTemplates from '../locales/pt/templates.json';
 
+declare module 'react-i18next' {
+  interface CustomTypeOptions {
+    defaultNS: 'common';
+    resources: {
+      common: typeof enCommon;
+      entityTable: typeof enEntityTable;
+      settings: typeof enSettings;
+      pat: typeof enPat;
+      templates: typeof enTemplates;
+      blueprints: typeof enBlueprints;
+    };
+  }
+}
+
 const resources = {
   pt: {
     common: ptCommon,
@@ -37,23 +51,15 @@ const resources = {
 };
 
 i18n
-  // load translation using http -> see /public/locales
   .use(Backend)
-  // detect user language
   .use(LanguageDetector)
-  // pass the i18n instance to react-i18next
   .use(initReactI18next)
-  // init i18next
   .init({
     resources,
-    fallbackLng: 'pt',
     defaultNS: 'common',
-    debug: process.env.NODE_ENV === 'development',
+    fallbackLng: 'en',
     interpolation: {
-      escapeValue: false, // not needed for react as it escapes by default
-    },
-    react: {
-      useSuspense: false,
+      escapeValue: false,
     },
   });
 
