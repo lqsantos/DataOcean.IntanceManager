@@ -57,8 +57,14 @@ export interface EntityPageProps<T, CreateDto, UpdateDto> {
   // Ação personalizada para o cabeçalho
   customHeaderAction?: React.ReactNode;
 
+  // Conteúdo personalizado para o cabeçalho
+  customHeaderContent?: React.ReactNode;
+
   // Esconder o botão de criação padrão
   hideCreateButton?: boolean;
+
+  // Esconder o cabeçalho completamente
+  hideHeader?: boolean;
 }
 
 export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
@@ -95,8 +101,14 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
   // Ação personalizada para o cabeçalho
   customHeaderAction,
 
+  // Conteúdo personalizado para o cabeçalho
+  customHeaderContent,
+
   // Esconder o botão de criação padrão
   hideCreateButton = false,
+
+  // Esconder o cabeçalho completamente
+  hideHeader = false,
 }: EntityPageProps<T, CreateDto, UpdateDto>) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [entityToEdit, setEntityToEdit] = useState<T | null>(null);
@@ -172,34 +184,38 @@ export function EntityPage<T extends { id: string }, CreateDto, UpdateDto>({
 
   return (
     <div className="space-y-6 animate-in" data-testid={`${testIdPrefix}-page`}>
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{entityName.plural}</h1>
-          <p className="mt-1 text-muted-foreground">{entityName.description}</p>
+      {customHeaderContent ? (
+        customHeaderContent
+      ) : !hideHeader ? (
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{entityName.plural}</h1>
+            <p className="mt-1 text-muted-foreground">{entityName.description}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={refreshEntities}
+              disabled={isRefreshing || isLoading}
+              data-testid={`${testIdPrefix}-page-refresh-button`}
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="sr-only">Atualizar</span>
+            </Button>
+            {customHeaderAction ||
+              (!hideCreateButton && (
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  data-testid={`${testIdPrefix}-page-add-button`}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar {entityName.singular}
+                </Button>
+              ))}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={refreshEntities}
-            disabled={isRefreshing || isLoading}
-            data-testid={`${testIdPrefix}-page-refresh-button`}
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Atualizar</span>
-          </Button>
-          {customHeaderAction ||
-            (!hideCreateButton && (
-              <Button
-                onClick={() => setIsCreateDialogOpen(true)}
-                data-testid={`${testIdPrefix}-page-add-button`}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar {entityName.singular}
-              </Button>
-            ))}
-        </div>
-      </div>
+      ) : null}
 
       {error && error.trim() !== '' && (
         <Alert variant="destructive" data-testid={`${testIdPrefix}-page-error-alert`}>

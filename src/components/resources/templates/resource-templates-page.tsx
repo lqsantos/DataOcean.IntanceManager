@@ -1,10 +1,12 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EntityPage } from '@/components/entities/entity-page';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   CreateTemplateModalProvider,
   useCreateTemplateModal,
@@ -35,6 +37,7 @@ export function ResourceTemplatesPage() {
 // Create a separate component that uses the contexts
 function ResourceTemplatesContent() {
   const { t: tTemplates } = useTranslation('templates');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const {
     templates,
@@ -49,6 +52,23 @@ function ResourceTemplatesContent() {
 
   const { openModal } = useCreateTemplateModal();
   const { validateTemplate } = useTemplateValidation();
+
+  // Filtrar templates com base na consulta de pesquisa
+  const filteredTemplates = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return templates;
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    return templates.filter(
+      (template) =>
+        template.name.toLowerCase().includes(query) ||
+        template.description.toLowerCase().includes(query) ||
+        template.category.toLowerCase().includes(query) ||
+        template.repositoryUrl.toLowerCase().includes(query)
+    );
+  }, [templates, searchQuery]);
 
   const getPageState = () => {
     if (isLoading) {
@@ -99,10 +119,10 @@ function ResourceTemplatesContent() {
       data-templates-count={templates.length}
     >
       <EntityPage<Template, CreateTemplateDto, UpdateTemplateDto>
-        entities={templates}
+        entities={filteredTemplates}
         isLoading={isLoading}
         isRefreshing={isRefreshing}
-        error={error ? error.message : undefined} // Only pass error message if error exists
+        error={error ? error.message : undefined}
         refreshEntities={refreshTemplates}
         createEntity={createTemplate}
         updateEntity={handleUpdateTemplate}
@@ -116,7 +136,7 @@ function ResourceTemplatesContent() {
         }}
         testIdPrefix="resource-templates"
         tableProps={{
-          templates,
+          templates: filteredTemplates,
           'data-testid': 'resource-templates-table',
           DeleteDialog: DeleteResourceTemplateDialog,
           onEdit: handleEditTemplate,
@@ -127,11 +147,43 @@ function ResourceTemplatesContent() {
         }}
         entityPropName="template"
         hideCreateButton={true}
-        customHeaderAction={
-          <Button onClick={openModal} className="gap-2" data-testid="new-resource-template-button">
-            <Plus className="h-4 w-4" />
-            {tTemplates('newButton')}
-          </Button>
+        hideHeader={true}
+        customHeaderContent={
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="w-full md:max-w-md">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Buscar templates..."
+                  className="w-full bg-background pl-8 md:w-[300px] lg:w-[400px]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  data-testid="templates-search-input"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={refreshTemplates}
+                disabled={isRefreshing || isLoading}
+                data-testid="resource-templates-page-refresh-button"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="sr-only">Atualizar</span>
+              </Button>
+              <Button
+                onClick={openModal}
+                className="gap-2"
+                data-testid="new-resource-template-button"
+              >
+                <Plus className="h-4 w-4" />
+                {tTemplates('newButton')}
+              </Button>
+            </div>
+          </div>
         }
       />
       <CreateTemplateModal />
