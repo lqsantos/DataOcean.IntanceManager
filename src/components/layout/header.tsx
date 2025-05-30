@@ -5,6 +5,7 @@ import { Bell, Key, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { FontSizeControl } from '@/components/layout/font-size-control';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -114,6 +115,11 @@ export function Header({ onMenuClick }: HeaderProps) {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Font Size Control */}
+          <div className="hidden md:block" data-testid="header-font-size-control">
+            <FontSizeControl />
+          </div>
 
           {/* Language Switcher */}
           <LanguageSwitcher />
