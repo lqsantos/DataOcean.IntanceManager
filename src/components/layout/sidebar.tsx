@@ -78,7 +78,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
       <aside
         data-testid="sidebar-container"
         className={cn(
-          'fixed left-0 top-0 z-50 h-full border-r border-border/40 bg-card/50 backdrop-blur-md transition-all duration-300',
+          'fixed left-0 top-0 z-50 h-full border-r border-border/40 bg-muted shadow-[1px_0_3px_0_rgba(0,0,0,0.05)] backdrop-blur-md supports-[backdrop-filter]:bg-muted/80 dark:bg-slate-900/75',
           collapsed ? 'w-20' : 'w-64',
           open ? 'translate-x-0' : '-translate-x-full',
           'md:translate-x-0' // Sempre visível em telas médias e grandes

@@ -47,7 +47,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div
-      className="flex h-screen overflow-hidden bg-background"
+      className="flex h-screen overflow-hidden bg-background dark:bg-slate-950"
       data-testid="main-layout-container"
     >
       {/* Sidebar ocupando altura total */}
@@ -85,10 +85,13 @@ export function MainLayout({ children }: MainLayoutProps) {
 
         {/* Conteúdo principal com rolagem independente e espaçamento para o header */}
         <main
-          className="flex-1 overflow-y-auto px-4 pb-8 pt-24 md:px-6"
+          className="flex-1 overflow-y-auto px-4 pb-8 pt-28 md:px-8"
           data-testid="main-layout-main"
         >
-          <div className="mx-auto max-w-7xl" data-testid="main-layout-children-container">
+          <div
+            className="mx-auto max-w-7xl rounded-t-lg bg-background/50 p-6 shadow-[0_-1px_0_rgba(0,0,0,0.05)] dark:bg-slate-950/50"
+            data-testid="main-layout-children-container"
+          >
             {children}
           </div>
         </main>

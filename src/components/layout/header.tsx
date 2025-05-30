@@ -44,7 +44,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60"
+      className="sticky top-0 z-40 w-full border-b border-border/40 bg-muted shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-muted/80 dark:bg-slate-900/75"
       data-testid="header-container"
     >
       <div className="flex h-16 items-center px-4">
@@ -90,7 +90,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <Input
                   type="search"
                   placeholder={t('common.search')}
-                  className="w-full border-border/50 bg-secondary/50 pl-8 focus-visible:ring-primary/30"
+                  className="w-full border-border bg-background/80 pl-8 hover:bg-background focus-visible:bg-background focus-visible:ring-primary/30"
                   data-testid="header-search-input"
                 />
               </div>
