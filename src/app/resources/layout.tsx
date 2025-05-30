@@ -15,13 +15,6 @@ export default function ResourcesLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Resources</h1>
-        <p className="text-muted-foreground">
-          Manage your templates and blueprints for instance creation
-        </p>
-      </div>
-
       <div className="flex border-b border-border/40">
         {tabs.map((tab) => (
           <Link
@@ -38,7 +31,6 @@ export default function ResourcesLayout({ children }: { children: React.ReactNod
           </Link>
         ))}
       </div>
-
       <div>{children}</div>
     </div>
   );

@@ -3,6 +3,8 @@
 
 import { Bell, Key, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { FontSizeControl } from '@/components/layout/font-size-control';
@@ -19,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { usePATModal } from '@/contexts/modal-manager-context';
+import { getRouteMetadata } from '@/lib/navigation-config';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -27,6 +30,17 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const { setTheme, theme } = useTheme();
   const { openModal } = usePATModal();
+  const pathname = usePathname();
+
+  // Obter metadados da página dinamicamente com base na rota atual
+  const pageMetadata = getRouteMetadata(pathname);
+
+  // Hook de tradução usando o namespace fornecido nos metadados ou 'common' como fallback
+  const { t } = useTranslation(pageMetadata.namespace || 'common');
+
+  // Obter o título e descrição traduzidos
+  const pageTitle = t(pageMetadata.titleKey);
+  const pageDescription = pageMetadata.descriptionKey ? t(pageMetadata.descriptionKey) : undefined;
 
   return (
     <header
@@ -57,7 +71,12 @@ export function Header({ onMenuClick }: HeaderProps) {
         <div className="flex flex-1 items-center gap-4 md:justify-between">
           {/* Título da página - visível apenas em telas médias e grandes */}
           <div className="hidden md:block">
-            <h1 className="text-xl font-bold">DataOcean</h1>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-bold">{pageTitle}</h1>
+              {pageDescription && (
+                <p className="text-sm text-muted-foreground">{pageDescription}</p>
+              )}
+            </div>
           </div>
 
           {/* Área de controles à direita */}
@@ -70,7 +89,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search..."
+                  placeholder={t('common.search')}
                   className="w-full border-border/50 bg-secondary/50 pl-8 focus-visible:ring-primary/30"
                   data-testid="header-search-input"
                 />
@@ -93,7 +112,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                   >
                     3
                   </Badge>
-                  <span className="sr-only">Notifications</span>
+                  <span className="sr-only">{t('common.notifications')}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -101,7 +120,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 className="glass w-80"
                 data-testid="header-notifications-dropdown"
               >
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('common.notifications')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className="max-h-80 overflow-auto" data-testid="header-notifications-list">
                   {[1, 2, 3].map((i) => (
@@ -111,9 +130,9 @@ export function Header({ onMenuClick }: HeaderProps) {
                       data-testid={`header-notification-item-${i}`}
                     >
                       <div className="flex flex-col gap-1">
-                        <p className="font-medium">New instance deployed</p>
+                        <p className="font-medium">{t('notifications.newInstance')}</p>
                         <p className="text-sm text-muted-foreground">
-                          Instance "api-gateway" was successfully deployed to production
+                          {t('notifications.instanceDeployed', { name: 'api-gateway' })}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {new Date().toLocaleTimeString()}
@@ -137,14 +156,14 @@ export function Header({ onMenuClick }: HeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Toggle theme"
+              aria-label={t('common.toggleTheme')}
               className="hover:bg-background/80"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               data-testid="header-theme-toggle"
             >
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
+              <span className="sr-only">{t('common.toggleTheme')}</span>
             </Button>
 
             {/* User dropdown menu */}
@@ -158,7 +177,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                   <Avatar className="h-8 w-8 ring-2 ring-primary/20">
                     <AvatarImage
                       src="https://ui-avatars.com/api/?name=User&background=random"
-                      alt="User"
+                      alt={t('common.user')}
                       data-testid="header-user-avatar"
                     />
                     <AvatarFallback
@@ -195,7 +214,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                   data-testid="header-profile-option"
                 >
                   <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                  <span>{t('user.profile')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="hover:bg-secondary/50 focus:bg-secondary/50"
@@ -203,14 +222,14 @@ export function Header({ onMenuClick }: HeaderProps) {
                   data-testid="header-pat-option"
                 >
                   <Key className="mr-2 h-4 w-4" />
-                  <span>Token de Acesso</span>
+                  <span>{t('user.accessToken')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="hover:bg-secondary/50 focus:bg-secondary/50"
                   data-testid="header-logout-option"
                 >
-                  Log out
+                  {t('user.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

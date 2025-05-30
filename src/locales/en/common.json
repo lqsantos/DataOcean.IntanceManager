@@ -38,5 +38,53 @@
   },
   "table": {
     "actions": "Actions"
+  },
+  "app": {
+    "title": "DataOcean"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Overview of your DataOcean platform"
+  },
+  "instances": {
+    "title": "Instances",
+    "description": "Manage your application instances"
+  },
+  "clusters": {
+    "title": "Clusters",
+    "description": "Configure and monitor your clusters"
+  },
+  "gitSources": {
+    "title": "Git Sources",
+    "description": "Manage your Git repository connections"
+  },
+  "resources": {
+    "title": "Resources",
+    "description": "Manage your resources for deployment",
+    "templates": {
+      "description": "Manage your templates for deployment standardization"
+    },
+    "blueprints": {
+      "description": "Create and manage blueprints for instance creation"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Configure your DataOcean settings"
+  },
+  "common": {
+    "search": "Search...",
+    "user": "User",
+    "notifications": "Notifications",
+    "toggleTheme": "Toggle theme"
+  },
+  "notifications": {
+    "newInstance": "New instance deployed",
+    "instanceDeployed": "Instance \"{{name}}\" was successfully deployed to production"
+  },
+  "user": {
+    "profile": "Profile",
+    "accessToken": "Access Token",
+    "logout": "Log out"
   }
 }
