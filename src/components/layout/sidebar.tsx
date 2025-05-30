@@ -190,7 +190,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
                               />
                             </Button>
                             {hasChildren && settingsOpen && (
-                              <div className="mt-1 space-y-1">
+                              <div className="mt-1 space-y-0.5">
                                 {route.children.map((child) => (
                                   <TooltipProvider key={child.href}>
                                     <Tooltip>
@@ -198,14 +198,14 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
                                         <Link
                                           href={child.href}
                                           className={cn(
-                                            'flex h-8 w-full items-center justify-center rounded-md transition-all duration-200',
+                                            'flex h-7 w-full items-center justify-center rounded-md transition-all duration-200',
                                             pathname === child.href &&
                                               'bg-primary/10 text-primary shadow-sm'
                                           )}
                                         >
                                           <child.icon
                                             className={cn(
-                                              'h-4 w-4',
+                                              'h-3.5 w-3.5',
                                               pathname === child.href
                                                 ? 'text-primary'
                                                 : 'text-muted-foreground'
@@ -213,7 +213,9 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
                                           />
                                         </Link>
                                       </TooltipTrigger>
-                                      <TooltipContent side="right">{child.name}</TooltipContent>
+                                      <TooltipContent side="right" className="text-xs">
+                                        {child.name}
+                                      </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
                                 ))}
@@ -260,13 +262,13 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
                       )}
                     </Button>
                     {hasChildren && settingsOpen && (
-                      <div className="ml-4 mt-1 space-y-1 border-l pl-3">
+                      <div className="ml-4 mt-0.5 space-y-0.5 border-l pl-3">
                         {route.children.map((child) => (
                           <Link
                             key={child.href}
                             href={child.href}
                             className={cn(
-                              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
+                              'flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-200',
                               pathname === child.href
                                 ? 'bg-primary/10 text-primary shadow-sm'
                                 : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
@@ -274,10 +276,8 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
                           >
                             <child.icon
                               className={cn(
-                                'h-4 w-4',
-                                pathname === child.href
-                                  ? 'text-primary'
-                                  : 'text-muted-foreground'
+                                'h-3.5 w-3.5',
+                                pathname === child.href ? 'text-primary' : 'text-muted-foreground'
                               )}
                             />
                             {child.name}
