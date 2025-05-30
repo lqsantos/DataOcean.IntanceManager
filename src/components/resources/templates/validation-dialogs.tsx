@@ -14,6 +14,12 @@ export function ValidationDialogs() {
     confirmBranchSelection,
   } = useTemplateValidation();
 
+  console.log('🔍 [ValidationDialogs] renderizando', {
+    isSelectBranchOpen,
+    isOpen,
+    templateName,
+  });
+
   return (
     <>
       {isSelectBranchOpen && (

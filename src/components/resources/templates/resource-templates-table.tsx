@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Edit, ExternalLink, MoreVertical, Pencil, Trash, XCircle } from 'lucide-react';
+import { Check, ExternalLink, MoreVertical, Pencil, Trash, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Template } from '@/types/template';
+import { DirectValidateButton } from './direct-validate-button';
 
 // As categorias disponíveis para exibir quando a categoria estiver vazia
 const templateCategories = [
@@ -59,11 +60,9 @@ export function ResourceTemplatesTable({
   validateTemplate,
   DeleteDialog,
 }: ResourceTemplatesTableProps) {
-  // Use i18n namespace correto
-  const { t } = useTranslation();
+  const { t } = useTranslation('templates');
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isValidating, setIsValidating] = useState<string | null>(null);
 
   const handleDelete = (template: Template) => {
     setTemplateToDelete(template);
@@ -75,23 +74,6 @@ export function ResourceTemplatesTable({
       onDelete(templateToDelete);
       setIsDeleteDialogOpen(false);
       setTemplateToDelete(null);
-    }
-  };
-
-  const handleValidateClick = async (templateId: string) => {
-    if (!validateTemplate) {
-      return;
-    }
-
-    setIsValidating(templateId);
-
-    try {
-      await validateTemplate(templateId);
-    } catch (error) {
-      // O erro já é tratado no hook useTemplates, que exibe o toast
-      console.error('Error validating template:', error);
-    } finally {
-      setIsValidating(null);
     }
   };
 
@@ -246,23 +228,17 @@ export function ResourceTemplatesTable({
                         )}
                         {validateTemplate && (
                           <DropdownMenuItem
-                            onClick={() => handleValidateClick(template.id)}
-                            disabled={isValidating === template.id}
+                            asChild
                             data-testid={`template-validate-${template.id}`}
                           >
-                            {isValidating === template.id ? (
-                              <>
-                                <span className="mr-2 flex h-4 w-4 items-center justify-center">
-                                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                </span>
-                                Validando...
-                              </>
-                            ) : (
-                              <>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Validar
-                              </>
-                            )}
+                            <div className="focus:bg-accent focus:text-accent-foreground">
+                              <DirectValidateButton 
+                                templateName={template.name}
+                                templateId={template.id}
+                                repositoryUrl={template.repositoryUrl}
+                                chartPath={template.chartPath}
+                              />
+                            </div>
                           </DropdownMenuItem>
                         )}
                         {onDelete && (

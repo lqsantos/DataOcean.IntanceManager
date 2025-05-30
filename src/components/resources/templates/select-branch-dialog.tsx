@@ -48,6 +48,12 @@ export function SelectBranchDialog({
   const { t } = useTranslation('templates');
   const [isCustomBranch, setIsCustomBranch] = useState(false);
 
+  console.log('🔍 [SelectBranchDialog] renderizando', {
+    isOpen,
+    templateName,
+    isCustomBranch,
+  });
+
   // Common branches that will be available as quick options
   const commonBranches = ['main', 'master', 'develop', 'release'];
 
@@ -68,6 +74,7 @@ export function SelectBranchDialog({
 
   // Handle form submission
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    console.log('🔍 [SelectBranchDialog] formulário enviado', values);
     onConfirm(values.branch);
   };
 
