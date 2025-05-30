@@ -34,6 +34,17 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Template } from '@/types/template';
 
+// As categorias disponíveis para exibir quando a categoria estiver vazia
+const templateCategories = [
+  'Application',
+  'Infrastructure',
+  'Database',
+  'Monitoring',
+  'Security',
+  'Storage',
+  'Other',
+];
+
 interface ResourceTemplatesTableProps {
   templates: Template[];
   selectedTemplate?: string;
@@ -41,7 +52,12 @@ interface ResourceTemplatesTableProps {
   onEdit?: (templateId: string) => void;
   onDelete?: (template: Template) => void;
   validateTemplate?: (templateId: string) => Promise<boolean>;
-  DeleteDialog?: React.ComponentType<any>;
+  DeleteDialog?: React.ComponentType<{
+    isOpen: boolean;
+    onClose: () => void;
+    onDelete: () => void;
+    template: Template | null;
+  }>;
 }
 
 export function ResourceTemplatesTable({
@@ -53,7 +69,8 @@ export function ResourceTemplatesTable({
   validateTemplate,
   DeleteDialog,
 }: ResourceTemplatesTableProps) {
-  const { t } = useTranslation('templates');
+  // Use i18n namespace correto
+  const { t } = useTranslation();
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isValidating, setIsValidating] = useState<string | null>(null);
@@ -90,8 +107,8 @@ export function ResourceTemplatesTable({
 
   const handleCopyRepositoryUrl = (template: Template) => {
     navigator.clipboard.writeText(template.repositoryUrl);
-    toast.success(t('table.toast.urlCopied.title'), {
-      description: t('table.toast.urlCopied.description'),
+    toast.success('URL Copiada', {
+      description: 'URL do repositório copiada para a área de transferência',
     });
   };
 
@@ -101,12 +118,12 @@ export function ResourceTemplatesTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('table.columns.name')}</TableHead>
-              <TableHead>{t('table.columns.category')}</TableHead>
-              <TableHead>{t('table.columns.repository')}</TableHead>
-              <TableHead>{t('table.columns.chartPath')}</TableHead>
-              <TableHead>{t('table.columns.status')}</TableHead>
-              <TableHead className="w-[100px]">{t('table.columns.actions')}</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Repositório</TableHead>
+              <TableHead>Caminho do Chart</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -117,7 +134,7 @@ export function ResourceTemplatesTable({
                   className="h-24 text-center"
                   data-testid="resource-templates-empty-message"
                 >
-                  {t('table.emptyMessage')}
+                  Nenhum template encontrado.
                 </TableCell>
               </TableRow>
             ) : (
@@ -147,7 +164,7 @@ export function ResourceTemplatesTable({
                     )}
                   </TableCell>
                   <TableCell data-testid={`template-category-${template.id}`}>
-                    {template.category}
+                    {template.category || 'Other'}
                   </TableCell>
                   <TableCell>
                     <div
@@ -166,11 +183,11 @@ export function ResourceTemplatesTable({
                               data-testid={`template-copy-url-${template.id}`}
                             >
                               <Copy className="h-3 w-3" />
-                              <span className="sr-only">{t('table.actions.copyUrl')}</span>
+                              <span className="sr-only">Copiar URL</span>
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{t('table.actions.copyUrl')}</p>
+                            <p>Copiar URL</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -185,11 +202,11 @@ export function ResourceTemplatesTable({
                               data-testid={`template-open-url-${template.id}`}
                             >
                               <ExternalLink className="h-3 w-3" />
-                              <span className="sr-only">{t('table.actions.openRepository')}</span>
+                              <span className="sr-only">Abrir repositório</span>
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{t('table.actions.openRepository')}</p>
+                            <p>Abrir repositório</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -205,7 +222,7 @@ export function ResourceTemplatesTable({
                         data-testid={`template-status-active-${template.id}`}
                       >
                         <Check className="h-3 w-3" />
-                        {t('table.status.active')}
+                        Ativo
                       </span>
                     ) : (
                       <span
@@ -213,7 +230,7 @@ export function ResourceTemplatesTable({
                         data-testid={`template-status-inactive-${template.id}`}
                       >
                         <XCircle className="h-3 w-3" />
-                        {t('table.status.inactive')}
+                        Inativo
                       </span>
                     )}
                   </TableCell>
@@ -226,11 +243,11 @@ export function ResourceTemplatesTable({
                           data-testid={`template-actions-${template.id}`}
                         >
                           <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">{t('table.columns.actions')}</span>
+                          <span className="sr-only">Ações</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>{t('table.columns.actions')}</DropdownMenuLabel>
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {onEdit && (
                           <DropdownMenuItem
@@ -238,7 +255,7 @@ export function ResourceTemplatesTable({
                             data-testid={`template-edit-${template.id}`}
                           >
                             <Pencil className="mr-2 h-4 w-4" />
-                            {t('table.actions.edit')}
+                            Editar
                           </DropdownMenuItem>
                         )}
                         {validateTemplate && (
@@ -252,12 +269,12 @@ export function ResourceTemplatesTable({
                                 <span className="mr-2 flex h-4 w-4 items-center justify-center">
                                   <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                                 </span>
-                                {t('table.actions.validating')}
+                                Validando...
                               </>
                             ) : (
                               <>
                                 <Edit className="mr-2 h-4 w-4" />
-                                {t('table.actions.validate')}
+                                Validar
                               </>
                             )}
                           </DropdownMenuItem>
@@ -269,7 +286,7 @@ export function ResourceTemplatesTable({
                             data-testid={`template-delete-${template.id}`}
                           >
                             <Trash className="mr-2 h-4 w-4" />
-                            {t('table.actions.delete')}
+                            Excluir
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
