@@ -1,18 +1,8 @@
 'use client';
 
-import {
-  Check,
-  Copy,
-  Edit,
-  ExternalLink,
-  MoreVertical,
-  Pencil,
-  Trash,
-  XCircle,
-} from 'lucide-react';
+import { Check, Edit, ExternalLink, MoreVertical, Pencil, Trash, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -105,13 +95,6 @@ export function ResourceTemplatesTable({
     }
   };
 
-  const handleCopyRepositoryUrl = (template: Template) => {
-    navigator.clipboard.writeText(template.repositoryUrl);
-    toast.success('URL Copiada', {
-      description: 'URL do repositório copiada para a área de transferência',
-    });
-  };
-
   return (
     <div className="w-full" data-testid="resource-templates-table-container">
       <div className="rounded-md border">
@@ -171,23 +154,15 @@ export function ResourceTemplatesTable({
                       className="flex items-center space-x-2"
                       data-testid={`template-repository-${template.id}`}
                     >
-                      <span className="max-w-[200px] truncate">{template.repositoryUrl}</span>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-5 w-5"
-                              onClick={() => handleCopyRepositoryUrl(template)}
-                              data-testid={`template-copy-url-${template.id}`}
-                            >
-                              <Copy className="h-3 w-3" />
-                              <span className="sr-only">Copiar URL</span>
-                            </Button>
+                            <span className="max-w-[180px] cursor-default truncate">
+                              {template.repositoryUrl}
+                            </span>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Copiar URL</p>
+                            <p>{template.repositoryUrl}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -213,7 +188,18 @@ export function ResourceTemplatesTable({
                     </div>
                   </TableCell>
                   <TableCell data-testid={`template-path-${template.id}`}>
-                    {template.chartPath}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="max-w-[150px] cursor-default truncate">
+                            {template.chartPath}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{template.chartPath}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                   <TableCell>
                     {template.isActive ? (
