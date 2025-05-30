@@ -20,7 +20,6 @@ import { CreateTemplateModal } from './create-template-modal';
 import { DeleteResourceTemplateDialog } from './delete-resource-template-dialog';
 import { ResourceTemplateForm } from './resource-template-form';
 import { ResourceTemplatesTable } from './resource-templates-table';
-import { ValidationDialogs } from './validation-dialogs';
 
 export function ResourceTemplatesPage() {
   // Wrap with both required providers
@@ -135,7 +134,6 @@ function ResourceTemplatesContent() {
           </Button>
         }
       />
-      <ValidationDialogs />
       <CreateTemplateModal />
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,8 @@ interface DirectValidateButtonProps {
   templateId?: string | null;
   repositoryUrl?: string;
   chartPath?: string;
+  isMenuItem?: boolean; // Para quando o botão é item de menu
+  id?: string; // ID para referencia externa
 }
 
 // Estados de exibição da modal
@@ -44,6 +46,8 @@ export function DirectValidateButton({
   templateId = null,
   repositoryUrl = '',
   chartPath = '',
+  isMenuItem = false, // Por padrão, não é item de menu
+  id, // Adicionando o id
 }: DirectValidateButtonProps) {
   const { t } = useTranslation('templates');
   const [isLoading, setIsLoading] = useState(false);
@@ -420,6 +424,32 @@ export function DirectValidateButton({
     }
   };
 
+  // Se for um item de menu, renderize um estilo compatível com o menu de dropdown
+  if (isMenuItem) {
+    return (
+      <>
+        <Pencil className="mr-2 h-4 w-4" />
+        Validar
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsDialogOpen(false);
+            }
+          }}
+        >
+          <DialogContent
+            className={`sm:max-w-${dialogState === 'result' ? '600' : '425'}px`}
+            data-testid="validation-dialog"
+          >
+            {renderDialogContent()}
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // Versão normal do botão para uso em outras partes da UI
   return (
     <>
       <Button
@@ -429,6 +459,7 @@ export function DirectValidateButton({
         disabled={isValidateButtonDisabled}
         className="w-full gap-2"
         data-testid="direct-validate-button"
+        id={id} // Usando o id aqui
         title={isValidateButtonDisabled ? getDisabledButtonMessage() : ''}
       >
         {isLoading ? (
@@ -441,7 +472,6 @@ export function DirectValidateButton({
         )}
       </Button>
 
-      {/* Dialog unificada para seleção de branch e resultados */}
       <Dialog
         open={isDialogOpen}
         onOpenChange={(open) => {

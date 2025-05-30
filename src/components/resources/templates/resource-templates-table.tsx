@@ -1,6 +1,14 @@
 'use client';
 
-import { Check, ExternalLink, MoreVertical, Pencil, Trash, XCircle } from 'lucide-react';
+import {
+  Check,
+  CheckCircle,
+  ExternalLink,
+  MoreVertical,
+  Pencil,
+  Trash,
+  XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -229,18 +237,37 @@ export function ResourceTemplatesTable({
                         )}
                         {validateTemplate && (
                           <DropdownMenuItem
-                            asChild
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+
+                              // Usar um pequeno timeout para garantir que o dropdown seja fechado primeiro
+                              setTimeout(() => {
+                                const validateButtonRef = document.getElementById(
+                                  `validate-button-hidden-${template.id}`
+                                );
+
+                                if (validateButtonRef) {
+                                  validateButtonRef.click();
+                                }
+                              }, 100);
+                            }}
                             data-testid={`template-validate-${template.id}`}
                           >
-                            <div className="focus:bg-accent focus:text-accent-foreground">
-                              <DirectValidateButton
-                                templateName={template.name}
-                                templateId={template.id}
-                                repositoryUrl={template.repositoryUrl}
-                                chartPath={template.chartPath}
-                              />
-                            </div>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Validar
                           </DropdownMenuItem>
+                        )}
+                        {validateTemplate && (
+                          <div className="hidden">
+                            <DirectValidateButton
+                              id={`validate-button-hidden-${template.id}`}
+                              templateName={template.name}
+                              templateId={template.id}
+                              repositoryUrl={template.repositoryUrl}
+                              chartPath={template.chartPath}
+                            />
+                          </div>
                         )}
                         {onDelete && (
                           <DropdownMenuItem
