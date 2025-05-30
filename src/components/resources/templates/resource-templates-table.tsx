@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Template } from '@/types/template';
+
 import { DirectValidateButton } from './direct-validate-button';
 
 // As categorias disponíveis para exibir quando a categoria estiver vazia
@@ -232,7 +233,7 @@ export function ResourceTemplatesTable({
                             data-testid={`template-validate-${template.id}`}
                           >
                             <div className="focus:bg-accent focus:text-accent-foreground">
-                              <DirectValidateButton 
+                              <DirectValidateButton
                                 templateName={template.name}
                                 templateId={template.id}
                                 repositoryUrl={template.repositoryUrl}
