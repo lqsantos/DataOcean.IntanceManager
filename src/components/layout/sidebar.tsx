@@ -87,6 +87,15 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
     },
   ];
 
+  // Função auxiliar para verificar se uma rota está ativa
+  const isRouteActive = (href: string): boolean => {
+    if (href === '/') {
+      return pathname === '/';
+    }
+
+    return pathname.startsWith(href);
+  };
+
   return (
     <>
       {/* Overlay for mobile devices */}
@@ -162,9 +171,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
             <nav className="flex flex-col gap-1" data-testid="sidebar-navigation">
               {routes.map((route) => {
                 const isSettings = route.href === '/settings';
-                const isActive = isSettings
-                  ? pathname.startsWith(route.href)
-                  : pathname === route.href;
+                const isActive = isRouteActive(route.href);
                 const hasChildren = route.children && route.children.length > 0;
 
                 if (collapsed) {
@@ -173,26 +180,31 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
                       <Tooltip delayDuration={0}>
                         <TooltipTrigger asChild>
                           <div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className={cn(
-                                'flex h-10 w-full items-center justify-center rounded-md transition-all duration-200',
-                                isActive && 'bg-primary/10 text-primary shadow-sm'
-                              )}
-                              onClick={() => {
+                            <Link
+                              href={route.href}
+                              onClick={(e) => {
                                 if (isSettings) {
+                                  e.preventDefault();
                                   setSettingsOpen(!settingsOpen);
                                 }
                               }}
                             >
-                              <route.icon
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className={cn(
-                                  'h-5 w-5',
-                                  isActive ? 'text-primary' : 'text-muted-foreground'
+                                  'flex h-10 w-full items-center justify-center rounded-md transition-all duration-200',
+                                  isActive && 'bg-primary/10 text-primary shadow-sm'
                                 )}
-                              />
-                            </Button>
+                              >
+                                <route.icon
+                                  className={cn(
+                                    'h-5 w-5',
+                                    isActive ? 'text-primary' : 'text-muted-foreground'
+                                  )}
+                                />
+                              </Button>
+                            </Link>
                             {hasChildren && settingsOpen && (
                               <div className="mt-1 space-y-0.5">
                                 {route.children.map((child) => (
@@ -235,36 +247,41 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: SidebarP
 
                 return (
                   <div key={route.href}>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        'flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
-                        isActive && 'bg-primary/10 text-primary shadow-sm'
-                      )}
-                      onClick={() => {
+                    <Link
+                      href={route.href}
+                      onClick={(e) => {
                         if (isSettings) {
+                          e.preventDefault();
                           setSettingsOpen(!settingsOpen);
                         }
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <route.icon
-                          className={cn(
-                            'h-5 w-5',
-                            isActive ? 'text-primary' : 'text-muted-foreground'
-                          )}
-                        />
-                        {route.name}
-                      </div>
-                      {hasChildren && (
-                        <ChevronRight
-                          className={cn(
-                            'h-4 w-4 transition-transform',
-                            settingsOpen && 'rotate-90'
-                          )}
-                        />
-                      )}
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          'flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
+                          isActive && 'bg-primary/10 text-primary shadow-sm'
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <route.icon
+                            className={cn(
+                              'h-5 w-5',
+                              isActive ? 'text-primary' : 'text-muted-foreground'
+                            )}
+                          />
+                          {route.name}
+                        </div>
+                        {hasChildren && (
+                          <ChevronRight
+                            className={cn(
+                              'h-4 w-4 transition-transform',
+                              settingsOpen && 'rotate-90'
+                            )}
+                          />
+                        )}
+                      </Button>
+                    </Link>
                     {hasChildren && settingsOpen && (
                       <div className="ml-4 mt-0.5 space-y-0.5 border-l pl-3">
                         {route.children.map((child) => (
