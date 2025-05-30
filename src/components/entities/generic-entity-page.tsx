@@ -167,21 +167,8 @@ export function GenericEntityPage({
   };
 
   return (
-    <div className="space-y-4" data-testid={`${testIdPrefix}-page`}>
-      {/* Cabeçalho customizável ou padrão, ocultado nas configurações */}
-      {!isInSettings &&
-        (customHeader || (
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">{entityName.plural}</h2>
-              <p className="text-muted-foreground">
-                {entityName.description || `Gerencie seus ${entityName.plural.toLowerCase()}`}
-              </p>
-            </div>
-          </div>
-        ))}
-
-      <div className="flex justify-end gap-2">
+    <div className="flex flex-col gap-4" data-testid={`${testIdPrefix}-page`}>
+      <div className="flex items-center justify-end gap-2">
         <Button
           variant="outline"
           size="icon"
@@ -208,20 +195,21 @@ export function GenericEntityPage({
           data-testid={`${testIdPrefix}-page-error-alert`}
           data-error={error.toString()}
         >
-          {/* Renderizando a mensagem de erro diretamente, para garantir que ela apareça nos testes */}
           {error.toString()}
         </div>
       )}
 
-      <EntityTable
-        entities={entities}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onEdit={handleEdit}
-        onDelete={deleteEntity}
-        data-testid={`${testIdPrefix}-table`}
-        {...tableProps}
-      />
+      <div className="rounded-md border bg-card">
+        <EntityTable
+          entities={entities}
+          isLoading={isLoading}
+          isRefreshing={isRefreshing}
+          onEdit={handleEdit}
+          onDelete={deleteEntity}
+          data-testid={`${testIdPrefix}-table`}
+          {...tableProps}
+        />
+      </div>
 
       <EntityModal
         isOpen={isOpen}

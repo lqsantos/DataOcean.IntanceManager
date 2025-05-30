@@ -50,7 +50,6 @@ export function MainLayout({ children }: MainLayoutProps) {
       className="flex h-screen overflow-hidden bg-background dark:bg-slate-950"
       data-testid="main-layout-container"
     >
-      {/* Sidebar ocupando altura total */}
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -69,35 +68,24 @@ export function MainLayout({ children }: MainLayoutProps) {
             : 'ml-0'
         )}
       >
-        {/* Header fixo no topo, apenas sobre a área de conteúdo */}
+        {/* Header fixo no topo */}
         <div
           className={cn(
             'fixed left-0 right-0 top-0 z-40',
-            sidebarOpen
-              ? sidebarCollapsed
-                ? 'md:left-20' // Ajuste para a sidebar colapsada
-                : 'md:left-64' // Ajuste para a sidebar expandida
-              : ''
+            sidebarOpen ? (sidebarCollapsed ? 'md:left-20' : 'md:left-64') : ''
           )}
         >
           <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         </div>
 
-        {/* Conteúdo principal com rolagem independente e espaçamento para o header */}
-        <main
-          className="flex-1 overflow-y-auto px-4 pb-8 pt-28 md:px-8"
-          data-testid="main-layout-main"
-        >
-          <div
-            className="mx-auto max-w-7xl rounded-t-lg bg-background/50 p-6 shadow-[0_-1px_0_rgba(0,0,0,0.05)] dark:bg-slate-950/50"
-            data-testid="main-layout-children-container"
-          >
+        {/* Conteúdo principal */}
+        <main className="flex-1 overflow-y-auto px-6 pb-8 pt-24" data-testid="main-layout-main">
+          <div className="mx-auto w-full" data-testid="main-layout-children-container">
             {children}
           </div>
         </main>
       </div>
 
-      {/* Include the PAT Modal here so it's available throughout the app */}
       <PATModal />
     </div>
   );
