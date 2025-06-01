@@ -84,7 +84,7 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-[800px]">
+      <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-[1000px]">
         <DialogHeader>
           <DialogTitle className="flex items-center text-xl">
             {currentStep > 1 && (

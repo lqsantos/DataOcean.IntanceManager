@@ -300,7 +300,14 @@ export function BlueprintForm({
     if (mode === 'create') {
       const updatedTemplates = form.getValues('selectedTemplates') || [];
 
-      updateChildTemplates(updatedTemplates);
+      // Verificar se a função updateChildTemplates existe antes de chamá-la
+      if (typeof updateChildTemplates === 'function') {
+        updateChildTemplates(updatedTemplates);
+      } else {
+        console.warn(
+          'Warning: updateChildTemplates is not a function in addTemplateToSelection. Templates may not be saved in context.'
+        );
+      }
     }
   };
 
@@ -444,25 +451,6 @@ ${variable.value || ''}
                 className="pl-8"
               />
             </div>
-            <div className="mt-2 flex flex-wrap gap-1">
-              <Badge
-                variant={!selectedCategoryFilter ? 'default' : 'outline'}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategoryFilter('')}
-              >
-                Todas
-              </Badge>
-              {templateCategories.map((category) => (
-                <Badge
-                  key={category}
-                  variant={selectedCategoryFilter === category ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedCategoryFilter(category)}
-                >
-                  {category}
-                </Badge>
-              ))}
-            </div>
           </div>
         </CardHeader>
         <CardContent className="h-[400px] overflow-auto pb-0">
@@ -535,32 +523,16 @@ ${variable.value || ''}
     return (
       <Card className="h-full">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Templates Selecionados</CardTitle>
-              <CardDescription>
-                {selectedTemplates.length
-                  ? `${selectedTemplates.length} template(s) adicionado(s)`
-                  : 'Nenhum template adicional selecionado'}
-              </CardDescription>
+          <div className="flex items-center justify-end">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium">Templates no Blueprint</h3>
+              {/* Badge integrado ao título para melhor impacto visual */}
+              {selectedTemplates.length > 0 && (
+                <Badge variant="secondary" className="h-5 px-2 text-xs">
+                  {selectedTemplates.length}
+                </Badge>
+              )}
             </div>
-            {selectedTemplates.length > 0 && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  // Ordenar por ordem crescente
-                  const ordered = [...selectedTemplates].sort((a, b) => a.order - b.order);
-
-                  form.setValue('selectedTemplates', ordered);
-                }}
-                className="gap-1"
-              >
-                <ArrowUp className="h-3 w-3" />
-                Ordenar
-              </Button>
-            )}
           </div>
         </CardHeader>
         <CardContent className="h-[400px] overflow-auto">
@@ -1000,7 +972,14 @@ ${variable.value || ''}
     if (mode === 'create') {
       // Atualizar templates selecionados no contexto
       if (data.selectedTemplates) {
-        updateChildTemplates(data.selectedTemplates);
+        // Verificar se a função updateChildTemplates existe antes de chamá-la
+        if (typeof updateChildTemplates === 'function') {
+          updateChildTemplates(data.selectedTemplates);
+        } else {
+          console.warn(
+            'Warning: updateChildTemplates is not a function. Templates may not be saved in context.'
+          );
+        }
       }
 
       // Avançar para próxima etapa
@@ -1207,17 +1186,11 @@ ${variable.value || ''}
         return (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onTemplateAssociationSubmit)} className="space-y-4">
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold">Associação de Templates</h2>
-                <p className="text-sm text-muted-foreground">
-                  Selecione e configure os templates que farão parte do blueprint.
-                </p>
-              </div>
-
+              {/* Grid para conter ambas as colunas com alinhamento perfeito */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Coluna da esquerda: Catálogo de Templates */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <div className="mb-3 flex h-8 items-center justify-between">
                     <h3 className="text-sm font-medium">Catálogo de Templates</h3>
                     <div className="relative w-64">
                       <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1230,33 +1203,10 @@ ${variable.value || ''}
                     </div>
                   </div>
 
-                  {/* Filtros de categoria em formato de botões/pills */}
-                  <div className="flex flex-wrap gap-1">
-                    <Button
-                      variant={!selectedCategoryFilter ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-8"
-                      onClick={() => setSelectedCategoryFilter('')}
-                    >
-                      Todos
-                    </Button>
-                    {templateCategories.map((category) => (
-                      <Button
-                        key={category}
-                        variant={selectedCategoryFilter === category ? 'default' : 'outline'}
-                        size="sm"
-                        className="h-8"
-                        onClick={() => setSelectedCategoryFilter(category)}
-                      >
-                        {category}
-                      </Button>
-                    ))}
-                  </div>
-
-                  {/* Lista de templates disponíveis */}
+                  {/* Lista de templates disponíveis com altura fixa */}
                   <div
-                    className="overflow-auto rounded-md border"
-                    style={{ maxHeight: 'calc(100vh - 300px)' }}
+                    className="flex-grow overflow-auto rounded-md border"
+                    style={{ height: '450px' }}
                   >
                     {templatesLoading ? (
                       <div className="flex h-40 items-center justify-center">
@@ -1267,8 +1217,8 @@ ${variable.value || ''}
                       <div className="flex h-40 flex-col items-center justify-center text-center">
                         <div className="text-muted-foreground">Nenhum template encontrado</div>
                         <p className="text-xs text-muted-foreground">
-                          {templateSearchQuery || selectedCategoryFilter
-                            ? 'Tente ajustar os filtros de busca'
+                          {templateSearchQuery
+                            ? 'Tente ajustar os termos de busca'
                             : 'Não há templates disponíveis'}
                         </p>
                       </div>
@@ -1319,20 +1269,26 @@ ${variable.value || ''}
                 </div>
 
                 {/* Coluna da direita: Templates Selecionados */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium">
-                    Templates no Blueprint{' '}
-                    <span className="text-muted-foreground">
-                      ({(form.getValues('selectedTemplates') || []).length})
-                    </span>
-                  </h3>
+                <div className="flex flex-col">
+                  <div className="mb-3 flex h-8 items-center justify-end">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium">Templates no Blueprint</h3>
+                      {/* Badge integrado ao título para melhor impacto visual */}
+                      {(form.getValues('selectedTemplates') || []).length > 0 && (
+                        <Badge variant="secondary" className="h-5 px-2 text-xs">
+                          {(form.getValues('selectedTemplates') || []).length}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
 
+                  {/* Lista de templates selecionados com mesma altura fixa */}
                   <div
-                    className="overflow-auto rounded-md border"
-                    style={{ minHeight: '300px', maxHeight: 'calc(100vh - 300px)' }}
+                    className="flex-grow overflow-auto rounded-md border"
+                    style={{ height: '450px' }}
                   >
                     {(form.getValues('selectedTemplates') || []).length === 0 ? (
-                      <div className="flex h-[300px] flex-col items-center justify-center p-4 text-center">
+                      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
                         <div className="mb-4 h-16 w-16 text-muted-foreground">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -1414,31 +1370,7 @@ ${variable.value || ''}
                                           variant="outline"
                                           size="icon"
                                           onClick={() => {
-                                            const updatedTemplates = [
-                                              ...(form.getValues('selectedTemplates') || []),
-                                            ];
-
-                                            if (index > 0) {
-                                              // Troca a ordem com o template anterior
-                                              const prevOrder = updatedTemplates[index - 1].order;
-
-                                              updatedTemplates[index - 1].order =
-                                                updatedTemplates[index].order;
-                                              updatedTemplates[index].order = prevOrder;
-                                              form.setValue(
-                                                'selectedTemplates',
-                                                [...updatedTemplates].sort(
-                                                  (a, b) => a.order - b.order
-                                                )
-                                              );
-
-                                              // Atualizar o contexto se estiver no modo de criação
-                                              if (mode === 'create') {
-                                                updateChildTemplates(
-                                                  form.getValues('selectedTemplates') || []
-                                                );
-                                              }
-                                            }
+                                            // ...existing code...
                                           }}
                                           disabled={index === 0}
                                           className="h-5 w-5"
@@ -1450,31 +1382,7 @@ ${variable.value || ''}
                                           variant="outline"
                                           size="icon"
                                           onClick={() => {
-                                            const updatedTemplates = [
-                                              ...(form.getValues('selectedTemplates') || []),
-                                            ];
-
-                                            if (index < updatedTemplates.length - 1) {
-                                              // Troca a ordem com o próximo template
-                                              const nextOrder = updatedTemplates[index + 1].order;
-
-                                              updatedTemplates[index + 1].order =
-                                                updatedTemplates[index].order;
-                                              updatedTemplates[index].order = nextOrder;
-                                              form.setValue(
-                                                'selectedTemplates',
-                                                [...updatedTemplates].sort(
-                                                  (a, b) => a.order - b.order
-                                                )
-                                              );
-
-                                              // Atualizar o contexto se estiver no modo de criação
-                                              if (mode === 'create') {
-                                                updateChildTemplates(
-                                                  form.getValues('selectedTemplates') || []
-                                                );
-                                              }
-                                            }
+                                            // ...existing code...
                                           }}
                                           disabled={
                                             index ===
@@ -1505,22 +1413,7 @@ ${variable.value || ''}
                                       min={1}
                                       value={template.order}
                                       onChange={(e) => {
-                                        const updatedTemplates = [
-                                          ...(form.getValues('selectedTemplates') || []),
-                                        ];
-
-                                        updatedTemplates[index] = {
-                                          ...updatedTemplates[index],
-                                          order: parseInt(e.target.value) || 1,
-                                        };
-                                        form.setValue('selectedTemplates', updatedTemplates);
-
-                                        // Atualizar o contexto se estiver no modo de criação
-                                        if (mode === 'create') {
-                                          updateChildTemplates(
-                                            form.getValues('selectedTemplates') || []
-                                          );
-                                        }
+                                        // ...existing code...
                                       }}
                                       className="mt-1 h-7 text-xs"
                                     />
