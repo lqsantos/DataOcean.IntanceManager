@@ -1,10 +1,10 @@
 'use client';
 
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
   AlertTriangle,
-  ArrowUp,
   Check,
   CheckCircle,
   Code,
@@ -254,18 +254,13 @@ export function BlueprintForm({
       });
   }, [templates, templateSearchQuery, selectedCategoryFilter]);
 
-  // Verifica se um template já está adicionado
+  // Verifica se um template já está adicionado - Removido para permitir adicionar o mesmo template múltiplas vezes
   const isTemplateSelected = (templateId: string) => {
-    return form.getValues('selectedTemplates')?.some((t) => t.templateId === templateId) || false;
+    return false; // Sempre retorna falso para permitir selecionar o mesmo template múltiplas vezes
   };
 
   // Adiciona um template à lista
   const addTemplateToSelection = (template: any) => {
-    // Se já estiver selecionado, não fazer nada
-    if (isTemplateSelected(template.id)) {
-      return;
-    }
-
     // Criar um identificador único baseado no nome do template
     let baseIdentifier = template.name
       .toLowerCase()
@@ -335,6 +330,35 @@ export function BlueprintForm({
     }
 
     return true;
+  };
+
+  // Função para reordenar templates usando drag and drop
+  const handleDragEnd = (result: any) => {
+    // Ignorar drop fora da área
+    if (!result.destination) {
+      return;
+    }
+
+    const selectedTemplates = form.getValues('selectedTemplates') || [];
+    const reorderedItems = [...selectedTemplates];
+
+    // Mover o item arrastado
+    const [removed] = reorderedItems.splice(result.source.index, 1);
+
+    reorderedItems.splice(result.destination.index, 0, removed);
+
+    // Atualizar a ordem correta após a reorganização
+    const reorderedWithCorrectOrder = reorderedItems.map((item, index) => ({
+      ...item,
+      order: index + 1,
+    }));
+
+    form.setValue('selectedTemplates', reorderedWithCorrectOrder);
+
+    // Atualizar o contexto se estiver no modo de criação
+    if (mode === 'create' && typeof updateChildTemplates === 'function') {
+      updateChildTemplates(reorderedWithCorrectOrder);
+    }
   };
 
   // Adicionar uma variável de blueprint (simple ou advanced)
@@ -470,45 +494,33 @@ ${variable.value || ''}
             </div>
           ) : (
             <div className="grid gap-2">
-              {filteredCatalogTemplates.map((template) => {
-                const isSelected = isTemplateSelected(template.id);
-
-                return (
-                  <Card
-                    key={template.id}
-                    className={`overflow-hidden transition-colors ${isSelected ? 'border-primary bg-primary/5' : ''}`}
-                  >
-                    <div className="flex items-start justify-between p-3">
-                      <div>
-                        <h4 className="text-sm font-medium">{template.name}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {template.description || 'Sem descrição'}
-                        </p>
-                        <div className="mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {template.category || 'Sem categoria'}
-                          </Badge>
-                        </div>
+              {filteredCatalogTemplates.map((template) => (
+                <Card key={template.id} className="overflow-hidden">
+                  <div className="flex items-start justify-between p-3">
+                    <div>
+                      <h4 className="text-sm font-medium">{template.name}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {template.description || 'Sem descrição'}
+                      </p>
+                      <div className="mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {template.category || 'Sem categoria'}
+                        </Badge>
                       </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={isSelected ? 'secondary' : 'ghost'}
-                        onClick={() => !isSelected && addTemplateToSelection(template)}
-                        disabled={isSelected}
-                        className="gap-1"
-                      >
-                        {isSelected ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <PlusCircle className="h-4 w-4" />
-                        )}
-                        <span className="sr-only">{isSelected ? 'Adicionado' : 'Adicionar'}</span>
-                      </Button>
                     </div>
-                  </Card>
-                );
-              })}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => addTemplateToSelection(template)}
+                      className="gap-1"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      <span>Adicionar</span>
+                    </Button>
+                  </div>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
@@ -516,7 +528,7 @@ ${variable.value || ''}
     );
   };
 
-  // Renderizar os templates selecionados
+  // Atualizar o renderSelectedTemplatesList para incluir drag and drop
   const renderSelectedTemplatesList = () => {
     const selectedTemplates = form.getValues('selectedTemplates') || [];
 
@@ -526,7 +538,6 @@ ${variable.value || ''}
           <div className="flex items-center justify-end">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-medium">Templates no Blueprint</h3>
-              {/* Badge integrado ao título para melhor impacto visual */}
               {selectedTemplates.length > 0 && (
                 <Badge variant="secondary" className="h-5 px-2 text-xs">
                   {selectedTemplates.length}
@@ -543,118 +554,124 @@ ${variable.value || ''}
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {selectedTemplates.map((template, index) => {
-                const templateInfo = templates.find((t) => t.id === template.templateId);
+            <DragDropContext
+              onDragEnd={(result) => {
+                // Ignorar drops fora de áreas válidas
+                if (!result.destination) {
+                  return;
+                }
 
-                return (
-                  <Card key={index} className="overflow-hidden">
-                    <div className="border-l-4 border-primary">
-                      <div className="p-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline">{template.identifier}</Badge>
-                              <h4 className="text-sm font-medium">
-                                {templateInfo?.name || 'Template desconhecido'}
-                              </h4>
-                            </div>
-                            {templateInfo?.category && (
-                              <div className="mt-1">
-                                <Badge variant="secondary" className="text-xs">
-                                  {templateInfo.category}
-                                </Badge>
+                // Obter a lista atual de templates
+                const selectedTemplates = [...(form.getValues('selectedTemplates') || [])];
+
+                // Mover o item arrastado
+                const [movedItem] = selectedTemplates.splice(result.source.index, 1);
+
+                selectedTemplates.splice(result.destination.index, 0, movedItem);
+
+                // Atualizar as ordens após reorganização
+                const reorderedTemplates = selectedTemplates.map((item, index) => ({
+                  ...item,
+                  order: index + 1,
+                }));
+
+                // Atualizar o formulário com a nova ordem
+                form.setValue('selectedTemplates', reorderedTemplates);
+
+                // Atualizar o contexto se necessário
+                if (mode === 'create' && typeof updateChildTemplates === 'function') {
+                  updateChildTemplates(reorderedTemplates);
+                }
+              }}
+            >
+              <Droppable droppableId="template-list">
+                {(provided) => (
+                  <div
+                    className="space-y-2 p-2"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                  >
+                    {(form.getValues('selectedTemplates') || [])
+                      .sort((a, b) => a.order - b.order)
+                      .map((template, index) => {
+                        const templateInfo = templates.find((t) => t.id === template.templateId);
+
+                        return (
+                          <Draggable
+                            key={`${template.identifier}-${index}`}
+                            draggableId={`${template.identifier}-${index}`}
+                            index={index}
+                          >
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`rounded-md border p-3 ${
+                                  snapshot.isDragging ? 'border-primary bg-accent opacity-90' : ''
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs">
+                                      {template.order}
+                                    </span>
+                                    <div>
+                                      <h4 className="text-sm font-medium">
+                                        {templateInfo?.name || 'Template desconhecido'}
+                                      </h4>
+                                      <p className="text-xs text-muted-foreground">
+                                        Identificador:{' '}
+                                        <span className="font-medium">{template.identifier}</span>
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeTemplate(index)}
+                                    className="h-7 w-7"
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                    <span className="sr-only">Remover</span>
+                                  </Button>
+                                </div>
+
+                                <div className="mt-3 space-y-2">
+                                  <div>
+                                    <label className="text-xs font-medium">Identificador</label>
+                                    <Input
+                                      value={template.identifier}
+                                      onChange={(e) =>
+                                        updateTemplateIdentifier(index, e.target.value)
+                                      }
+                                      className="mt-1 h-7 text-xs"
+                                      placeholder="identificador-unico"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-medium text-muted-foreground">
+                                        Ordem do template: {template.order}
+                                      </label>
+                                      <div className="text-xs italic text-muted-foreground">
+                                        Arraste para reordenar
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             )}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeTemplate(index)}
-                            className="h-6 w-6"
-                          >
-                            <Trash className="h-4 w-4" />
-                            <span className="sr-only">Remover</span>
-                          </Button>
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-xs font-medium">Identificador</label>
-                            <Input
-                              value={template.identifier}
-                              onChange={(e) => updateTemplateIdentifier(index, e.target.value)}
-                              className="mt-1 h-8 text-xs"
-                              placeholder="identificador-unico"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium">Ordem</label>
-                            <Input
-                              type="number"
-                              min={1}
-                              value={template.order}
-                              onChange={(e) => {
-                                const updatedTemplates = [...selectedTemplates];
-
-                                updatedTemplates[index] = {
-                                  ...updatedTemplates[index],
-                                  order: parseInt(e.target.value) || 1,
-                                };
-                                form.setValue('selectedTemplates', updatedTemplates);
-                              }}
-                              className="mt-1 h-8 text-xs"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium">
-                              Valores de Sobrescrita (opcional)
-                            </label>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                // Expandir/colapsar área de texto
-                                const updatedTemplates = [...selectedTemplates];
-
-                                updatedTemplates[index] = {
-                                  ...updatedTemplates[index],
-                                  expanded: !template.expanded,
-                                };
-                                form.setValue('selectedTemplates', updatedTemplates);
-                              }}
-                              className="h-5 p-0 text-xs"
-                            >
-                              {template.expanded ? 'Colapsar' : 'Expandir'}
-                            </Button>
-                          </div>
-                          <Textarea
-                            value={template.overrideValues || ''}
-                            onChange={(e) => {
-                              const updatedTemplates = [...selectedTemplates];
-
-                              updatedTemplates[index] = {
-                                ...updatedTemplates[index],
-                                overrideValues: e.target.value,
-                              };
-                              form.setValue('selectedTemplates', updatedTemplates);
-                            }}
-                            className="mt-1 font-mono text-xs"
-                            placeholder="# Valores YAML para sobrescrever os padrões\nreplicaCount: 2\nresources:\n  limits:\n    cpu: 100m"
-                            rows={template.expanded ? 5 : 2}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+                          </Draggable>
+                        );
+                      })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           )}
         </CardContent>
       </Card>
@@ -1185,254 +1202,314 @@ ${variable.value || ''}
       case 2:
         return (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onTemplateAssociationSubmit)} className="space-y-4">
-              {/* Grid para conter ambas as colunas com alinhamento perfeito */}
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {/* Coluna da esquerda: Catálogo de Templates */}
-                <div className="flex flex-col">
-                  <div className="mb-3 flex h-8 items-center justify-between">
-                    <h3 className="text-sm font-medium">Catálogo de Templates</h3>
-                    <div className="relative w-64">
-                      <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar templates..."
-                        value={templateSearchQuery}
-                        onChange={(e) => setTemplateSearchQuery(e.target.value)}
-                        className="h-8 pl-8 text-sm"
-                      />
-                    </div>
-                  </div>
+            <form
+              onSubmit={form.handleSubmit(onTemplateAssociationSubmit)}
+              className="flex h-full flex-col"
+            >
+              {/* DragDropContext global que engloba ambas as listas */}
+              <DragDropContext
+                onDragEnd={(result) => {
+                  // Se não tiver destino válido, ignorar
+                  if (!result.destination) {
+                    return;
+                  }
 
-                  {/* Lista de templates disponíveis com altura fixa */}
-                  <div
-                    className="flex-grow overflow-auto rounded-md border"
-                    style={{ height: '450px' }}
-                  >
-                    {templatesLoading ? (
-                      <div className="flex h-40 items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                        <span className="ml-2">Carregando templates...</span>
-                      </div>
-                    ) : filteredCatalogTemplates.length === 0 ? (
-                      <div className="flex h-40 flex-col items-center justify-center text-center">
-                        <div className="text-muted-foreground">Nenhum template encontrado</div>
-                        <p className="text-xs text-muted-foreground">
-                          {templateSearchQuery
-                            ? 'Tente ajustar os termos de busca'
-                            : 'Não há templates disponíveis'}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-border">
-                        {filteredCatalogTemplates.map((template) => {
-                          const isSelected = isTemplateSelected(template.id);
+                  // Caso 1: Arrastar da lista de catálogo para a lista de selecionados
+                  if (
+                    result.source.droppableId === 'template-catalog' &&
+                    result.destination.droppableId === 'selected-templates'
+                  ) {
+                    // Pega o template que foi arrastado do catálogo
+                    const templateId = result.draggableId;
+                    const template = filteredCatalogTemplates.find((t) => t.id === templateId);
 
-                          return (
-                            <div
-                              key={template.id}
-                              className={`flex items-center justify-between p-3 hover:bg-muted/50 ${
-                                isSelected ? 'border-l-2 border-l-primary bg-primary/5' : ''
-                              }`}
-                            >
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-sm font-medium">{template.name}</h4>
-                                </div>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {template.description || 'Sem descrição'}
-                                </p>
-                                <div className="mt-1">
-                                  <Badge variant="secondary" className="text-xs">
-                                    {template.category || 'Sem categoria'}
-                                  </Badge>
-                                </div>
-                              </div>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant={isSelected ? 'secondary' : 'ghost'}
-                                onClick={() => !isSelected && addTemplateToSelection(template)}
-                                disabled={isSelected}
-                                className="self-start"
-                              >
-                                {isSelected ? 'Adicionado' : 'Adicionar'}
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                    if (template) {
+                      // Adiciona o template à lista de selecionados
+                      addTemplateToSelection(template);
+                    }
 
-                {/* Coluna da direita: Templates Selecionados */}
-                <div className="flex flex-col">
-                  <div className="mb-3 flex h-8 items-center justify-end">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-medium">Templates no Blueprint</h3>
-                      {/* Badge integrado ao título para melhor impacto visual */}
-                      {(form.getValues('selectedTemplates') || []).length > 0 && (
-                        <Badge variant="secondary" className="h-5 px-2 text-xs">
-                          {(form.getValues('selectedTemplates') || []).length}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+                    return;
+                  }
 
-                  {/* Lista de templates selecionados com mesma altura fixa */}
-                  <div
-                    className="flex-grow overflow-auto rounded-md border"
-                    style={{ height: '450px' }}
-                  >
-                    {(form.getValues('selectedTemplates') || []).length === 0 ? (
-                      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-                        <div className="mb-4 h-16 w-16 text-muted-foreground">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="100%"
-                            height="100%"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <path d="M12 8v8" />
-                            <path d="M8 12h8" />
-                          </svg>
+                  // Caso 2: Reordenar dentro da lista de selecionados
+                  if (
+                    result.source.droppableId === 'selected-templates' &&
+                    result.destination.droppableId === 'selected-templates'
+                  ) {
+                    // Obter a lista atual de templates
+                    const selectedTemplates = [...(form.getValues('selectedTemplates') || [])];
+
+                    // Mover o item arrastado
+                    const [movedItem] = selectedTemplates.splice(result.source.index, 1);
+
+                    selectedTemplates.splice(result.destination.index, 0, movedItem);
+
+                    // Atualizar as ordens após reorganização
+                    const reorderedTemplates = selectedTemplates.map((item, index) => ({
+                      ...item,
+                      order: index + 1,
+                    }));
+
+                    // Atualizar o formulário com a nova ordem
+                    form.setValue('selectedTemplates', reorderedTemplates);
+
+                    // Atualizar o contexto se necessário
+                    if (mode === 'create' && typeof updateChildTemplates === 'function') {
+                      updateChildTemplates(reorderedTemplates);
+                    }
+                  }
+                }}
+              >
+                {/* Conteúdo principal com altura fixa sem overflow */}
+                <div className="flex-1">
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {/* Coluna da esquerda: Catálogo de Templates */}
+                    <div className="flex flex-col">
+                      <div className="mb-3 flex h-8 items-center justify-between">
+                        <h3 className="text-sm font-medium">Catálogo de Templates</h3>
+                        <div className="relative w-64">
+                          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            placeholder="Buscar templates..."
+                            value={templateSearchQuery}
+                            onChange={(e) => setTemplateSearchQuery(e.target.value)}
+                            className="h-8 pl-8 text-sm"
+                          />
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          Selecione templates do catálogo para adicionar ao blueprint
-                        </p>
                       </div>
-                    ) : (
-                      <div className="divide-y divide-border">
-                        {(form.getValues('selectedTemplates') || [])
-                          .sort((a, b) => a.order - b.order)
-                          .map((template, index) => {
-                            const templateInfo = templates.find(
-                              (t) => t.id === template.templateId
-                            );
 
-                            return (
-                              <div key={index} className="p-3">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs">
-                                      {template.order}
-                                    </span>
-                                    <div>
-                                      <h4 className="text-sm font-medium">
-                                        {templateInfo?.name || 'Template desconhecido'}
-                                      </h4>
-                                      <p className="text-xs text-muted-foreground">
-                                        Identificador:{' '}
-                                        <span className="font-medium">{template.identifier}</span>
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeTemplate(index)}
-                                    className="h-7 w-7"
-                                  >
-                                    <Trash className="h-4 w-4" />
-                                    <span className="sr-only">Remover</span>
-                                  </Button>
+                      {/* Lista de templates disponíveis com altura fixa e scrollbar */}
+                      <Droppable droppableId="template-catalog" isDropDisabled={true}>
+                        {(provided) => (
+                          <div
+                            className="flex-grow overflow-auto rounded-md border"
+                            style={{ height: '400px' }}
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                          >
+                            {templatesLoading ? (
+                              <div className="flex h-40 items-center justify-center">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                                <span className="ml-2">Carregando templates...</span>
+                              </div>
+                            ) : filteredCatalogTemplates.length === 0 ? (
+                              <div className="flex h-40 flex-col items-center justify-center text-center">
+                                <div className="text-muted-foreground">
+                                  Nenhum template encontrado
                                 </div>
-                                <div className="mt-3 space-y-2">
-                                  <div>
-                                    <label className="text-xs font-medium">Identificador</label>
-                                    <Input
-                                      value={template.identifier}
-                                      onChange={(e) =>
-                                        updateTemplateIdentifier(index, e.target.value)
-                                      }
-                                      className="mt-1 h-7 text-xs"
-                                      placeholder="identificador-unico"
-                                    />
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center justify-between">
-                                      <label className="text-xs font-medium">
-                                        Ordem de execução
-                                      </label>
-                                      <div className="flex gap-1">
+                                <p className="text-xs text-muted-foreground">
+                                  {templateSearchQuery
+                                    ? 'Tente ajustar os termos de busca'
+                                    : 'Não há templates disponíveis'}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="divide-y divide-border">
+                                {filteredCatalogTemplates.map((template, index) => (
+                                  <Draggable
+                                    key={template.id}
+                                    draggableId={template.id}
+                                    index={index}
+                                  >
+                                    {(provided, snapshot) => (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        className={`flex items-center justify-between p-3 ${
+                                          snapshot.isDragging
+                                            ? 'bg-accent opacity-90'
+                                            : 'hover:bg-muted/50'
+                                        }`}
+                                      >
+                                        <div>
+                                          <div className="flex items-center gap-2">
+                                            <h4 className="text-sm font-medium">{template.name}</h4>
+                                          </div>
+                                          <p className="mt-1 text-xs text-muted-foreground">
+                                            {template.description || 'Sem descrição'}
+                                          </p>
+                                          <div className="mt-1">
+                                            <Badge variant="secondary" className="text-xs">
+                                              {template.category || 'Sem categoria'}
+                                            </Badge>
+                                          </div>
+                                        </div>
                                         <Button
                                           type="button"
-                                          variant="outline"
-                                          size="icon"
-                                          onClick={() => {
-                                            // ...existing code...
-                                          }}
-                                          disabled={index === 0}
-                                          className="h-5 w-5"
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => addTemplateToSelection(template)}
+                                          className="gap-1"
                                         >
-                                          <ArrowUp className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          size="icon"
-                                          onClick={() => {
-                                            // ...existing code...
-                                          }}
-                                          disabled={
-                                            index ===
-                                            (form.getValues('selectedTemplates') || []).length - 1
-                                          }
-                                          className="h-5 w-5"
-                                        >
-                                          <svg
-                                            className="h-3 w-3"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="24"
-                                            height="24"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          >
-                                            <path d="M12 5v14" />
-                                            <path d="m19 12-7 7-7-7" />
-                                          </svg>
+                                          <PlusCircle className="h-4 w-4" />
+                                          <span>Adicionar</span>
                                         </Button>
                                       </div>
-                                    </div>
-                                    <Input
-                                      type="number"
-                                      min={1}
-                                      value={template.order}
-                                      onChange={(e) => {
-                                        // ...existing code...
-                                      }}
-                                      className="mt-1 h-7 text-xs"
-                                    />
-                                  </div>
-                                </div>
+                                    )}
+                                  </Draggable>
+                                ))}
+                                {provided.placeholder}
                               </div>
-                            );
-                          })}
+                            )}
+                          </div>
+                        )}
+                      </Droppable>
+                    </div>
+
+                    {/* Coluna da direita: Templates Selecionados */}
+                    <div className="flex flex-col">
+                      <div className="mb-3 flex h-8 items-center justify-end">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-medium">Templates no Blueprint</h3>
+                          {/* Badge integrado ao título para melhor impacto visual */}
+                          {(form.getValues('selectedTemplates') || []).length > 0 && (
+                            <Badge variant="secondary" className="h-5 px-2 text-xs">
+                              {(form.getValues('selectedTemplates') || []).length}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    )}
+
+                      {/* Lista de templates selecionados com suporte a drag and drop e altura fixa */}
+                      <Droppable droppableId="selected-templates">
+                        {(provided) => (
+                          <div
+                            className="flex-grow overflow-auto rounded-md border"
+                            style={{ height: '400px' }}
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                          >
+                            {(form.getValues('selectedTemplates') || []).length === 0 ? (
+                              <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+                                <div className="mb-4 h-16 w-16 text-muted-foreground">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="100%"
+                                    height="100%"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <path d="M12 8v8" />
+                                    <path d="M8 12h8" />
+                                  </svg>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  Selecione ou arraste templates do catálogo para adicionar ao
+                                  blueprint
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2 p-2">
+                                {(form.getValues('selectedTemplates') || [])
+                                  .sort((a, b) => a.order - b.order)
+                                  .map((template, index) => {
+                                    const templateInfo = templates.find(
+                                      (t) => t.id === template.templateId
+                                    );
+
+                                    return (
+                                      <Draggable
+                                        key={`${template.identifier}-${index}`}
+                                        draggableId={`selected-${template.identifier}-${index}`}
+                                        index={index}
+                                      >
+                                        {(provided, snapshot) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            className={`rounded-md border p-3 ${
+                                              snapshot.isDragging
+                                                ? 'border-primary bg-accent opacity-90'
+                                                : ''
+                                            }`}
+                                          >
+                                            <div className="flex items-start justify-between">
+                                              <div className="flex items-center gap-2">
+                                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs">
+                                                  {template.order}
+                                                </span>
+                                                <div>
+                                                  <h4 className="text-sm font-medium">
+                                                    {templateInfo?.name || 'Template desconhecido'}
+                                                  </h4>
+                                                  <p className="text-xs text-muted-foreground">
+                                                    Identificador:{' '}
+                                                    <span className="font-medium">
+                                                      {template.identifier}
+                                                    </span>
+                                                  </p>
+                                                </div>
+                                              </div>
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => removeTemplate(index)}
+                                                className="h-7 w-7"
+                                              >
+                                                <Trash className="h-4 w-4" />
+                                                <span className="sr-only">Remover</span>
+                                              </Button>
+                                            </div>
+
+                                            <div className="mt-3 space-y-2">
+                                              <div>
+                                                <label className="text-xs font-medium">
+                                                  Identificador
+                                                </label>
+                                                <Input
+                                                  value={template.identifier}
+                                                  onChange={(e) =>
+                                                    updateTemplateIdentifier(index, e.target.value)
+                                                  }
+                                                  className="mt-1 h-7 text-xs"
+                                                  placeholder="identificador-unico"
+                                                />
+                                              </div>
+
+                                              <div>
+                                                <div className="flex items-center justify-between">
+                                                  <label className="text-xs font-medium text-muted-foreground">
+                                                    Ordem do template: {template.order}
+                                                  </label>
+                                                  <div className="text-xs italic text-muted-foreground">
+                                                    Arraste para reordenar
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </Draggable>
+                                    );
+                                  })}
+                                {provided.placeholder}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Droppable>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onPrevStep}>
-                  Voltar
-                </Button>
-                <Button type="submit" data-testid="templates-next-button">
-                  Próximo
-                </Button>
-              </DialogFooter>
+                {/* Footer fixo na parte inferior */}
+                <DialogFooter className="mt-4 border-t pt-4">
+                  <Button type="button" variant="outline" onClick={onPrevStep}>
+                    Voltar
+                  </Button>
+                  <Button type="submit" data-testid="templates-next-button">
+                    Próximo
+                  </Button>
+                </DialogFooter>
+              </DragDropContext>
             </form>
           </Form>
         );

@@ -84,7 +84,7 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-[1000px]">
+      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-[1000px]">
         <DialogHeader>
           <DialogTitle className="flex items-center text-xl">
             {currentStep > 1 && (
@@ -119,17 +119,19 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
           ))}
         </div>
 
-        {/* Formulário compartilhado */}
-        <BlueprintForm
-          onSave={handleSave}
-          onCancel={handleClose}
-          mode="create"
-          currentStep={currentStep}
-          totalSteps={totalSteps}
-          onNextStep={nextStep}
-          onPrevStep={prevStep}
-          onGoToStep={goToStep}
-        />
+        {/* Formulário compartilhado - sem overflow na modal, apenas nos componentes internos */}
+        <div className="flex-1 overflow-hidden">
+          <BlueprintForm
+            onSave={handleSave}
+            onCancel={handleClose}
+            mode="create"
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            onNextStep={nextStep}
+            onPrevStep={prevStep}
+            onGoToStep={goToStep}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
