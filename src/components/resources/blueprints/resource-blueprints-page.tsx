@@ -32,6 +32,7 @@ export function ResourceBlueprintsPage() {
 
 function BlueprintsPageContent() {
   const { t } = useTranslation('blueprints');
+  const { t: tResources } = useTranslation('resources');
   const router = useRouter();
   const {
     blueprints,
@@ -119,7 +120,7 @@ function BlueprintsPageContent() {
           <div className="relative flex-1">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder={t('search.placeholder')}
+              placeholder={tResources('table.search.placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8"

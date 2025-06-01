@@ -17,8 +17,10 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
+// UI Components
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,9 +55,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateBlueprint } from '@/contexts/create-blueprint-context';
 import { useTemplates } from '@/hooks/use-templates';
-import type { Blueprint } from '@/types/blueprint';
 
-// Atualizando o esquema de validação para remover categoria e templateId da etapa 1
+// Components
+
+// Define Blueprint interface
+interface Blueprint {
+  id?: string;
+  name: string;
+  description?: string;
+  category?: string;
+  templateId?: string;
+  childTemplates?: Array<{
+    templateId: string;
+    identifier: string;
+    order: number;
+    overrideValues?: string;
+  }>;
+  variables?: Array<{
+    name: string;
+    description?: string;
+    value?: string;
+    type: 'simple' | 'advanced';
+  }>;
+  helperTpl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Atualizando o esquema de validação para corrigir problemas de tipagem
 const formSchema = z.object({
   // Etapa 1: Informações Gerais - apenas nome e descrição conforme especificação blue.md
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
@@ -77,14 +104,14 @@ const formSchema = z.object({
     )
     .optional(),
 
-  // Etapa 3: Blueprint Variables
+  // Etapa 3: Blueprint Variables - Corrigido para corresponder ao tipo esperado
   blueprintVariables: z
     .array(
       z.object({
         name: z.string().min(1, 'Nome é obrigatório'),
         description: z.string().optional(),
         value: z.string().optional(),
-        type: z.enum(['simple', 'advanced']).default('simple'),
+        type: z.enum(['simple', 'advanced']).default('simple'), // Garantindo que type nunca é undefined
       })
     )
     .optional(),
@@ -93,6 +120,7 @@ const formSchema = z.object({
   helperTpl: z.string().optional(),
 });
 
+// Definindo o tipo para uso em todo o componente
 type FormValues = z.infer<typeof formSchema>;
 
 interface BlueprintFormProps {
@@ -125,6 +153,7 @@ export function BlueprintForm({
   onGoToStep,
 }: BlueprintFormProps) {
   const { t } = useTranslation(['common', 'blueprints']);
+  const { t: tResources } = useTranslation('resources');
   const { templates, isLoading: templatesLoading } = useTemplates();
 
   // Para o modo de edição, usamos tabs para navegar entre seções
@@ -139,12 +168,13 @@ export function BlueprintForm({
   const {
     blueprintData,
     variables: contextVariables,
-    childTemplates: contextChildTemplates,
+    selectedTemplates: contextSelectedTemplates, // Renomeado para corresponder ao contexto
     generatedHelperTpl,
     updateBlueprintData,
     updateVariables,
-    updateChildTemplates,
-    generateHelperTpl: generateContextHelperTpl,
+    updateSelectedTemplates, // Renomeado para corresponder ao contexto
+    updateBlueprintVariables, // Nova função definida no contexto
+    generateHelperTpl, // Função correta do contexto
   } = useCreateBlueprint();
 
   // Form setup com valores iniciais dependendo do modo
@@ -166,8 +196,8 @@ export function BlueprintForm({
             description: blueprintData?.description || '',
             category: blueprintData?.category || '',
             templateId: blueprintData?.templateId || '',
-            selectedTemplates: contextChildTemplates || [],
-            blueprintVariables: contextVariables.length > 0 ? contextVariables : [],
+            selectedTemplates: contextSelectedTemplates || [], // Atualizado para usar a propriedade correta
+            blueprintVariables: [], // Inicializado com array vazio para resolver problemas de tipo
             helperTpl: generatedHelperTpl || '',
           },
   });
@@ -180,12 +210,12 @@ export function BlueprintForm({
         description: blueprintData?.description || '',
         category: blueprintData?.category || '',
         templateId: blueprintData?.templateId || '',
-        selectedTemplates: contextChildTemplates || [],
-        blueprintVariables: contextVariables.length > 0 ? contextVariables : [],
+        selectedTemplates: contextSelectedTemplates || [],
+        blueprintVariables: [], // Inicializado com array vazio para evitar problemas de tipo
         helperTpl: generatedHelperTpl || '',
       });
     }
-  }, [mode, blueprintData, contextVariables, contextChildTemplates, generatedHelperTpl, form]);
+  }, [mode, blueprintData, contextSelectedTemplates, generatedHelperTpl, form]);
 
   // Get unique categories from templates
   const templateCategories = useMemo(
@@ -295,12 +325,12 @@ export function BlueprintForm({
     if (mode === 'create') {
       const updatedTemplates = form.getValues('selectedTemplates') || [];
 
-      // Verificar se a função updateChildTemplates existe antes de chamá-la
-      if (typeof updateChildTemplates === 'function') {
-        updateChildTemplates(updatedTemplates);
+      // Verificar se a função updateSelectedTemplates existe antes de chamá-la
+      if (typeof updateSelectedTemplates === 'function') {
+        updateSelectedTemplates(updatedTemplates);
       } else {
         console.warn(
-          'Warning: updateChildTemplates is not a function in addTemplateToSelection. Templates may not be saved in context.'
+          'Warning: updateSelectedTemplates is not a function in addTemplateToSelection. Templates may not be saved in context.'
         );
       }
     }
@@ -326,7 +356,7 @@ export function BlueprintForm({
 
     // Atualizar o contexto se estiver no modo de criação
     if (mode === 'create') {
-      updateChildTemplates(updatedTemplates);
+      updateSelectedTemplates(updatedTemplates);
     }
 
     return true;
@@ -356,8 +386,8 @@ export function BlueprintForm({
     form.setValue('selectedTemplates', reorderedWithCorrectOrder);
 
     // Atualizar o contexto se estiver no modo de criação
-    if (mode === 'create' && typeof updateChildTemplates === 'function') {
-      updateChildTemplates(reorderedWithCorrectOrder);
+    if (mode === 'create' && typeof updateSelectedTemplates === 'function') {
+      updateSelectedTemplates(reorderedWithCorrectOrder);
     }
   };
 
@@ -463,13 +493,15 @@ ${variable.value || ''}
     return (
       <Card className="h-full">
         <CardHeader className="pb-2">
-          <CardTitle>Catálogo de Templates</CardTitle>
-          <CardDescription>Selecione os templates para adicionar ao blueprint.</CardDescription>
+          <CardTitle>{tResources('createResource.steps.selectBlueprint.title')}</CardTitle>
+          <CardDescription>
+            {tResources('createResource.steps.selectBlueprint.description')}
+          </CardDescription>
           <div className="mt-2">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, descrição ou categoria..."
+                placeholder={tResources('table.search.placeholder')}
                 value={templateSearchQuery}
                 onChange={(e) => setTemplateSearchQuery(e.target.value)}
                 className="pl-8"
@@ -485,42 +517,68 @@ ${variable.value || ''}
             </div>
           ) : filteredCatalogTemplates.length === 0 ? (
             <div className="flex h-40 flex-col items-center justify-center text-center">
-              <div className="text-muted-foreground">Nenhum template encontrado</div>
-              <p className="text-xs text-muted-foreground">
-                {templateSearchQuery || selectedCategoryFilter
-                  ? 'Tente ajustar os filtros de busca'
-                  : 'Não há templates disponíveis'}
+              <div className="mb-4 h-16 w-16 text-muted-foreground">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M12 8v8" />
+                  <path d="M8 12h8" />
+                </svg>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {tResources('table.emptyState.description')}
               </p>
             </div>
           ) : (
-            <div className="grid gap-2">
-              {filteredCatalogTemplates.map((template) => (
-                <Card key={template.id} className="overflow-hidden">
-                  <div className="flex items-start justify-between p-3">
-                    <div>
-                      <h4 className="text-sm font-medium">{template.name}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {template.description || 'Sem descrição'}
-                      </p>
-                      <div className="mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {template.category || 'Sem categoria'}
-                        </Badge>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => addTemplateToSelection(template)}
-                      className="gap-1"
+            <div className="divide-y divide-border">
+              {filteredCatalogTemplates.map((template, index) => (
+                <Draggable key={template.id} draggableId={template.id} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={`flex items-center justify-between p-3 ${
+                        snapshot.isDragging ? 'bg-accent opacity-90' : 'hover:bg-muted/50'
+                      }`}
                     >
-                      <PlusCircle className="h-4 w-4" />
-                      <span>Adicionar</span>
-                    </Button>
-                  </div>
-                </Card>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-medium">{template.name}</h4>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {template.description || 'Sem descrição'}
+                        </p>
+                        <div className="mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {template.category || 'Sem categoria'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => addTemplateToSelection(template)}
+                        className="gap-1"
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                        <span>{tResources('actions.add')}</span>
+                      </Button>
+                    </div>
+                  )}
+                </Draggable>
               ))}
+              {provided.placeholder}
             </div>
           )}
         </CardContent>
@@ -537,7 +595,9 @@ ${variable.value || ''}
         <CardHeader className="pb-2">
           <div className="flex items-center justify-end">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium">Templates no Blueprint</h3>
+              <h3 className="text-sm font-medium">
+                {tResources('createResource.steps.configureBlueprintTemplates.title')}
+              </h3>
               {selectedTemplates.length > 0 && (
                 <Badge variant="secondary" className="h-5 px-2 text-xs">
                   {selectedTemplates.length}
@@ -547,131 +607,100 @@ ${variable.value || ''}
           </div>
         </CardHeader>
         <CardContent className="h-[400px] overflow-auto">
-          {selectedTemplates.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center rounded-md border border-dashed p-4 text-center">
+          {(form.getValues('selectedTemplates') || []).length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+              <div className="mb-4 h-16 w-16 text-muted-foreground">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M12 8v8" />
+                  <path d="M8 12h8" />
+                </svg>
+              </div>
               <p className="text-sm text-muted-foreground">
-                Selecione templates do catálogo ao lado para adicionar aqui.
+                {tResources('table.emptyState.description')}
               </p>
             </div>
           ) : (
-            <DragDropContext
-              onDragEnd={(result) => {
-                // Ignorar drops fora de áreas válidas
-                if (!result.destination) {
-                  return;
-                }
+            <div className="space-y-2 p-2">
+              {(form.getValues('selectedTemplates') || [])
+                .sort((a, b) => a.order - b.order)
+                .map((template, index) => {
+                  const templateInfo = templates.find((t) => t.id === template.templateId);
 
-                // Obter a lista atual de templates
-                const selectedTemplates = [...(form.getValues('selectedTemplates') || [])];
-
-                // Mover o item arrastado
-                const [movedItem] = selectedTemplates.splice(result.source.index, 1);
-
-                selectedTemplates.splice(result.destination.index, 0, movedItem);
-
-                // Atualizar as ordens após reorganização
-                const reorderedTemplates = selectedTemplates.map((item, index) => ({
-                  ...item,
-                  order: index + 1,
-                }));
-
-                // Atualizar o formulário com a nova ordem
-                form.setValue('selectedTemplates', reorderedTemplates);
-
-                // Atualizar o contexto se necessário
-                if (mode === 'create' && typeof updateChildTemplates === 'function') {
-                  updateChildTemplates(reorderedTemplates);
-                }
-              }}
-            >
-              <Droppable droppableId="template-list">
-                {(provided) => (
-                  <div
-                    className="space-y-2 p-2"
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                  >
-                    {(form.getValues('selectedTemplates') || [])
-                      .sort((a, b) => a.order - b.order)
-                      .map((template, index) => {
-                        const templateInfo = templates.find((t) => t.id === template.templateId);
-
-                        return (
-                          <Draggable
-                            key={`${template.identifier}-${index}`}
-                            draggableId={`${template.identifier}-${index}`}
-                            index={index}
-                          >
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`rounded-md border p-3 ${
-                                  snapshot.isDragging ? 'border-primary bg-accent opacity-90' : ''
-                                }`}
-                              >
-                                <div className="flex items-start justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs">
-                                      {template.order}
-                                    </span>
-                                    <div>
-                                      <h4 className="text-sm font-medium">
-                                        {templateInfo?.name || 'Template desconhecido'}
-                                      </h4>
-                                      <p className="text-xs text-muted-foreground">
-                                        Identificador:{' '}
-                                        <span className="font-medium">{template.identifier}</span>
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeTemplate(index)}
-                                    className="h-7 w-7"
-                                  >
-                                    <Trash className="h-4 w-4" />
-                                    <span className="sr-only">Remover</span>
-                                  </Button>
-                                </div>
-
-                                <div className="mt-3 space-y-2">
-                                  <div>
-                                    <label className="text-xs font-medium">Identificador</label>
-                                    <Input
-                                      value={template.identifier}
-                                      onChange={(e) =>
-                                        updateTemplateIdentifier(index, e.target.value)
-                                      }
-                                      className="mt-1 h-7 text-xs"
-                                      placeholder="identificador-unico"
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <div className="flex items-center justify-between">
-                                      <label className="text-xs font-medium text-muted-foreground">
-                                        Ordem do template: {template.order}
-                                      </label>
-                                      <div className="text-xs italic text-muted-foreground">
-                                        Arraste para reordenar
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
+                  return (
+                    <Draggable
+                      key={`${template.identifier}-${index}`}
+                      draggableId={`selected-${template.identifier}-${index}`}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`rounded-md border p-3 ${
+                            snapshot.isDragging ? 'border-primary bg-accent opacity-90' : ''
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs">
+                                {template.order}
+                              </span>
+                              <div>
+                                <h4 className="text-sm font-medium">
+                                  {templateInfo?.name || 'Template desconhecido'}
+                                </h4>
+                                <p className="text-xs text-muted-foreground">
+                                  {tResources('createResource.form.identifier.label')}:{' '}
+                                  <span className="font-medium">{template.identifier}</span>
+                                </p>
                               </div>
-                            )}
-                          </Draggable>
-                        );
-                      })}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeTemplate(index)}
+                              className="h-7 w-7"
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">{tResources('actions.delete')}</span>
+                            </Button>
+                          </div>
+
+                          <div className="mt-3 space-y-2">
+                            <div>
+                              <label className="text-xs font-medium">
+                                {tResources('createResource.form.identifier.label')}
+                              </label>
+                              <Input
+                                value={template.identifier}
+                                onChange={(e) => updateTemplateIdentifier(index, e.target.value)}
+                                className="mt-1 h-7 text-xs"
+                                placeholder={tResources(
+                                  'createResource.form.identifier.placeholder'
+                                )}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  );
+                })}
+              {provided.placeholder}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -989,12 +1018,12 @@ ${variable.value || ''}
     if (mode === 'create') {
       // Atualizar templates selecionados no contexto
       if (data.selectedTemplates) {
-        // Verificar se a função updateChildTemplates existe antes de chamá-la
-        if (typeof updateChildTemplates === 'function') {
-          updateChildTemplates(data.selectedTemplates);
+        // Verificar se a função updateSelectedTemplates existe antes de chamá-la
+        if (typeof updateSelectedTemplates === 'function') {
+          updateSelectedTemplates(data.selectedTemplates);
         } else {
           console.warn(
-            'Warning: updateChildTemplates is not a function. Templates may not be saved in context.'
+            'Warning: updateSelectedTemplates is not a function. Templates may not be saved in context.'
           );
         }
       }
@@ -1254,8 +1283,8 @@ ${variable.value || ''}
                     form.setValue('selectedTemplates', reorderedTemplates);
 
                     // Atualizar o contexto se necessário
-                    if (mode === 'create' && typeof updateChildTemplates === 'function') {
-                      updateChildTemplates(reorderedTemplates);
+                    if (mode === 'create' && typeof updateSelectedTemplates === 'function') {
+                      updateSelectedTemplates(reorderedTemplates);
                     }
                   }
                 }}
@@ -1294,13 +1323,25 @@ ${variable.value || ''}
                               </div>
                             ) : filteredCatalogTemplates.length === 0 ? (
                               <div className="flex h-40 flex-col items-center justify-center text-center">
-                                <div className="text-muted-foreground">
-                                  Nenhum template encontrado
+                                <div className="mb-4 h-16 w-16 text-muted-foreground">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="100%"
+                                    height="100%"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <path d="M12 8v8" />
+                                    <path d="M8 12h8" />
+                                  </svg>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                  {templateSearchQuery
-                                    ? 'Tente ajustar os termos de busca'
-                                    : 'Não há templates disponíveis'}
+                                <p className="text-sm text-muted-foreground">
+                                  {tResources('table.emptyState.description')}
                                 </p>
                               </div>
                             ) : (
@@ -1343,7 +1384,7 @@ ${variable.value || ''}
                                           className="gap-1"
                                         >
                                           <PlusCircle className="h-4 w-4" />
-                                          <span>Adicionar</span>
+                                          <span>{tResources('actions.add')}</span>
                                         </Button>
                                       </div>
                                     )}
@@ -1400,8 +1441,7 @@ ${variable.value || ''}
                                   </svg>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                  Selecione ou arraste templates do catálogo para adicionar ao
-                                  blueprint
+                                  {tResources('table.emptyState.description')}
                                 </p>
                               </div>
                             ) : (
@@ -1440,7 +1480,10 @@ ${variable.value || ''}
                                                     {templateInfo?.name || 'Template desconhecido'}
                                                   </h4>
                                                   <p className="text-xs text-muted-foreground">
-                                                    Identificador:{' '}
+                                                    {tResources(
+                                                      'createResource.form.identifier.label'
+                                                    )}
+                                                    :{' '}
                                                     <span className="font-medium">
                                                       {template.identifier}
                                                     </span>
@@ -1455,14 +1498,18 @@ ${variable.value || ''}
                                                 className="h-7 w-7"
                                               >
                                                 <Trash className="h-4 w-4" />
-                                                <span className="sr-only">Remover</span>
+                                                <span className="sr-only">
+                                                  {tResources('actions.delete')}
+                                                </span>
                                               </Button>
                                             </div>
 
                                             <div className="mt-3 space-y-2">
                                               <div>
                                                 <label className="text-xs font-medium">
-                                                  Identificador
+                                                  {tResources(
+                                                    'createResource.form.identifier.label'
+                                                  )}
                                                 </label>
                                                 <Input
                                                   value={template.identifier}
@@ -1470,19 +1517,10 @@ ${variable.value || ''}
                                                     updateTemplateIdentifier(index, e.target.value)
                                                   }
                                                   className="mt-1 h-7 text-xs"
-                                                  placeholder="identificador-unico"
+                                                  placeholder={tResources(
+                                                    'createResource.form.identifier.placeholder'
+                                                  )}
                                                 />
-                                              </div>
-
-                                              <div>
-                                                <div className="flex items-center justify-between">
-                                                  <label className="text-xs font-medium text-muted-foreground">
-                                                    Ordem do template: {template.order}
-                                                  </label>
-                                                  <div className="text-xs italic text-muted-foreground">
-                                                    Arraste para reordenar
-                                                  </div>
-                                                </div>
                                               </div>
                                             </div>
                                           </div>
@@ -1503,10 +1541,10 @@ ${variable.value || ''}
                 {/* Footer fixo na parte inferior */}
                 <DialogFooter className="mt-4 border-t pt-4">
                   <Button type="button" variant="outline" onClick={onPrevStep}>
-                    Voltar
+                    {tResources('createResource.buttons.previous')}
                   </Button>
                   <Button type="submit" data-testid="templates-next-button">
-                    Próximo
+                    {tResources('createResource.buttons.next')}
                   </Button>
                 </DialogFooter>
               </DragDropContext>

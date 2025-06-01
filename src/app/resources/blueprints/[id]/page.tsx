@@ -3,6 +3,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { EditBlueprintForm } from '@/components/resources/blueprints/edit-blueprint-form';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,8 @@ export default function BlueprintEditPage() {
 function BlueprintEditPageContent() {
   const params = useParams();
   const router = useRouter();
+  const { t: tBlueprints } = useTranslation('blueprints');
+  const { t: tResources } = useTranslation('resources');
   const { blueprints, isLoading: isLoadingBlueprints, updateBlueprint } = useBlueprintStore();
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,11 +40,11 @@ function BlueprintEditPageContent() {
       if (foundBlueprint) {
         setBlueprint(foundBlueprint);
       } else {
-        setError(`Blueprint com ID ${blueprintId} não encontrado.`);
+        setError(tBlueprints('errors.blueprintNotFound', { id: blueprintId }));
       }
       setIsLoading(false);
     }
-  }, [blueprintId, blueprints, isLoadingBlueprints]);
+  }, [blueprintId, blueprints, isLoadingBlueprints, tBlueprints]);
 
   const handleGoBack = () => {
     router.push('/resources/blueprints');
@@ -73,7 +76,7 @@ function BlueprintEditPageContent() {
       router.push('/resources/blueprints');
     } catch (err) {
       console.error('Erro ao atualizar blueprint:', err);
-      setError('Falha ao salvar alterações no blueprint.');
+      setError(tBlueprints('errors.updateFailed'));
     }
   };
 
@@ -106,13 +109,13 @@ function BlueprintEditPageContent() {
             <Button variant="ghost" size="icon" onClick={handleGoBack}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-semibold">Erro</h1>
+            <h1 className="text-2xl font-semibold">{tBlueprints('errors.title')}</h1>
           </div>
         </div>
         <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4">
-          <p className="text-destructive">{error || 'Blueprint não encontrado'}</p>
+          <p className="text-destructive">{error || tBlueprints('errors.blueprintNotFound')}</p>
           <Button onClick={handleGoBack} variant="outline" className="mt-4">
-            Voltar para Blueprints
+            {tBlueprints('actions.backToBlueprints')}
           </Button>
         </div>
       </div>
@@ -125,14 +128,13 @@ function BlueprintEditPageContent() {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={handleGoBack} data-testid="go-back-button">
             <ArrowLeft className="h-4 w-4" />
-            <span className="sr-only">Voltar</span>
+            <span className="sr-only">{tBlueprints('actions.back')}</span>
           </Button>
           <h1 className="text-2xl font-semibold" data-testid="edit-blueprint-title">
-            Editar Blueprint: {blueprint.name}
+            {tBlueprints('editBlueprint.title', { name: blueprint.name })}
           </h1>
         </div>
       </div>
-
       <EditBlueprintForm blueprint={blueprint} onSave={handleSave} />
     </div>
   );

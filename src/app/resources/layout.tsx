@@ -8,11 +8,11 @@ import { cn } from '@/lib/utils';
 
 export default function ResourcesLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['resources', 'common']);
 
   const tabs = [
-    { name: t('resources.tabs.templates'), href: '/resources/templates' },
-    { name: t('resources.tabs.blueprints'), href: '/resources/blueprints' },
+    { name: t('common:resources.tabs.templates'), href: '/resources/templates' },
+    { name: t('common:resources.tabs.blueprints'), href: '/resources/blueprints' },
   ];
 
   return (

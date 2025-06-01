@@ -8,12 +8,14 @@ import enBlueprints from '../locales/en/blueprints.json';
 import enCommon from '../locales/en/common.json';
 import enEntityTable from '../locales/en/entityTable.json';
 import enPat from '../locales/en/pat.json';
+import enResources from '../locales/en/resources.json';
 import enSettings from '../locales/en/settings.json';
 import enTemplates from '../locales/en/templates.json';
 import ptBlueprints from '../locales/pt/blueprints.json';
 import ptCommon from '../locales/pt/common.json';
 import ptEntityTable from '../locales/pt/entityTable.json';
 import ptPat from '../locales/pt/pat.json';
+import ptResources from '../locales/pt/resources.json';
 import ptSettings from '../locales/pt/settings.json';
 import ptTemplates from '../locales/pt/templates.json';
 
@@ -27,6 +29,7 @@ declare module 'react-i18next' {
       pat: typeof enPat;
       templates: typeof enTemplates;
       blueprints: typeof enBlueprints;
+      resources: typeof enResources;
     };
   }
 }
@@ -39,6 +42,7 @@ const resources = {
     pat: ptPat,
     templates: ptTemplates,
     blueprints: ptBlueprints,
+    resources: ptResources,
   },
   en: {
     common: enCommon,
@@ -47,6 +51,7 @@ const resources = {
     pat: enPat,
     templates: enTemplates,
     blueprints: enBlueprints,
+    resources: enResources,
   },
 };
 

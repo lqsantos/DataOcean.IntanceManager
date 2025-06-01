@@ -37,6 +37,7 @@ export function ResourceTemplatesPage() {
 // Create a separate component that uses the contexts
 function ResourceTemplatesContent() {
   const { t: tTemplates } = useTranslation('templates');
+  const { t: tResources } = useTranslation('resources');
   const [searchQuery, setSearchQuery] = useState('');
 
   const {
@@ -155,7 +156,7 @@ function ResourceTemplatesContent() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Buscar templates..."
+                  placeholder={tResources('table.search.placeholder')}
                   className="w-full bg-background pl-8 md:w-[300px] lg:w-[400px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -172,7 +173,7 @@ function ResourceTemplatesContent() {
                 data-testid="resource-templates-page-refresh-button"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span className="sr-only">Atualizar</span>
+                <span className="sr-only">{tResources('actions.refresh')}</span>
               </Button>
               <Button
                 onClick={openModal}
