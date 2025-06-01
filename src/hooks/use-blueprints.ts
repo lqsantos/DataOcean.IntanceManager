@@ -5,7 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
-import type { Blueprint, CreateBlueprintDto, UpdateBlueprintDto } from '@/types/blueprint';
+import type {
+  Blueprint,
+  BlueprintChildTemplate,
+  CreateBlueprintDto,
+  UpdateBlueprintDto,
+} from '@/types/blueprint';
 
 import { useTemplates } from './use-templates';
 
@@ -49,6 +54,10 @@ export function useBlueprintStore() {
                   type: 'number',
                 },
               ],
+              childTemplates: [],
+              helperTpl: `{{- define "helper.replicaCount" -}}
+2
+{{- end }}`,
             },
             {
               id: '2',
@@ -68,6 +77,17 @@ export function useBlueprintStore() {
                   type: 'number',
                 },
               ],
+              childTemplates: [
+                {
+                  templateId: 'template-monitoring',
+                  templateName: 'Database Monitoring',
+                  order: 1,
+                  overrideValues: 'enabled: true\ninterval: 30s',
+                },
+              ],
+              helperTpl: `{{- define "helper.storageSize" -}}
+10
+{{- end }}`,
             },
           ];
 
@@ -93,23 +113,48 @@ export function useBlueprintStore() {
       // Create a deep copy of blueprints to prevent modifications to original state
       const updatedBlueprints = blueprints.map((blueprint) => {
         const template = templates.find((t) => t.id === blueprint.templateId);
+        const updatedBlueprint = { ...blueprint };
 
-        // Only update if template name is different to avoid unnecessary re-renders
+        // Update main template name if different
         if (template && blueprint.templateName !== template.name) {
-          return {
-            ...blueprint,
-            templateName: template.name,
-          };
+          updatedBlueprint.templateName = template.name;
         }
 
-        // Return the original blueprint if no changes
-        return blueprint;
+        // Update child template names if they exist
+        if (blueprint.childTemplates && blueprint.childTemplates.length > 0) {
+          updatedBlueprint.childTemplates = blueprint.childTemplates.map((childTemplate) => {
+            const childTemplateObj = templates.find((t) => t.id === childTemplate.templateId);
+
+            if (childTemplateObj && childTemplate.templateName !== childTemplateObj.name) {
+              return { ...childTemplate, templateName: childTemplateObj.name };
+            }
+
+            return childTemplate;
+          });
+        }
+
+        return updatedBlueprint;
       });
 
       // Check if there were actual changes
-      const hasChanges = updatedBlueprints.some(
-        (updatedBp, index) => updatedBp.templateName !== blueprints[index].templateName
-      );
+      const hasChanges = updatedBlueprints.some((updatedBp, index) => {
+        // Check main template name
+        if (updatedBp.templateName !== blueprints[index].templateName) {
+          return true;
+        }
+
+        // Check child template names
+        const updatedChildren = updatedBp.childTemplates || [];
+        const originalChildren = blueprints[index].childTemplates || [];
+
+        if (updatedChildren.length !== originalChildren.length) {
+          return true;
+        }
+
+        return updatedChildren.some((child, childIndex) => {
+          return child.templateName !== originalChildren[childIndex]?.templateName;
+        });
+      });
 
       // Only update state if there were actual changes
       if (hasChanges) {
@@ -120,6 +165,36 @@ export function useBlueprintStore() {
     }
   }, [templates]);
 
+  // Generate helper.tpl content from variables
+  const generateHelperTpl = (variables: Blueprint['variables']) => {
+    if (!variables || variables.length === 0) {
+      return '';
+    }
+
+    const helperContent = variables
+      .map((variable) => {
+        let defaultValue = '';
+
+        // Format the default value according to the type
+        if (variable.defaultValue !== undefined) {
+          if (variable.type === 'string') {
+            defaultValue = variable.defaultValue;
+          } else if (variable.type === 'number') {
+            defaultValue = String(Number(variable.defaultValue) || 0);
+          } else if (variable.type === 'boolean') {
+            defaultValue = variable.defaultValue.toLowerCase() === 'true' ? 'true' : 'false';
+          }
+        }
+
+        return `{{- define "helper.${variable.name}" -}}
+${defaultValue}
+{{- end }}`;
+      })
+      .join('\n\n');
+
+    return helperContent;
+  };
+
   // Save blueprints to storage
   const saveBlueprints = (newBlueprints: Blueprint[]) => {
     localStorage.setItem('dataocean_blueprints', JSON.stringify(newBlueprints));
@@ -129,7 +204,27 @@ export function useBlueprintStore() {
   // Create a new blueprint
   const createBlueprint = async (data: CreateBlueprintDto): Promise<Blueprint> => {
     try {
-      const template = templates.find((t) => t.id === data.templateId);
+      const mainTemplate = templates.find((t) => t.id === data.templateId);
+
+      // Process child templates (if any)
+      const processedChildTemplates: BlueprintChildTemplate[] = [];
+
+      if (data.childTemplates && data.childTemplates.length > 0) {
+        data.childTemplates.forEach((child, index) => {
+          const childTemplateObj = templates.find((t) => t.id === child.templateId);
+
+          if (childTemplateObj) {
+            processedChildTemplates.push({
+              ...child,
+              templateName: childTemplateObj.name,
+              order: index + 1,
+            });
+          }
+        });
+      }
+
+      // Generate helper.tpl content if variables are provided
+      const helperTpl = data.variables ? generateHelperTpl(data.variables) : '';
 
       const newBlueprint: Blueprint = {
         id: uuidv4(),
@@ -137,10 +232,12 @@ export function useBlueprintStore() {
         description: data.description,
         category: data.category,
         templateId: data.templateId,
-        templateName: template?.name || 'Unknown Template',
+        templateName: mainTemplate?.name || 'Unknown Template',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        variables: [],
+        variables: data.variables || [],
+        childTemplates: processedChildTemplates,
+        helperTpl: helperTpl,
       };
 
       const newBlueprints = [...blueprints, newBlueprint];
@@ -158,7 +255,6 @@ export function useBlueprintStore() {
       toast.error(t('toast.error.title'), {
         description: error.message,
       });
-
       throw error;
     }
   };
@@ -172,10 +268,40 @@ export function useBlueprintStore() {
         throw new Error(`Blueprint with ID ${data.id} not found`);
       }
 
+      // Process child templates if provided
+      let processedChildTemplates: BlueprintChildTemplate[] | undefined = undefined;
+
+      if (data.childTemplates) {
+        processedChildTemplates = [];
+        data.childTemplates.forEach((child, index) => {
+          const childTemplateObj = templates.find((t) => t.id === child.templateId);
+
+          if (childTemplateObj) {
+            processedChildTemplates!.push({
+              ...child,
+              templateName: childTemplateObj.name,
+              order: child.order || index + 1,
+            });
+          }
+        });
+      }
+
+      // Generate or use provided helper.tpl
+      let helperTpl = data.helperTpl;
+
+      if (!helperTpl && data.variables) {
+        helperTpl = generateHelperTpl(data.variables);
+      }
+
       const updatedBlueprint: Blueprint = {
         ...blueprints[index],
         ...data,
         updatedAt: new Date().toISOString(),
+        childTemplates:
+          processedChildTemplates !== undefined
+            ? processedChildTemplates
+            : blueprints[index].childTemplates,
+        helperTpl: helperTpl !== undefined ? helperTpl : blueprints[index].helperTpl,
       };
 
       const newBlueprints = [...blueprints];
@@ -194,7 +320,6 @@ export function useBlueprintStore() {
       toast.error(t('toast.error.title'), {
         description: error.message,
       });
-
       throw error;
     }
   };
@@ -207,11 +332,9 @@ export function useBlueprintStore() {
       if (index === -1) {
         throw new Error(`Blueprint with ID ${id} not found`);
       }
-
       const newBlueprints = blueprints.filter((b) => b.id !== id);
 
       saveBlueprints(newBlueprints);
-
       toast.success(t('toast.deleted.title'), {
         description: t('toast.deleted.description'),
       });
@@ -221,7 +344,6 @@ export function useBlueprintStore() {
       toast.error(t('toast.error.title'), {
         description: error.message,
       });
-
       throw error;
     }
   };
@@ -241,6 +363,8 @@ export function useBlueprintStore() {
         name: `${blueprint.name} (Cópia)`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        // Ensure child templates are properly copied
+        childTemplates: blueprint.childTemplates ? [...blueprint.childTemplates] : [],
       };
 
       const newBlueprints = [...blueprints, newBlueprint];
@@ -258,7 +382,6 @@ export function useBlueprintStore() {
       toast.error(t('toast.error.title'), {
         description: error.message,
       });
-
       throw error;
     }
   };

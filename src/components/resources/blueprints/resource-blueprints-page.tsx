@@ -19,6 +19,7 @@ import { CreateBlueprintProvider, useCreateBlueprint } from '@/contexts/create-b
 import { useBlueprintStore } from '@/hooks/use-blueprints';
 
 import { BlueprintCard } from './blueprint-card';
+import { CreateBlueprintModal } from './create-blueprint-modal';
 import { DeleteBlueprintDialog } from './delete-blueprint-dialog';
 
 export function ResourceBlueprintsPage() {
@@ -266,6 +267,15 @@ function BlueprintsPageContent() {
           }
         />
       )}
+
+      {/* Componente de modal para criar novos blueprints */}
+      <CreateBlueprintModal
+        isOpen={false}
+        onClose={() => {}}
+        onCreate={(newBlueprint) => {
+          console.log('Blueprint criado:', newBlueprint);
+        }}
+      />
     </div>
   );
 }

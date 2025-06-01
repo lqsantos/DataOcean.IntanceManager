@@ -28,7 +28,7 @@ Criar um formulário amigável, modular e escalável para cadastro de Blueprints
 1. Informações Gerais
 
    - Nome do Blueprint
-   - Descrição do Blueprint (com suporte a markdown e preview)
+   - Descrição do Blueprint
 
 2. Associação de Templates (Aplicações Filhas)
 
