@@ -1237,12 +1237,9 @@ ${variable.value || ''}
                               <div>
                                 <div className="flex items-center gap-2">
                                   <h4 className="text-sm font-medium">{template.name}</h4>
-                                  <Badge variant="outline" className="text-xs">
-                                    v{template.version || '1.0.0'}
-                                  </Badge>
                                 </div>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                  {template.description || 'Template sem descrição'}
+                                  {template.description || 'Sem descrição'}
                                 </p>
                                 <div className="mt-1">
                                   <Badge variant="secondary" className="text-xs">
