@@ -75,6 +75,8 @@ export function SelectedTemplatesList({
                   </svg>
                 </div>
                 <p className="text-sm text-muted-foreground">Nenhum template selecionado</p>
+                {/* The droppable needs placeholder even when empty */}
+                {provided.placeholder}
               </div>
             ) : (
               <div className="space-y-2 p-2">

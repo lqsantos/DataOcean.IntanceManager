@@ -33,7 +33,18 @@ export interface BlueprintVariable {
   name: string;
   description?: string;
   value?: string;
-  type: 'simple' | 'advanced';
+  type: 'simple' | 'advanced'; // Type is always required
+}
+
+/**
+ * Template simplified for the catalog display
+ */
+export interface CatalogTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  isActive?: boolean;
 }
 
 /**
@@ -67,7 +78,7 @@ export const formSchema = z.object({
         name: z.string().min(1, 'Nome é obrigatório'),
         description: z.string().optional(),
         value: z.string().optional(),
-        type: z.enum(['simple', 'advanced']).default('simple'),
+        type: z.enum(['simple', 'advanced']), // Required field
       })
     )
     .optional(),
@@ -97,9 +108,11 @@ export interface BlueprintFormProps {
   currentStep?: number;
   /** Total wizard steps */
   totalSteps?: number;
-  /** Navigation functions (for create mode wizard) */
+  /** Function to move to next step */
   onNextStep?: () => void;
+  /** Function to move to previous step */
   onPrevStep?: () => void;
+  /** Function to go to a specific step */
   onGoToStep?: (step: number) => void;
 }
 

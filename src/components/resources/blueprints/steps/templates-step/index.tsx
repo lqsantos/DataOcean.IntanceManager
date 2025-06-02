@@ -1,13 +1,13 @@
 'use client';
 
-import { DragDropContext } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 
 import { useTemplates } from '@/hooks/use-templates';
 
 import { useTemplateSelection } from '../../hooks/use-template-selection';
-import type { FormValues } from '../../types';
+import type { CatalogTemplate, FormValues } from '../../types';
 
 import { SelectedTemplatesList } from './selected-templates';
 import { TemplateCatalog } from './template-catalog';
@@ -24,9 +24,8 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
   // Fetch templates from API
   const { templates, isLoading: templatesLoading } = useTemplates();
 
-  // State for search and filter
+  // State for search
   const [templateSearchQuery, setTemplateSearchQuery] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
 
   // Get form values
   const formTemplates = form.getValues('selectedTemplates') || [];
@@ -41,10 +40,7 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
     reorderTemplates,
   } = useTemplateSelection(formTemplates);
 
-  // Extract unique categories
-  const templateCategories = Array.from(
-    new Set(templates.map((template) => template.category).filter(Boolean))
-  );
+  // No category extraction needed anymore
 
   // Update form value when selectedTemplates change
   const updateFormTemplates = () => {
@@ -62,26 +58,19 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
   const filteredCatalogTemplates = templates
     .filter((template) => template.isActive)
     .filter((template) => {
-      // Category filter
-      if (selectedCategoryFilter && template.category !== selectedCategoryFilter) {
-        return false;
-      }
-
-      // Search text filter
       if (templateSearchQuery) {
         const searchLower = templateSearchQuery.toLowerCase();
         const nameMatch = template.name.toLowerCase().includes(searchLower);
         const descMatch = (template.description || '').toLowerCase().includes(searchLower);
-        const categoryMatch = (template.category || '').toLowerCase().includes(searchLower);
 
-        return nameMatch || descMatch || categoryMatch;
+        return nameMatch || descMatch;
       }
 
       return true;
     });
 
   // Handle dragdrop events
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: DropResult) => {
     // Ignore if no destination
     if (!result.destination) {
       return;
@@ -114,7 +103,7 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
   };
 
   // Handle add template
-  const handleAddTemplate = (template: any) => {
+  const handleAddTemplate = (template: CatalogTemplate) => {
     addTemplate(template);
     updateFormTemplates();
   };
@@ -140,6 +129,9 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
     updateFormTemplates();
   };
 
+  // We always need to wrap our components in DragDropContext
+  // otherwise the Droppable components will throw an error
+
   return (
     <div className="flex h-full flex-col">
       <div className="mb-6">
@@ -152,14 +144,11 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <TemplateCatalog
-            templates={filteredCatalogTemplates}
+            templates={templatesLoading ? [] : filteredCatalogTemplates}
             isLoading={templatesLoading}
             searchQuery={templateSearchQuery}
             setSearchQuery={setTemplateSearchQuery}
-            selectedCategory={selectedCategoryFilter}
-            setSelectedCategory={setSelectedCategoryFilter}
             onAddTemplate={handleAddTemplate}
-            categories={templateCategories}
           />
           <SelectedTemplatesList
             selectedTemplates={selectedTemplates}
