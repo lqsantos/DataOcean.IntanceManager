@@ -34,7 +34,8 @@ export function TemplateCatalog({
 }: TemplateCatalogProps) {
   return (
     <div className="flex flex-col">
-      <div className="mb-3 flex h-8 items-center justify-end">
+      <div className="mb-3 flex h-8 items-center justify-between">
+        <h3 className="text-sm font-medium">Catálogo de Templates</h3>
         <div className="relative w-64">
           <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

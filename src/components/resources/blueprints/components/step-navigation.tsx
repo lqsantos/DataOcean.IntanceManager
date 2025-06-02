@@ -7,10 +7,6 @@ import { Button } from '@/components/ui/button';
 interface StepNavigationProps {
   /** Current step */
   currentStep: number;
-  /** Total number of steps */
-  totalSteps: number;
-  /** Function to move to next step */
-  onNextStep?: () => void;
   /** Function to move to previous step */
   onPrevStep?: () => void;
   /** Function to cancel operation */
@@ -37,8 +33,6 @@ interface StepNavigationProps {
  */
 export function StepNavigation({
   currentStep,
-  totalSteps,
-  onNextStep,
   onPrevStep,
   onCancel,
   isFinalStep = false,
@@ -68,10 +62,6 @@ export function StepNavigation({
             {prev}
           </Button>
         )}
-      </div>
-
-      <div className="self-center text-sm text-muted-foreground">
-        Etapa {currentStep} de {totalSteps}
       </div>
 
       {isFinalStep ? (

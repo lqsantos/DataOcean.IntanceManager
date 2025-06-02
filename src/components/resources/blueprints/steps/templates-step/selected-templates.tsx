@@ -6,7 +6,6 @@ import { Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 
 import type { BlueprintChildTemplate } from '../../types';
 
@@ -17,8 +16,6 @@ interface SelectedTemplatesListProps {
   onRemoveTemplate: (index: number) => void;
   /** Update template identifier */
   onUpdateIdentifier: (index: number, identifier: string) => boolean;
-  /** Update template overrides */
-  onUpdateOverrides: (index: number, overrides: string) => void;
   /** Get template name from ID */
   getTemplateName: (id: string) => string;
 }
@@ -30,7 +27,6 @@ export function SelectedTemplatesList({
   selectedTemplates,
   onRemoveTemplate,
   onUpdateIdentifier,
-  onUpdateOverrides,
   getTemplateName,
 }: SelectedTemplatesListProps) {
   return (
@@ -137,23 +133,6 @@ export function SelectedTemplatesList({
                                 placeholder="identificador-do-template"
                                 data-testid={`template-identifier-${index}`}
                               />
-                            </div>
-
-                            <div>
-                              <label className="text-xs font-medium">
-                                Valores de Substituição (opcional)
-                              </label>
-                              <Textarea
-                                value={template.overrideValues || ''}
-                                onChange={(e) => onUpdateOverrides(index, e.target.value)}
-                                className="mt-1 font-mono text-xs"
-                                placeholder='{ "key": "value" }'
-                                rows={3}
-                                data-testid={`template-overrides-${index}`}
-                              />
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                Valores em formato JSON que substituirão os padrões do template.
-                              </p>
                             </div>
                           </div>
                         </div>

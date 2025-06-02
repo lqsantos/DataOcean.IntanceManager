@@ -36,7 +36,6 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
     addTemplate,
     removeTemplate,
     updateTemplateIdentifier,
-    updateTemplateOverrides,
     reorderTemplates,
   } = useTemplateSelection(formTemplates);
 
@@ -123,24 +122,11 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
     return result;
   };
 
-  // Handle update overrides
-  const handleUpdateOverrides = (index: number, overrides: string) => {
-    updateTemplateOverrides(index, overrides);
-    updateFormTemplates();
-  };
-
   // We always need to wrap our components in DragDropContext
   // otherwise the Droppable components will throw an error
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold">Templates Associados</h2>
-        <p className="text-sm text-muted-foreground">
-          Selecione os templates que farão parte deste blueprint.
-        </p>
-      </div>
-
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <TemplateCatalog
@@ -154,7 +140,6 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
             selectedTemplates={selectedTemplates}
             onRemoveTemplate={handleRemoveTemplate}
             onUpdateIdentifier={handleUpdateIdentifier}
-            onUpdateOverrides={handleUpdateOverrides}
             getTemplateName={getTemplateName}
           />
         </div>
