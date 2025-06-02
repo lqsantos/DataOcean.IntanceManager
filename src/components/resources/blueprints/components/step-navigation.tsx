@@ -45,7 +45,7 @@ export function StepNavigation({
   const { next = 'Próximo', prev = 'Anterior', cancel = 'Cancelar', submit = 'Salvar' } = labels;
 
   return (
-    <div className="mt-6 flex justify-between border-t pt-4">
+    <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center gap-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           {cancel}

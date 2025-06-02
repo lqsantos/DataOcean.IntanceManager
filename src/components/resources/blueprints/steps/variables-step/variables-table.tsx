@@ -25,12 +25,19 @@ interface VariablesTableProps {
   onEdit: (variable: BlueprintVariable) => void;
   /** Callback when delete button is clicked */
   onDelete: (variable: BlueprintVariable) => void;
+  /** Render function for the add button */
+  renderAddButton?: () => React.ReactNode;
 }
 
 /**
  * Table component to display blueprint variables
  */
-export function VariablesTable({ variables, onEdit, onDelete }: VariablesTableProps) {
+export function VariablesTable({
+  variables,
+  onEdit,
+  onDelete,
+  renderAddButton,
+}: VariablesTableProps) {
   // Search state
   const [search, setSearch] = useState('');
 
@@ -81,14 +88,17 @@ export function VariablesTable({ variables, onEdit, onDelete }: VariablesTablePr
   return (
     <div className="space-y-4">
       {/* Search Bar */}
-      <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar variável por nome..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
-        />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar variável por nome..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-[300px]"
+          />
+        </div>
+        {renderAddButton?.()}
       </div>
 
       {/* Variables Table */}

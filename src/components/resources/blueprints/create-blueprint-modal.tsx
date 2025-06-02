@@ -85,7 +85,7 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
       <DialogContent className="flex h-[800px] max-h-[90vh] flex-col sm:max-w-[1000px]">
-        <div className="flex h-full flex-col">
+        <div className="flex flex-col h-full">
           <div className="flex-shrink-0 space-y-4">
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
@@ -123,17 +123,19 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
           </div>
 
           {/* Área de conteúdo com altura fixa e scroll */}
-          <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
-            <BlueprintForm
-              onSave={handleSave}
-              onCancel={handleClose}
-              mode="create"
-              currentStep={currentStep}
-              totalSteps={totalSteps}
-              onNextStep={nextStep}
-              onPrevStep={prevStep}
-              onGoToStep={goToStep}
-            />
+          <div className="flex-1 overflow-y-auto mt-4 min-h-0">
+            <div className="space-y-6 px-1">
+              <BlueprintForm
+                onSave={handleSave}
+                onCancel={handleClose}
+                mode="create"
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNextStep={nextStep}
+                onPrevStep={prevStep}
+                onGoToStep={goToStep}
+              />
+            </div>
           </div>
         </div>
       </DialogContent>

@@ -270,7 +270,7 @@ export function BlueprintForm({
     <div className="space-y-6">
       <Form {...form}>
         {currentStep === 1 && (
-          <form onSubmit={form.handleSubmit(handleBasicInfoSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleBasicInfoSubmit)} className="space-y-4 pb-20">
             <BasicInfoStep form={form} />
             <StepNavigation
               currentStep={currentStep}
@@ -282,7 +282,7 @@ export function BlueprintForm({
         )}
 
         {currentStep === 2 && (
-          <form onSubmit={form.handleSubmit(handleTemplatesSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleTemplatesSubmit)} className="space-y-4 pb-20">
             <TemplatesStep form={form} />
             <StepNavigation
               currentStep={currentStep}
@@ -295,7 +295,7 @@ export function BlueprintForm({
         )}
 
         {currentStep === 3 && (
-          <form onSubmit={form.handleSubmit(handleVariablesSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleVariablesSubmit)} className="space-y-4 pb-20">
             <VariablesStep form={form} />
             <StepNavigation
               currentStep={currentStep}
@@ -308,7 +308,7 @@ export function BlueprintForm({
         )}
 
         {currentStep === 4 && (
-          <form onSubmit={form.handleSubmit(handleFinalSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleFinalSubmit)} className="space-y-4 pb-20">
             <PreviewStep form={form} />
             <StepNavigation
               currentStep={currentStep}

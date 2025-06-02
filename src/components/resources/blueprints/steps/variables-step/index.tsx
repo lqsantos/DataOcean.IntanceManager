@@ -170,27 +170,29 @@ export function VariablesStep({ form }: VariablesStepProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium">Variáveis do Blueprint</h2>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Variável
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleAddVariable('fixed')}>
-              Valor Fixo
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAddVariable('expression')}>
-              Expressão Go Template
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <VariablesTable variables={variables} onEdit={handleEdit} onDelete={handleDelete} />
+      <VariablesTable
+        variables={variables}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        renderAddButton={() => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Variável
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleAddVariable('fixed')}>
+                Valor Fixo
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleAddVariable('expression')}>
+                Expressão Go Template
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      />
 
       <FixedVariableModal
         open={isFixedModalOpen}
