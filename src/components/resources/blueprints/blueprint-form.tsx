@@ -160,7 +160,6 @@ export function BlueprintForm({
   const [activeTab, setActiveTab] = useState('basic');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
-  const [showHelperTplPreview, setShowHelperTplPreview] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [previewTab, setPreviewTab] = useState<string>('helper');
 
@@ -254,7 +253,6 @@ export function BlueprintForm({
 
   // Estado para controle da edição de variáveis
   const [expandedVariable, setExpandedVariable] = useState<number | null>(null);
-  const [showVariablePreview, setShowVariablePreview] = useState(false);
 
   // Estado para controlar filtros e busca de templates
   const [templateSearchQuery, setTemplateSearchQuery] = useState('');
@@ -391,6 +389,45 @@ export function BlueprintForm({
     }
   };
 
+  // Função para gerar o conteúdo do helper.tpl com base nas variáveis definidas
+  const generateHelperTplContent = () => {
+    const blueprintVariables = form.getValues('blueprintVariables') || [];
+
+    if (blueprintVariables.length === 0) {
+      return '# Nenhuma variável definida\n';
+    }
+
+    // Agrupar variáveis por tipo para melhor organização
+    const simpleVars = blueprintVariables.filter((v) => v.type === 'simple');
+    const advancedVars = blueprintVariables.filter((v) => v.type === 'advanced');
+
+    let content = '# Helper.tpl - Variáveis globais para este blueprint\n\n';
+
+    // Adicionar variáveis simples
+    if (simpleVars.length > 0) {
+      content += '# Valores fixos\n';
+      simpleVars.forEach((variable) => {
+        if (variable.description) {
+          content += `# ${variable.description}\n`;
+        }
+        content += `{{- define "${variable.name}" -}}${variable.value || ''}{{- end -}}\n\n`;
+      });
+    }
+
+    // Adicionar variáveis de expressão avançada
+    if (advancedVars.length > 0) {
+      content += '# Expressões Go Template\n';
+      advancedVars.forEach((variable) => {
+        if (variable.description) {
+          content += `# ${variable.description}\n`;
+        }
+        content += `{{- define "${variable.name}" -}}\n${variable.value || ''}\n{{- end -}}\n\n`;
+      });
+    }
+
+    return content;
+  };
+
   // Adicionar uma variável de blueprint (simple ou advanced)
   const addBlueprintVariable = (type: 'simple' | 'advanced') => {
     const blueprintVariables = form.getValues('blueprintVariables') || [];
@@ -427,6 +464,11 @@ export function BlueprintForm({
       // Verificamos se a função existe antes de chamá-la
       if (typeof updateBlueprintVariables === 'function') {
         updateBlueprintVariables(updatedVariables);
+
+        // Geramos o helper.tpl automaticamente ao adicionar uma variável
+        setTimeout(() => {
+          updateHelperTpl();
+        }, 0);
       } else if (typeof updateVariables === 'function') {
         // Fallback para o método antigo
         // Converter para o formato antigo se necessário
@@ -439,6 +481,11 @@ export function BlueprintForm({
         }));
 
         updateVariables(oldFormatVariables);
+
+        // Geramos o helper.tpl automaticamente ao adicionar uma variável
+        setTimeout(() => {
+          updateHelperTpl();
+        }, 0);
       }
     }
   };
@@ -450,33 +497,11 @@ export function BlueprintForm({
     return blueprintVariables.some((v, idx) => idx !== currentIndex && v.name === name);
   };
 
-  // Gerar o conteúdo do helper.tpl a partir das variáveis do blueprint
-  const generateHelperTplContent = () => {
-    const variables = form.getValues('blueprintVariables') || [];
-
-    if (variables.length === 0) {
-      return '# Nenhuma variável definida';
-    }
-
-    const helperContent = variables
-      .map((variable) => {
-        const description = variable.description ? `{{/* ${variable.description} */}}\n` : '';
-
-        return `${description}{{- define "${variable.name}" -}}
-${variable.value || ''}
-{{- end }}`;
-      })
-      .join('\n\n');
-
-    return helperContent;
-  };
-
   // Atualizar o conteúdo do helper.tpl no formulário
   const updateHelperTpl = () => {
     const content = generateHelperTplContent();
 
     form.setValue('helperTpl', content);
-    setShowHelperTplPreview(true);
 
     // Atualizar o contexto se estiver no modo de criação
     if (mode === 'create') {
@@ -488,231 +513,34 @@ ${variable.value || ''}
     return content;
   };
 
-  // Renderizar o catálogo de templates
-  const renderTemplateCatalog = () => {
-    return (
-      <Card className="h-full">
-        <CardHeader className="pb-2">
-          <CardTitle>{tResources('createResource.steps.selectBlueprint.title')}</CardTitle>
-          <CardDescription>
-            {tResources('createResource.steps.selectBlueprint.description')}
-          </CardDescription>
-          <div className="mt-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={tResources('table.search.placeholder')}
-                value={templateSearchQuery}
-                onChange={(e) => setTemplateSearchQuery(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="h-[400px] overflow-auto pb-0">
-          {templatesLoading ? (
-            <div className="flex h-40 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Carregando templates...</span>
-            </div>
-          ) : filteredCatalogTemplates.length === 0 ? (
-            <div className="flex h-40 flex-col items-center justify-center text-center">
-              <div className="mb-4 h-16 w-16 text-muted-foreground">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="100%"
-                  height="100%"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M12 8v8" />
-                  <path d="M8 12h8" />
-                </svg>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {tResources('table.emptyState.description')}
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filteredCatalogTemplates.map((template, index) => (
-                <Draggable key={template.id} draggableId={template.id} index={index}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className={`flex items-center justify-between p-3 ${
-                        snapshot.isDragging ? 'bg-accent opacity-90' : 'hover:bg-muted/50'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-medium">{template.name}</h4>
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {template.description || 'Sem descrição'}
-                        </p>
-                        <div className="mt-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {template.category || 'Sem categoria'}
-                          </Badge>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => addTemplateToSelection(template)}
-                        className="gap-1"
-                      >
-                        <PlusCircle className="h-4 w-4" />
-                        <span>{tResources('actions.add')}</span>
-                      </Button>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Atualizar o renderSelectedTemplatesList para incluir drag and drop
-  const renderSelectedTemplatesList = () => {
-    const selectedTemplates = form.getValues('selectedTemplates') || [];
-
-    return (
-      <Card className="h-full">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-end">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium">
-                {tResources('createResource.steps.configureBlueprintTemplates.title')}
-              </h3>
-              {selectedTemplates.length > 0 && (
-                <Badge variant="secondary" className="h-5 px-2 text-xs">
-                  {selectedTemplates.length}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="h-[400px] overflow-auto">
-          {(form.getValues('selectedTemplates') || []).length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-              <div className="mb-4 h-16 w-16 text-muted-foreground">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="100%"
-                  height="100%"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M12 8v8" />
-                  <path d="M8 12h8" />
-                </svg>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {tResources('table.emptyState.description')}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2 p-2">
-              {(form.getValues('selectedTemplates') || [])
-                .sort((a, b) => a.order - b.order)
-                .map((template, index) => {
-                  const templateInfo = templates.find((t) => t.id === template.templateId);
-
-                  return (
-                    <Draggable
-                      key={`${template.identifier}-${index}`}
-                      draggableId={`selected-${template.identifier}-${index}`}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`rounded-md border p-3 ${
-                            snapshot.isDragging ? 'border-primary bg-accent opacity-90' : ''
-                          }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs">
-                                {template.order}
-                              </span>
-                              <div>
-                                <h4 className="text-sm font-medium">
-                                  {templateInfo?.name || 'Template desconhecido'}
-                                </h4>
-                                <p className="text-xs text-muted-foreground">
-                                  {tResources('createResource.form.identifier.label')}:{' '}
-                                  <span className="font-medium">{template.identifier}</span>
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeTemplate(index)}
-                              className="h-7 w-7"
-                            >
-                              <Trash className="h-4 w-4" />
-                              <span className="sr-only">{tResources('actions.delete')}</span>
-                            </Button>
-                          </div>
-
-                          <div className="mt-3 space-y-2">
-                            <div>
-                              <label className="text-xs font-medium">
-                                {tResources('createResource.form.identifier.label')}
-                              </label>
-                              <Input
-                                value={template.identifier}
-                                onChange={(e) => updateTemplateIdentifier(index, e.target.value)}
-                                className="mt-1 h-7 text-xs"
-                                placeholder={tResources(
-                                  'createResource.form.identifier.placeholder'
-                                )}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
-                  );
-                })}
-              {provided.placeholder}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Renderizar o formulário de variáveis do blueprint
+  // Modificar o componente renderBlueprintVariablesForm para atualizar o helper.tpl quando o valor muda
   const renderBlueprintVariablesForm = () => {
+    // Função auxiliar para atualizar variável e regenerar helper.tpl
+    const updateVariableAndRegenerateHelper = (index: number, fieldName: string, value: any) => {
+      const updatedVariables = [...(form.getValues('blueprintVariables') || [])];
+
+      updatedVariables[index] = {
+        ...updatedVariables[index],
+        [fieldName]: value,
+      };
+      form.setValue('blueprintVariables', updatedVariables);
+
+      // Atualizar o contexto se estiver no modo de criação
+      if (mode === 'create') {
+        if (typeof updateBlueprintVariables === 'function') {
+          updateBlueprintVariables(updatedVariables);
+
+          // Regenerar helper.tpl automaticamente após atualizar o valor
+          setTimeout(() => {
+            updateHelperTpl();
+          }, 0);
+        }
+      }
+    };
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">Variáveis do Blueprint</h3>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button type="button" size="sm" className="gap-1">
@@ -727,275 +555,250 @@ ${variable.value || ''}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => addBlueprintVariable('advanced')}>
                 <Code className="mr-2 h-4 w-4" />
-                Expressão Avançada
+                Expressão Go Template
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Configure variáveis reutilizáveis que serão utilizadas nos templates do blueprint.
-          <br />
-          Estas variáveis serão incluídas no arquivo helper.tpl.
-        </p>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Coluna 1: Definição de Variáveis */}
-          <Card>
-            <CardContent className="pt-6">
-              {(form.getValues('blueprintVariables') || []).length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-8 text-center">
-                  <p className="text-sm text-muted-foreground">Nenhuma variável definida</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Clique em "Adicionar Variável" para criar uma nova variável.
-                  </p>
+        <Card>
+          <CardContent className="pt-6">
+            {(form.getValues('blueprintVariables') || []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-8 text-center">
+                <div className="mb-3 h-12 w-12 text-muted-foreground">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="100%"
+                    height="100%"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <circle cx="12" cy="12" r="4"></circle>
+                  </svg>
                 </div>
-              ) : (
-                <div className="max-h-[500px] space-y-4 overflow-auto pr-2">
-                  {(form.getValues('blueprintVariables') || []).map((variable, index) => (
-                    <Card
-                      key={index}
-                      className={`overflow-hidden border-l-4 ${variable.type === 'advanced' ? 'border-l-blue-500' : 'border-l-primary'}`}
-                    >
-                      <CardHeader className="p-3 pb-0">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={variable.type === 'advanced' ? 'secondary' : 'outline'}>
-                              {variable.type === 'advanced' ? 'Expressão' : 'Valor Fixo'}
-                            </Badge>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2 text-xs"
-                              onClick={() =>
-                                setExpandedVariable(expandedVariable === index ? null : index)
-                              }
-                            >
-                              {expandedVariable === index ? 'Colapsar' : 'Expandir'}
-                            </Button>
-                          </div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Nenhuma variável global definida
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Clique em "Adicionar Variável" para criar uma variável que poderá ser usada em
+                  todos os templates.
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-[500px] space-y-4 overflow-auto pr-2">
+                {(form.getValues('blueprintVariables') || []).map((variable, index) => (
+                  <Card
+                    key={index}
+                    className={`overflow-hidden border-l-4 ${variable.type === 'advanced' ? 'border-l-blue-500' : 'border-l-primary'}`}
+                  >
+                    <CardHeader className="p-3 pb-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={variable.type === 'advanced' ? 'secondary' : 'outline'}>
+                            {variable.type === 'advanced' ? 'Expressão' : 'Valor Fixo'}
+                          </Badge>
                           <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
-                            onClick={() => removeBlueprintVariable(index)}
-                            className="h-6 w-6 opacity-70 hover:opacity-100"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() =>
+                              setExpandedVariable(expandedVariable === index ? null : index)
+                            }
                           >
-                            <Trash className="h-4 w-4" />
+                            {expandedVariable === index ? 'Colapsar' : 'Expandir'}
                           </Button>
                         </div>
-                      </CardHeader>
-                      <CardContent className="p-3">
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-xs font-medium">Nome</label>
-                            <div className="relative mt-1">
-                              {isVariableNameDuplicate(variable.name, index) && (
-                                <AlertCircle className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-destructive" />
-                              )}
-                              <Input
-                                value={variable.name}
-                                onChange={(e) => {
-                                  const updatedVariables = [
-                                    ...(form.getValues('blueprintVariables') || []),
-                                  ];
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            removeBlueprintVariable(index);
 
-                                  updatedVariables[index] = {
-                                    ...updatedVariables[index],
-                                    name: e.target.value,
-                                  };
-                                  form.setValue('blueprintVariables', updatedVariables);
-                                }}
-                                className={`h-7 text-xs ${isVariableNameDuplicate(variable.name, index) ? 'border-destructive pr-8' : ''}`}
-                                placeholder="helper.nome_variavel"
-                              />
-                            </div>
+                            // Regenerar helper.tpl automaticamente após remover variável
+                            if (mode === 'create') {
+                              setTimeout(() => {
+                                updateHelperTpl();
+                              }, 0);
+                            }
+                          }}
+                          className="h-6 w-6 opacity-70 hover:opacity-100"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-3">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs font-medium">Nome da Variável</label>
+                          <div className="relative mt-1">
                             {isVariableNameDuplicate(variable.name, index) && (
-                              <p className="mt-1 text-xs text-destructive">
-                                Este nome já está em uso por outra variável
-                              </p>
+                              <AlertCircle className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-destructive" />
                             )}
-                          </div>
-
-                          {expandedVariable === index && (
-                            <div>
-                              <label className="text-xs font-medium">Descrição (opcional)</label>
-                              <Input
-                                value={variable.description || ''}
-                                onChange={(e) => {
-                                  const updatedVariables = [
-                                    ...(form.getValues('blueprintVariables') || []),
-                                  ];
-
-                                  updatedVariables[index] = {
-                                    ...updatedVariables[index],
-                                    description: e.target.value,
-                                  };
-                                  form.setValue('blueprintVariables', updatedVariables);
-                                }}
-                                className="mt-1 h-7 text-xs"
-                                placeholder="Descreva o propósito desta variável"
-                              />
-                            </div>
-                          )}
-
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-medium">
-                                {variable.type === 'advanced' ? 'Expressão Go Template' : 'Valor'}
-                              </label>
-                              {variable.type === 'advanced' && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-5 p-0 text-xs"
-                                  onClick={() => {
-                                    // Verificar sintaxe da expressão (básico)
-                                    const value = variable.value || '';
-                                    const openBraces = (value.match(/{{/g) || []).length;
-                                    const closeBraces = (value.match(/}}/g) || []).length;
-
-                                    if (openBraces !== closeBraces) {
-                                      toast.error('Erro de sintaxe', {
-                                        description:
-                                          'Número de chaves de abertura e fechamento não coincide',
-                                      });
-                                    } else {
-                                      toast.success('Sintaxe válida', {
-                                        description:
-                                          'A expressão parece estar corretamente formatada',
-                                      });
-                                    }
-                                  }}
-                                >
-                                  Verificar
-                                </Button>
-                              )}
-                            </div>
-                            <Textarea
-                              value={variable.value || ''}
-                              onChange={(e) => {
-                                const updatedVariables = [
-                                  ...(form.getValues('blueprintVariables') || []),
-                                ];
-
-                                updatedVariables[index] = {
-                                  ...updatedVariables[index],
-                                  value: e.target.value,
-                                };
-                                form.setValue('blueprintVariables', updatedVariables);
-                              }}
-                              className={`mt-1 text-xs ${variable.type === 'advanced' ? 'font-mono' : ''}`}
-                              rows={
-                                expandedVariable === index
-                                  ? variable.type === 'advanced'
-                                    ? 6
-                                    : 3
-                                  : 1
+                            <Input
+                              value={variable.name}
+                              onChange={(e) =>
+                                updateVariableAndRegenerateHelper(index, 'name', e.target.value)
                               }
-                              placeholder={
-                                variable.type === 'advanced'
-                                  ? '{{- if eq .Values.environment "production" -}}\nprod\n{{- else -}}\ndev\n{{- end -}}'
-                                  : 'Valor fixo que será substituído'
-                              }
+                              className={`h-7 text-xs ${isVariableNameDuplicate(variable.name, index) ? 'border-destructive pr-8' : ''}`}
+                              placeholder="helper.nome_variavel"
+                              data-testid={`variable-name-input-${index}`}
                             />
                           </div>
+                          {isVariableNameDuplicate(variable.name, index) && (
+                            <p className="mt-1 text-xs text-destructive">
+                              Este nome já está em uso por outra variável
+                            </p>
+                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
 
-              {(form.getValues('blueprintVariables') || []).length > 0 && (
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    type="button"
-                    onClick={updateHelperTpl}
-                    variant="outline"
-                    className="gap-1"
-                    data-testid="generate-helper-tpl-button"
-                  >
-                    <Code className="h-4 w-4" />
-                    Gerar helper.tpl
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                        {expandedVariable === index && (
+                          <div>
+                            <label className="text-xs font-medium">Descrição (opcional)</label>
+                            <Input
+                              value={variable.description || ''}
+                              onChange={(e) =>
+                                updateVariableAndRegenerateHelper(
+                                  index,
+                                  'description',
+                                  e.target.value
+                                )
+                              }
+                              className="mt-1 h-7 text-xs"
+                              placeholder="Descreva o propósito desta variável"
+                              data-testid={`variable-description-input-${index}`}
+                            />
+                          </div>
+                        )}
 
-          {/* Coluna 2: Preview do helper.tpl */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Preview do helper.tpl</CardTitle>
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-medium">
+                              {variable.type === 'advanced' ? 'Expressão Go Template' : 'Valor'}
+                            </label>
+                            {variable.type === 'advanced' && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 p-0 text-xs"
+                                onClick={() => {
+                                  // Verificar sintaxe da expressão (básico)
+                                  const value = variable.value || '';
+                                  const openBraces = (value.match(/{{/g) || []).length;
+                                  const closeBraces = (value.match(/}}/g) || []).length;
+
+                                  if (openBraces !== closeBraces) {
+                                    toast.error('Erro de sintaxe', {
+                                      description:
+                                        'Número de chaves de abertura e fechamento não coincide',
+                                    });
+                                  } else {
+                                    toast.success('Sintaxe válida', {
+                                      description:
+                                        'A expressão parece estar corretamente formatada',
+                                    });
+                                  }
+                                }}
+                              >
+                                Verificar Sintaxe
+                              </Button>
+                            )}
+                          </div>
+                          <Textarea
+                            value={variable.value || ''}
+                            onChange={(e) =>
+                              updateVariableAndRegenerateHelper(index, 'value', e.target.value)
+                            }
+                            className={`mt-1 text-xs ${variable.type === 'advanced' ? 'font-mono' : ''}`}
+                            rows={
+                              expandedVariable === index
+                                ? variable.type === 'advanced'
+                                  ? 6
+                                  : 3
+                                : 1
+                            }
+                            placeholder={
+                              variable.type === 'advanced'
+                                ? '{{- if eq .Values.environment "production" -}}\nprod\n{{- else -}}\ndev\n{{- end -}}'
+                                : 'Valor fixo que será substituído'
+                            }
+                            data-testid={`variable-value-input-${index}`}
+                          />
+
+                          {variable.type === 'advanced' && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Use a sintaxe Go Template para criar expressões dinâmicas que avaliam
+                              valores em tempo de execução.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {(form.getValues('blueprintVariables') || []).length > 0 && (
+              <div className="mt-6 flex justify-end">
+                <div className="mr-4 pt-2 text-sm text-muted-foreground">
+                  {(form.getValues('blueprintVariables') || []).length} variável(is) configurada(s)
+                </div>
+
+                {/* Este botão está escondido do usuário, mas continua gerando o helper.tpl quando necessário */}
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 text-xs"
-                  onClick={() => setShowVariablePreview(!showVariablePreview)}
+                  onClick={updateHelperTpl}
+                  className="hidden"
+                  data-testid="generate-helper-tpl-button"
                 >
-                  <FileText className="h-3 w-3" />
-                  {showVariablePreview ? 'Ver Código' : 'Documentação'}
+                  Gerar helper.tpl
                 </Button>
               </div>
-              <CardDescription>
-                Visualize como o arquivo helper.tpl será gerado a partir das variáveis.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {showVariablePreview ? (
-                // Documentação das variáveis
-                <div className="rounded-md border bg-muted/30 p-4">
-                  <h4 className="mb-3 text-sm font-medium">Documentação de Variáveis</h4>
+            )}
+          </CardContent>
+        </Card>
 
-                  {(form.getValues('blueprintVariables') || []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhuma variável definida.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {(form.getValues('blueprintVariables') || []).map((variable, index) => (
-                        <div key={index} className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={variable.type === 'advanced' ? 'secondary' : 'default'}>
-                              {variable.name}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {variable.type === 'advanced' ? 'Expressão' : 'Valor Fixo'}
-                            </span>
-                          </div>
-                          {variable.description && (
-                            <p className="text-xs text-muted-foreground">{variable.description}</p>
-                          )}
-                          <div className="rounded border bg-muted p-2 font-mono text-xs">
-                            {variable.value || '<vazio>'}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                // Código do helper.tpl
-                <div className="rounded-md border bg-muted p-4">
-                  <pre className="max-h-[400px] overflow-auto whitespace-pre-wrap text-sm">
-                    <code>{form.getValues('helperTpl') || generateHelperTplContent()}</code>
-                  </pre>
-                </div>
-              )}
-
-              <div className="mt-4 text-xs text-muted-foreground">
-                <p>
-                  Este arquivo define funções helper que serão usadas nas instâncias do blueprint.
-                  Clique em "Gerar helper.tpl" para atualizar o conteúdo com base nas variáveis.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="mt-4 text-sm text-muted-foreground">
+          <p>
+            <strong>Como usar variáveis globais:</strong> As variáveis definidas aqui estarão
+            disponíveis para uso em todos os templates associados a este blueprint.
+          </p>
         </div>
       </div>
     );
+  };
+
+  const onVariablesSubmit = (data: FormValues) => {
+    if (mode === 'create') {
+      // Atualizar variáveis no contexto
+      if (data.blueprintVariables) {
+        // Usamos a nova função para variáveis estendidas
+        updateBlueprintVariables(data.blueprintVariables);
+
+        // Geramos o helper.tpl baseado nas novas variáveis automaticamente
+        const helperTplContent = generateHelperTplContent();
+
+        form.setValue('helperTpl', helperTplContent);
+
+        if (typeof generateHelperTpl === 'function') {
+          generateHelperTpl();
+        }
+      }
+
+      // Avançar para próxima etapa
+      if (onNextStep) {
+        onNextStep();
+      }
+    }
   };
 
   // Form submission handlers
@@ -1026,24 +829,6 @@ ${variable.value || ''}
             'Warning: updateSelectedTemplates is not a function. Templates may not be saved in context.'
           );
         }
-      }
-
-      // Avançar para próxima etapa
-      if (onNextStep) {
-        onNextStep();
-      }
-    }
-  };
-
-  const onVariablesSubmit = (data: FormValues) => {
-    if (mode === 'create') {
-      // Atualizar variáveis no contexto
-      if (data.blueprintVariables) {
-        // Usamos a nova função para variáveis estendidas
-        updateBlueprintVariables(data.blueprintVariables);
-
-        // Geramos o helper.tpl baseado nas novas variáveis
-        generateHelperTpl();
       }
 
       // Avançar para próxima etapa
@@ -1556,13 +1341,6 @@ ${variable.value || ''}
         return (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onVariablesSubmit)} className="space-y-4">
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold">Blueprint Variables</h2>
-                <p className="text-sm text-muted-foreground">
-                  Defina variáveis reutilizáveis que serão usadas nos templates do blueprint.
-                </p>
-              </div>
-
               {renderBlueprintVariablesForm()}
 
               <DialogFooter>
