@@ -112,9 +112,12 @@ export function FixedVariableModal({
                         field.onChange(value);
                       }
                     }}
+                    placeholder="vars_nome_variavel"
                   />
                 </FormControl>
-                <FormDescription>O nome da variável no blueprint.</FormDescription>
+                <FormDescription>
+                  Nome pode começar com &quot;vars_&quot; seguido por letras, números, _ ou -.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

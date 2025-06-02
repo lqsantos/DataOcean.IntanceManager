@@ -3,6 +3,7 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { StreamLanguage } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
+import { EditorView } from '@codemirror/view';
 import CodeMirror from '@uiw/react-codemirror';
 
 interface GoTemplateEditorProps {
@@ -27,82 +28,88 @@ export function GoTemplateEditor({
 }: GoTemplateEditorProps) {
   return (
     <div className="relative rounded-md border">
-      <CodeMirror
-        value={value}
-        onChange={onChange}
-        theme={oneDark}
-        placeholder={placeholder}
-        readOnly={disabled}
-        basicSetup={{
-          lineNumbers: true,
-          foldGutter: true,
-          autocompletion: true,
-          bracketMatching: true,
-          closeBrackets: true,
-          highlightActiveLine: true,
-        }}
-        extensions={[
-          javascript(),
-          // Custom Go Template syntax highlighting
-          StreamLanguage.define({
-            name: 'goTemplate',
-            token(stream) {
-              // Inside {{ ... }} expressions, use JavaScript-like syntax
-              if (stream.match('{{')) {
-                let depth = 1;
+      <div className="max-w-full overflow-x-auto">
+        <CodeMirror
+          value={value}
+          onChange={onChange}
+          theme={oneDark}
+          placeholder={placeholder}
+          readOnly={disabled}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: true,
+            autocompletion: true,
+            bracketMatching: true,
+            closeBrackets: true,
+            highlightActiveLine: true,
+          }}
+          height="250px"
+          width="100%"
+          style={{ minHeight: '250px', maxWidth: '100%' }}
+          className="max-w-full"
+          extensions={[
+            javascript(),
+            EditorView.lineWrapping,
+            // Custom Go Template syntax highlighting
+            StreamLanguage.define({
+              name: 'goTemplate',
+              token(stream) {
+                // Inside {{ ... }} expressions, use JavaScript-like syntax
+                if (stream.match('{{')) {
+                  let depth = 1;
 
-                stream.eatSpace();
+                  stream.eatSpace();
 
-                while (!stream.eol()) {
-                  // Handle nested braces
-                  if (stream.match('{{')) {
-                    depth++;
-                    continue;
-                  }
-
-                  if (stream.match('}}')) {
-                    depth--;
-
-                    if (depth === 0) {
-                      return 'bracket';
+                  while (!stream.eol()) {
+                    // Handle nested braces
+                    if (stream.match('{{')) {
+                      depth++;
+                      continue;
                     }
-                    continue;
+
+                    if (stream.match('}}')) {
+                      depth--;
+
+                      if (depth === 0) {
+                        return 'bracket';
+                      }
+                      continue;
+                    }
+
+                    // Match operators
+                    if (stream.match(/[.|]/)) {
+                      return 'operator';
+                    }
+
+                    // Match variables and functions
+                    if (stream.match(/\$?[a-zA-Z_][a-zA-Z0-9_]*/)) {
+                      return 'variable';
+                    }
+
+                    // Match literals
+                    if (stream.match(/"([^"\\]|\\.)*"/)) {
+                      return 'string';
+                    }
+
+                    if (stream.match(/\d+/)) {
+                      return 'number';
+                    }
+
+                    stream.next();
                   }
 
-                  // Match operators
-                  if (stream.match(/[.|]/)) {
-                    return 'operator';
-                  }
-
-                  // Match variables and functions
-                  if (stream.match(/\$?[a-zA-Z_][a-zA-Z0-9_]*/)) {
-                    return 'variable';
-                  }
-
-                  // Match literals
-                  if (stream.match(/"([^"\\]|\\.)*"/)) {
-                    return 'string';
-                  }
-
-                  if (stream.match(/\d+/)) {
-                    return 'number';
-                  }
-
-                  stream.next();
+                  return 'bracket';
                 }
 
-                return 'bracket';
-              }
+                // Outside {{ ... }}, just consume characters
+                stream.next();
 
-              // Outside {{ ... }}, just consume characters
-              stream.next();
-
-              return null;
-            },
-          }),
-        ]}
-        className="min-h-[200px]"
-      />
+                return null;
+              },
+            }),
+          ]}
+        />
+      </div>
     </div>
   );
 }
