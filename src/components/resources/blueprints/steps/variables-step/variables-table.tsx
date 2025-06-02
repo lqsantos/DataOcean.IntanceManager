@@ -70,7 +70,9 @@ export function VariablesTable({ variables, onEdit, onDelete }: VariablesTablePr
           <TooltipTrigger asChild>
             <span>{text.slice(0, maxLength)}...</span>
           </TooltipTrigger>
-          <TooltipContent>{text}</TooltipContent>
+          <TooltipContent side="bottom" className="max-w-[350px] whitespace-pre-wrap break-words">
+            <p className="text-sm">{text}</p>
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     );
