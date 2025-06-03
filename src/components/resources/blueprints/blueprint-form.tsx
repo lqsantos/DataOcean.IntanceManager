@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCreateBlueprint } from '@/contexts/create-blueprint-context';
+import { useBlueprintForm } from '@/hooks/use-blueprint-form';
 
 import { ConfirmDialog } from './components/confirm-dialog';
 import { StepNavigation } from './components/step-navigation';
@@ -27,7 +28,6 @@ export function BlueprintForm({
   onCancel,
   mode,
   currentStep = 1,
-  totalSteps = 4,
   onNextStep,
   onPrevStep,
 }: BlueprintFormProps) {
@@ -41,9 +41,6 @@ export function BlueprintForm({
     blueprintData,
     selectedTemplates: contextSelectedTemplates,
     generatedHelperTpl,
-    updateBlueprintData,
-    updateSelectedTemplates,
-    updateBlueprintVariables,
     generateHelperTpl,
   } = useCreateBlueprint();
 
@@ -53,21 +50,7 @@ export function BlueprintForm({
     defaultValues: getDefaultValues(),
   });
 
-  // Check if there are validation errors for the current step
-  const hasCurrentStepErrors = () => {
-    const { errors } = form.formState;
-
-    switch (currentStep) {
-      case 1:
-        return !!errors.name || !!errors.description;
-      case 2:
-        return !!errors.selectedTemplates;
-      case 3:
-        return !!errors.blueprintVariables || !!errors.helperTpl;
-      default:
-        return false;
-    }
-  };
+  const { handleStepSubmit, hasStepErrors } = useBlueprintForm(form, mode);
 
   /**
    * Get default form values based on mode
@@ -109,71 +92,14 @@ export function BlueprintForm({
     }
   }
 
-  /**
-   * Handle form submission for basic info step
-   */
-  const handleBasicInfoSubmit = (data: FormValues) => {
-    if (mode === 'create') {
-      updateBlueprintData({
-        name: data.name,
-        description: data.description,
-      });
+  const handleStepSubmitWithNavigation =
+    (step: keyof typeof handleStepSubmit) => (data: FormValues) => {
+      handleStepSubmit[step](data);
 
       if (onNextStep) {
         onNextStep();
       }
-    }
-  };
-
-  /**
-   * Handle form submission for templates step
-   */
-  const handleTemplatesSubmit = (data: FormValues) => {
-    console.warn('Template step submission:', data.selectedTemplates);
-
-    if (mode === 'create' && data.selectedTemplates) {
-      // Garantir que a ordem está preservada e que todos os campos necessários estão presentes
-      const processedTemplates = data.selectedTemplates.map((template, index) => ({
-        ...template,
-        order: index + 1, // Garante que a ordem está correta
-      }));
-
-      console.warn('Processed templates:', processedTemplates);
-
-      updateSelectedTemplates(processedTemplates);
-
-      if (onNextStep) {
-        onNextStep();
-      }
-    }
-  };
-
-  /**
-   * Handle form submission for variables step
-   */
-  const handleVariablesSubmit = (data: FormValues) => {
-    if (mode === 'create' && data.blueprintVariables) {
-      // Type assertion to match expected interface
-      const typedVariables = data.blueprintVariables.map((v) => ({
-        ...v,
-        value: v.value || '',
-      }));
-
-      // Use type assertion for the context function
-      updateBlueprintVariables(typedVariables as Parameters<typeof updateBlueprintVariables>[0]);
-      const helperTplContent = data.helperTpl || '';
-
-      form.setValue('helperTpl', helperTplContent);
-
-      if (generateHelperTpl) {
-        generateHelperTpl();
-      }
-
-      if (onNextStep) {
-        onNextStep();
-      }
-    }
-  };
+    };
 
   /**
    * Handle final form submission
@@ -280,54 +206,59 @@ export function BlueprintForm({
     <div className="space-y-6">
       <Form {...form}>
         {currentStep === 1 && (
-          <form onSubmit={form.handleSubmit(handleBasicInfoSubmit)} className="space-y-4 pb-20">
+          <form
+            onSubmit={form.handleSubmit(handleStepSubmitWithNavigation('basicInfo'))}
+            className="space-y-4 pb-20"
+          >
             <BasicInfoStep form={form} />
             <StepNavigation
               currentStep={currentStep}
-              totalSteps={totalSteps}
               onCancel={onCancel}
-              isNextEnabled={!hasCurrentStepErrors()}
+              isNextEnabled={!hasStepErrors(currentStep)}
             />
           </form>
         )}
 
         {currentStep === 2 && (
-          <form onSubmit={form.handleSubmit(handleTemplatesSubmit)} className="space-y-4 pb-20">
+          <form
+            onSubmit={form.handleSubmit(handleStepSubmitWithNavigation('templates'))}
+            className="space-y-4 pb-20"
+          >
             <TemplatesStep form={form} />
             <StepNavigation
               currentStep={currentStep}
-              totalSteps={totalSteps}
               onCancel={onCancel}
               onPrevStep={onPrevStep}
-              isNextEnabled={!hasCurrentStepErrors()}
+              isNextEnabled={!hasStepErrors(currentStep)}
             />
           </form>
         )}
 
         {currentStep === 3 && (
-          <form onSubmit={form.handleSubmit(handleVariablesSubmit)} className="space-y-4 pb-20">
+          <form
+            onSubmit={form.handleSubmit(handleStepSubmitWithNavigation('variables'))}
+            className="space-y-4 pb-20"
+          >
             <VariablesStep form={form} />
             <StepNavigation
               currentStep={currentStep}
-              totalSteps={totalSteps}
               onCancel={onCancel}
               onPrevStep={onPrevStep}
-              isNextEnabled={!hasCurrentStepErrors()}
+              isNextEnabled={!hasStepErrors(currentStep)}
             />
           </form>
         )}
 
         {currentStep === 4 && (
-          <form onSubmit={form.handleSubmit(handleFinalSubmit)} className="space-y-4 pb-20">
+          <form onSubmit={form.handleSubmit(handleFinalSubmit)} className="space-y-4">
             <PreviewStep form={form} />
             <StepNavigation
               currentStep={currentStep}
-              totalSteps={totalSteps}
               onCancel={onCancel}
               onPrevStep={onPrevStep}
               isFinalStep={true}
               isSubmitting={isSubmitting}
-              isNextEnabled={!hasCurrentStepErrors()}
+              isNextEnabled={!hasStepErrors(currentStep)}
               labels={{ submit: 'Criar Blueprint' }}
             />
           </form>
