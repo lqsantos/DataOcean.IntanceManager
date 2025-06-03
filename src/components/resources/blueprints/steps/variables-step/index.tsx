@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 
 import {
@@ -86,8 +86,7 @@ export function VariablesStep({ form }: VariablesStepProps) {
   } = useBlueprintVariables(formVariables);
 
   // Update form values when variables change
-  const updateFormVariables = () => {
-    // Convert new variables back to old format for form
+  useEffect(() => {
     const oldFormatVariables = variables.map((v) => ({
       name: v.name,
       description: v.description,
@@ -95,11 +94,11 @@ export function VariablesStep({ form }: VariablesStepProps) {
       value: v.type === 'fixed' ? v.value : v.expression,
     }));
 
-    form.setValue('blueprintVariables', oldFormatVariables);
-    form.setValue('helperTpl', generateHelperTpl());
-  };
+    form.setValue('blueprintVariables', oldFormatVariables, { shouldValidate: true });
+    form.setValue('helperTpl', generateHelperTpl(), { shouldValidate: true });
+  }, [variables, form, generateHelperTpl]);
 
-  // Handle variable addition
+  // Handle variable type selection
   const handleAddVariable = (type: VariableType) => {
     if (type === 'fixed') {
       setIsFixedModalOpen(true);
@@ -108,34 +107,32 @@ export function VariablesStep({ form }: VariablesStepProps) {
     }
   };
 
-  // Handle fixed variable submission
-  const handleFixedSubmit = (data: FixedVariable) => {
-    if (editingVariable) {
-      const index = variables.findIndex((v: BlueprintVariable) => v.name === editingVariable.name);
+  // Handle fixed variable actions
+  const handleFixedSubmit = (variable: FixedVariable) => {
+    if (editingVariable && editingVariable.type === 'fixed') {
+      const index = variables.findIndex((v) => v.name === editingVariable.name);
 
       if (index !== -1) {
-        updateVariable(index, data);
+        updateVariable(index, { ...variable, type: 'fixed' });
       }
     } else {
-      addVariable(data);
+      addVariable({ ...variable, type: 'fixed' });
     }
-    updateFormVariables();
     setEditingVariable(null);
     setIsFixedModalOpen(false);
   };
 
-  // Handle expression variable submission
-  const handleExpressionSubmit = (data: ExpressionVariable) => {
-    if (editingVariable) {
-      const index = variables.findIndex((v: BlueprintVariable) => v.name === editingVariable.name);
+  // Handle expression variable actions
+  const handleExpressionSubmit = (variable: ExpressionVariable) => {
+    if (editingVariable && editingVariable.type === 'expression') {
+      const index = variables.findIndex((v) => v.name === editingVariable.name);
 
       if (index !== -1) {
-        updateVariable(index, data);
+        updateVariable(index, { ...variable, type: 'expression' });
       }
     } else {
-      addVariable(data);
+      addVariable({ ...variable, type: 'expression' });
     }
-    updateFormVariables();
     setEditingVariable(null);
     setIsExpressionModalOpen(false);
   };
@@ -156,58 +153,62 @@ export function VariablesStep({ form }: VariablesStepProps) {
     setDeletingVariable(variable);
   };
 
-  const handleConfirmDelete = () => {
+  // Handle remove variable confirmation
+  const handleRemoveVariable = () => {
     if (deletingVariable) {
-      const index = variables.findIndex((v: BlueprintVariable) => v.name === deletingVariable.name);
+      const index = variables.findIndex((v) => v.name === deletingVariable.name);
 
       if (index !== -1) {
         removeVariable(index);
-        updateFormVariables();
       }
     }
     setDeletingVariable(null);
   };
 
   return (
-    <div className="space-y-6">
-      <VariablesTable
-        variables={variables}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        renderAddButton={() => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar Variável
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleAddVariable('fixed')}>
-                Valor Fixo
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAddVariable('expression')}>
-                Expressão Go Template
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      />
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium">Variáveis</h3>
+          <p className="text-sm text-muted-foreground">
+            Defina variáveis que podem ser usadas nos templates
+          </p>
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar Variável
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => handleAddVariable('fixed')}>
+              Valor Fixo
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAddVariable('expression')}>
+              Expressão
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <VariablesTable variables={variables} onEdit={handleEdit} onDelete={handleDelete} />
 
       <FixedVariableModal
         open={isFixedModalOpen}
         onOpenChange={setIsFixedModalOpen}
         onSubmit={handleFixedSubmit}
-        initialData={editingVariable?.type === 'fixed' ? editingVariable : undefined}
         isVariableNameDuplicate={isVariableNameDuplicate}
+        initialData={editingVariable?.type === 'fixed' ? editingVariable : undefined}
       />
 
       <ExpressionVariableModal
         open={isExpressionModalOpen}
         onOpenChange={setIsExpressionModalOpen}
         onSubmit={handleExpressionSubmit}
-        initialData={editingVariable?.type === 'expression' ? editingVariable : undefined}
         isVariableNameDuplicate={isVariableNameDuplicate}
+        initialData={editingVariable?.type === 'expression' ? editingVariable : undefined}
       />
 
       <AlertDialog open={!!deletingVariable} onOpenChange={() => setDeletingVariable(null)}>
@@ -215,15 +216,14 @@ export function VariablesStep({ form }: VariablesStepProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Variável</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a variável {deletingVariable?.name}? Esta ação não pode
-              ser desfeita.
+              Tem certeza que deseja excluir esta variável? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletingVariable(null)}>
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>Excluir</AlertDialogAction>
+            <AlertDialogAction onClick={handleRemoveVariable}>Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
