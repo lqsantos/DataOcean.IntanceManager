@@ -167,33 +167,29 @@ export function VariablesStep({ form }: VariablesStepProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">Variáveis</h3>
-          <p className="text-sm text-muted-foreground">
-            Defina variáveis que podem ser usadas nos templates
-          </p>
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Variável
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => handleAddVariable('fixed')}>
-              Valor Fixo
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAddVariable('expression')}>
-              Expressão
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <VariablesTable variables={variables} onEdit={handleEdit} onDelete={handleDelete} />
+      <VariablesTable
+        variables={variables}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        renderAddButton={() => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Variável
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => handleAddVariable('fixed')}>
+                Valor Fixo
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleAddVariable('expression')}>
+                Expressão
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      />
 
       <FixedVariableModal
         open={isFixedModalOpen}
