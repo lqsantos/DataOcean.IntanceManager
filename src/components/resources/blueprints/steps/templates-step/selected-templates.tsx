@@ -2,6 +2,7 @@
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { Trash } from 'lucide-react';
+import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,41 @@ export function SelectedTemplatesList({
   onUpdateIdentifier,
   getTemplateName,
 }: SelectedTemplatesListProps) {
+  // Estado local para controlar o valor do input durante a edição
+  const [editingIdentifiers, setEditingIdentifiers] = useState<Record<number, string>>({});
+
+  // Manipular mudança no input
+  const handleIdentifierChange = (index: number, value: string) => {
+    setEditingIdentifiers((prev) => ({
+      ...prev,
+      [index]: value,
+    }));
+  };
+
+  // Manipular quando o input perde o foco
+  const handleIdentifierBlur = (index: number) => {
+    const newIdentifier = editingIdentifiers[index];
+
+    if (newIdentifier !== undefined) {
+      onUpdateIdentifier(index, newIdentifier);
+      // Limpar o estado de edição após atualizar
+      setEditingIdentifiers((prev) => {
+        const updated = { ...prev };
+
+        delete updated[index];
+
+        return updated;
+      });
+    }
+  };
+
+  // Manipular tecla Enter
+  const handleIdentifierKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleIdentifierBlur(index);
+    }
+  };
+
   return (
     <div className="flex flex-col">
       <div className="mb-3 flex h-8 items-center justify-end">
@@ -125,10 +161,14 @@ export function SelectedTemplatesList({
                             <div>
                               <label className="text-xs font-medium">Identificador</label>
                               <Input
-                                value={template.identifier}
-                                onChange={(e) => {
-                                  onUpdateIdentifier(index, e.target.value);
-                                }}
+                                value={
+                                  editingIdentifiers[index] !== undefined
+                                    ? editingIdentifiers[index]
+                                    : template.identifier
+                                }
+                                onChange={(e) => handleIdentifierChange(index, e.target.value)}
+                                onBlur={() => handleIdentifierBlur(index)}
+                                onKeyDown={(e) => handleIdentifierKeyDown(index, e)}
                                 className="mt-1 h-7 text-xs"
                                 placeholder="identificador-do-template"
                                 data-testid={`template-identifier-${index}`}
