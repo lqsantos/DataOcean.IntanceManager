@@ -16,41 +16,47 @@ export function useTemplateSelection(initialTemplates: BlueprintChildTemplate[] 
    */
   const addTemplate = useCallback(
     (template: { id: string; name: string }) => {
-      // Create a unique identifier based on template name
-      let baseIdentifier = template.name
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '');
+      let finalIdentifier = '';
 
-      // If a template with this identifier already exists, add a number
-      const existingIds = selectedTemplates.map((t) => t.identifier);
+      setSelectedTemplates((prevTemplates) => {
+        // Create a unique identifier based on template name
+        let baseIdentifier = template.name
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '');
 
-      if (existingIds.includes(baseIdentifier)) {
-        let counter = 1;
+        // If a template with this identifier already exists, add a number
+        const existingIds = prevTemplates.map((t) => t.identifier);
 
-        while (existingIds.includes(`${baseIdentifier}-${counter}`)) {
-          counter++;
+        if (existingIds.includes(baseIdentifier)) {
+          let counter = 1;
+
+          while (existingIds.includes(`${baseIdentifier}-${counter}`)) {
+            counter++;
+          }
+          baseIdentifier = `${baseIdentifier}-${counter}`;
         }
-        baseIdentifier = `${baseIdentifier}-${counter}`;
-      }
 
-      // Add to the list with the next available order
-      const nextOrder =
-        selectedTemplates.length > 0 ? Math.max(...selectedTemplates.map((t) => t.order)) + 1 : 1;
+        finalIdentifier = baseIdentifier;
 
-      setSelectedTemplates([
-        ...selectedTemplates,
-        {
-          templateId: template.id,
-          identifier: baseIdentifier,
-          order: nextOrder,
-          overrideValues: '',
-        },
-      ]);
+        // Add to the list with the next available order
+        const nextOrder =
+          prevTemplates.length > 0 ? Math.max(...prevTemplates.map((t) => t.order)) + 1 : 1;
 
-      return baseIdentifier;
+        return [
+          ...prevTemplates,
+          {
+            templateId: template.id,
+            identifier: baseIdentifier,
+            order: nextOrder,
+            overrideValues: '',
+          },
+        ];
+      });
+
+      return finalIdentifier;
     },
-    [selectedTemplates]
+    [] // Removed selectedTemplates from dependency array since we use the function form of setState
   );
 
   /**
@@ -58,9 +64,11 @@ export function useTemplateSelection(initialTemplates: BlueprintChildTemplate[] 
    */
   const removeTemplate = useCallback(
     (index: number) => {
-      setSelectedTemplates(selectedTemplates.filter((_, idx) => idx !== index));
+      setSelectedTemplates((prevTemplates) => {
+        return prevTemplates.filter((_, idx) => idx !== index);
+      });
     },
-    [selectedTemplates]
+    [] // Removed dependency since we use the function form of setState
   );
 
   /**
@@ -68,34 +76,24 @@ export function useTemplateSelection(initialTemplates: BlueprintChildTemplate[] 
    */
   const updateTemplateIdentifier = useCallback(
     (index: number, newIdentifier: string): boolean => {
-      // Check if the new identifier already exists
-      if (selectedTemplates.some((t, i) => i !== index && t.identifier === newIdentifier)) {
-        return false; // Don't allow duplicate identifiers
-      }
+      let success = true;
 
-      setSelectedTemplates(
-        selectedTemplates.map((template, idx) =>
+      setSelectedTemplates((prevTemplates) => {
+        // Check if the new identifier already exists
+        if (prevTemplates.some((t, i) => i !== index && t.identifier === newIdentifier)) {
+          success = false;
+
+          return prevTemplates; // Don't update if duplicate
+        }
+
+        return prevTemplates.map((template, idx) =>
           idx === index ? { ...template, identifier: newIdentifier } : template
-        )
-      );
+        );
+      });
 
-      return true;
+      return success;
     },
-    [selectedTemplates]
-  );
-
-  /**
-   * Update template override values
-   */
-  const updateTemplateOverrides = useCallback(
-    (index: number, overrideValues: string) => {
-      setSelectedTemplates(
-        selectedTemplates.map((template, idx) =>
-          idx === index ? { ...template, overrideValues } : template
-        )
-      );
-    },
-    [selectedTemplates]
+    [] // Removed dependency since we use the function form of setState
   );
 
   /**
@@ -129,7 +127,6 @@ export function useTemplateSelection(initialTemplates: BlueprintChildTemplate[] 
     addTemplate,
     removeTemplate,
     updateTemplateIdentifier,
-    updateTemplateOverrides,
     reorderTemplates,
   };
 }

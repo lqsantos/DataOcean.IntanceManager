@@ -129,8 +129,18 @@ export function BlueprintForm({
    * Handle form submission for templates step
    */
   const handleTemplatesSubmit = (data: FormValues) => {
+    console.warn('Template step submission:', data.selectedTemplates);
+
     if (mode === 'create' && data.selectedTemplates) {
-      updateSelectedTemplates(data.selectedTemplates);
+      // Garantir que a ordem está preservada e que todos os campos necessários estão presentes
+      const processedTemplates = data.selectedTemplates.map((template, index) => ({
+        ...template,
+        order: index + 1, // Garante que a ordem está correta
+      }));
+
+      console.warn('Processed templates:', processedTemplates);
+
+      updateSelectedTemplates(processedTemplates);
 
       if (onNextStep) {
         onNextStep();

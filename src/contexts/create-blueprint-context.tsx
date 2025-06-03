@@ -64,61 +64,6 @@ export function CreateBlueprintProvider({ children }: { children: ReactNode }) {
   >([]);
   const [generatedHelperTpl, setGeneratedHelperTpl] = useState('');
 
-  // Funções de controle do modal
-  const openModal = () => {
-    setIsOpen(true);
-    resetForm();
-  };
-
-  const closeModal = () => {
-    setIsOpen(false);
-  };
-
-  // Funções de navegação
-  const nextStep = () => {
-    setCurrentStep((prev) => Math.min(totalSteps, prev + 1));
-  };
-
-  const prevStep = () => {
-    setCurrentStep((prev) => Math.max(1, prev - 1));
-  };
-
-  const goToStep = (step: number) => {
-    if (step >= 1 && step <= totalSteps) {
-      setCurrentStep(step);
-    }
-  };
-
-  // Funções de atualização de dados
-  const updateBlueprintData = (data: Partial<CreateBlueprintDto>) => {
-    setBlueprintData((prev) => ({ ...prev, ...data }));
-  };
-
-  const updateVariables = (newVariables: BlueprintVariable[]) => {
-    setVariables(newVariables);
-    // Ao atualizar variáveis, regeneramos o helper.tpl
-    setGeneratedHelperTpl(generateHelperTplContent(newVariables));
-  };
-
-  // Nova função para atualizar blueprint variables conforme blue.md
-  const updateBlueprintVariables = (newVariables: BlueprintVariableExtended[]) => {
-    setBlueprintVariables(newVariables);
-
-    // Converter para o formato antigo para compatibilidade
-    const convertedVariables: BlueprintVariable[] = newVariables.map((v) => ({
-      name: v.name.replace('helper.', ''),
-      description: v.description,
-      defaultValue: v.value,
-      required: true,
-      type: 'string', // Por padrão, considerar como string
-    }));
-
-    setVariables(convertedVariables);
-
-    // Gerar helper.tpl a partir das novas variáveis
-    setGeneratedHelperTpl(generateHelperTplFromExtended(newVariables));
-  };
-
   // Função para gerar helper.tpl a partir das variáveis estendidas
   const generateHelperTplFromExtended = (vars: BlueprintVariableExtended[]): string => {
     if (!vars || vars.length === 0) {
@@ -136,16 +81,6 @@ ${variable.value || ''}
       .join('\n\n');
 
     return helperContent;
-  };
-
-  const updateSelectedTemplates = (templates: Omit<BlueprintChildTemplate, 'templateName'>[]) => {
-    // Garantir que cada template tenha uma ordem sequencial
-    const templatesWithOrder = templates.map((template, index) => ({
-      ...template,
-      order: template.order || index + 1,
-    }));
-
-    setSelectedTemplates(templatesWithOrder);
   };
 
   // Gerar o conteúdo do helper.tpl com base nas variáveis (para compatibilidade)
@@ -178,6 +113,75 @@ ${defaultValue}
     return helperContent;
   };
 
+  // Reset do formulário
+  const resetForm = () => {
+    setCurrentStep(1);
+    setBlueprintData({});
+    setVariables([]);
+    setBlueprintVariables([]);
+    setSelectedTemplates([]);
+    setGeneratedHelperTpl('');
+  };
+
+  // Funções de controle do modal
+  const openModal = () => {
+    setIsOpen(true);
+    resetForm();
+  };
+
+  const closeModal = () => {
+    setIsOpen(false);
+  };
+
+  // Funções de navegação
+  const nextStep = () => {
+    setCurrentStep((prev) => Math.min(totalSteps, prev + 1));
+  };
+
+  const prevStep = () => {
+    setCurrentStep((prev) => Math.max(1, prev - 1));
+  };
+
+  const goToStep = (step: number) => {
+    if (step >= 1 && step <= totalSteps) {
+      setCurrentStep(step);
+    }
+  };
+
+  // Funções de atualização de dados
+  const updateBlueprintData = (data: Partial<CreateBlueprintDto>) => {
+    setBlueprintData((prev) => ({ ...prev, ...data }));
+  };
+
+  const updateSelectedTemplates = (templates: Omit<BlueprintChildTemplate, 'templateName'>[]) => {
+    setSelectedTemplates(templates);
+  };
+
+  const updateVariables = (newVariables: BlueprintVariable[]) => {
+    setVariables(newVariables);
+    // Ao atualizar variáveis, regeneramos o helper.tpl
+    setGeneratedHelperTpl(generateHelperTplContent(newVariables));
+  };
+
+  // Nova função para atualizar blueprint variables conforme blue.md
+  const updateBlueprintVariables = (newVariables: BlueprintVariableExtended[]) => {
+    setBlueprintVariables(newVariables);
+
+    // Converter para o formato antigo para compatibilidade
+    const convertedVariables: BlueprintVariable[] = newVariables.map((v) => ({
+      name: v.name.replace('helper.', ''),
+      description: v.description,
+      defaultValue: v.value,
+      required: true,
+      type: 'string', // Por padrão, considerar como string
+    }));
+
+    setVariables(convertedVariables);
+
+    // Gerar helper.tpl a partir das novas variáveis
+    setGeneratedHelperTpl(generateHelperTplFromExtended(newVariables));
+  };
+
   // Função para regenerar o helper.tpl (útil para a etapa de preview)
   const generateHelperTpl = (): string => {
     let content;
@@ -192,16 +196,6 @@ ${defaultValue}
     setGeneratedHelperTpl(content);
 
     return content;
-  };
-
-  // Reset do formulário
-  const resetForm = () => {
-    setCurrentStep(1);
-    setBlueprintData({});
-    setVariables([]);
-    setBlueprintVariables([]);
-    setSelectedTemplates([]);
-    setGeneratedHelperTpl('');
   };
 
   // Criação do blueprint
@@ -220,7 +214,10 @@ ${defaultValue}
       // Preparar dados completos para criação
       const createData: CreateBlueprintDto = {
         ...(blueprintData as CreateBlueprintDto),
-        childTemplates: selectedTemplates,
+        childTemplates: selectedTemplates.map((template) => ({
+          ...template,
+          order: template.order || 0, // Garantir que a ordem está definida
+        })),
       };
 
       // Criar o blueprint
@@ -228,11 +225,13 @@ ${defaultValue}
 
       // Atualizar com variáveis e helper.tpl gerado
       if (variables.length > 0 || generatedHelperTpl) {
-        await blueprintService.updateBlueprint({
+        const updateData = {
           id: blueprint.id,
           variables,
           helperTpl: generatedHelperTpl || generateHelperTplContent(variables),
-        });
+        };
+
+        await blueprintService.updateBlueprint(updateData);
       }
 
       toast.success('Blueprint criado', {

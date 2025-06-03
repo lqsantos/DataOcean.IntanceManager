@@ -1,7 +1,7 @@
 'use client';
 
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 
 import { useTemplates } from '@/hooks/use-templates';
@@ -39,18 +39,21 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
     reorderTemplates,
   } = useTemplateSelection(formTemplates);
 
-  // No category extraction needed anymore
+  // Use useEffect to update form when selectedTemplates changes
+  useEffect(() => {
+    const updatedTemplates = selectedTemplates.map((template, index) => ({
+      ...template,
+      order: index + 1, // Ensure correct order
+    }));
 
-  // Update form value when selectedTemplates change
-  const updateFormTemplates = () => {
-    form.setValue('selectedTemplates', selectedTemplates);
-  };
+    form.setValue('selectedTemplates', updatedTemplates, { shouldValidate: true });
+  }, [selectedTemplates, form]);
 
   // Get template name from ID
   const getTemplateName = (id: string) => {
     const template = templates.find((t) => t.id === id);
 
-    return template ? template.name : 'Template desconhecido';
+    return template ? template.name : 'Unknown template';
   };
 
   // Filter catalog templates
@@ -85,41 +88,33 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
 
       if (template) {
         addTemplate(template);
-        updateFormTemplates();
       }
 
       return;
     }
 
-    // Handle reordering within selected templates
+    // Handle reordering of selected templates
     if (
       result.source.droppableId === 'selected-templates' &&
       result.destination.droppableId === 'selected-templates'
     ) {
       reorderTemplates(result.source.index, result.destination.index);
-      updateFormTemplates();
     }
   };
 
   // Handle add template
   const handleAddTemplate = (template: CatalogTemplate) => {
     addTemplate(template);
-    updateFormTemplates();
   };
 
   // Handle remove template
   const handleRemoveTemplate = (index: number) => {
     removeTemplate(index);
-    updateFormTemplates();
   };
 
-  // Handle update identifier
+  // Handle update identifier  const handleUpdateIdentifier = (index: number, identifier: string) => {
   const handleUpdateIdentifier = (index: number, identifier: string) => {
-    const result = updateTemplateIdentifier(index, identifier);
-
-    updateFormTemplates();
-
-    return result;
+    return updateTemplateIdentifier(index, identifier);
   };
 
   // We always need to wrap our components in DragDropContext
