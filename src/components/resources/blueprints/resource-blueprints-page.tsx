@@ -2,6 +2,7 @@
 
 import { Plus, RotateCw, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,7 +24,7 @@ import { BlueprintCard } from './blueprint-card';
 import { CreateBlueprintModal } from './create-blueprint-modal';
 import { DeleteBlueprintDialog } from './delete-blueprint-dialog';
 
-export function ResourceBlueprintsPage() {
+export function ResourceBlueprintsPage(): ReactElement {
   return (
     <CreateBlueprintProvider>
       <BlueprintsPageContent />
@@ -31,42 +32,23 @@ export function ResourceBlueprintsPage() {
   );
 }
 
-function BlueprintsPageContent() {
-  const { t } = useTranslation('blueprints');
-  const { t: tResources } = useTranslation('resources');
+function BlueprintsPageContent(): ReactElement {
+  const { t } = useTranslation('entityTable');
   const router = useRouter();
   const {
     blueprints,
     isLoading,
     error,
-    createBlueprint,
-    updateBlueprint,
     deleteBlueprint,
     duplicateBlueprint,
     refreshBlueprints: refreshBlueprintsFromStore,
   } = useBlueprintStore();
-
-  // Adiciona uma função para recarregar os blueprints do backend
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const refreshBlueprints = async () => {
-    setIsRefreshing(true);
-
-    try {
-      // Usar a função refreshBlueprints do hook que foi exposta
-      await refreshBlueprintsFromStore();
-    } catch (err) {
-      console.error('Erro ao recarregar blueprints:', err);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
   const { openModal } = useCreateBlueprint();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [deleteDialogState, setDeleteDialogState] = useState<{
     isOpen: boolean;
     blueprintId: string | null;
@@ -77,7 +59,11 @@ function BlueprintsPageContent() {
 
   // Get unique categories from blueprints
   const categories = Array.from(
-    new Set(blueprints.map((blueprint) => blueprint.category).filter(Boolean))
+    new Set(
+      blueprints
+        .map((blueprint) => blueprint.category)
+        .filter((category): category is string => category !== undefined)
+    )
   );
 
   // Filter blueprints based on search query and category
@@ -92,6 +78,18 @@ function BlueprintsPageContent() {
     return matchesSearch && matchesCategory;
   });
 
+  const refreshBlueprints = async () => {
+    setIsRefreshing(true);
+
+    try {
+      await refreshBlueprintsFromStore();
+    } catch (err) {
+      console.error('Error refreshing blueprints:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const handleCreateBlueprint = () => {
     openModal();
   };
@@ -103,8 +101,8 @@ function BlueprintsPageContent() {
   const handleDuplicateBlueprint = async (blueprintId: string) => {
     try {
       await duplicateBlueprint(blueprintId);
-    } catch (error) {
-      console.error('Error duplicating blueprint:', error);
+    } catch (err) {
+      console.error('Error duplicating blueprint:', err);
     }
   };
 
@@ -113,8 +111,8 @@ function BlueprintsPageContent() {
       try {
         await deleteBlueprint(deleteDialogState.blueprintId);
         setDeleteDialogState({ isOpen: false, blueprintId: null });
-      } catch (error) {
-        console.error('Error deleting blueprint:', error);
+      } catch (err) {
+        console.error('Error deleting blueprint:', err);
       }
     }
   };
@@ -131,6 +129,26 @@ function BlueprintsPageContent() {
     router.push(`/instances/new?blueprint=${blueprintId}`);
   };
 
+  const renderBlueprints = () => (
+    <div
+      className={
+        viewMode === 'grid' ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'
+      }
+    >
+      {filteredBlueprints.map((blueprint) => (
+        <BlueprintCard
+          key={blueprint.id}
+          blueprint={blueprint}
+          viewMode={viewMode}
+          onEdit={() => handleEditBlueprint(blueprint.id)}
+          onDuplicate={() => handleDuplicateBlueprint(blueprint.id)}
+          onDelete={() => openDeleteDialog(blueprint.id)}
+          onCreateInstance={() => handleCreateInstance(blueprint.id)}
+        />
+      ))}
+    </div>
+  );
+
   return (
     <div data-testid="blueprints-page-container">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -138,7 +156,7 @@ function BlueprintsPageContent() {
           <div className="relative flex-1">
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder={tResources('table.search.placeholder')}
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8"
@@ -150,10 +168,10 @@ function BlueprintsPageContent() {
         <div className="flex flex-wrap items-center gap-2">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t('search.filterByCategory')} />
+              <SelectValue placeholder={t('searchPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('search.allCategories')}</SelectItem>
+              <SelectItem value="all">{t('actions.view')}</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
@@ -162,12 +180,9 @@ function BlueprintsPageContent() {
             </SelectContent>
           </Select>
 
-          <Tabs
-            defaultValue="grid"
-            onValueChange={(value) => setViewMode(value as 'grid' | 'list')}
-          >
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'grid' | 'list')}>
             <TabsList>
-              <TabsTrigger value="grid" aria-label={t('viewMode.grid')}>
+              <TabsTrigger value="grid" aria-label={t('actions.view')}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -185,7 +200,7 @@ function BlueprintsPageContent() {
                   <rect width="7" height="7" x="3" y="14" rx="1" />
                 </svg>
               </TabsTrigger>
-              <TabsTrigger value="list" aria-label={t('viewMode.list')}>
+              <TabsTrigger value="list" aria-label={t('actions.view')}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -217,13 +232,13 @@ function BlueprintsPageContent() {
                   size="icon"
                   disabled={isRefreshing || isLoading}
                   data-testid="reload-blueprints-button"
-                  aria-label={t('refreshButton')}
+                  aria-label={t('actions.view')}
                 >
                   <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t('refreshButton')}</p>
+                <p>{t('actions.view')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -234,65 +249,59 @@ function BlueprintsPageContent() {
             data-testid="create-blueprint-button"
           >
             <Plus className="h-4 w-4" />
-            {t('newButton')}
+            {t('actions.view')}
           </Button>
         </div>
       </div>
 
       <div className="mt-6">
-        {isLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-[220px] rounded-lg border border-border bg-card p-6 shadow-sm"
-              >
-                <div className="space-y-3">
-                  <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted"></div>
-                  <div className="h-3 w-1/2 animate-pulse rounded-md bg-muted"></div>
-                  <div className="mt-4 space-y-2">
-                    <div className="h-3 w-full animate-pulse rounded-md bg-muted"></div>
-                    <div className="h-3 w-full animate-pulse rounded-md bg-muted"></div>
+        {(() => {
+          if (isLoading) {
+            return (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="h-[220px] rounded-lg border border-border bg-card p-6 shadow-sm"
+                  >
+                    <div className="space-y-3">
+                      <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted"></div>
+                      <div className="h-3 w-1/2 animate-pulse rounded-md bg-muted"></div>
+                      <div className="mt-4 space-y-2">
+                        <div className="h-3 w-full animate-pulse rounded-md bg-muted"></div>
+                        <div className="h-3 w-full animate-pulse rounded-md bg-muted"></div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-            <div className="text-destructive">{t('toast.error.title')}</div>
-            <p className="text-sm text-muted-foreground">{t('toast.error.description')}</p>
-          </div>
-        ) : filteredBlueprints.length === 0 ? (
-          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-            <div className="text-muted-foreground">{t('search.noResults.title')}</div>
-            <p className="text-sm text-muted-foreground">
-              {searchQuery || categoryFilter !== 'all'
-                ? t('search.noResults.description.withFilters')
-                : t('search.noResults.description.noFilters')}
-            </p>
-          </div>
-        ) : (
-          <div
-            className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'
-                : 'space-y-4'
-            }
-          >
-            {filteredBlueprints.map((blueprint) => (
-              <BlueprintCard
-                key={blueprint.id}
-                blueprint={blueprint}
-                viewMode={viewMode}
-                onEdit={() => handleEditBlueprint(blueprint.id)}
-                onDuplicate={() => handleDuplicateBlueprint(blueprint.id)}
-                onDelete={() => openDeleteDialog(blueprint.id)}
-                onCreateInstance={() => handleCreateInstance(blueprint.id)}
-              />
-            ))}
-          </div>
-        )}
+            );
+          }
+
+          if (error) {
+            return (
+              <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+                <div className="text-destructive">{t('emptyMessage')}</div>
+                <p className="text-sm text-muted-foreground">{t('emptySearchMessage')}</p>
+              </div>
+            );
+          }
+
+          if (filteredBlueprints.length === 0) {
+            return (
+              <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+                <div className="text-muted-foreground">{t('emptyMessage')}</div>
+                <p className="text-sm text-muted-foreground">
+                  {searchQuery || categoryFilter !== 'all'
+                    ? t('emptySearchMessage')
+                    : t('emptyMessage')}
+                </p>
+              </div>
+            );
+          }
+
+          return renderBlueprints();
+        })()}
       </div>
 
       {deleteDialogState.isOpen && (
@@ -307,13 +316,11 @@ function BlueprintsPageContent() {
         />
       )}
 
-      {/* Componente de modal para criar novos blueprints - é controlado pelo contexto CreateBlueprintProvider */}
       <CreateBlueprintModal
         isOpen={false}
-        onClose={() => {}}
-        onCreate={(_newBlueprint) => {
-          // Quando um blueprint é criado com sucesso, atualize a lista
-          refreshBlueprints();
+        onClose={closeDeleteDialog}
+        onCreate={async () => {
+          await refreshBlueprints();
         }}
       />
     </div>
