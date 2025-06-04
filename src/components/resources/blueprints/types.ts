@@ -8,7 +8,7 @@ export interface Blueprint {
   name: string;
   description?: string;
   category?: string;
-  templateId?: string;
+  // Removido templateId
   childTemplates?: BlueprintChildTemplate[];
   variables?: BlueprintVariable[];
   helperTpl?: string;
@@ -57,7 +57,8 @@ export const formSchema = z.object({
 
   // Optional fields defined in other steps or by the system
   category: z.string().optional(),
-  templateId: z.string().optional(),
+  // Removido templateId
+  __serverValidation: z.boolean().optional(), // Controle interno para validação do servidor
 
   // Step 2: Associated Templates
   selectedTemplates: z

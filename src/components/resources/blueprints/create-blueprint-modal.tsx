@@ -45,11 +45,17 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
   };
 
   // Função para criar o blueprint
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: any): Promise<void> => {
+    // Assegurar que os dados do contexto estão atualizados
     const blueprint = await createBlueprint();
 
     if (blueprint && onCreate) {
       onCreate(blueprint);
+    }
+
+    // Fechar explicitamente o modal após a criação bem-sucedida
+    if (blueprint) {
+      handleClose();
     }
   };
 
@@ -85,7 +91,7 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
       <DialogContent className="flex h-[800px] max-h-[90vh] flex-col sm:max-w-[1000px]">
-        <div className="flex flex-col h-full">
+        <div className="flex h-full flex-col">
           <div className="flex-shrink-0 space-y-4">
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
@@ -123,7 +129,7 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
           </div>
 
           {/* Área de conteúdo com altura fixa e scroll */}
-          <div className="flex-1 overflow-y-auto mt-4 min-h-0">
+          <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
             <div className="space-y-6 px-1">
               <BlueprintForm
                 onSave={handleSave}

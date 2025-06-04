@@ -15,7 +15,7 @@ import type {
 import { useTemplates } from './use-templates';
 
 export function useBlueprintStore() {
-  const { t } = useTranslation('blueprints');
+  const { t } = useTranslation(['common', 'templates']);
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -112,13 +112,7 @@ export function useBlueprintStore() {
     if (templates.length > 0 && blueprints.length > 0) {
       // Create a deep copy of blueprints to prevent modifications to original state
       const updatedBlueprints = blueprints.map((blueprint) => {
-        const template = templates.find((t) => t.id === blueprint.templateId);
         const updatedBlueprint = { ...blueprint };
-
-        // Update main template name if different
-        if (template && blueprint.templateName !== template.name) {
-          updatedBlueprint.templateName = template.name;
-        }
 
         // Update child template names if they exist
         if (blueprint.childTemplates && blueprint.childTemplates.length > 0) {
@@ -204,8 +198,6 @@ ${defaultValue}
   // Create a new blueprint
   const createBlueprint = async (data: CreateBlueprintDto): Promise<Blueprint> => {
     try {
-      const mainTemplate = templates.find((t) => t.id === data.templateId);
-
       // Process child templates (if any)
       const processedChildTemplates: BlueprintChildTemplate[] = [];
 
@@ -231,8 +223,6 @@ ${defaultValue}
         name: data.name,
         description: data.description,
         category: data.category,
-        templateId: data.templateId,
-        templateName: mainTemplate?.name || 'Unknown Template',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         variables: data.variables || [],

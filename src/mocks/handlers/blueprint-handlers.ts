@@ -10,7 +10,7 @@ let blueprints: Blueprint[] = [
     name: 'Web Application Blueprint',
     description: 'Standard web application with load balancing',
     category: 'Application',
-    templateId: '1',
+    // Removido templateId
     templateName: 'Web Application Template',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -28,6 +28,14 @@ let blueprints: Blueprint[] = [
         defaultValue: 'latest',
         required: true,
         type: 'string',
+      },
+    ],
+    childTemplates: [
+      {
+        templateId: '1',
+        templateName: 'Web Application Template',
+        identifier: 'main-template',
+        order: 1,
       },
     ],
   },
@@ -118,11 +126,16 @@ export const blueprintHandlers = [
       name: data.name,
       description: data.description,
       category: data.category,
-      templateId: data.templateId,
-      templateName: 'Template Name', // This would typically come from a template lookup
+      // Removido templateId
+      templateName: data.childTemplates?.length ? 'Template associado' : undefined, // Nome derivado de templates associados
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       variables: [],
+      childTemplates: data.childTemplates?.map((template, index) => ({
+        ...template,
+        templateName: `Template ${index + 1}`, // Nome representativo do template
+        order: index + 1, // Definir ordem dos templates
+      })),
     };
 
     blueprints = [...blueprints, newBlueprint];
@@ -216,6 +229,36 @@ export const blueprintHandlers = [
       success: true,
       message: `Instance created from blueprint ${blueprint.name}`,
       instanceId: uuidv4(),
+    });
+  }),
+
+  // Validate blueprint
+  http.post('/api/blueprints/validate', async ({ request }) => {
+    await delay(800); // Simular um pequeno atraso na validação
+
+    const blueprintData = (await request.json()) as CreateBlueprintDto;
+
+    // Implementar validação básica do blueprint
+    if (!blueprintData.name || blueprintData.name.length < 3) {
+      return HttpResponse.json({
+        valid: false,
+        message: 'O nome do blueprint deve ter pelo menos 3 caracteres',
+      });
+    }
+
+    // Verificar se tem descrição
+    if (!blueprintData.description) {
+      return HttpResponse.json({
+        valid: false,
+        message: 'A descrição do blueprint é obrigatória',
+      });
+    }
+
+    // Adicione aqui outras validações que você desejar...
+
+    // Se passou em todas as validações
+    return HttpResponse.json({
+      valid: true,
     });
   }),
 ];

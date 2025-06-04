@@ -98,4 +98,35 @@ export const blueprintService = {
 
     return response.json();
   },
+
+  async validateBlueprint(
+    blueprint: CreateBlueprintDto,
+    signal?: AbortSignal
+  ): Promise<{
+    valid: boolean;
+    message?: string;
+  }> {
+    try {
+      const response = await fetch('/api/blueprints/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(blueprint),
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to validate blueprint');
+      }
+
+      return response.json();
+    } catch (error) {
+      // Return validation failed if request was aborted
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return { valid: false, message: 'Validação cancelada' };
+      }
+      throw error;
+    }
+  },
 };

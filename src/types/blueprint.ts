@@ -5,12 +5,11 @@ export interface Blueprint {
   name: string;
   description?: string;
   category?: string;
-  templateId: string; // Template base (principal)
   templateName?: string;
   createdAt: string;
   updatedAt: string;
   variables?: BlueprintVariable[];
-  childTemplates?: BlueprintChildTemplate[]; // Aplicações filhas
+  childTemplates?: BlueprintChildTemplate[]; // Templates associados ao blueprint
   helperTpl?: string; // Conteúdo do helper.tpl
 }
 
@@ -35,8 +34,8 @@ export interface CreateBlueprintDto {
   name: string;
   description?: string;
   category?: string;
-  templateId: string; // Template principal
-  childTemplates?: Omit<BlueprintChildTemplate, 'order'>[]; // Templates filhos sem ordem
+  childTemplates?: Omit<BlueprintChildTemplate, 'order'>[]; // Templates associados ao blueprint
+  variables?: BlueprintVariable[];
 }
 
 export interface UpdateBlueprintDto {

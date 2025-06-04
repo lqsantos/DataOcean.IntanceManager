@@ -19,6 +19,8 @@ interface StepNavigationProps {
   isNextEnabled?: boolean;
   /** Is previous button enabled */
   isPrevEnabled?: boolean;
+  /** Is server validation passed (only relevant for final step) */
+
   /** Custom labels */
   labels?: {
     next?: string;
@@ -39,6 +41,7 @@ export function StepNavigation({
   isSubmitting = false,
   isNextEnabled = true,
   isPrevEnabled = true,
+
   labels = {},
 }: StepNavigationProps) {
   // Default labels

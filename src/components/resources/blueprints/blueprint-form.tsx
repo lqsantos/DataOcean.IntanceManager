@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
@@ -50,7 +51,7 @@ export function BlueprintForm({
     defaultValues: getDefaultValues(),
   });
 
-  const { handleStepSubmit, hasStepErrors } = useBlueprintForm(form, mode);
+  const { handleStepSubmit, hasStepErrors, validateBlueprint } = useBlueprintForm(form, mode);
 
   /**
    * Get default form values based on mode
@@ -61,7 +62,7 @@ export function BlueprintForm({
         name: blueprint.name,
         description: blueprint.description || '',
         category: blueprint.category || '',
-        templateId: blueprint.templateId,
+        // Removido templateId
         selectedTemplates: blueprint.childTemplates || [],
         blueprintVariables: blueprint.variables || [],
         helperTpl: blueprint.helperTpl || '',
@@ -84,7 +85,7 @@ export function BlueprintForm({
         name: blueprintData?.name || '',
         description: blueprintData?.description || '',
         category: blueprintData?.category || '',
-        templateId: blueprintData?.templateId || '',
+        // Removido templateId
         selectedTemplates,
         blueprintVariables: [],
         helperTpl: generatedHelperTpl || '',
@@ -102,19 +103,49 @@ export function BlueprintForm({
     };
 
   /**
-   * Handle final form submission
+   * Handle final form submission with validation
    */
   const handleFinalSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
 
     try {
+      // Gerar o helper template se estiver no modo de criação
       if (mode === 'create') {
         generateHelperTpl();
+
+        // Validar o blueprint antes de salvar (apenas no modo de criação)
+        const validationResult = await validateBlueprint(data);
+
+        if (!validationResult.valid) {
+          // Mostrar toast de erro com a mensagem específica do backend
+          toast.error('Erro de validação', {
+            description:
+              validationResult.message ||
+              'O blueprint não passou na validação do servidor. Por favor, verifique os dados.',
+          });
+
+          return;
+        }
       }
 
+      // Chamar a função de salvamento
       await onSave(data);
+
+      // Mostrar toast de sucesso apenas no modo de edição (o modo de criação já mostra um toast)
+      if (mode === 'edit') {
+        toast.success('Blueprint atualizado', {
+          description: `${data.name} foi atualizado com sucesso.`,
+        });
+      }
+
+      // No modo de criação, o modal será fechado pela função onSave (handleSave no CreateBlueprintModal)
     } catch (error) {
       console.error('Erro ao salvar blueprint:', error);
+
+      // Mostrar toast de erro em caso de falha
+      toast.error('Erro ao salvar blueprint', {
+        description: 'Ocorreu um erro ao tentar salvar o blueprint. Tente novamente.',
+      });
     } finally {
       setIsSubmitting(false);
     }

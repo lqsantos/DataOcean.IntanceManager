@@ -23,6 +23,9 @@ export function PreviewStep({ form }: PreviewStepProps) {
   const formData = form.getValues();
   const validations = getValidations(formData);
 
+  // Não precisamos mais da validação automática aqui
+  // A validação só será feita quando o usuário clicar em "Criar Blueprint"
+
   return (
     <div className="space-y-6">
       <div className="mb-6">
@@ -68,30 +71,27 @@ export function PreviewStep({ form }: PreviewStepProps) {
       {/* Validation Results */}
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Validações</h3>
+
+        {/* Local validations */}
         {validations.map((validation, index) => (
-          <Alert
-            key={index}
-            variant={
-              validation.type === 'error'
-                ? 'destructive'
-                : validation.type === 'warning'
-                  ? 'default'
-                  : 'default'
-            }
-          >
+          <Alert key={index} variant={getAlertVariant(validation.type)}>
             {validation.type === 'error' && <AlertCircle className="h-4 w-4" />}
             {validation.type === 'warning' && <AlertTriangle className="h-4 w-4" />}
             {validation.type === 'success' && <CheckCircle className="h-4 w-4" />}
-            <AlertTitle>
-              {validation.type === 'error'
-                ? 'Erro'
-                : validation.type === 'warning'
-                  ? 'Aviso'
-                  : 'Sucesso'}
-            </AlertTitle>
+            <AlertTitle>{getAlertTitle(validation.type)}</AlertTitle>
             <AlertDescription>{validation.message}</AlertDescription>
           </Alert>
         ))}
+
+        {/* Sem validação automática - será feita ao clicar em Criar Blueprint */}
+        <Alert variant="default">
+          <CheckCircle className="h-4 w-4" />
+          <AlertTitle>Pronto para criar</AlertTitle>
+          <AlertDescription>
+            Revise os dados acima e clique no botão "Criar Blueprint" para continuar. O blueprint
+            será validado antes da criação.
+          </AlertDescription>
+        </Alert>
       </div>
 
       {/* Preview Helper.tpl */}
@@ -114,6 +114,36 @@ export function PreviewStep({ form }: PreviewStepProps) {
       )}
     </div>
   );
+}
+
+/**
+ * Get the appropriate alert variant based on validation type
+ */
+function getAlertVariant(type: 'error' | 'warning' | 'success'): 'destructive' | 'default' {
+  switch (type) {
+    case 'error':
+      return 'destructive';
+    case 'warning':
+    case 'success':
+    default:
+      return 'default';
+  }
+}
+
+/**
+ * Get the appropriate alert title based on validation type
+ */
+function getAlertTitle(type: 'error' | 'warning' | 'success') {
+  switch (type) {
+    case 'error':
+      return 'Erro';
+    case 'warning':
+      return 'Aviso';
+    case 'success':
+      return 'Sucesso';
+    default:
+      return 'Informação';
+  }
 }
 
 /**

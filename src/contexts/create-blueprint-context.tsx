@@ -200,9 +200,18 @@ ${defaultValue}
 
   // Criação do blueprint
   const createBlueprint = async (): Promise<Blueprint | null> => {
-    if (!blueprintData.name || !blueprintData.templateId) {
+    if (!blueprintData.name) {
       toast.error('Informações obrigatórias faltando', {
-        description: 'Por favor, forneça todas as informações necessárias para o blueprint.',
+        description: 'Por favor, forneça um nome para o blueprint.',
+      });
+
+      return null;
+    }
+
+    // Verificar se pelo menos um template está associado ao blueprint
+    if (!selectedTemplates || selectedTemplates.length === 0) {
+      toast.error('Templates faltando', {
+        description: 'Por favor, selecione pelo menos um template para associar ao blueprint.',
       });
 
       return null;
@@ -214,9 +223,10 @@ ${defaultValue}
       // Preparar dados completos para criação
       const createData: CreateBlueprintDto = {
         ...(blueprintData as CreateBlueprintDto),
+        // Não precisa mais de templateId
         childTemplates: selectedTemplates.map((template) => ({
           ...template,
-          order: template.order || 0, // Garantir que a ordem está definida
+          // Não precisa incluir order aqui pois removemos da interface
         })),
       };
 
