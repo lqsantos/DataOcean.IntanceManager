@@ -10,19 +10,20 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useCreateBlueprint } from '@/contexts/create-blueprint-context';
+import type { Blueprint } from '@/types/blueprint';
 
 import { BlueprintForm } from './blueprint-form';
 
 interface CreateBlueprintModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate?: (data: any) => void;
+  onCreate?: (data: Blueprint) => void;
 }
 
 export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBlueprintModalProps) {
   const {
     isOpen: isContextOpen,
-    isLoading,
+    // Omitimos isLoading pois não é usado neste componente
     currentStep,
     totalSteps,
     closeModal,
@@ -31,6 +32,10 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
     goToStep,
     createBlueprint,
   } = useCreateBlueprint();
+
+  /* Não precisamos importar funções do useBlueprintStore aqui
+     O contexto já faz a chamada da API e o componente pai que usa 
+     o store será atualizado na próxima chamada */
 
   // Combine props open state with context
   const isModalOpen = isOpen || isContextOpen;
@@ -45,17 +50,25 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
   };
 
   // Função para criar o blueprint
-  const handleSave = async (data: any): Promise<void> => {
-    // Assegurar que os dados do contexto estão atualizados
-    const blueprint = await createBlueprint();
+  const handleSave = async (_formData: Record<string, unknown>): Promise<void> => {
+    try {
+      // Criar o blueprint usando apenas o contexto
+      // A função do contexto já usa blueprintService para salvar no backend
+      const blueprint = await createBlueprint();
 
-    if (blueprint && onCreate) {
-      onCreate(blueprint);
-    }
+      if (blueprint) {
+        // Notificar o componente pai através da prop onCreate
+        if (onCreate) {
+          // Passamos o blueprint criado para o componente pai
+          // que será responsável por atualizar a lista
+          onCreate(blueprint);
+        }
 
-    // Fechar explicitamente o modal após a criação bem-sucedida
-    if (blueprint) {
-      handleClose();
+        // Fechar explicitamente o modal após a criação bem-sucedida
+        handleClose();
+      }
+    } catch (error) {
+      console.error('Erro ao criar blueprint:', error);
     }
   };
 
@@ -111,20 +124,26 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
 
             {/* Barra de Progresso */}
             <div className="flex items-center gap-1">
-              {Array.from({ length: totalSteps }).map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-1.5 flex-1 rounded-full transition-colors ${
-                    index + 1 === currentStep
-                      ? 'bg-primary'
-                      : index + 1 < currentStep
-                        ? 'bg-primary/70'
-                        : 'bg-muted'
-                  }`}
-                  onClick={() => index + 1 < currentStep && goToStep(index + 1)}
-                  style={{ cursor: index + 1 < currentStep ? 'pointer' : 'default' }}
-                />
-              ))}
+              {Array.from({ length: totalSteps }).map((_, index) => {
+                const isCurrentStep = index + 1 === currentStep;
+                const isPreviousStep = index + 1 < currentStep;
+                let stepClass = 'bg-muted';
+
+                if (isCurrentStep) {
+                  stepClass = 'bg-primary';
+                } else if (isPreviousStep) {
+                  stepClass = 'bg-primary/70';
+                }
+
+                return (
+                  <div
+                    key={index}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${stepClass}`}
+                    onClick={() => isPreviousStep && goToStep(index + 1)}
+                    style={{ cursor: isPreviousStep ? 'pointer' : 'default' }}
+                  />
+                );
+              })}
             </div>
           </div>
 

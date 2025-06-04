@@ -16,26 +16,32 @@ export function useBlueprintStore() {
   const [error, setError] = useState<Error | null>(null);
   const { templates } = useTemplates();
 
+  // Function to fetch blueprints (can be called from outside)
+  const fetchBlueprints = async () => {
+    setIsLoading(true);
+
+    try {
+      // Use the blueprintService to fetch blueprints from the API
+      const data = await blueprintService.getAllBlueprints();
+
+      setBlueprints(data);
+
+      return data;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to fetch blueprints');
+
+      setError(error);
+      toast.error(t('toast.error.title'), {
+        description: t('toast.error.description'),
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Load blueprints on mount
   useEffect(() => {
-    const fetchBlueprints = async () => {
-      setIsLoading(true);
-
-      try {
-        // Use the blueprintService to fetch blueprints from the API
-        const data = await blueprintService.getAllBlueprints();
-
-        setBlueprints(data);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch blueprints'));
-        toast.error(t('toast.error.title'), {
-          description: t('toast.error.description'),
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchBlueprints();
   }, [t]);
 
@@ -280,5 +286,6 @@ ${defaultValue}
     deleteBlueprint,
     duplicateBlueprint,
     validateBlueprint,
+    refreshBlueprints: fetchBlueprints, // Expose the function to refresh blueprints
   };
 }

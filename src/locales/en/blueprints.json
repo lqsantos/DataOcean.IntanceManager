@@ -106,6 +106,7 @@
   },
 
   "newButton": "New Blueprint",
+  "refreshButton": "Refresh",
 
   "toast": {
     "created": {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Search } from 'lucide-react';
+import { Plus, RotateCw, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CreateBlueprintProvider, useCreateBlueprint } from '@/contexts/create-blueprint-context';
 import { useBlueprintStore } from '@/hooks/use-blueprints';
 
@@ -42,7 +43,24 @@ function BlueprintsPageContent() {
     updateBlueprint,
     deleteBlueprint,
     duplicateBlueprint,
+    refreshBlueprints: refreshBlueprintsFromStore,
   } = useBlueprintStore();
+
+  // Adiciona uma função para recarregar os blueprints do backend
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const refreshBlueprints = async () => {
+    setIsRefreshing(true);
+
+    try {
+      // Usar a função refreshBlueprints do hook que foi exposta
+      await refreshBlueprintsFromStore();
+    } catch (err) {
+      console.error('Erro ao recarregar blueprints:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const { openModal } = useCreateBlueprint();
 
@@ -190,6 +208,26 @@ function BlueprintsPageContent() {
             </TabsList>
           </Tabs>
 
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={refreshBlueprints}
+                  variant="outline"
+                  size="icon"
+                  disabled={isRefreshing || isLoading}
+                  data-testid="reload-blueprints-button"
+                  aria-label={t('refreshButton')}
+                >
+                  <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('refreshButton')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <Button
             onClick={handleCreateBlueprint}
             className="gap-2"
@@ -269,12 +307,13 @@ function BlueprintsPageContent() {
         />
       )}
 
-      {/* Componente de modal para criar novos blueprints */}
+      {/* Componente de modal para criar novos blueprints - é controlado pelo contexto CreateBlueprintProvider */}
       <CreateBlueprintModal
         isOpen={false}
         onClose={() => {}}
-        onCreate={(newBlueprint) => {
-          console.log('Blueprint criado:', newBlueprint);
+        onCreate={(_newBlueprint) => {
+          // Quando um blueprint é criado com sucesso, atualize a lista
+          refreshBlueprints();
         }}
       />
     </div>
