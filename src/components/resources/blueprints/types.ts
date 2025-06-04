@@ -68,6 +68,7 @@ export const formSchema = z.object({
         overrideValues: z.string().optional(),
       })
     )
+    .min(1, 'É necessário associar pelo menos um template')
     .optional(),
 
   // Step 3: Blueprint Variables

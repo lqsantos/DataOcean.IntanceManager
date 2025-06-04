@@ -29,7 +29,6 @@ interface CreateBlueprintContextType {
   variables: BlueprintVariable[];
   blueprintVariables: BlueprintVariableExtended[]; // Novo tipo de variáveis
   selectedTemplates: Omit<BlueprintChildTemplate, 'templateName'>[]; // Renomeado para clareza
-  generatedHelperTpl: string;
   openModal: () => void;
   closeModal: () => void;
   nextStep: () => void;
@@ -39,7 +38,6 @@ interface CreateBlueprintContextType {
   updateVariables: (variables: BlueprintVariable[]) => void;
   updateBlueprintVariables: (variables: BlueprintVariableExtended[]) => void; // Nova função
   updateSelectedTemplates: (templates: Omit<BlueprintChildTemplate, 'templateName'>[]) => void; // Renomeado
-  generateHelperTpl: () => string;
   createBlueprint: () => Promise<Blueprint | null>;
   resetForm: () => void;
 }
@@ -62,56 +60,6 @@ export function CreateBlueprintProvider({ children }: { children: ReactNode }) {
   const [selectedTemplates, setSelectedTemplates] = useState<
     Omit<BlueprintChildTemplate, 'templateName'>[]
   >([]);
-  const [generatedHelperTpl, setGeneratedHelperTpl] = useState('');
-
-  // Função para gerar helper.tpl a partir das variáveis estendidas
-  const generateHelperTplFromExtended = (vars: BlueprintVariableExtended[]): string => {
-    if (!vars || vars.length === 0) {
-      return '';
-    }
-
-    const helperContent = vars
-      .map((variable) => {
-        const description = variable.description ? `{{/* ${variable.description} */}}\n` : '';
-
-        return `${description}{{- define "${variable.name}" -}}
-${variable.value || ''}
-{{- end }}`;
-      })
-      .join('\n\n');
-
-    return helperContent;
-  };
-
-  // Gerar o conteúdo do helper.tpl com base nas variáveis (para compatibilidade)
-  const generateHelperTplContent = (vars: BlueprintVariable[]): string => {
-    if (!vars || vars.length === 0) {
-      return '';
-    }
-
-    const helperContent = vars
-      .map((variable) => {
-        let defaultValue = '';
-
-        // Formatar o valor padrão de acordo com o tipo
-        if (variable.defaultValue !== undefined) {
-          if (variable.type === 'string') {
-            defaultValue = variable.defaultValue;
-          } else if (variable.type === 'number') {
-            defaultValue = String(Number(variable.defaultValue) || 0);
-          } else if (variable.type === 'boolean') {
-            defaultValue = variable.defaultValue.toLowerCase() === 'true' ? 'true' : 'false';
-          }
-        }
-
-        return `{{- define "helper.${variable.name}" -}}
-${defaultValue}
-{{- end }}`;
-      })
-      .join('\n\n');
-
-    return helperContent;
-  };
 
   // Reset do formulário
   const resetForm = () => {
@@ -120,7 +68,6 @@ ${defaultValue}
     setVariables([]);
     setBlueprintVariables([]);
     setSelectedTemplates([]);
-    setGeneratedHelperTpl('');
   };
 
   // Funções de controle do modal
@@ -159,8 +106,7 @@ ${defaultValue}
 
   const updateVariables = (newVariables: BlueprintVariable[]) => {
     setVariables(newVariables);
-    // Ao atualizar variáveis, regeneramos o helper.tpl
-    setGeneratedHelperTpl(generateHelperTplContent(newVariables));
+    // Já não precisamos mais gerar o helperTpl no frontend
   };
 
   // Nova função para atualizar blueprint variables conforme blue.md
@@ -177,25 +123,7 @@ ${defaultValue}
     }));
 
     setVariables(convertedVariables);
-
-    // Gerar helper.tpl a partir das novas variáveis
-    setGeneratedHelperTpl(generateHelperTplFromExtended(newVariables));
-  };
-
-  // Função para regenerar o helper.tpl (útil para a etapa de preview)
-  const generateHelperTpl = (): string => {
-    let content;
-
-    // Se tivermos blueprint variables, usar elas prioritariamente
-    if (blueprintVariables.length > 0) {
-      content = generateHelperTplFromExtended(blueprintVariables);
-    } else {
-      content = generateHelperTplContent(variables);
-    }
-
-    setGeneratedHelperTpl(content);
-
-    return content;
+    // Já não precisamos mais gerar o helperTpl no frontend
   };
 
   // Criação do blueprint
@@ -233,12 +161,12 @@ ${defaultValue}
       // Criar o blueprint
       const blueprint = await blueprintService.createBlueprint(createData);
 
-      // Atualizar com variáveis e helper.tpl gerado
-      if (variables.length > 0 || generatedHelperTpl) {
+      // Atualizar com variáveis - o backend gerará o helperTpl
+      if (variables.length > 0) {
         const updateData = {
           id: blueprint.id,
           variables,
-          helperTpl: generatedHelperTpl || generateHelperTplContent(variables),
+          // Não enviamos mais o helperTpl, o backend o gerará
         };
 
         await blueprintService.updateBlueprint(updateData);
@@ -274,7 +202,6 @@ ${defaultValue}
         variables,
         blueprintVariables,
         selectedTemplates,
-        generatedHelperTpl,
         openModal,
         closeModal,
         nextStep,
@@ -284,7 +211,6 @@ ${defaultValue}
         updateVariables,
         updateBlueprintVariables,
         updateSelectedTemplates,
-        generateHelperTpl,
         createBlueprint,
         resetForm,
       }}

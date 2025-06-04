@@ -10,7 +10,7 @@ export interface Blueprint {
   updatedAt: string;
   variables?: BlueprintVariable[];
   childTemplates?: BlueprintChildTemplate[]; // Templates associados ao blueprint
-  helperTpl?: string; // Conteúdo do helper.tpl
+  // helperTpl removido - será gerado e usado apenas no backend
 }
 
 export interface BlueprintVariable {
@@ -45,7 +45,6 @@ export interface UpdateBlueprintDto {
   category?: string;
   variables?: BlueprintVariable[];
   childTemplates?: Omit<BlueprintChildTemplate, 'templateName'>[]; // Templates filhos com ordem
-  helperTpl?: string; // Helper.tpl para atualização manual
 }
 
 export interface BlueprintWithTemplate extends Blueprint {

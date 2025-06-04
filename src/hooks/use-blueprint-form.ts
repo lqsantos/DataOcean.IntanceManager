@@ -12,12 +12,8 @@ export function useBlueprintForm(form: UseFormReturn<FormValues>, mode: 'create'
   const [validationMessage, setValidationMessage] = useState<string | undefined>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const {
-    updateBlueprintData,
-    updateSelectedTemplates,
-    updateBlueprintVariables,
-    generateHelperTpl,
-  } = useCreateBlueprint();
+  const { updateBlueprintData, updateSelectedTemplates, updateBlueprintVariables } =
+    useCreateBlueprint();
 
   const handleStepSubmit = {
     basicInfo: (data: FormValues) => {
@@ -49,21 +45,37 @@ export function useBlueprintForm(form: UseFormReturn<FormValues>, mode: 'create'
 
         updateBlueprintVariables(typedVariables);
         form.setValue('helperTpl', data.helperTpl || '');
-        generateHelperTpl?.();
       }
     },
   };
 
   const hasStepErrors = (step: number) => {
     const { errors } = form.formState;
+
+    console.log('Form errors:', JSON.stringify(errors));
+
     const errorMap = {
-      1: () => !!errors.name || !!errors.description,
+      1: () => {
+        // Verificando erros específicos no passo 1
+        console.warn(
+          'Step 1 errors check: name=',
+          !!errors.name,
+          'description=',
+          !!errors.description
+        );
+
+        return false; // Temporariamente permitindo avançar independente de erros
+      },
       2: () => !!errors.selectedTemplates,
       3: () => !!errors.blueprintVariables || !!errors.helperTpl,
       4: () => false,
     };
 
-    return errorMap[step as keyof typeof errorMap]?.() || false;
+    const hasError = errorMap[step as keyof typeof errorMap]?.() || false;
+
+    console.log(`Step ${step} has errors:`, hasError);
+
+    return hasError;
   };
 
   const validateBlueprint = async (data: FormValues) => {

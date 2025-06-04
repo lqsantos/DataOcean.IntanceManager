@@ -67,14 +67,17 @@ export function SelectedTemplatesList({
 
   return (
     <div className="flex flex-col">
-      <div className="mb-3 flex h-8 items-center justify-end">
+      <div className="mb-3 flex h-8 items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium">Templates no Blueprint</h3>
-          {selectedTemplates.length > 0 && (
-            <Badge variant="secondary" className="h-5 px-2 text-xs">
-              {selectedTemplates.length}
-            </Badge>
-          )}
+          <h3 className="text-sm font-medium">Templates Selecionados</h3>
+          <Badge
+            variant={selectedTemplates.length > 0 ? 'secondary' : 'outline'}
+            className={`h-5 px-2 text-xs ${selectedTemplates.length === 0 ? 'border-primary text-primary' : ''}`}
+          >
+            {selectedTemplates.length > 0
+              ? `${selectedTemplates.length} template(s)`
+              : 'Obrigatório'}
+          </Badge>
         </div>
       </div>
 
@@ -89,7 +92,7 @@ export function SelectedTemplatesList({
           >
             {selectedTemplates.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-                <div className="mb-4 h-16 w-16 text-muted-foreground">
+                <div className="mb-4 h-16 w-16 text-primary">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="100%"
@@ -106,7 +109,12 @@ export function SelectedTemplatesList({
                     <path d="M8 12h8" />
                   </svg>
                 </div>
-                <p className="text-sm text-muted-foreground">Nenhum template selecionado</p>
+                <p className="text-sm font-medium text-primary">
+                  É necessário selecionar pelo menos um template
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Arraste templates do catálogo ou utilize o botão de adicionar
+                </p>
                 {/* The droppable needs placeholder even when empty */}
                 {provided.placeholder}
               </div>

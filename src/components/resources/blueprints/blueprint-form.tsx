@@ -41,17 +41,19 @@ export function BlueprintForm({
   const {
     blueprintData,
     selectedTemplates: contextSelectedTemplates,
-    generatedHelperTpl,
-    generateHelperTpl,
+    // Não precisamos mais dessas propriedades, o backend gerará o helperTpl
+    // generatedHelperTpl,
+    // generateHelperTpl,
   } = useCreateBlueprint();
 
   // Form configuration with validation
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: getDefaultValues(),
+    mode: 'onSubmit',
   });
 
-  const { handleStepSubmit, hasStepErrors, validateBlueprint } = useBlueprintForm(form, mode);
+  const { handleStepSubmit, hasStepErrors } = useBlueprintForm(form, mode);
 
   /**
    * Get default form values based on mode
@@ -88,17 +90,73 @@ export function BlueprintForm({
         // Removido templateId
         selectedTemplates,
         blueprintVariables: [],
-        helperTpl: generatedHelperTpl || '',
+        // O backend se encarregará de gerar o helperTpl
+        helperTpl: '',
       };
     }
   }
 
-  const handleStepSubmitWithNavigation =
-    (step: keyof typeof handleStepSubmit) => (data: FormValues) => {
-      handleStepSubmit[step](data);
+  // Função para validar apenas os campos específicos de cada passo
+  const validateStepOnly = async (step: string, data: FormValues) => {
+    // Desativa temporariamente outras validações
+    form.clearErrors();
 
-      if (onNextStep) {
-        onNextStep();
+    // Validações específicas por passo
+    if (step === 'basicInfo') {
+      // Validamos apenas nome e descrição no primeiro passo
+      let isValid = true;
+
+      if (!data.name || data.name.length < 3) {
+        form.setError('name', { message: 'Nome deve ter pelo menos 3 caracteres' });
+        isValid = false;
+      }
+
+      if (!data.description || data.description.length < 1) {
+        form.setError('description', { message: 'Descrição é obrigatória' });
+        isValid = false;
+      }
+
+      return isValid;
+    }
+
+    if (step === 'templates') {
+      // Validamos apenas templates no segundo passo
+      if (!data.selectedTemplates || data.selectedTemplates.length < 1) {
+        form.setError('selectedTemplates', {
+          message: 'É necessário associar pelo menos um template',
+        });
+
+        return false;
+      }
+
+      return true;
+    }
+
+    // Por padrão, permitir avanço
+    return true;
+  };
+
+  const handleStepSubmitWithNavigation =
+    (step: keyof typeof handleStepSubmit) => async (data: FormValues) => {
+      console.warn(`Processando submissão do passo ${step}`);
+
+      try {
+        // Validar apenas os campos deste passo
+        const isValid = await validateStepOnly(step, data);
+
+        if (isValid) {
+          handleStepSubmit[step](data);
+
+          console.warn(`Avançando para o próximo passo após ${step}`);
+
+          if (onNextStep) {
+            onNextStep();
+          }
+        } else {
+          console.warn(`Validação falhou para o passo ${step}`);
+        }
+      } catch (error) {
+        console.error(`Erro ao processar passo ${step}:`, error);
       }
     };
 
@@ -109,24 +167,8 @@ export function BlueprintForm({
     setIsSubmitting(true);
 
     try {
-      // Gerar o helper template se estiver no modo de criação
-      if (mode === 'create') {
-        generateHelperTpl();
-
-        // Validar o blueprint antes de salvar (apenas no modo de criação)
-        const validationResult = await validateBlueprint(data);
-
-        if (!validationResult.valid) {
-          // Mostrar toast de erro com a mensagem específica do backend
-          toast.error('Erro de validação', {
-            description:
-              validationResult.message ||
-              'O blueprint não passou na validação do servidor. Por favor, verifique os dados.',
-          });
-
-          return;
-        }
-      }
+      // Não precisamos mais gerar o helper template no frontend
+      // O backend se encarregará disso
 
       // Chamar a função de salvamento
       await onSave(data);
@@ -237,31 +279,91 @@ export function BlueprintForm({
     <div className="space-y-6">
       <Form {...form}>
         {currentStep === 1 && (
-          <form
-            onSubmit={form.handleSubmit(handleStepSubmitWithNavigation('basicInfo'))}
-            className="space-y-4 pb-20"
-          >
+          <form className="space-y-4 pb-20">
             <BasicInfoStep form={form} />
-            <StepNavigation
-              currentStep={currentStep}
-              onCancel={onCancel}
-              isNextEnabled={!hasStepErrors(currentStep)}
-            />
+            <div>
+              {/* Botão que substitui a navegação para diagnosticar o problema */}
+              <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t bg-background/95 px-6 py-4 backdrop-blur">
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    console.warn('Validando e salvando dados do passo 1');
+                    const data = form.getValues();
+
+                    // Validar campos obrigatórios
+                    if (!data.name || data.name.length < 3) {
+                      form.setError('name', { message: 'Nome deve ter pelo menos 3 caracteres' });
+
+                      return;
+                    }
+
+                    if (!data.description) {
+                      form.setError('description', { message: 'Descrição é obrigatória' });
+
+                      return;
+                    }
+
+                    // Se passou na validação, salvar e avançar
+                    handleStepSubmit.basicInfo(data);
+
+                    if (onNextStep) {
+                      onNextStep();
+                    }
+                  }}
+                >
+                  Próximo
+                </Button>
+              </div>
+            </div>
           </form>
         )}
 
         {currentStep === 2 && (
-          <form
-            onSubmit={form.handleSubmit(handleStepSubmitWithNavigation('templates'))}
-            className="space-y-4 pb-20"
-          >
+          <form className="space-y-4 pb-20">
             <TemplatesStep form={form} />
-            <StepNavigation
-              currentStep={currentStep}
-              onCancel={onCancel}
-              onPrevStep={onPrevStep}
-              isNextEnabled={!hasStepErrors(currentStep)}
-            />
+            <div>
+              {/* Botão que substitui a navegação para diagnosticar o problema */}
+              <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t bg-background/95 px-6 py-4 backdrop-blur">
+                <div className="flex gap-4">
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancelar
+                  </Button>
+                  {onPrevStep && (
+                    <Button type="button" variant="outline" onClick={onPrevStep}>
+                      Anterior
+                    </Button>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    console.warn('Validando e salvando dados do passo 2');
+                    const data = form.getValues();
+
+                    // Validar seleção de templates
+                    if (!data.selectedTemplates || data.selectedTemplates.length === 0) {
+                      form.setError('selectedTemplates', {
+                        message: 'É necessário associar pelo menos um template',
+                      });
+
+                      return;
+                    }
+
+                    // Se passou na validação, salvar e avançar
+                    handleStepSubmit.templates(data);
+
+                    if (onNextStep) {
+                      onNextStep();
+                    }
+                  }}
+                >
+                  Próximo
+                </Button>
+              </div>
+            </div>
           </form>
         )}
 

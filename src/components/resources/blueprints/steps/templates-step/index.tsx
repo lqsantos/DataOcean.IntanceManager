@@ -122,6 +122,14 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
 
   return (
     <div className="flex h-full flex-col">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold">Templates Associados</h2>
+        <p className="text-sm text-muted-foreground">
+          Selecione e organize os templates que compõem este blueprint.{' '}
+          <span className="text-primary">É necessário selecionar pelo menos um template.</span>
+        </p>
+      </div>
+
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <TemplateCatalog

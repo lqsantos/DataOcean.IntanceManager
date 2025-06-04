@@ -76,14 +76,8 @@ export function VariablesStep({ form }: VariablesStepProps) {
   const formVariables = convertOldVariables(form.getValues('blueprintVariables'));
 
   // Blueprint variables hook
-  const {
-    variables,
-    addVariable,
-    removeVariable,
-    updateVariable,
-    isVariableNameDuplicate,
-    generateHelperTpl,
-  } = useBlueprintVariables(formVariables);
+  const { variables, addVariable, removeVariable, updateVariable, isVariableNameDuplicate } =
+    useBlueprintVariables(formVariables);
 
   // Update form values when variables change
   useEffect(() => {
@@ -95,8 +89,9 @@ export function VariablesStep({ form }: VariablesStepProps) {
     }));
 
     form.setValue('blueprintVariables', oldFormatVariables, { shouldValidate: true });
-    form.setValue('helperTpl', generateHelperTpl(), { shouldValidate: true });
-  }, [variables, form, generateHelperTpl]);
+    // O backend irá gerar o helperTpl
+    form.setValue('helperTpl', '', { shouldValidate: true });
+  }, [variables, form]);
 
   // Handle variable type selection
   const handleAddVariable = (type: VariableType) => {
