@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 
 import { ClientLayout } from '@/components/layout/client-layout';
 import { MainLayout } from '@/components/layout/main-layout';
+import { NavigationProgress } from '@/components/layout/navigation-progress';
 import { Providers } from '@/lib/providers';
 import { MockProvider } from '@/mocks/provider';
 import './globals.css';
@@ -23,6 +24,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <MockProvider>
           <Providers>
+            {/* Barra de progresso para navegação entre páginas */}
+            <NavigationProgress />
             <ClientLayout>
               <MainLayout>{children}</MainLayout>
             </ClientLayout>
