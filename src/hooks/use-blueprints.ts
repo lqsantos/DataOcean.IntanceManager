@@ -3,19 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 
-import type {
-  Blueprint,
-  BlueprintChildTemplate,
-  CreateBlueprintDto,
-  UpdateBlueprintDto,
-} from '@/types/blueprint';
+import { blueprintService } from '@/services/blueprint-service';
+import type { Blueprint, CreateBlueprintDto, UpdateBlueprintDto } from '@/types/blueprint';
 
 import { useTemplates } from './use-templates';
 
 export function useBlueprintStore() {
-  const { t } = useTranslation(['common', 'templates']);
+  const { t } = useTranslation(['common', 'blueprints']);
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -27,73 +22,10 @@ export function useBlueprintStore() {
       setIsLoading(true);
 
       try {
-        // In a real implementation, this would be an API call
-        // For now, we'll simulate loading data from browser storage
-        const storedBlueprints = localStorage.getItem('dataocean_blueprints');
+        // Use the blueprintService to fetch blueprints from the API
+        const data = await blueprintService.getAllBlueprints();
 
-        if (storedBlueprints) {
-          setBlueprints(JSON.parse(storedBlueprints));
-        } else {
-          // Initial mock data if none exists
-          const mockBlueprints = [
-            {
-              id: '1',
-              name: 'Web Application Blueprint',
-              description: 'Standard web application with load balancing',
-              category: 'Application',
-              templateId: 'template-web-app',
-              templateName: 'Web Application',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              variables: [
-                {
-                  name: 'replicaCount',
-                  description: 'Number of replicas',
-                  defaultValue: '2',
-                  required: true,
-                  type: 'number',
-                },
-              ],
-              childTemplates: [],
-              helperTpl: `{{- define "helper.replicaCount" -}}
-2
-{{- end }}`,
-            },
-            {
-              id: '2',
-              name: 'Database Blueprint',
-              description: 'PostgreSQL database with persistent storage',
-              category: 'Database',
-              templateId: 'template-db',
-              templateName: 'PostgreSQL Database',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              variables: [
-                {
-                  name: 'storageSize',
-                  description: 'Storage size in GB',
-                  defaultValue: '10',
-                  required: true,
-                  type: 'number',
-                },
-              ],
-              childTemplates: [
-                {
-                  templateId: 'template-monitoring',
-                  templateName: 'Database Monitoring',
-                  order: 1,
-                  overrideValues: 'enabled: true\ninterval: 30s',
-                },
-              ],
-              helperTpl: `{{- define "helper.storageSize" -}}
-10
-{{- end }}`,
-            },
-          ];
-
-          setBlueprints(mockBlueprints);
-          localStorage.setItem('dataocean_blueprints', JSON.stringify(mockBlueprints));
-        }
+        setBlueprints(data);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch blueprints'));
         toast.error(t('toast.error.title'), {
@@ -107,10 +39,9 @@ export function useBlueprintStore() {
     fetchBlueprints();
   }, [t]);
 
-  // Fix: Update template names separately to avoid infinite loops
+  // Update template names when templates change
   useEffect(() => {
     if (templates.length > 0 && blueprints.length > 0) {
-      // Create a deep copy of blueprints to prevent modifications to original state
       const updatedBlueprints = blueprints.map((blueprint) => {
         const updatedBlueprint = { ...blueprint };
 
@@ -150,14 +81,11 @@ export function useBlueprintStore() {
         });
       });
 
-      // Only update state if there were actual changes
       if (hasChanges) {
         setBlueprints(updatedBlueprints);
-        // Update localStorage with the new blueprints
-        localStorage.setItem('dataocean_blueprints', JSON.stringify(updatedBlueprints));
       }
     }
-  }, [templates]);
+  }, [templates, blueprints]);
 
   // Generate helper.tpl content from variables
   const generateHelperTpl = (variables: Blueprint['variables']) => {
@@ -189,50 +117,34 @@ ${defaultValue}
     return helperContent;
   };
 
-  // Save blueprints to storage
-  const saveBlueprints = (newBlueprints: Blueprint[]) => {
-    localStorage.setItem('dataocean_blueprints', JSON.stringify(newBlueprints));
-    setBlueprints(newBlueprints);
-  };
-
   // Create a new blueprint
   const createBlueprint = async (data: CreateBlueprintDto): Promise<Blueprint> => {
     try {
-      // Process child templates (if any)
-      const processedChildTemplates: BlueprintChildTemplate[] = [];
+      // Process child templates if provided
+      const processedData = { ...data };
 
-      if (data.childTemplates && data.childTemplates.length > 0) {
-        data.childTemplates.forEach((child, index) => {
+      if (data.childTemplates) {
+        processedData.childTemplates = data.childTemplates.map((child, index) => {
           const childTemplateObj = templates.find((t) => t.id === child.templateId);
 
-          if (childTemplateObj) {
-            processedChildTemplates.push({
-              ...child,
-              templateName: childTemplateObj.name,
-              order: index + 1,
-            });
-          }
+          return {
+            ...child,
+            templateName: childTemplateObj?.name || `Template ${index + 1}`,
+            order: child.order || index + 1,
+          };
         });
       }
 
-      // Generate helper.tpl content if variables are provided
-      const helperTpl = data.variables ? generateHelperTpl(data.variables) : '';
+      // Generate helper.tpl if variables are provided
+      if (data.variables && !data.helperTpl) {
+        processedData.helperTpl = generateHelperTpl(data.variables);
+      }
 
-      const newBlueprint: Blueprint = {
-        id: uuidv4(),
-        name: data.name,
-        description: data.description,
-        category: data.category,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        variables: data.variables || [],
-        childTemplates: processedChildTemplates,
-        helperTpl: helperTpl,
-      };
+      // Call API to create the blueprint
+      const newBlueprint = await blueprintService.createBlueprint(processedData);
 
-      const newBlueprints = [...blueprints, newBlueprint];
-
-      saveBlueprints(newBlueprints);
+      // Update local state
+      setBlueprints((prev) => [...prev, newBlueprint]);
 
       toast.success(t('toast.created.title'), {
         description: t('toast.created.description', { name: data.name }),
@@ -252,52 +164,33 @@ ${defaultValue}
   // Update an existing blueprint
   const updateBlueprint = async (data: UpdateBlueprintDto): Promise<Blueprint> => {
     try {
-      const index = blueprints.findIndex((b) => b.id === data.id);
-
-      if (index === -1) {
-        throw new Error(`Blueprint with ID ${data.id} not found`);
-      }
-
       // Process child templates if provided
-      let processedChildTemplates: BlueprintChildTemplate[] | undefined = undefined;
+      const processedData = { ...data };
 
       if (data.childTemplates) {
-        processedChildTemplates = [];
-        data.childTemplates.forEach((child, index) => {
+        processedData.childTemplates = data.childTemplates.map((child, index) => {
           const childTemplateObj = templates.find((t) => t.id === child.templateId);
 
-          if (childTemplateObj) {
-            processedChildTemplates!.push({
-              ...child,
-              templateName: childTemplateObj.name,
-              order: child.order || index + 1,
-            });
-          }
+          return {
+            ...child,
+            templateName: childTemplateObj?.name || `Template ${index + 1}`,
+            order: child.order || index + 1,
+          };
         });
       }
 
-      // Generate or use provided helper.tpl
-      let helperTpl = data.helperTpl;
-
-      if (!helperTpl && data.variables) {
-        helperTpl = generateHelperTpl(data.variables);
+      // Generate helper.tpl if variables are provided and helperTpl not already set
+      if (data.variables && !data.helperTpl) {
+        processedData.helperTpl = generateHelperTpl(data.variables);
       }
 
-      const updatedBlueprint: Blueprint = {
-        ...blueprints[index],
-        ...data,
-        updatedAt: new Date().toISOString(),
-        childTemplates:
-          processedChildTemplates !== undefined
-            ? processedChildTemplates
-            : blueprints[index].childTemplates,
-        helperTpl: helperTpl !== undefined ? helperTpl : blueprints[index].helperTpl,
-      };
+      // Call API to update the blueprint
+      const updatedBlueprint = await blueprintService.updateBlueprint(processedData);
 
-      const newBlueprints = [...blueprints];
-
-      newBlueprints[index] = updatedBlueprint;
-      saveBlueprints(newBlueprints);
+      // Update local state
+      setBlueprints((prev) =>
+        prev.map((b) => (b.id === updatedBlueprint.id ? updatedBlueprint : b))
+      );
 
       toast.success(t('toast.updated.title'), {
         description: t('toast.updated.description'),
@@ -317,14 +210,12 @@ ${defaultValue}
   // Delete a blueprint
   const deleteBlueprint = async (id: string): Promise<void> => {
     try {
-      const index = blueprints.findIndex((b) => b.id === id);
+      // Call API to delete the blueprint
+      await blueprintService.deleteBlueprint(id);
 
-      if (index === -1) {
-        throw new Error(`Blueprint with ID ${id} not found`);
-      }
-      const newBlueprints = blueprints.filter((b) => b.id !== id);
+      // Update local state
+      setBlueprints((prev) => prev.filter((b) => b.id !== id));
 
-      saveBlueprints(newBlueprints);
       toast.success(t('toast.deleted.title'), {
         description: t('toast.deleted.description'),
       });
@@ -341,31 +232,21 @@ ${defaultValue}
   // Duplicate a blueprint
   const duplicateBlueprint = async (id: string): Promise<Blueprint> => {
     try {
-      const blueprint = blueprints.find((b) => b.id === id);
+      // Call API to duplicate the blueprint
+      const duplicatedBlueprint = await blueprintService.duplicateBlueprint(id);
 
-      if (!blueprint) {
-        throw new Error(`Blueprint with ID ${id} not found`);
-      }
+      // Update local state
+      setBlueprints((prev) => [...prev, duplicatedBlueprint]);
 
-      const newBlueprint: Blueprint = {
-        ...blueprint,
-        id: uuidv4(),
-        name: `${blueprint.name} (Cópia)`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        // Ensure child templates are properly copied
-        childTemplates: blueprint.childTemplates ? [...blueprint.childTemplates] : [],
-      };
-
-      const newBlueprints = [...blueprints, newBlueprint];
-
-      saveBlueprints(newBlueprints);
+      const originalBlueprint = blueprints.find((b) => b.id === id);
 
       toast.success(t('toast.duplicated.title'), {
-        description: t('toast.duplicated.description', { name: blueprint.name }),
+        description: t('toast.duplicated.description', {
+          name: originalBlueprint?.name || 'Blueprint',
+        }),
       });
 
-      return newBlueprint;
+      return duplicatedBlueprint;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to duplicate blueprint');
 
@@ -373,6 +254,20 @@ ${defaultValue}
         description: error.message,
       });
       throw error;
+    }
+  };
+
+  // Validate a blueprint
+  const validateBlueprint = async (
+    blueprint: CreateBlueprintDto,
+    signal?: AbortSignal
+  ): Promise<{ valid: boolean; message?: string }> => {
+    try {
+      return await blueprintService.validateBlueprint(blueprint, signal);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to validate blueprint');
+
+      return { valid: false, message: error.message };
     }
   };
 
@@ -384,5 +279,6 @@ ${defaultValue}
     updateBlueprint,
     deleteBlueprint,
     duplicateBlueprint,
+    validateBlueprint,
   };
 }
