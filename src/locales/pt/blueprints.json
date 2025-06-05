@@ -59,6 +59,11 @@
       "next": "Próximo",
       "previous": "Anterior",
       "finish": "Finalizar"
+    },
+    "validation": {
+      "nameRequired": "Nome deve ter pelo menos 3 caracteres",
+      "descriptionRequired": "Descrição é obrigatória",
+      "templatesRequired": "É necessário associar pelo menos um template"
     }
   },
 
@@ -68,6 +73,12 @@
     "buttons": {
       "save": "Salvar Alterações",
       "saving": "Salvando..."
+    },
+    "confirmClose": {
+      "title": "Descartar alterações",
+      "description": "Tem certeza que deseja descartar as alterações não salvas?",
+      "confirm": "Descartar",
+      "cancel": "Continuar editando"
     }
   },
 

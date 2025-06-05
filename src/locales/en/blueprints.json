@@ -59,6 +59,11 @@
       "next": "Next",
       "previous": "Previous",
       "finish": "Finish"
+    },
+    "validation": {
+      "nameRequired": "Name must be at least 3 characters",
+      "descriptionRequired": "Description is required",
+      "templatesRequired": "You must associate at least one template"
     }
   },
 
@@ -68,6 +73,12 @@
     "buttons": {
       "save": "Save Changes",
       "saving": "Saving..."
+    },
+    "confirmClose": {
+      "title": "Discard changes",
+      "description": "Are you sure you want to discard unsaved changes?",
+      "confirm": "Discard",
+      "cancel": "Continue editing"
     }
   },
 

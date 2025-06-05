@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,9 @@ export function BlueprintForm({
   onNextStep,
   onPrevStep,
 }: BlueprintFormProps) {
+  // Internacionalização
+  const { t } = useTranslation(['blueprints']);
+
   // UI state
   const [activeTab, setActiveTab] = useState('basic');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,8 +91,6 @@ export function BlueprintForm({
       // vamos definir o applicationId padrão para a primeira aplicação
       const defaultApplicationId = blueprintData?.applicationId || '';
 
-      console.warn('Default applicationId:', defaultApplicationId);
-
       return {
         name: blueprintData?.name || '',
         description: blueprintData?.description || '',
@@ -111,23 +113,26 @@ export function BlueprintForm({
       let isValid = true;
 
       if (!data.name || data.name.length < 3) {
-        form.setError('name', { message: 'Nome deve ter pelo menos 3 caracteres' });
+        form.setError('name', {
+          message: 'Nome deve ter pelo menos 3 caracteres',
+        });
         isValid = false;
       }
 
       if (!data.description || data.description.length < 1) {
-        form.setError('description', { message: 'Descrição é obrigatória' });
+        form.setError('description', {
+          message: 'Descrição é obrigatória',
+        });
         isValid = false;
       }
 
       // Verificar se o applicationId foi selecionado
       if (!data.applicationId) {
-        form.setError('applicationId', { message: 'Selecione uma aplicação' });
+        form.setError('applicationId', {
+          message: 'Selecione uma aplicação',
+        });
         isValid = false;
-        console.warn('ApplicationId não selecionado!');
       } else {
-        console.warn('ApplicationId validado:', data.applicationId);
-
         // Atualizar o contexto imediatamente com o applicationId
         updateBlueprintData({
           applicationId: data.applicationId,
@@ -141,7 +146,10 @@ export function BlueprintForm({
       // Validamos apenas templates no segundo passo
       if (!data.selectedTemplates || data.selectedTemplates.length < 1) {
         form.setError('selectedTemplates', {
-          message: 'É necessário associar pelo menos um template',
+          message: t(
+            'createBlueprint.validation.templatesRequired',
+            'É necessário associar pelo menos um template'
+          ),
         });
 
         return false;
@@ -156,11 +164,8 @@ export function BlueprintForm({
 
   const handleStepSubmitWithNavigation =
     (step: keyof typeof handleStepSubmit) => async (data: FormValues) => {
-      console.warn(`Processando submissão do passo ${step}`);
-
       // Garantir que applicationId seja passada para o contexto no passo 1
       if (step === 'basicInfo' && mode === 'create') {
-        console.warn('Dados do formulário (passo 1):', JSON.stringify(data));
         updateBlueprintData({
           name: data.name,
           description: data.description,
@@ -174,8 +179,6 @@ export function BlueprintForm({
 
         if (isValid) {
           handleStepSubmit[step](data);
-
-          console.warn(`Avançando para o próximo passo após ${step}`);
 
           if (onNextStep) {
             onNextStep();
@@ -203,8 +206,8 @@ export function BlueprintForm({
 
       // Mostrar toast de sucesso apenas no modo de edição (o modo de criação já mostra um toast)
       if (mode === 'edit') {
-        toast.success('Blueprint atualizado', {
-          description: `${data.name} foi atualizado com sucesso.`,
+        toast.success(t('toast.updated.title', 'Blueprint atualizado'), {
+          description: t('toast.updated.description', `${data.name} foi atualizado com sucesso.`),
         });
       }
 
@@ -213,8 +216,11 @@ export function BlueprintForm({
       console.error('Erro ao salvar blueprint:', error);
 
       // Mostrar toast de erro em caso de falha
-      toast.error('Erro ao salvar blueprint', {
-        description: 'Ocorreu um erro ao tentar salvar o blueprint. Tente novamente.',
+      toast.error(t('toast.error.title', 'Erro ao salvar blueprint'), {
+        description: t(
+          'toast.error.description',
+          'Ocorreu um erro ao tentar salvar o blueprint. Tente novamente.'
+        ),
       });
     } finally {
       setIsSubmitting(false);
@@ -241,9 +247,15 @@ export function BlueprintForm({
         <Form {...form}>
           <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4 w-full justify-start">
-              <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
-              <TabsTrigger value="templates">Templates Associados</TabsTrigger>
-              <TabsTrigger value="variables">Variáveis</TabsTrigger>
+              <TabsTrigger value="basic">
+                {t('createBlueprint.steps.info', 'Informações Básicas')}
+              </TabsTrigger>
+              <TabsTrigger value="templates">
+                {t('createBlueprint.steps.template', 'Templates Associados')}
+              </TabsTrigger>
+              <TabsTrigger value="variables">
+                {t('createBlueprint.steps.variables', 'Variáveis')}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4">
@@ -265,7 +277,7 @@ export function BlueprintForm({
                 onClick={handleCancel}
                 data-testid="cancel-button"
               >
-                Cancelar
+                {t('createBlueprint.buttons.cancel', 'Cancelar')}
               </Button>
               <Button
                 onClick={form.handleSubmit(handleFinalSubmit)}
@@ -275,12 +287,12 @@ export function BlueprintForm({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
+                    {t('editBlueprint.buttons.saving', 'Salvando...')}
                   </>
                 ) : (
                   <>
                     <Check className="mr-2 h-4 w-4" />
-                    Salvar Alterações
+                    {t('editBlueprint.buttons.save', 'Salvar Alterações')}
                   </>
                 )}
               </Button>
@@ -291,10 +303,13 @@ export function BlueprintForm({
         <ConfirmDialog
           open={showConfirmDialog}
           onOpenChange={setShowConfirmDialog}
-          title="Descartar alterações"
-          description="Tem certeza que deseja descartar as alterações não salvas?"
-          confirmText="Descartar"
-          cancelText="Continuar editando"
+          title={t('editBlueprint.confirmClose.title', 'Descartar alterações')}
+          description={t(
+            'editBlueprint.confirmClose.description',
+            'Tem certeza que deseja descartar as alterações não salvas?'
+          )}
+          confirmText={t('editBlueprint.confirmClose.confirm', 'Descartar')}
+          cancelText={t('editBlueprint.confirmClose.cancel', 'Continuar editando')}
           destructive={true}
           onConfirm={onCancel}
         />
@@ -313,23 +328,32 @@ export function BlueprintForm({
               {/* Botão que substitui a navegação para diagnosticar o problema */}
               <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t bg-background/95 px-6 py-4 backdrop-blur">
                 <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancelar
+                  {t('createBlueprint.buttons.cancel', 'Cancelar')}
                 </Button>
                 <Button
                   type="button"
                   onClick={() => {
-                    console.warn('Validando e salvando dados do passo 1');
                     const data = form.getValues();
 
                     // Validar campos obrigatórios
                     if (!data.name || data.name.length < 3) {
-                      form.setError('name', { message: 'Nome deve ter pelo menos 3 caracteres' });
+                      form.setError('name', {
+                        message: t(
+                          'createBlueprint.validation.nameRequired',
+                          'Nome deve ter pelo menos 3 caracteres'
+                        ),
+                      });
 
                       return;
                     }
 
                     if (!data.description) {
-                      form.setError('description', { message: 'Descrição é obrigatória' });
+                      form.setError('description', {
+                        message: t(
+                          'createBlueprint.validation.descriptionRequired',
+                          'Descrição é obrigatória'
+                        ),
+                      });
 
                       return;
                     }
@@ -342,7 +366,7 @@ export function BlueprintForm({
                     }
                   }}
                 >
-                  Próximo
+                  {t('createBlueprint.buttons.next', 'Próximo')}
                 </Button>
               </div>
             </div>
@@ -357,24 +381,26 @@ export function BlueprintForm({
               <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t bg-background/95 px-6 py-4 backdrop-blur">
                 <div className="flex gap-4">
                   <Button type="button" variant="outline" onClick={onCancel}>
-                    Cancelar
+                    {t('createBlueprint.buttons.cancel', 'Cancelar')}
                   </Button>
                   {onPrevStep && (
                     <Button type="button" variant="outline" onClick={onPrevStep}>
-                      Anterior
+                      {t('createBlueprint.buttons.previous', 'Anterior')}
                     </Button>
                   )}
                 </div>
                 <Button
                   type="button"
                   onClick={() => {
-                    console.warn('Validando e salvando dados do passo 2');
                     const data = form.getValues();
 
                     // Validar seleção de templates
                     if (!data.selectedTemplates || data.selectedTemplates.length === 0) {
                       form.setError('selectedTemplates', {
-                        message: 'É necessário associar pelo menos um template',
+                        message: t(
+                          'createBlueprint.validation.templatesRequired',
+                          'É necessário associar pelo menos um template'
+                        ),
                       });
 
                       return;
@@ -388,7 +414,7 @@ export function BlueprintForm({
                     }
                   }}
                 >
-                  Próximo
+                  {t('createBlueprint.buttons.next', 'Próximo')}
                 </Button>
               </div>
             </div>
@@ -420,7 +446,7 @@ export function BlueprintForm({
               isFinalStep={true}
               isSubmitting={isSubmitting}
               isNextEnabled={!hasStepErrors(currentStep)}
-              labels={{ submit: 'Criar Blueprint' }}
+              labels={{ submit: t('createBlueprint.buttons.create', 'Criar Blueprint') }}
             />
           </form>
         )}
