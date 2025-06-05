@@ -3,6 +3,7 @@
 import { Code, FileText } from 'lucide-react';
 import { useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -36,14 +37,15 @@ interface BasicInfoStepProps {
  * First step in blueprint form to collect basic info
  */
 export function BasicInfoStep({ form }: BasicInfoStepProps) {
+  const { t } = useTranslation(['blueprints']);
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
   const { applications } = useApplications();
 
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold">Informações Gerais</h2>
-        <p className="text-sm text-muted-foreground">Defina as informações básicas do blueprint.</p>
+        <h2 className="text-lg font-semibold">{t('basicInfoStep.title')}</h2>
+        <p className="text-sm text-muted-foreground">{t('basicInfoStep.description')}</p>
       </div>
 
       <FormField
@@ -51,10 +53,12 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="required-field">Nome do Blueprint</FormLabel>
+            <FormLabel className="required-field">
+              {t('createBlueprint.fields.name.label')}
+            </FormLabel>
             <FormControl>
               <Input
-                placeholder="Ex: E-commerce Platform"
+                placeholder={t('createBlueprint.fields.name.placeholder')}
                 {...field}
                 data-testid="blueprint-name-input"
               />
@@ -69,7 +73,9 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
         name="applicationId"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="required-field">Aplicação</FormLabel>
+            <FormLabel className="required-field">
+              {t('createBlueprint.fields.applicationId.label')}
+            </FormLabel>
             <Select
               onValueChange={(value) => {
                 field.onChange(value);
@@ -81,7 +87,9 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma aplicação" />
+                  <SelectValue
+                    placeholder={t('createBlueprint.fields.applicationId.placeholder')}
+                  />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -92,7 +100,9 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 ))}
               </SelectContent>
             </Select>
-            <FormDescription>Selecione a aplicação à qual este blueprint pertence.</FormDescription>
+            <FormDescription>
+              {t('createBlueprint.fields.applicationId.description')}
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -105,7 +115,9 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between">
-                <FormLabel className="required-field">Descrição</FormLabel>
+                <FormLabel className="required-field">
+                  {t('createBlueprint.fields.description.label')}
+                </FormLabel>
                 <Button
                   type="button"
                   variant="outline"
@@ -118,26 +130,26 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                   ) : (
                     <FileText className="h-3 w-3" />
                   )}
-                  {showMarkdownPreview ? 'Editar' : 'Preview'}
+                  {showMarkdownPreview
+                    ? t('basicInfoStep.markdownButtons.edit')
+                    : t('basicInfoStep.markdownButtons.preview')}
                 </Button>
               </div>
               <FormControl>
                 {showMarkdownPreview ? (
                   <div className="min-h-[150px] rounded-md border bg-muted/30 p-3">
-                    <MarkdownPreview content={field.value || '*Sem descrição*'} />
+                    <MarkdownPreview content={field.value || t('basicInfoStep.noDescription')} />
                   </div>
                 ) : (
                   <Textarea
-                    placeholder="Descrição detalhada do blueprint (suporta markdown)"
+                    placeholder={t('createBlueprint.fields.description.placeholder')}
                     {...field}
                     rows={5}
                     data-testid="blueprint-description-input"
                   />
                 )}
               </FormControl>
-              <FormDescription>
-                Descreva o propósito e uso deste blueprint. Suporta formatação Markdown.
-              </FormDescription>
+              <FormDescription>{t('basicInfoStep.markdownHelp')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}

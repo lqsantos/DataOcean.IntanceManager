@@ -119,6 +119,31 @@
     }
   },
 
+  "basicInfoStep": {
+    "title": "Informações Gerais",
+    "description": "Defina as informações básicas do blueprint.",
+    "markdownButtons": {
+      "edit": "Editar",
+      "preview": "Preview"
+    },
+    "markdownHelp": "Descreva o propósito e uso deste blueprint. Suporta formatação Markdown.",
+    "noDescription": "Sem descrição"
+  },
+
+  "templatesStep": {
+    "title": "Templates Associados",
+    "description": "Selecione e organize os templates que compõem este blueprint.",
+    "requiredMessage": "É necessário selecionar pelo menos um template."
+  },
+
+  "previewStep": {
+    "title": "Revisar e Confirmar",
+    "description": "Revise todas as informações antes de finalizar a criação do blueprint.",
+    "templates": "Templates Associados",
+    "templatesCount": "{{count}} template(s) associado(s)",
+    "variablesCount": "{{count}} variável(is) definida(s)"
+  },
+
   "search": {
     "placeholder": "Buscar blueprints...",
     "filterByCategory": "Filtrar por categoria",

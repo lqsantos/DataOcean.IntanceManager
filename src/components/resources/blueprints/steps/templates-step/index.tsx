@@ -3,6 +3,7 @@
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useEffect, useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 import { useTemplates } from '@/hooks/use-templates';
 
@@ -21,6 +22,8 @@ interface TemplatesStepProps {
  * Second step in blueprint form to select and configure templates
  */
 export function TemplatesStep({ form }: TemplatesStepProps) {
+  const { t } = useTranslation(['blueprints']);
+
   // Fetch templates from API
   const { templates, isLoading: templatesLoading } = useTemplates();
 
@@ -123,10 +126,10 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold">Templates Associados</h2>
+        <h2 className="text-lg font-semibold">{t('templatesStep.title')}</h2>
         <p className="text-sm text-muted-foreground">
-          Selecione e organize os templates que compõem este blueprint.{' '}
-          <span className="text-primary">É necessário selecionar pelo menos um template.</span>
+          {t('templatesStep.description')}{' '}
+          <span className="text-primary">{t('templatesStep.requiredMessage')}</span>
         </p>
       </div>
 
