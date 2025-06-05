@@ -133,7 +133,26 @@
   "templatesStep": {
     "title": "Templates Associados",
     "description": "Selecione e organize os templates que compõem este blueprint.",
-    "requiredMessage": "É necessário selecionar pelo menos um template."
+    "requiredMessage": "É necessário selecionar pelo menos um template.",
+    "catalog": {
+      "title": "Catálogo de Templates",
+      "searchPlaceholder": "Buscar templates...",
+      "loading": "Carregando templates...",
+      "noResults": "Nenhum template encontrado",
+      "noDescription": "Sem descrição",
+      "noCategory": "Sem categoria",
+      "addButton": "Adicionar"
+    },
+    "selection": {
+      "title": "Templates Selecionados",
+      "count": "{{count}} template(s)",
+      "required": "Obrigatório",
+      "requiredMessage": "É necessário selecionar pelo menos um template",
+      "emptyHint": "Arraste templates do catálogo ou utilize o botão de adicionar",
+      "identifierLabel": "Identificador",
+      "identifierPlaceholder": "identificador-do-template",
+      "removeButton": "Remover"
+    }
   },
 
   "variablesStep": {

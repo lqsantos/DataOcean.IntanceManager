@@ -2,6 +2,7 @@
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { Loader2, PlusCircle, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,14 +33,16 @@ export function TemplateCatalog({
   setSearchQuery,
   onAddTemplate,
 }: TemplateCatalogProps) {
+  const { t } = useTranslation(['blueprints']);
+
   return (
     <div className="flex flex-col">
       <div className="mb-3 flex h-8 items-center justify-between">
-        <h3 className="text-sm font-medium">Catálogo de Templates</h3>
+        <h3 className="text-sm font-medium">{t('templatesStep.catalog.title')}</h3>
         <div className="relative w-64">
           <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar templates..."
+            placeholder={t('templatesStep.catalog.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-8 pl-8 text-sm"
@@ -62,7 +65,7 @@ export function TemplateCatalog({
             {isLoading && (
               <div className="flex h-40 items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2">Carregando templates...</span>
+                <span className="ml-2">{t('templatesStep.catalog.loading')}</span>
               </div>
             )}
 
@@ -86,7 +89,9 @@ export function TemplateCatalog({
                     <path d="M8 12h8" />
                   </svg>
                 </div>
-                <p className="text-sm text-muted-foreground">Nenhum template encontrado</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('templatesStep.catalog.noResults')}
+                </p>
               </div>
             )}
 
@@ -109,11 +114,11 @@ export function TemplateCatalog({
                             <h4 className="text-sm font-medium">{template.name}</h4>
                           </div>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {template.description || 'Sem descrição'}
+                            {template.description || t('templatesStep.catalog.noDescription')}
                           </p>
                           <div className="mt-1">
                             <Badge variant="secondary" className="text-xs">
-                              {template.category || 'Sem categoria'}
+                              {template.category || t('templatesStep.catalog.noCategory')}
                             </Badge>
                           </div>
                         </div>
@@ -126,7 +131,7 @@ export function TemplateCatalog({
                           data-testid={`add-template-${template.id}`}
                         >
                           <PlusCircle className="h-4 w-4" />
-                          <span>Adicionar</span>
+                          <span>{t('templatesStep.catalog.addButton')}</span>
                         </Button>
                       </div>
                     )}

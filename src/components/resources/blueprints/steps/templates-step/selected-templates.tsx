@@ -3,6 +3,7 @@
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { Trash } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,8 @@ export function SelectedTemplatesList({
   onUpdateIdentifier,
   getTemplateName,
 }: SelectedTemplatesListProps) {
+  const { t } = useTranslation(['blueprints']);
+
   // Estado local para controlar o valor do input durante a edição
   const [editingIdentifiers, setEditingIdentifiers] = useState<Record<number, string>>({});
 
@@ -69,14 +72,14 @@ export function SelectedTemplatesList({
     <div className="flex flex-col">
       <div className="mb-3 flex h-8 items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium">Templates Selecionados</h3>
+          <h3 className="text-sm font-medium">{t('templatesStep.selection.title')}</h3>
           <Badge
             variant={selectedTemplates.length > 0 ? 'secondary' : 'outline'}
             className={`h-5 px-2 text-xs ${selectedTemplates.length === 0 ? 'border-primary text-primary' : ''}`}
           >
             {selectedTemplates.length > 0
-              ? `${selectedTemplates.length} template(s)`
-              : 'Obrigatório'}
+              ? t('templatesStep.selection.count', { count: selectedTemplates.length })
+              : t('templatesStep.selection.required')}
           </Badge>
         </div>
       </div>
@@ -110,10 +113,10 @@ export function SelectedTemplatesList({
                   </svg>
                 </div>
                 <p className="text-sm font-medium text-primary">
-                  É necessário selecionar pelo menos um template
+                  {t('templatesStep.selection.requiredMessage')}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Arraste templates do catálogo ou utilize o botão de adicionar
+                  {t('templatesStep.selection.emptyHint')}
                 </p>
                 {/* The droppable needs placeholder even when empty */}
                 {provided.placeholder}
@@ -147,7 +150,7 @@ export function SelectedTemplatesList({
                                   {getTemplateName(template.templateId)}
                                 </h4>
                                 <p className="text-xs text-muted-foreground">
-                                  Identificador:{' '}
+                                  {t('templatesStep.selection.identifierLabel')}:{' '}
                                   <span className="font-medium">{template.identifier}</span>
                                 </p>
                               </div>
@@ -161,13 +164,17 @@ export function SelectedTemplatesList({
                               data-testid={`remove-template-${index}`}
                             >
                               <Trash className="h-4 w-4" />
-                              <span className="sr-only">Remover</span>
+                              <span className="sr-only">
+                                {t('templatesStep.selection.removeButton')}
+                              </span>
                             </Button>
                           </div>
 
                           <div className="mt-3 space-y-2">
                             <div>
-                              <label className="text-xs font-medium">Identificador</label>
+                              <label className="text-xs font-medium">
+                                {t('templatesStep.selection.identifierLabel')}
+                              </label>
                               <Input
                                 value={
                                   editingIdentifiers[index] !== undefined
@@ -178,7 +185,7 @@ export function SelectedTemplatesList({
                                 onBlur={() => handleIdentifierBlur(index)}
                                 onKeyDown={(e) => handleIdentifierKeyDown(index, e)}
                                 className="mt-1 h-7 text-xs"
-                                placeholder="identificador-do-template"
+                                placeholder={t('templatesStep.selection.identifierPlaceholder')}
                                 data-testid={`template-identifier-${index}`}
                               />
                             </div>
