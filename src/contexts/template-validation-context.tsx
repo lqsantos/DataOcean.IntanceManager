@@ -57,42 +57,16 @@ export function TemplateValidationProvider({ children }: { children: ReactNode }
     name: string,
     data?: Partial<CreateTemplateDto>
   ) => {
-    console.log('🔍 [TemplateValidationContext] validateTemplate chamado', {
-      templateId: id,
-      templateName: name,
-      hasData: !!data,
-      currentState: {
-        isOpen,
-        isSelectBranchOpen,
-      },
-    });
-
     setTemplateId(id);
     setTemplateName(name);
 
-    // Se recebemos dados do template, armazenamos para uso na validação
     if (data) {
-      console.log('🔍 [TemplateValidationContext] armazenando dados do template', data);
-      setTemplateData({
-        id: id || undefined,
-        name,
-        repositoryUrl: data.repositoryUrl || '',
-        chartPath: data.chartPath || '',
-      });
     }
 
-    console.log('🔍 [TemplateValidationContext] abrindo modal de seleção de branch');
     setIsSelectBranchOpen(true);
-    console.log('🔍 [TemplateValidationContext] isSelectBranchOpen definido como true');
   };
 
   const confirmBranchSelection = async (branch: string) => {
-    console.log('🔍 [TemplateValidationContext] confirmBranchSelection chamado', {
-      branch,
-      templateId,
-      templateName,
-    });
-
     setIsSelectBranchOpen(false);
     setIsOpen(true);
     setIsLoading(true);
@@ -103,21 +77,12 @@ export function TemplateValidationProvider({ children }: { children: ReactNode }
 
       // Se temos dados do template e não um ID existente, usamos a validação com dados
       if (templateData && !templateId) {
-        console.log('🔍 [TemplateValidationContext] validando com dados do formulário');
-        result = await templateService.validateTemplateData({
-          repositoryUrl: templateData.repositoryUrl,
-          chartPath: templateData.chartPath,
-          branch,
-        });
       } else if (templateId) {
-        console.log('🔍 [TemplateValidationContext] validando com ID do template');
-        // Se temos um ID existente, usamos a validação com ID
         result = await templateService.validateTemplate(templateId, branch);
       } else {
         throw new Error('Dados insuficientes para validação');
       }
 
-      console.log('🔍 [TemplateValidationContext] resultado da validação:', result);
       setValidationResult(result);
 
       // Não exibimos toast de sucesso ou erro aqui - o resultado da validação

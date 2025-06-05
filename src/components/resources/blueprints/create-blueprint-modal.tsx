@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Dialog,
@@ -21,6 +22,7 @@ interface CreateBlueprintModalProps {
 }
 
 export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBlueprintModalProps) {
+  const { t } = useTranslation(['blueprints']);
   const {
     isOpen: isContextOpen,
     // Omitimos isLoading pois não é usado neste componente
@@ -53,14 +55,14 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
   const handleSave = async (formData: Record<string, unknown>): Promise<void> => {
     try {
       // Log para verificar se os dados do formulário estão chegando corretamente
-      console.warn('Dados do formulário para criação:', formData);
+      console.warn(`${t('createBlueprint.title')} - form data:`, formData);
 
       // Criar o blueprint usando apenas o contexto
       // A função do contexto já usa blueprintService para salvar no backend
       const blueprint = await createBlueprint();
 
       if (blueprint) {
-        console.warn('Blueprint criado com sucesso:', blueprint);
+        console.warn(`${t('toast.created.description', { name: blueprint.name })}:`, blueprint);
 
         // Notificar o componente pai através da prop onCreate
         if (onCreate) {
@@ -73,7 +75,7 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
         handleClose();
       }
     } catch (error) {
-      console.error('Erro ao criar blueprint:', error);
+      console.error(`${t('toast.error.title')}: ${t('toast.error.description')}`, error);
     }
   };
 
@@ -84,20 +86,20 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
 
     switch (currentStep) {
       case 1:
-        title = 'Informações Gerais';
-        description = 'Defina as informações básicas do blueprint.';
+        title = t('createBlueprint.steps.info');
+        description = t('createBlueprint.fields.description.description');
         break;
       case 2:
-        title = 'Associação de Templates';
-        description = 'Selecione e configure os templates que farão parte do blueprint.';
+        title = t('createBlueprint.steps.template');
+        description = t('createBlueprint.fields.templateId.description');
         break;
       case 3:
-        title = 'Blueprint Variables';
-        description = 'Defina variáveis reutilizáveis para seu blueprint.';
+        title = t('createBlueprint.steps.variables');
+        description = t('createBlueprint.fields.variables.description');
         break;
       case 4:
-        title = 'Resumo e Confirmação';
-        description = 'Confirme as informações antes de criar o blueprint.';
+        title = t('createBlueprint.steps.review');
+        description = t('createBlueprint.description');
         break;
     }
 
@@ -117,12 +119,12 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
                   <button
                     onClick={prevStep}
                     className="mr-2 rounded-full p-1 hover:bg-muted"
-                    aria-label="Voltar para etapa anterior"
+                    aria-label={t('createBlueprint.buttons.previous')}
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                 )}
-                Criar Novo Blueprint - {title}
+                {t('createBlueprint.title')} - {title}
               </DialogTitle>
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
