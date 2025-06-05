@@ -97,12 +97,26 @@
     "childTemplates": "Templates:",
     "createInstance": "Create Instance",
     "unknownApplication": "Unknown Application",
+    "templateNotFound": "Template not found",
     "actions": {
       "edit": "Edit",
       "duplicate": "Duplicate",
       "delete": "Delete"
     },
-    "noDescription": "No description"
+    "noDescription": "No description",
+    "tooltip": {
+      "clickToView": "Click to view variables",
+      "noVariables": "No variables defined"
+    },
+    "helperDialog": {
+      "title": "Variables",
+      "description": "Reusable variables available for instances created from this blueprint.",
+      "noVariables": "# No variables defined."
+    },
+    "descriptionDialog": {
+      "title": "Complete blueprint description",
+      "noDescription": "*No description available*"
+    }
   },
 
   "search": {

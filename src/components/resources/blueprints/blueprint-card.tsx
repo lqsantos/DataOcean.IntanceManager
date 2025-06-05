@@ -73,9 +73,22 @@ export function BlueprintCard({
   const hasVariables = variablesCount > 0;
 
   // Gerar uma representação das variáveis para exibição
-  const variablesPreview = hasVariables
+  const variablesContent = hasVariables
     ? blueprint.variables?.map((v) => `${v.name}: ${v.defaultValue || 'null'}`).join('\n') || ''
-    : '# Nenhuma variável definida.';
+    : t('blueprintCard.helperDialog.noVariables', '# Nenhuma variável definida.');
+
+  // Função para renderizar a descrição de forma segura
+  const renderDescription = (description: string | undefined, maxLength: number) => {
+    if (!description) {
+      return t('blueprintCard.noDescription');
+    }
+
+    if (description.length <= maxLength) {
+      return description;
+    }
+
+    return `${description.substring(0, maxLength)}...`;
+  };
 
   return isGridView ? (
     <>
@@ -130,11 +143,7 @@ export function BlueprintCard({
             onClick={() => setShowDescriptionDialog(true)}
             data-testid={`blueprint-description-${blueprint.id}`}
           >
-            {blueprint.description
-              ? blueprint.description.length > 100
-                ? `${blueprint.description.substring(0, 100)}...`
-                : blueprint.description
-              : t('blueprintCard.noDescription')}
+            {renderDescription(blueprint.description, 100)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -142,7 +151,8 @@ export function BlueprintCard({
             <div className="text-sm">
               <span className="font-medium">{t('blueprintCard.template')}</span>{' '}
               <span data-testid={`blueprint-template-${blueprint.id}`}>
-                {blueprint.templateName || 'Template não encontrado'}
+                {blueprint.templateName ||
+                  t('blueprintCard.templateNotFound', 'Template não encontrado')}
               </span>
             </div>
 
@@ -164,8 +174,11 @@ export function BlueprintCard({
                     <TooltipContent side="bottom">
                       <p>
                         {hasVariables
-                          ? 'Clique para visualizar o helper.tpl'
-                          : 'Sem variáveis definidas'}
+                          ? t(
+                              'blueprintCard.tooltip.clickToView',
+                              'Clique para visualizar as variáveis'
+                            )
+                          : t('blueprintCard.tooltip.noVariables', 'Sem variáveis definidas')}
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -204,14 +217,16 @@ export function BlueprintCard({
       <Dialog open={showHelperTplDialog} onOpenChange={setShowHelperTplDialog}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Helper.tpl - {blueprint.name}</DialogTitle>
+            <DialogTitle>
+              {t('blueprintCard.helperDialog.title')} - {blueprint.name}
+            </DialogTitle>
             <DialogDescription>
               Variáveis reutilizáveis disponíveis para instâncias criadas a partir deste blueprint.
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-md border bg-muted p-4">
             <pre className="max-h-[400px] overflow-auto whitespace-pre-wrap text-sm">
-              <code>{blueprint.helperTpl || '# Nenhuma variável definida.'}</code>
+              <code>{variablesContent}</code>
             </pre>
           </div>
           <DialogFooter>
@@ -259,21 +274,17 @@ export function BlueprintCard({
             data-testid={`blueprint-description-list-${blueprint.id}`}
             onClick={() => setShowDescriptionDialog(true)}
           >
-            {blueprint.description
-              ? blueprint.description.length > 80
-                ? `${blueprint.description.substring(0, 80)}...`
-                : blueprint.description
-              : t('blueprintCard.noDescription')}
+            {renderDescription(blueprint.description, 80)}
           </p>
         </div>
         <div className="flex w-32 flex-col items-center justify-center border-r p-2">
           <div className="text-center text-sm">
-            <div className="font-medium">{t('blueprintCard.template')}</div>
+            <div className="font-medium">{t('blueprintCard.template')}</div>{' '}
             <div
               className="text-muted-foreground"
               data-testid={`blueprint-template-list-${blueprint.id}`}
             >
-              {blueprint.templateName || 'Não encontrado'}
+              {blueprint.templateName || t('blueprintCard.templateNotFound', 'Não encontrado')}
             </div>
           </div>
         </div>
@@ -294,11 +305,11 @@ export function BlueprintCard({
             <div className="font-medium">{t('blueprintCard.variables')}</div>
             <div
               className="cursor-pointer text-muted-foreground hover:underline"
-              onClick={() => hasHelperTpl && setShowHelperTplDialog(true)}
+              onClick={() => hasVariables && setShowHelperTplDialog(true)}
               data-testid={`blueprint-variables-list-${blueprint.id}`}
             >
               {variablesCount}
-              {hasHelperTpl && <Code className="ml-1 inline h-3 w-3" />}
+              {hasVariables && <Code className="ml-1 inline h-3 w-3" />}
             </div>
           </div>
         </div>
@@ -366,7 +377,7 @@ export function BlueprintCard({
           </DialogHeader>
           <div className="rounded-md border bg-muted p-4">
             <pre className="max-h-[400px] overflow-auto whitespace-pre-wrap text-sm">
-              <code>{blueprint.helperTpl || '# Nenhuma variável definida.'}</code>
+              <code>{variablesContent}</code>
             </pre>
           </div>
           <DialogFooter>
@@ -380,7 +391,7 @@ export function BlueprintCard({
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>{blueprint.name}</DialogTitle>
-            <DialogDescription>Descrição completa do blueprint</DialogDescription>
+            <DialogDescription>{t('blueprintCard.descriptionDialog.title')} </DialogDescription>
           </DialogHeader>
           <div className="rounded-md bg-muted/20 p-4">
             <MarkdownPreview content={blueprint.description || '*Sem descrição disponível*'} />
