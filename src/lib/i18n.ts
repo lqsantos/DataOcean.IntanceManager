@@ -19,21 +19,6 @@ import ptResources from '../locales/pt/resources.json';
 import ptSettings from '../locales/pt/settings.json';
 import ptTemplates from '../locales/pt/templates.json';
 
-declare module 'react-i18next' {
-  interface CustomTypeOptions {
-    defaultNS: 'common';
-    resources: {
-      common: typeof enCommon;
-      entityTable: typeof enEntityTable;
-      settings: typeof enSettings;
-      pat: typeof enPat;
-      templates: typeof enTemplates;
-      blueprints: typeof enBlueprints;
-      resources: typeof enResources;
-    };
-  }
-}
-
 const resources = {
   pt: {
     common: ptCommon,

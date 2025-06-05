@@ -1,6 +1,6 @@
 {
   "pageTitle": "Blueprints",
-  "description": "Gerencie seus blueprints para criação de instâncias padronizadas",
+  "description": "Gerencie seus blueprints para criação padronizada de instâncias",
 
   "createBlueprint": {
     "title": "Criar Novo Blueprint",
@@ -14,7 +14,8 @@
       "category": {
         "label": "Categoria",
         "placeholder": "Selecione uma categoria",
-        "description": "Categoria para organização dos blueprints."
+        "description": "Categoria para organizar blueprints.",
+        "all": "Todas as Categorias"
       },
       "description": {
         "label": "Descrição",
@@ -48,10 +49,10 @@
     },
     "buttons": {
       "cancel": "Cancelar",
-      "back": "Voltar",
-      "next": "Avançar",
       "create": "Criar Blueprint",
-      "creating": "Criando..."
+      "next": "Próximo",
+      "previous": "Anterior",
+      "finish": "Finalizar"
     }
   },
 
@@ -73,10 +74,10 @@
       "delete": "Excluir"
     }
   },
-
   "blueprintCard": {
     "template": "Template:",
     "variables": "Variáveis:",
+    "childTemplates": "Templates:",
     "createInstance": "Criar Instância",
     "actions": {
       "edit": "Editar",
@@ -101,12 +102,17 @@
   },
 
   "viewMode": {
-    "grid": "Visualização em grade",
-    "list": "Visualização em lista"
+    "grid": "Visualização em Grade",
+    "list": "Visualização em Lista"
   },
 
-  "newButton": "Novo Blueprint",
-  "refreshButton": "Atualizar",
+  "actions": {
+    "refresh": "Atualizar",
+    "edit": "Editar Blueprint",
+    "delete": "Excluir Blueprint",
+    "duplicate": "Duplicar Blueprint",
+    "create": "Criar Instância"
+  },
 
   "toast": {
     "created": {

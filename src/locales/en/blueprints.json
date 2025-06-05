@@ -14,7 +14,8 @@
       "category": {
         "label": "Category",
         "placeholder": "Select a category",
-        "description": "Category for organizing blueprints."
+        "description": "Category for organizing blueprints.",
+        "all": "All Categories"
       },
       "description": {
         "label": "Description",
@@ -48,10 +49,10 @@
     },
     "buttons": {
       "cancel": "Cancel",
-      "back": "Back",
-      "next": "Next",
       "create": "Create Blueprint",
-      "creating": "Creating..."
+      "next": "Next",
+      "previous": "Previous",
+      "finish": "Finish"
     }
   },
 
@@ -73,10 +74,10 @@
       "delete": "Delete"
     }
   },
-
   "blueprintCard": {
     "template": "Template:",
     "variables": "Variables:",
+    "childTemplates": "Templates:",
     "createInstance": "Create Instance",
     "actions": {
       "edit": "Edit",
@@ -129,5 +130,13 @@
       "title": "Error",
       "description": "An error occurred while processing the request"
     }
+  },
+
+  "actions": {
+    "refresh": "Refresh",
+    "edit": "Edit Blueprint",
+    "delete": "Delete Blueprint",
+    "duplicate": "Duplicate Blueprint",
+    "create": "Create Instance"
   }
 }
