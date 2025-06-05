@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { FormEvent } from 'react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 import type { FixedVariable } from './types';
-import { fixedVariableSchema } from './types';
+import { useVariableValidation } from './types';
 import { VariableModal } from './variable-modal';
 
 interface FixedVariableModalProps {
@@ -50,9 +51,12 @@ export function FixedVariableModal({
   onSubmit,
   isVariableNameDuplicate,
 }: FixedVariableModalProps) {
+  const { t } = useTranslation(['blueprints']);
+  const validation = useVariableValidation();
+
   // Form
   const form = useForm<FixedVariable>({
-    resolver: zodResolver(fixedVariableSchema),
+    resolver: zodResolver(validation.fixedVariableSchema),
     defaultValues,
   });
 
@@ -76,8 +80,8 @@ export function FixedVariableModal({
 
   return (
     <VariableModal
-      title={initialData ? 'Editar Variável' : 'Nova Variável'}
-      description="Adicione uma variável com valor fixo ao seu blueprint."
+      title={initialData ? t('variableModal.fixed.title.edit') : t('variableModal.fixed.title.new')}
+      description={t('variableModal.fixed.description')}
       open={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
@@ -100,7 +104,7 @@ export function FixedVariableModal({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel>{t('variableModal.fixed.nameLabel')}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -112,12 +116,10 @@ export function FixedVariableModal({
                         field.onChange(value);
                       }
                     }}
-                    placeholder="vars_nome_variavel"
+                    placeholder={t('variableModal.fixed.namePlaceholder')}
                   />
                 </FormControl>
-                <FormDescription>
-                  Nome pode começar com &quot;vars_&quot; seguido por letras, números, _ ou -.
-                </FormDescription>
+                <FormDescription>{t('variableModal.fixed.nameDescription')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -128,11 +130,11 @@ export function FixedVariableModal({
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Descrição</FormLabel>
+                <FormLabel>{t('variableModal.fixed.descriptionLabel')}</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
-                <FormDescription>Uma breve descrição da variável.</FormDescription>
+                <FormDescription>{t('variableModal.fixed.descriptionDescription')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -143,11 +145,11 @@ export function FixedVariableModal({
             name="value"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Valor</FormLabel>
+                <FormLabel>{t('variableModal.fixed.valueLabel')}</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
-                <FormDescription>O valor fixo da variável.</FormDescription>
+                <FormDescription>{t('variableModal.fixed.valueDescription')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -162,9 +164,9 @@ export function FixedVariableModal({
                 onOpenChange(false);
               }}
             >
-              Cancelar
+              {t('variableModal.fixed.cancel')}
             </Button>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit">{t('variableModal.fixed.save')}</Button>
           </div>
         </form>
       </Form>

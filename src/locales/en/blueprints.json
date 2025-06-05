@@ -136,6 +136,18 @@
     "requiredMessage": "You must select at least one template."
   },
 
+  "variablesStep": {
+    "title": "Variables Configuration",
+    "description": "Define the variables that can be used in the blueprint templates.",
+    "addVariable": "Add Variable",
+    "deleteVariable": {
+      "title": "Delete Variable",
+      "description": "Are you sure you want to delete this variable? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+
   "variablesTable": {
     "search": "Search variable by name...",
     "columns": {
@@ -155,6 +167,50 @@
     "tooltips": {
       "edit": "Edit variable",
       "delete": "Delete variable"
+    }
+  },
+
+  "variableValidation": {
+    "nameRequired": "Name is required",
+    "nameMaxLength": "Name must be at most 60 characters",
+    "namePattern": "Name must start with \"vars_\" (optional) followed by a letter and can contain letters, numbers, ., _ or - after",
+    "descriptionMaxLength": "Description must be at most 60 characters",
+    "valueRequired": "Value is required",
+    "expressionRequired": "Expression is required"
+  },
+
+  "variableModal": {
+    "fixed": {
+      "title": {
+        "new": "New Variable",
+        "edit": "Edit Variable"
+      },
+      "description": "Add a variable with a fixed value to your blueprint.",
+      "nameLabel": "Name",
+      "nameDescription": "Name can start with \"vars_\" followed by letters, numbers, _ or -.",
+      "namePlaceholder": "vars_variable_name",
+      "descriptionLabel": "Description",
+      "descriptionDescription": "A brief description of the variable.",
+      "valueLabel": "Value",
+      "valueDescription": "The fixed value of the variable.",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "expression": {
+      "title": {
+        "new": "New Expression",
+        "edit": "Edit Expression"
+      },
+      "description": "Add a variable with Go Template expression to your blueprint.",
+      "nameLabel": "Name",
+      "nameDescription": "Name can start with \"vars_\" followed by letters, numbers, _ or -.",
+      "namePlaceholder": "vars_expression_name",
+      "descriptionLabel": "Description",
+      "descriptionDescription": "A brief description of the variable.",
+      "expressionLabel": "Expression",
+      "expressionDescription": "Go Template expression to evaluate.",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   },
 

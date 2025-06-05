@@ -136,6 +136,18 @@
     "requiredMessage": "É necessário selecionar pelo menos um template."
   },
 
+  "variablesStep": {
+    "title": "Configuração de Variáveis",
+    "description": "Defina as variáveis que podem ser utilizadas nos templates do blueprint.",
+    "addVariable": "Adicionar Variável",
+    "deleteVariable": {
+      "title": "Excluir Variável",
+      "description": "Tem certeza que deseja excluir esta variável? Esta ação não pode ser desfeita.",
+      "cancel": "Cancelar",
+      "confirm": "Excluir"
+    }
+  },
+
   "variablesTable": {
     "search": "Buscar variável por nome...",
     "columns": {
@@ -155,6 +167,50 @@
     "tooltips": {
       "edit": "Editar variável",
       "delete": "Excluir variável"
+    }
+  },
+
+  "variableValidation": {
+    "nameRequired": "Nome é obrigatório",
+    "nameMaxLength": "Nome deve ter no máximo 60 caracteres",
+    "namePattern": "Nome deve começar com \"vars_\" (opcional) seguido por uma letra e pode conter letras, números, ., _ ou - após",
+    "descriptionMaxLength": "Descrição deve ter no máximo 60 caracteres",
+    "valueRequired": "Valor é obrigatório",
+    "expressionRequired": "Expressão é obrigatória"
+  },
+
+  "variableModal": {
+    "fixed": {
+      "title": {
+        "new": "Nova Variável",
+        "edit": "Editar Variável"
+      },
+      "description": "Adicione uma variável com valor fixo ao seu blueprint.",
+      "nameLabel": "Nome",
+      "nameDescription": "Nome pode começar com \"vars_\" seguido por letras, números, _ ou -.",
+      "namePlaceholder": "vars_nome_variavel",
+      "descriptionLabel": "Descrição",
+      "descriptionDescription": "Uma breve descrição da variável.",
+      "valueLabel": "Valor",
+      "valueDescription": "O valor fixo da variável.",
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    },
+    "expression": {
+      "title": {
+        "new": "Nova Expressão",
+        "edit": "Editar Expressão"
+      },
+      "description": "Adicione uma variável com expressão Go Template ao seu blueprint.",
+      "nameLabel": "Nome",
+      "nameDescription": "Nome pode começar com \"vars_\" seguido por letras, números, _ ou -.",
+      "namePlaceholder": "vars_nome_expressao",
+      "descriptionLabel": "Descrição",
+      "descriptionDescription": "Uma breve descrição da variável.",
+      "expressionLabel": "Expressão",
+      "expressionDescription": "Expressão Go Template para avaliação.",
+      "cancel": "Cancelar",
+      "save": "Salvar"
     }
   },
 

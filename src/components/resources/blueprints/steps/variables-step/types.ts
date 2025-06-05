@@ -1,16 +1,14 @@
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
 /**
- * Types of variables s    .regex(
-      variableNamePattern,
-      'Nome deve começar com uma letra e pode conter letras, números, _, . ou -'
-    ),rted
+ * Types of variables supported
  */
 export type VariableType = 'fixed' | 'expression';
 
 /**
  * Variable name validation pattern
- * - Must start with a letter
+ * - Must start with a letter (optionally prefixed with vars_)
  * - Can contain letters, numbers, underscores, dots and hyphens
  * - Cannot contain spaces or other special characters
  */
@@ -47,20 +45,63 @@ export interface ExpressionVariable extends BlueprintVariableBase {
 export type BlueprintVariable = FixedVariable | ExpressionVariable;
 
 /**
- * Validation schema for fixed variables
+ * Hook for getting variable validation schemas with translated messages
+ */
+export function useVariableValidation() {
+  const { t } = useTranslation(['blueprints']);
+
+  /**
+   * Validation schema for fixed variables with translations
+   */
+  const getFixedVariableSchema = () =>
+    z.object({
+      name: z
+        .string()
+        .min(1, t('variableValidation.nameRequired'))
+        .max(60, t('variableValidation.nameMaxLength'))
+        .regex(variableNamePattern, t('variableValidation.namePattern')),
+      description: z.string().max(60, t('variableValidation.descriptionMaxLength')).optional(),
+      type: z.literal('fixed'),
+      value: z.string().min(1, t('variableValidation.valueRequired')),
+    });
+
+  /**
+   * Validation schema for expression variables with translations
+   */
+  const getExpressionVariableSchema = () =>
+    z.object({
+      name: z
+        .string()
+        .min(1, t('variableValidation.nameRequired'))
+        .max(60, t('variableValidation.nameMaxLength'))
+        .regex(variableNamePattern, t('variableValidation.namePattern')),
+      description: z.string().max(60, t('variableValidation.descriptionMaxLength')).optional(),
+      type: z.literal('expression'),
+      expression: z.string().min(1, t('variableValidation.expressionRequired')),
+    });
+
+  return {
+    fixedVariableSchema: getFixedVariableSchema(),
+    expressionVariableSchema: getExpressionVariableSchema(),
+  };
+}
+
+/**
+ * Static schemas with default messages (for non-React contexts)
+ * These will use the default English messages
  */
 export const fixedVariableSchema = z.object({
   name: z
     .string()
-    .min(1, 'Nome é obrigatório')
-    .max(60, 'Nome deve ter no máximo 60 caracteres')
+    .min(1, 'Name is required')
+    .max(60, 'Name must be at most 60 characters')
     .regex(
       variableNamePattern,
-      'Nome deve começar com "vars_" (opcional) seguido por uma letra e pode conter letras, números, ., _ ou - após'
+      'Name must start with "vars_" (optional) followed by a letter and can contain letters, numbers, ., _ or - after'
     ),
-  description: z.string().max(60, 'Descrição deve ter no máximo 60 caracteres').optional(),
+  description: z.string().max(60, 'Description must be at most 60 characters').optional(),
   type: z.literal('fixed'),
-  value: z.string().min(1, 'Valor é obrigatório'),
+  value: z.string().min(1, 'Value is required'),
 });
 
 /**
@@ -69,15 +110,15 @@ export const fixedVariableSchema = z.object({
 export const expressionVariableSchema = z.object({
   name: z
     .string()
-    .min(1, 'Nome é obrigatório')
-    .max(60, 'Nome deve ter no máximo 60 caracteres')
+    .min(1, 'Name is required')
+    .max(60, 'Name must be at most 60 characters')
     .regex(
       variableNamePattern,
-      'Nome deve começar com "vars_" (opcional) seguido por uma letra e pode conter letras, números, ., _ ou - após'
+      'Name must start with "vars_" (optional) followed by a letter and can contain letters, numbers, ., _ or - after'
     ),
-  description: z.string().max(60, 'Descrição deve ter no máximo 60 caracteres').optional(),
+  description: z.string().max(60, 'Description must be at most 60 characters').optional(),
   type: z.literal('expression'),
-  expression: z.string().min(1, 'Expressão é obrigatória'),
+  expression: z.string().min(1, 'Expression is required'),
 });
 
 export type FixedVariableFormValues = z.infer<typeof fixedVariableSchema>;

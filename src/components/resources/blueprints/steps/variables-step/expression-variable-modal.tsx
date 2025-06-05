@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { FormEvent } from 'react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +20,7 @@ import { Input } from '@/components/ui/input';
 
 import { GoTemplateEditor } from './go-template-editor';
 import type { ExpressionVariable } from './types';
-import { expressionVariableSchema } from './types';
+import { useVariableValidation } from './types';
 import { VariableModal } from './variable-modal';
 
 interface ExpressionVariableModalProps {
@@ -51,9 +52,12 @@ export function ExpressionVariableModal({
   onSubmit,
   isVariableNameDuplicate,
 }: ExpressionVariableModalProps) {
+  const { t } = useTranslation(['blueprints']);
+  const validation = useVariableValidation();
+
   // Form
   const form = useForm<ExpressionVariable>({
-    resolver: zodResolver(expressionVariableSchema),
+    resolver: zodResolver(validation.expressionVariableSchema),
     defaultValues,
   });
 
@@ -77,8 +81,12 @@ export function ExpressionVariableModal({
 
   return (
     <VariableModal
-      title={initialData ? 'Editar Expressão' : 'Nova Expressão'}
-      description="Adicione uma variável com expressão Go Template ao seu blueprint."
+      title={
+        initialData
+          ? t('variableModal.expression.title.edit')
+          : t('variableModal.expression.title.new')
+      }
+      description={t('variableModal.expression.description')}
       open={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
@@ -101,7 +109,7 @@ export function ExpressionVariableModal({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel>{t('variableModal.expression.nameLabel')}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -113,12 +121,10 @@ export function ExpressionVariableModal({
                         field.onChange(value);
                       }
                     }}
-                    placeholder="vars_nome_expressao"
+                    placeholder={t('variableModal.expression.namePlaceholder')}
                   />
                 </FormControl>
-                <FormDescription>
-                  Nome pode começar com &quot;vars_&quot; seguido por letras, números, _ ou -.
-                </FormDescription>
+                <FormDescription>{t('variableModal.expression.nameDescription')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -129,11 +135,13 @@ export function ExpressionVariableModal({
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Descrição</FormLabel>
+                <FormLabel>{t('variableModal.expression.descriptionLabel')}</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value || ''} />
                 </FormControl>
-                <FormDescription>Uma breve descrição da variável.</FormDescription>
+                <FormDescription>
+                  {t('variableModal.expression.descriptionDescription')}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -144,13 +152,12 @@ export function ExpressionVariableModal({
             name="expression"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Expressão Go Template</FormLabel>
+                <FormLabel>{t('variableModal.expression.expressionLabel')}</FormLabel>
                 <FormControl>
                   <GoTemplateEditor value={field.value || ''} onChange={field.onChange} />
                 </FormControl>
                 <FormDescription>
-                  Insira uma expressão Go Template. Use a documentação oficial do Go Template para
-                  referência.
+                  {t('variableModal.expression.expressionDescription')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -166,9 +173,9 @@ export function ExpressionVariableModal({
                 onOpenChange(false);
               }}
             >
-              Cancelar
+              {t('variableModal.expression.cancel')}
             </Button>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit">{t('variableModal.expression.save')}</Button>
           </div>
         </form>
       </Form>

@@ -3,6 +3,7 @@
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 import {
   AlertDialog,
@@ -66,6 +67,8 @@ function convertOldVariables(oldVariables: FormValues['blueprintVariables']): Bl
  * Third step in blueprint form to define variables
  */
 export function VariablesStep({ form }: VariablesStepProps) {
+  const { t } = useTranslation(['blueprints']);
+
   // Modal state
   const [isFixedModalOpen, setIsFixedModalOpen] = useState(false);
   const [isExpressionModalOpen, setIsExpressionModalOpen] = useState(false);
@@ -171,15 +174,15 @@ export function VariablesStep({ form }: VariablesStepProps) {
             <DropdownMenuTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Adicionar Variável
+                {t('createBlueprint.fields.variables.add')}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => handleAddVariable('fixed')}>
-                Valor Fixo
+                {t('variablesTable.types.fixed')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleAddVariable('expression')}>
-                Expressão
+                {t('variablesTable.types.expression')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -205,16 +208,18 @@ export function VariablesStep({ form }: VariablesStepProps) {
       <AlertDialog open={!!deletingVariable} onOpenChange={() => setDeletingVariable(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Variável</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteBlueprint.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta variável? Esta ação não pode ser desfeita.
+              {t('deleteBlueprint.description', { name: deletingVariable?.name || '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletingVariable(null)}>
-              Cancelar
+              {t('deleteBlueprint.buttons.cancel')}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveVariable}>Excluir</AlertDialogAction>
+            <AlertDialogAction onClick={handleRemoveVariable}>
+              {t('deleteBlueprint.buttons.delete')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
