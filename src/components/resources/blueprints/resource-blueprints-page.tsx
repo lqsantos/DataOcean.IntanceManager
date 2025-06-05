@@ -3,7 +3,7 @@
 import { Plus, RotateCw, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CreateBlueprintProvider, useCreateBlueprint } from '@/contexts/create-blueprint-context';
+import { useApplications } from '@/hooks/use-applications';
 import { useBlueprintStore } from '@/hooks/use-blueprints';
 
 import { BlueprintCard } from './blueprint-card';
@@ -90,35 +91,40 @@ function BlueprintsPageContent(): ReactElement {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [applicationFilter, setApplicationFilter] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [deleteDialogState, setDeleteDialogState] = useState<DeleteDialogState>({
     isOpen: false,
     blueprintId: null,
   });
 
-  // Get unique categories from blueprints
-  const categories = Array.from(
-    new Set(blueprints.map((blueprint) => blueprint.category || '').filter(Boolean))
-  ).sort();
+  // Use o hook de aplicações para obter a lista de aplicações e force o refresh
+  const { applications, refreshApplications } = useApplications();
 
-  // Filter blueprints based on search query and category
+  // Certifica-se de carregar as aplicações quando a página é montada
+  useEffect(() => {
+    refreshApplications();
+  }, [refreshApplications]);
+
+  // Filter blueprints based on search query and application
   const filteredBlueprints = blueprints.filter((blueprint) => {
     const matchesSearch =
       blueprint.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       blueprint.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       false;
 
-    const matchesCategory = categoryFilter === 'all' || blueprint.category === categoryFilter;
+    const matchesApplication =
+      applicationFilter === 'all' || blueprint.applicationId === applicationFilter;
 
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesApplication;
   });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
 
     try {
-      await refreshBlueprintsFromStore();
+      // Atualizar tanto a lista de blueprints quanto a de aplicações
+      await Promise.all([refreshBlueprintsFromStore(), refreshApplications()]);
     } finally {
       setIsRefreshing(false);
     }
@@ -223,19 +229,19 @@ function BlueprintsPageContent(): ReactElement {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <Select value={applicationFilter} onValueChange={setApplicationFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue
-                placeholder={t('createBlueprint.fields.category.label', { ns: 'blueprints' })}
+                placeholder={t('createBlueprint.fields.applicationId.label', { ns: 'blueprints' })}
               />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
-                {t('createBlueprint.fields.category.all', { ns: 'blueprints' })}
+                {t('createBlueprint.fields.applicationId.all', { ns: 'blueprints' })}
               </SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
+              {applications.map((application) => (
+                <SelectItem key={application.id} value={application.id}>
+                  {application.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -310,7 +316,7 @@ function BlueprintsPageContent(): ReactElement {
           <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
             <div className="text-muted-foreground">{t('emptyMessage', { ns: 'entityTable' })}</div>
             <p className="text-sm text-muted-foreground">
-              {searchQuery || categoryFilter !== 'all'
+              {searchQuery || applicationFilter !== 'all'
                 ? t('emptySearchMessage', { ns: 'entityTable' })
                 : t('emptyMessage', { ns: 'entityTable' })}
             </p>
@@ -334,7 +340,12 @@ function BlueprintsPageContent(): ReactElement {
       <CreateBlueprintModal
         isOpen={false}
         onClose={closeModal}
-        onCreate={refreshBlueprintsFromStore}
+        onCreate={async (blueprint) => {
+          // Atualizar a lista de blueprints
+          await refreshBlueprintsFromStore();
+          // Atualizar a lista de aplicações para garantir que os nomes sejam exibidos corretamente
+          await refreshApplications();
+        }}
       />
     </div>
   );

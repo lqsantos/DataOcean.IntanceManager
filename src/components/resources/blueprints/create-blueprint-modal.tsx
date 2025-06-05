@@ -50,13 +50,18 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
   };
 
   // Função para criar o blueprint
-  const handleSave = async (_formData: Record<string, unknown>): Promise<void> => {
+  const handleSave = async (formData: Record<string, unknown>): Promise<void> => {
     try {
+      // Log para verificar se os dados do formulário estão chegando corretamente
+      console.warn('Dados do formulário para criação:', formData);
+
       // Criar o blueprint usando apenas o contexto
       // A função do contexto já usa blueprintService para salvar no backend
       const blueprint = await createBlueprint();
 
       if (blueprint) {
+        console.warn('Blueprint criado com sucesso:', blueprint);
+
         // Notificar o componente pai através da prop onCreate
         if (onCreate) {
           // Passamos o blueprint criado para o componente pai

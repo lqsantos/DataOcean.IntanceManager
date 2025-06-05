@@ -41,6 +41,7 @@ export function BlueprintForm({
   const {
     blueprintData,
     selectedTemplates: contextSelectedTemplates,
+    updateBlueprintData,
     // Não precisamos mais dessas propriedades, o backend gerará o helperTpl
     // generatedHelperTpl,
     // generateHelperTpl,
@@ -63,11 +64,10 @@ export function BlueprintForm({
       return {
         name: blueprint.name,
         description: blueprint.description || '',
-        category: blueprint.category || '',
+        applicationId: blueprint.applicationId || '',
         // Removido templateId
         selectedTemplates: blueprint.childTemplates || [],
         blueprintVariables: blueprint.variables || [],
-        helperTpl: blueprint.helperTpl || '',
       };
     } else {
       // Create mode with context data
@@ -83,15 +83,19 @@ export function BlueprintForm({
           }))
         : [];
 
+      // Se não houver um applicationId definido e houver aplicações disponíveis,
+      // vamos definir o applicationId padrão para a primeira aplicação
+      const defaultApplicationId = blueprintData?.applicationId || '';
+
+      console.warn('Default applicationId:', defaultApplicationId);
+
       return {
         name: blueprintData?.name || '',
         description: blueprintData?.description || '',
-        category: blueprintData?.category || '',
+        applicationId: defaultApplicationId,
         // Removido templateId
         selectedTemplates,
         blueprintVariables: [],
-        // O backend se encarregará de gerar o helperTpl
-        helperTpl: '',
       };
     }
   }
@@ -103,7 +107,7 @@ export function BlueprintForm({
 
     // Validações específicas por passo
     if (step === 'basicInfo') {
-      // Validamos apenas nome e descrição no primeiro passo
+      // Validamos nome, descrição e applicationId no primeiro passo
       let isValid = true;
 
       if (!data.name || data.name.length < 3) {
@@ -114,6 +118,20 @@ export function BlueprintForm({
       if (!data.description || data.description.length < 1) {
         form.setError('description', { message: 'Descrição é obrigatória' });
         isValid = false;
+      }
+
+      // Verificar se o applicationId foi selecionado
+      if (!data.applicationId) {
+        form.setError('applicationId', { message: 'Selecione uma aplicação' });
+        isValid = false;
+        console.warn('ApplicationId não selecionado!');
+      } else {
+        console.warn('ApplicationId validado:', data.applicationId);
+
+        // Atualizar o contexto imediatamente com o applicationId
+        updateBlueprintData({
+          applicationId: data.applicationId,
+        });
       }
 
       return isValid;
@@ -139,6 +157,16 @@ export function BlueprintForm({
   const handleStepSubmitWithNavigation =
     (step: keyof typeof handleStepSubmit) => async (data: FormValues) => {
       console.warn(`Processando submissão do passo ${step}`);
+
+      // Garantir que applicationId seja passada para o contexto no passo 1
+      if (step === 'basicInfo' && mode === 'create') {
+        console.warn('Dados do formulário (passo 1):', JSON.stringify(data));
+        updateBlueprintData({
+          name: data.name,
+          description: data.description,
+          applicationId: data.applicationId,
+        });
+      }
 
       try {
         // Validar apenas os campos deste passo

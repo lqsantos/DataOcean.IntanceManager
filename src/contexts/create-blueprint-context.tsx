@@ -136,6 +136,18 @@ export function CreateBlueprintProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
+    // Verificar se o applicationId está definido
+    if (!blueprintData.applicationId) {
+      // Adicionar log para debug
+      console.warn('Blueprint data no contexto:', blueprintData);
+
+      toast.error('Informações obrigatórias faltando', {
+        description: 'Por favor, selecione uma aplicação para o blueprint.',
+      });
+
+      return null;
+    }
+
     // Verificar se pelo menos um template está associado ao blueprint
     if (!selectedTemplates || selectedTemplates.length === 0) {
       toast.error('Templates faltando', {

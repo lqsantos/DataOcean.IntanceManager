@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MarkdownPreview } from '@/components/ui/markdown-preview';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useApplications } from '@/hooks/use-applications';
 import type { Blueprint } from '@/types/blueprint';
 
 interface BlueprintCardProps {
@@ -51,15 +52,30 @@ export function BlueprintCard({
   onCreateInstance,
 }: BlueprintCardProps) {
   const { t } = useTranslation('blueprints');
+  const { applications } = useApplications();
   const isGridView = viewMode === 'grid';
 
   const [showHelperTplDialog, setShowHelperTplDialog] = useState(false);
   const [showDescriptionDialog, setShowDescriptionDialog] = useState(false);
 
+  // Get the application name based on applicationId
+  // Verificar se temos um applicationId válido e encontrar o nome na lista de aplicações
+  const applicationName = blueprint.applicationId
+    ? applications.find((app) => app.id === blueprint.applicationId)?.name ||
+      t('blueprintCard.unknownApplication')
+    : t('blueprintCard.unknownApplication');
+
   // Calculate stats for display
   const childTemplatesCount = blueprint.childTemplates?.length || 0;
   const variablesCount = blueprint.variables?.length || 0;
-  const hasHelperTpl = !!blueprint.helperTpl;
+  // Não temos mais acesso direto ao helperTpl, então vamos usar variáveis como indicador
+  // Considerar que há variáveis para exibir se houver variáveis definidas
+  const hasVariables = variablesCount > 0;
+
+  // Gerar uma representação das variáveis para exibição
+  const variablesPreview = hasVariables
+    ? blueprint.variables?.map((v) => `${v.name}: ${v.defaultValue || 'null'}`).join('\n') || ''
+    : '# Nenhuma variável definida.';
 
   return isGridView ? (
     <>
@@ -67,15 +83,13 @@ export function BlueprintCard({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              {blueprint.category && (
-                <Badge
-                  variant="secondary"
-                  className="mb-2"
-                  data-testid={`blueprint-category-badge-${blueprint.id}`}
-                >
-                  {blueprint.category}
-                </Badge>
-              )}
+              <Badge
+                variant="secondary"
+                className="mb-2"
+                data-testid={`blueprint-category-badge-${blueprint.id}`}
+              >
+                {applicationName}
+              </Badge>
               <CardTitle data-testid={`blueprint-name-${blueprint.id}`}>{blueprint.name}</CardTitle>
             </div>
             <DropdownMenu>
@@ -140,16 +154,16 @@ export function BlueprintCard({
                     <TooltipTrigger asChild>
                       <span
                         className="cursor-pointer hover:underline"
-                        onClick={() => hasHelperTpl && setShowHelperTplDialog(true)}
+                        onClick={() => hasVariables && setShowHelperTplDialog(true)}
                         data-testid={`blueprint-variables-${blueprint.id}`}
                       >
                         {variablesCount || 0}
-                        {hasHelperTpl && <Code className="ml-1 inline h-3 w-3" />}
+                        {hasVariables && <Code className="ml-1 inline h-3 w-3" />}
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       <p>
-                        {hasHelperTpl
+                        {hasVariables
                           ? 'Clique para visualizar o helper.tpl'
                           : 'Sem variáveis definidas'}
                       </p>
@@ -233,14 +247,12 @@ export function BlueprintCard({
             >
               {blueprint.name}
             </h3>
-            {blueprint.category && (
-              <Badge
-                variant="secondary"
-                data-testid={`blueprint-category-badge-list-${blueprint.id}`}
-              >
-                {blueprint.category}
-              </Badge>
-            )}
+            <Badge
+              variant="secondary"
+              data-testid={`blueprint-category-badge-list-${blueprint.id}`}
+            >
+              {applicationName}
+            </Badge>
           </div>
           <p
             className="cursor-pointer text-sm text-muted-foreground hover:underline"

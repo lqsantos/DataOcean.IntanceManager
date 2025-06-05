@@ -129,6 +129,11 @@ ${defaultValue}
       // Process child templates if provided
       const processedData = { ...data };
 
+      // Garantir que applicationId esteja definido
+      if (!processedData.applicationId) {
+        processedData.applicationId = '1'; // Usar valor padrão se não estiver definido
+      }
+
       if (data.childTemplates) {
         processedData.childTemplates = data.childTemplates.map((child, index) => {
           const childTemplateObj = templates.find((t) => t.id === child.templateId);

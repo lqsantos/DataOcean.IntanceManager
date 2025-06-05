@@ -11,6 +11,12 @@
         "placeholder": "Blueprint name",
         "description": "Unique name to identify this blueprint."
       },
+      "applicationId": {
+        "label": "Application",
+        "placeholder": "Select an application",
+        "description": "Application this blueprint belongs to.",
+        "all": "All Applications"
+      },
       "category": {
         "label": "Category",
         "placeholder": "Select a category",
@@ -79,6 +85,7 @@
     "variables": "Variables:",
     "childTemplates": "Templates:",
     "createInstance": "Create Instance",
+    "unknownApplication": "Unknown Application",
     "actions": {
       "edit": "Edit",
       "duplicate": "Duplicate",

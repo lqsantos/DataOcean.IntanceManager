@@ -15,7 +15,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { MarkdownPreview } from '@/components/ui/markdown-preview';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useApplications } from '@/hooks/use-applications';
 
 import type { FormValues } from '../types';
 
@@ -29,6 +37,7 @@ interface BasicInfoStepProps {
  */
 export function BasicInfoStep({ form }: BasicInfoStepProps) {
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+  const { applications } = useApplications();
 
   return (
     <div className="space-y-6">
@@ -50,7 +59,40 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 data-testid="blueprint-name-input"
               />
             </FormControl>
-            <FormDescription>Nome único para identificar este blueprint.</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="applicationId"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="required-field">Aplicação</FormLabel>
+            <Select
+              onValueChange={(value) => {
+                field.onChange(value);
+                // Adicionar log para debug
+                console.warn('Application selected:', value);
+              }}
+              defaultValue={field.value}
+              value={field.value} // Adicionar o value explicitamente
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma aplicação" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {applications?.map((app: { id: string; name: string }) => (
+                  <SelectItem key={app.id} value={app.id}>
+                    {app.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormDescription>Selecione a aplicação à qual este blueprint pertence.</FormDescription>
             <FormMessage />
           </FormItem>
         )}

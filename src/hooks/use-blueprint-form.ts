@@ -18,10 +18,14 @@ export function useBlueprintForm(form: UseFormReturn<FormValues>, mode: 'create'
   const handleStepSubmit = {
     basicInfo: (data: FormValues) => {
       if (mode === 'create') {
+        // Incluir applicationId nos dados atualizados
         updateBlueprintData({
           name: data.name,
           description: data.description,
+          applicationId: data.applicationId,
         });
+        // Log para debug
+        console.warn('ApplicationId being saved to context:', data.applicationId);
       }
     },
 

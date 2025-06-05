@@ -1,44 +1,9 @@
 import { delay, http, HttpResponse } from 'msw';
 import { v4 as uuidv4 } from 'uuid';
 
-import type {
-  Blueprint,
-  BlueprintVariable,
-  CreateBlueprintDto,
-  UpdateBlueprintDto,
-} from '@/types/blueprint';
+import type { Blueprint, CreateBlueprintDto, UpdateBlueprintDto } from '@/types/blueprint';
 
-// Função auxiliar para gerar o helperTpl no lado do servidor (mock)
-const generateHelperTplForMock = (variables: BlueprintVariable[]): string => {
-  if (!variables || variables.length === 0) {
-    return '';
-  }
-
-  const helperContent = variables
-    .map((variable) => {
-      let defaultValue = '';
-
-      // Formatar o valor padrão de acordo com o tipo
-      if (variable.defaultValue !== undefined) {
-        if (variable.type === 'string') {
-          defaultValue = variable.defaultValue;
-        } else if (variable.type === 'number') {
-          defaultValue = String(Number(variable.defaultValue) || 0);
-        } else if (variable.type === 'boolean') {
-          defaultValue = variable.defaultValue.toLowerCase() === 'true' ? 'true' : 'false';
-        }
-      }
-
-      const description = variable.description ? `{{/* ${variable.description} */}}\n` : '';
-
-      return `${description}{{- define "helper.${variable.name}" -}}
-${defaultValue}
-{{- end }}`;
-    })
-    .join('\n\n');
-
-  return helperContent;
-};
+// Nota: Função para gerar helperTpl foi removida, pois não é mais necessária
 
 // Mock data store
 let blueprints: Blueprint[] = [
@@ -46,8 +11,7 @@ let blueprints: Blueprint[] = [
     id: '1',
     name: 'Web Application Blueprint',
     description: 'Standard web application with load balancing',
-    category: 'Application',
-    // Removido templateId
+    applicationId: '1', // Frontend Web
     templateName: 'Web Application Template',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -79,7 +43,7 @@ let blueprints: Blueprint[] = [
     id: '2',
     name: 'Database Blueprint',
     description: 'PostgreSQL database with persistent storage',
-    category: 'Database',
+    applicationId: '2', // API Gateway
     templateName: 'Database Template',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -111,7 +75,7 @@ let blueprints: Blueprint[] = [
     id: '3',
     name: 'API Service Blueprint',
     description: 'REST API service with autoscaling',
-    category: 'Application',
+    applicationId: '3', // Auth Service
     templateName: 'API Service Template',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -169,20 +133,20 @@ export const blueprintHandlers = [
 
     const data = (await request.json()) as CreateBlueprintDto;
 
-    // Gerar o helperTpl automaticamente com base nas variáveis fornecidas (simulando o backend)
-    const helperTpl = data.variables ? generateHelperTplForMock(data.variables) : '';
+    // Nota: helperTpl foi removido do tipo Blueprint - não é mais necessário gerar
+
+    // Garantir que o applicationId seja válido e exista
+    const applicationId = data.applicationId || '1'; // Usar '1' como fallback se não existir
 
     const newBlueprint: Blueprint = {
       id: uuidv4(),
       name: data.name,
       description: data.description,
-      category: data.category,
-      // Removido templateId
+      applicationId: applicationId,
       templateName: data.childTemplates?.length ? 'Template associado' : undefined, // Nome derivado de templates associados
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       variables: data.variables || [],
-      helperTpl, // Adicionar o helperTpl gerado automaticamente
       childTemplates: data.childTemplates?.map((template, index) => ({
         ...template,
         templateName: `Template ${index + 1}`, // Nome representativo do template
@@ -208,13 +172,11 @@ export const blueprintHandlers = [
       return new HttpResponse(null, { status: 404 });
     }
 
-    // Gerar o helperTpl automaticamente com base nas variáveis (simulando o backend)
-    const helperTpl = generateHelperTplForMock(data.variables || []);
+    // Nota: helperTpl foi removido do tipo Blueprint - não é mais necessário gerar
 
     const updatedBlueprint = {
       ...blueprints[index],
       ...data,
-      helperTpl, // Adicionar o helperTpl gerado automaticamente
       updatedAt: new Date().toISOString(),
     };
 
