@@ -136,6 +136,28 @@
     "requiredMessage": "You must select at least one template."
   },
 
+  "variablesTable": {
+    "search": "Search variable by name...",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "description": "Description",
+      "value": "Value/Expression",
+      "actions": "Actions"
+    },
+    "types": {
+      "fixed": "Fixed Value",
+      "expression": "Go Template Expression"
+    },
+    "noVariables": "No variables defined",
+    "noResults": "No variables found",
+    "noDescription": "No description",
+    "tooltips": {
+      "edit": "Edit variable",
+      "delete": "Delete variable"
+    }
+  },
+
   "previewStep": {
     "title": "Review and Confirm",
     "description": "Review all information before finalizing the blueprint creation.",

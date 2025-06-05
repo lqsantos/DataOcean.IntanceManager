@@ -136,6 +136,28 @@
     "requiredMessage": "É necessário selecionar pelo menos um template."
   },
 
+  "variablesTable": {
+    "search": "Buscar variável por nome...",
+    "columns": {
+      "name": "Nome",
+      "type": "Tipo",
+      "description": "Descrição",
+      "value": "Valor/Expressão",
+      "actions": "Ações"
+    },
+    "types": {
+      "fixed": "Valor Fixo",
+      "expression": "Expressão Go Template"
+    },
+    "noVariables": "Nenhuma variável definida",
+    "noResults": "Nenhuma variável encontrada",
+    "noDescription": "Sem descrição",
+    "tooltips": {
+      "edit": "Editar variável",
+      "delete": "Excluir variável"
+    }
+  },
+
   "previewStep": {
     "title": "Revisar e Confirmar",
     "description": "Revise todas as informações antes de finalizar a criação do blueprint.",

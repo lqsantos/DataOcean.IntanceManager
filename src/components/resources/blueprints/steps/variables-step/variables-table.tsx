@@ -2,6 +2,7 @@
 
 import { Edit2, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,8 @@ export function VariablesTable({
   onDelete,
   renderAddButton,
 }: VariablesTableProps) {
+  const { t } = useTranslation(['blueprints']);
+
   // Search state
   const [search, setSearch] = useState('');
 
@@ -92,7 +95,7 @@ export function VariablesTable({
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar variável por nome..."
+            placeholder={t('variablesTable.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-[300px]"
@@ -107,18 +110,18 @@ export function VariablesTable({
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>
-                <TableHead className="w-[200px]">Nome</TableHead>
-                <TableHead className="w-[120px]">Tipo</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Valor/Expressão</TableHead>
-                <TableHead className="w-[100px]">Ações</TableHead>
+                <TableHead className="w-[200px]">{t('variablesTable.columns.name')}</TableHead>
+                <TableHead className="w-[120px]">{t('variablesTable.columns.type')}</TableHead>
+                <TableHead>{t('variablesTable.columns.description')}</TableHead>
+                <TableHead>{t('variablesTable.columns.value')}</TableHead>
+                <TableHead className="w-[100px]">{t('variablesTable.columns.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredVariables.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
-                    {search ? 'Nenhuma variável encontrada' : 'Nenhuma variável definida'}
+                    {search ? t('variablesTable.noResults') : t('variablesTable.noVariables')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -128,13 +131,17 @@ export function VariablesTable({
                       <TruncatedText text={variable.name} maxLength={30} />
                     </TableCell>
                     <TableCell>
-                      {variable.type === 'fixed' ? 'Valor Fixo' : 'Expressão Go Template'}
+                      {variable.type === 'fixed'
+                        ? t('variablesTable.types.fixed')
+                        : t('variablesTable.types.expression')}
                     </TableCell>
                     <TableCell>
                       {variable.description ? (
                         <TruncatedText text={variable.description} maxLength={60} />
                       ) : (
-                        <span className="text-muted-foreground">Sem descrição</span>
+                        <span className="text-muted-foreground">
+                          {t('variablesTable.noDescription')}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -158,7 +165,7 @@ export function VariablesTable({
                                 <Edit2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Editar variável</TooltipContent>
+                            <TooltipContent>{t('variablesTable.tooltips.edit')}</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
 
@@ -175,7 +182,7 @@ export function VariablesTable({
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Excluir variável</TooltipContent>
+                            <TooltipContent>{t('variablesTable.tooltips.delete')}</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </div>
