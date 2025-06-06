@@ -60,19 +60,23 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid="blueprint-confirm-dialog">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} data-testid="dialog-cancel-button">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            data-testid="confirm-dialog-cancel-button"
+          >
             {cancelText}
           </Button>
           <Button
             variant={destructive ? 'destructive' : 'default'}
             onClick={handleConfirm}
-            data-testid="dialog-confirm-button"
+            data-testid="confirm-dialog-confirm-button"
           >
             {confirmText}
           </Button>

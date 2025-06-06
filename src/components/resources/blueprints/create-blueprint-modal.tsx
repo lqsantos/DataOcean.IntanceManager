@@ -110,64 +110,68 @@ export function CreateBlueprintModal({ isOpen, onClose, onCreate }: CreateBluepr
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="flex h-[800px] max-h-[90vh] flex-col sm:max-w-[1000px]">
-        <div className="flex h-full flex-col">
-          <div className="flex-shrink-0 space-y-4">
-            <DialogHeader>
-              <DialogTitle className="flex items-center text-xl">
-                {currentStep > 1 && (
-                  <button
-                    onClick={prevStep}
-                    className="mr-2 rounded-full p-1 hover:bg-muted"
-                    aria-label={t('createBlueprint.buttons.previous')}
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </button>
-                )}
-                {t('createBlueprint.title')} - {title}
-              </DialogTitle>
-              <DialogDescription>{description}</DialogDescription>
-            </DialogHeader>
-
-            {/* Barra de Progresso */}
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalSteps }).map((_, index) => {
-                const isCurrentStep = index + 1 === currentStep;
-                const isPreviousStep = index + 1 < currentStep;
-                let stepClass = 'bg-muted';
-
-                if (isCurrentStep) {
-                  stepClass = 'bg-primary';
-                } else if (isPreviousStep) {
-                  stepClass = 'bg-primary/70';
-                }
-
-                return (
-                  <div
-                    key={index}
-                    className={`h-1.5 flex-1 rounded-full transition-colors ${stepClass}`}
-                    onClick={() => isPreviousStep && goToStep(index + 1)}
-                    style={{ cursor: isPreviousStep ? 'pointer' : 'default' }}
-                  />
-                );
-              })}
-            </div>
+      <DialogContent
+        className="flex h-[800px] max-h-[90vh] flex-col sm:max-w-[1000px]"
+        data-testid="create-blueprint-modal"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader>
+          <div className="flex items-center">
+            {/* Mostrar ícone de voltar nos passos 2 ou posterior */}
+            {currentStep > 1 && (
+              <button
+                onClick={prevStep}
+                className="mr-2 flex h-6 w-6 items-center justify-center rounded-full hover:bg-muted"
+                data-testid="blueprint-go-back-button"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">{t('createBlueprint.buttons.back', 'Voltar')}</span>
+              </button>
+            )}
+            <DialogTitle className="text-xl">
+              {t('createBlueprint.title')} - {title}
+            </DialogTitle>
           </div>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
 
-          {/* Área de conteúdo com altura fixa e scroll */}
-          <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
-            <div className="space-y-6 px-1">
-              <BlueprintForm
-                onSave={handleSave}
-                onCancel={handleClose}
-                mode="create"
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                onNextStep={nextStep}
-                onPrevStep={prevStep}
-                onGoToStep={goToStep}
+        {/* Barra de Progresso */}
+        <div className="flex items-center gap-1">
+          {Array.from({ length: totalSteps }).map((_, index) => {
+            const isCurrentStep = index + 1 === currentStep;
+            const isPreviousStep = index + 1 < currentStep;
+            let stepClass = 'bg-muted';
+
+            if (isCurrentStep) {
+              stepClass = 'bg-primary';
+            } else if (isPreviousStep) {
+              stepClass = 'bg-primary/70';
+            }
+
+            return (
+              <div
+                key={index}
+                className={`h-1.5 flex-1 rounded-full transition-colors ${stepClass}`}
+                onClick={() => isPreviousStep && goToStep(index + 1)}
+                style={{ cursor: isPreviousStep ? 'pointer' : 'default' }}
               />
-            </div>
+            );
+          })}
+        </div>
+
+        {/* Área de conteúdo com altura fixa e scroll */}
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+          <div className="space-y-6 px-1">
+            <BlueprintForm
+              onSave={handleSave}
+              onCancel={handleClose}
+              mode="create"
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onNextStep={nextStep}
+              onPrevStep={prevStep}
+              onGoToStep={goToStep}
+            />
           </div>
         </div>
       </DialogContent>

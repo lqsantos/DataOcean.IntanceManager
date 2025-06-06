@@ -243,17 +243,17 @@ export function BlueprintForm({
   // Render content based on mode
   if (mode === 'edit') {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-testid="blueprint-form">
         <Form {...form}>
           <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4 w-full justify-start">
-              <TabsTrigger value="basic">
+              <TabsTrigger value="basic" data-testid="tab-basic">
                 {t('createBlueprint.steps.info', 'Informações Básicas')}
               </TabsTrigger>
-              <TabsTrigger value="templates">
+              <TabsTrigger value="templates" data-testid="tab-templates">
                 {t('createBlueprint.steps.template', 'Templates Associados')}
               </TabsTrigger>
-              <TabsTrigger value="variables">
+              <TabsTrigger value="variables" data-testid="tab-variables">
                 {t('createBlueprint.steps.variables', 'Variáveis')}
               </TabsTrigger>
             </TabsList>
@@ -319,15 +319,20 @@ export function BlueprintForm({
 
   // Create mode with step-by-step wizard
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="blueprint-form-steps">
       <Form {...form}>
         {currentStep === 1 && (
-          <form className="space-y-4 pb-20">
+          <form className="space-y-4 pb-20" data-testid="blueprint-step-basic-info">
             <BasicInfoStep form={form} />
             <div>
               {/* Botão que substitui a navegação para diagnosticar o problema */}
               <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t bg-background/95 px-6 py-4 backdrop-blur">
-                <Button type="button" variant="outline" onClick={onCancel}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancel}
+                  data-testid="cancel-button"
+                >
                   {t('createBlueprint.buttons.cancel', 'Cancelar')}
                 </Button>
                 <Button
@@ -374,7 +379,7 @@ export function BlueprintForm({
         )}
 
         {currentStep === 2 && (
-          <form className="space-y-4 pb-20">
+          <form className="space-y-4 pb-20" data-testid="blueprint-step-templates">
             <TemplatesStep form={form} />
             <div>
               {/* Botão que substitui a navegação para diagnosticar o problema */}

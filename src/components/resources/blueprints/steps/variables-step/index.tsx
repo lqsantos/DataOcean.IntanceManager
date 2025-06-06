@@ -163,8 +163,9 @@ export function VariablesStep({ form }: VariablesStepProps) {
     setDeletingVariable(null);
   };
 
+  // Renderização
   return (
-    <div className="flex flex-col gap-6">
+    <div className="space-y-6" data-testid="variables-step">
       <VariablesTable
         variables={variables}
         onEdit={handleEdit}
@@ -178,10 +179,16 @@ export function VariablesStep({ form }: VariablesStepProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleAddVariable('fixed')}>
+              <DropdownMenuItem
+                onClick={() => handleAddVariable('fixed')}
+                data-testid="add-fixed-variable-button"
+              >
                 {t('variablesTable.types.fixed')}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAddVariable('expression')}>
+              <DropdownMenuItem
+                onClick={() => handleAddVariable('expression')}
+                data-testid="add-expression-variable-button"
+              >
                 {t('variablesTable.types.expression')}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -206,7 +213,7 @@ export function VariablesStep({ form }: VariablesStepProps) {
       />
 
       <AlertDialog open={!!deletingVariable} onOpenChange={() => setDeletingVariable(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent data-testid="delete-variable-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteBlueprint.title')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -214,10 +221,17 @@ export function VariablesStep({ form }: VariablesStepProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeletingVariable(null)}>
+            <AlertDialogCancel
+              onClick={() => setDeletingVariable(null)}
+              data-testid="delete-variable-cancel-button"
+            >
               {t('deleteBlueprint.buttons.cancel')}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveVariable}>
+            <AlertDialogAction
+              onClick={handleRemoveVariable}
+              data-testid="delete-variable-confirm-button"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {t('deleteBlueprint.buttons.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>

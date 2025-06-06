@@ -69,7 +69,7 @@ export function SelectedTemplatesList({
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-testid="selected-templates">
       <div className="mb-3 flex h-8 items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-medium">{t('templatesStep.selection.title')}</h3>

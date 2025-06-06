@@ -42,7 +42,7 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
   const { applications } = useApplications();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="basic-info-step">
       <div className="mb-6">
         <h2 className="text-lg font-semibold">{t('basicInfoStep.title')}</h2>
         <p className="text-sm text-muted-foreground">{t('basicInfoStep.description')}</p>
@@ -86,7 +86,7 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
               value={field.value} // Adicionar o value explicitamente
             >
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger data-testid="blueprint-application-select">
                   <SelectValue
                     placeholder={t('createBlueprint.fields.applicationId.placeholder')}
                   />

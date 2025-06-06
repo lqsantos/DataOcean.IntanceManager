@@ -27,7 +27,7 @@ export function GoTemplateEditor({
   placeholder,
 }: GoTemplateEditorProps) {
   return (
-    <div className="relative rounded-md border">
+    <div className="relative rounded-md border" data-testid="go-template-editor">
       <div className="max-w-full overflow-x-auto">
         <CodeMirror
           value={value}

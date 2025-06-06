@@ -23,7 +23,7 @@ export function PreviewStep({ form }: PreviewStepProps) {
   const formData = form.getValues();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="preview-step">
       <div className="mb-6">
         <h2 className="text-lg font-semibold">{t('previewStep.title', 'Revisar e Confirmar')}</h2>
         <p className="text-sm text-muted-foreground">{t('previewStep.description')}</p>

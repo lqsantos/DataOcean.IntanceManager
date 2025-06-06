@@ -19,5 +19,5 @@ export function BlueprintEditor({ id }: { id: string }) {
     return <EditBlueprintPage blueprintId={id} />;
   }, [id]);
 
-  return editorComponent;
+  return <div data-testid="blueprint-editor">{editorComponent}</div>;
 }

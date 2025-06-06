@@ -213,7 +213,15 @@ function BlueprintsPageContent(): ReactElement {
   );
 
   return (
-    <div className="space-y-6" data-testid="blueprints-page-container">
+    <div className="flex flex-col gap-4" data-testid="blueprints-page">
+      {/* Cabeçalho da página */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t('pageTitle', { ns: 'blueprints' })}
+        </h1>
+        <p className="text-muted-foreground">{t('description', { ns: 'blueprints' })}</p>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-1 items-center space-x-2 md:max-w-sm">
           <div className="relative flex-1">
@@ -230,7 +238,7 @@ function BlueprintsPageContent(): ReactElement {
 
         <div className="flex flex-wrap items-center gap-2">
           <Select value={applicationFilter} onValueChange={setApplicationFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]" data-testid="application-filter-select">
               <SelectValue
                 placeholder={t('createBlueprint.fields.applicationId.label', { ns: 'blueprints' })}
               />

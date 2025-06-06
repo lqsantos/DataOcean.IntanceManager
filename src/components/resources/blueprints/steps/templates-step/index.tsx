@@ -124,7 +124,7 @@ export function TemplatesStep({ form }: TemplatesStepProps) {
   // otherwise the Droppable components will throw an error
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" data-testid="templates-step">
       <div className="mb-4">
         <h2 className="text-lg font-semibold">{t('templatesStep.title')}</h2>
         <p className="text-sm text-muted-foreground">

@@ -35,7 +35,7 @@ export function VariableModal({
 }: VariableModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] sm:max-w-[750px]">
+      <DialogContent className="max-h-[90vh] sm:max-w-[750px]" data-testid="variable-modal">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

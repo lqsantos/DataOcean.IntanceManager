@@ -117,6 +117,7 @@ export function FixedVariableModal({
                       }
                     }}
                     placeholder={t('variableModal.fixed.namePlaceholder')}
+                    data-testid="fixed-variable-name-input"
                   />
                 </FormControl>
                 <FormDescription>{t('variableModal.fixed.nameDescription')}</FormDescription>
@@ -132,7 +133,11 @@ export function FixedVariableModal({
               <FormItem>
                 <FormLabel>{t('variableModal.fixed.descriptionLabel')}</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ''} />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    data-testid="fixed-variable-description-input"
+                  />
                 </FormControl>
                 <FormDescription>{t('variableModal.fixed.descriptionDescription')}</FormDescription>
                 <FormMessage />
@@ -147,7 +152,11 @@ export function FixedVariableModal({
               <FormItem>
                 <FormLabel>{t('variableModal.fixed.valueLabel')}</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ''} />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    data-testid="fixed-variable-value-input"
+                  />
                 </FormControl>
                 <FormDescription>{t('variableModal.fixed.valueDescription')}</FormDescription>
                 <FormMessage />
@@ -163,10 +172,13 @@ export function FixedVariableModal({
                 form.reset(defaultValues);
                 onOpenChange(false);
               }}
+              data-testid="fixed-variable-cancel-button"
             >
               {t('variableModal.fixed.cancel')}
             </Button>
-            <Button type="submit">{t('variableModal.fixed.save')}</Button>
+            <Button type="submit" data-testid="fixed-variable-save-button">
+              {t('variableModal.fixed.save')}
+            </Button>
           </div>
         </form>
       </Form>

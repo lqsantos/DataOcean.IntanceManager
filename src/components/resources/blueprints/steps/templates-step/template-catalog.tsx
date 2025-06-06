@@ -36,7 +36,7 @@ export function TemplateCatalog({
   const { t } = useTranslation(['blueprints']);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-testid="template-catalog">
       <div className="mb-3 flex h-8 items-center justify-between">
         <h3 className="text-sm font-medium">{t('templatesStep.catalog.title')}</h3>
         <div className="relative w-64">

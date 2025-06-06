@@ -192,10 +192,10 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
   }
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="px-6 py-6" data-testid="blueprint-edit-page">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
+          <Button asChild variant="outline" size="icon">
             <Link href="/resources/blueprints">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -215,6 +215,7 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
           onClick={form.handleSubmit(onSave)}
           disabled={isLoading || isSaving || !isDirty}
           title={!isDirty ? t('editBlueprint.buttons.noChanges') : ''}
+          data-testid="save-blueprint-button"
         >
           {isSaving ? (
             <>

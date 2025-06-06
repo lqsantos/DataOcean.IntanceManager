@@ -105,7 +105,7 @@ export function VariablesTable({
       </div>
 
       {/* Variables Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border" data-testid="variables-table">
         <ScrollArea className="h-[400px]">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-background">
@@ -161,6 +161,7 @@ export function VariablesTable({
                                 size="icon"
                                 onClick={(e) => handleEdit(e, variable)}
                                 className="h-8 w-8"
+                                data-testid={`edit-variable-${variable.name}`}
                               >
                                 <Edit2 className="h-4 w-4" />
                               </Button>
@@ -177,7 +178,8 @@ export function VariablesTable({
                                 variant="ghost"
                                 size="icon"
                                 onClick={(e) => handleDelete(e, variable)}
-                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                className="h-8 w-8 text-destructive"
+                                data-testid={`delete-variable-${variable.name}`}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>

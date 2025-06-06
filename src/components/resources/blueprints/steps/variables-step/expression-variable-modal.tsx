@@ -122,6 +122,7 @@ export function ExpressionVariableModal({
                       }
                     }}
                     placeholder={t('variableModal.expression.namePlaceholder')}
+                    data-testid="expression-variable-name-input"
                   />
                 </FormControl>
                 <FormDescription>{t('variableModal.expression.nameDescription')}</FormDescription>
@@ -137,7 +138,11 @@ export function ExpressionVariableModal({
               <FormItem>
                 <FormLabel>{t('variableModal.expression.descriptionLabel')}</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ''} />
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    data-testid="expression-variable-description-input"
+                  />
                 </FormControl>
                 <FormDescription>
                   {t('variableModal.expression.descriptionDescription')}
@@ -172,10 +177,13 @@ export function ExpressionVariableModal({
                 form.reset(defaultValues);
                 onOpenChange(false);
               }}
+              data-testid="expression-variable-cancel-button"
             >
               {t('variableModal.expression.cancel')}
             </Button>
-            <Button type="submit">{t('variableModal.expression.save')}</Button>
+            <Button type="submit" data-testid="expression-variable-save-button">
+              {t('variableModal.expression.save')}
+            </Button>
           </div>
         </form>
       </Form>
