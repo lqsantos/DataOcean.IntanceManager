@@ -32,6 +32,7 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const { getBlueprint, updateBlueprint } = useBlueprintStore();
+  const [isFormChanged, setIsFormChanged] = useState(false);
 
   // Inicializar formulário com valores padrão
   const form = useForm<FormValues>({
@@ -48,6 +49,29 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
 
   // Acessar o estado do formulário para verificar modificações
   const { isDirty } = form.formState;
+
+  // Referências para armazenar valores iniciais de templates e variáveis
+  const [initialTemplates, setInitialTemplates] = useState<string>('');
+  const [initialVariables, setInitialVariables] = useState<string>('');
+
+  // Efeito para monitorar mudanças nos templates e variáveis
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (!blueprint) {
+        return;
+      }
+
+      const currentTemplates = JSON.stringify(value.selectedTemplates || []);
+      const currentVariables = JSON.stringify(value.blueprintVariables || []);
+
+      const templatesChanged = currentTemplates !== initialTemplates;
+      const variablesChanged = currentVariables !== initialVariables;
+
+      setIsFormChanged(isDirty || templatesChanged || variablesChanged);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, blueprint, isDirty, initialTemplates, initialVariables]);
 
   // Carregar dados do blueprint - com controle para evitar múltiplas chamadas
   useEffect(() => {
@@ -99,13 +123,20 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
 
         // Atualizar valores do formulário apenas se o componente ainda estiver montado
         if (isMounted) {
-          form.reset({
+          const formValues = {
             name: loadedBlueprint.name,
             description: loadedBlueprint.description || '',
             applicationId: loadedBlueprint.applicationId,
             selectedTemplates: loadedBlueprint.childTemplates || [],
             blueprintVariables: mappedVariables,
-          });
+          };
+
+          form.reset(formValues);
+
+          // Armazenar valores iniciais para comparações futuras
+          setInitialTemplates(JSON.stringify(formValues.selectedTemplates));
+          setInitialVariables(JSON.stringify(formValues.blueprintVariables));
+          setIsFormChanged(false);
         }
       } catch (error) {
         // Verificar se o componente ainda está montado
@@ -213,8 +244,8 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
         </div>
         <Button
           onClick={form.handleSubmit(onSave)}
-          disabled={isLoading || isSaving || !isDirty}
-          title={!isDirty ? t('editBlueprint.buttons.noChanges') : ''}
+          disabled={isLoading || isSaving || !isFormChanged}
+          title={!isFormChanged ? t('editBlueprint.buttons.noChanges') : ''}
           data-testid="save-blueprint-button"
         >
           {isSaving ? (
