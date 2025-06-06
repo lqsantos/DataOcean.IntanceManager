@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
@@ -40,6 +40,45 @@ export function useBlueprintStore() {
     }
   };
 
+  // Cache de blueprints carregados para evitar chamadas duplicadas à API - uso de useRef para não causar re-renderizações
+  const loadedBlueprintsCache = useRef<Record<string, Blueprint>>({});
+
+  // Function to get a single blueprint by ID - otimizado para evitar re-renderizações desnecessárias
+  const getBlueprint = async (id: string): Promise<Blueprint> => {
+    try {
+      // First check if the blueprint is in cache
+      if (loadedBlueprintsCache.current[id]) {
+        return loadedBlueprintsCache.current[id];
+      }
+
+      // Then check if the blueprint is already in state
+      const existingBlueprint = blueprints.find((bp) => bp.id === id);
+
+      if (existingBlueprint) {
+        // Add to cache without causar re-renderização
+        loadedBlueprintsCache.current[id] = existingBlueprint;
+
+        return existingBlueprint;
+      }
+
+      // If not found in state or cache, fetch from API
+      const blueprint = await blueprintService.getBlueprint(id);
+
+      // Add to cache without causar re-renderização
+      loadedBlueprintsCache.current[id] = blueprint;
+
+      return blueprint;
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error(`Failed to fetch blueprint with id ${id}`);
+
+      toast.error(t('toast.error.title'), {
+        description: t('toast.error.description'),
+      });
+      throw error;
+    }
+  };
+
   // Load blueprints on mount
   useEffect(() => {
     fetchBlueprints();
@@ -47,7 +86,11 @@ export function useBlueprintStore() {
 
   // Update template names when templates change
   useEffect(() => {
-    if (templates.length > 0 && blueprints.length > 0) {
+    // Utilize uma variável de referência para evitar loops infinitos
+    // Essa lógica só deve executar quando os templates mudarem, não quando blueprints mudar
+    const shouldUpdate = templates.length > 0 && blueprints.length > 0;
+
+    if (shouldUpdate) {
       const updatedBlueprints = blueprints.map((blueprint) => {
         const updatedBlueprint = { ...blueprint };
 
@@ -67,31 +110,45 @@ export function useBlueprintStore() {
         return updatedBlueprint;
       });
 
-      // Check if there were actual changes
-      const hasChanges = updatedBlueprints.some((updatedBp, index) => {
-        // Check main template name
-        if (updatedBp.templateName !== blueprints[index].templateName) {
-          return true;
+      // Check if there were actual changes - compare keys that matter
+      let hasChanges = false;
+
+      for (let i = 0; i < updatedBlueprints.length; i++) {
+        const updatedBp = updatedBlueprints[i];
+        const originalBp = blueprints[i];
+
+        // Se o nome do template principal mudou, há mudanças
+        if (updatedBp.templateName !== originalBp.templateName) {
+          hasChanges = true;
+          break;
         }
 
-        // Check child template names
+        // Comparar nomes dos templates filhos
         const updatedChildren = updatedBp.childTemplates || [];
-        const originalChildren = blueprints[index].childTemplates || [];
+        const originalChildren = originalBp.childTemplates || [];
 
         if (updatedChildren.length !== originalChildren.length) {
-          return true;
+          hasChanges = true;
+          break;
         }
 
-        return updatedChildren.some((child, childIndex) => {
-          return child.templateName !== originalChildren[childIndex]?.templateName;
-        });
-      });
+        for (let j = 0; j < updatedChildren.length; j++) {
+          if (updatedChildren[j].templateName !== originalChildren[j]?.templateName) {
+            hasChanges = true;
+            break;
+          }
+        }
+
+        if (hasChanges) {
+          break;
+        }
+      }
 
       if (hasChanges) {
         setBlueprints(updatedBlueprints);
       }
     }
-  }, [templates, blueprints]);
+  }, [templates]);
 
   // Generate helper.tpl content from variables
   const generateHelperTpl = (variables: Blueprint['variables']) => {
@@ -291,6 +348,7 @@ ${defaultValue}
     deleteBlueprint,
     duplicateBlueprint,
     validateBlueprint,
+    getBlueprint,
     refreshBlueprints: fetchBlueprints, // Expose the function to refresh blueprints
   };
 }

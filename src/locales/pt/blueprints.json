@@ -72,7 +72,8 @@
     "description": "Edite as informações do blueprint",
     "buttons": {
       "save": "Salvar Alterações",
-      "saving": "Salvando..."
+      "saving": "Salvando...",
+      "noChanges": "Nenhuma alteração para salvar"
     },
     "confirmClose": {
       "title": "Descartar alterações",
@@ -120,14 +121,14 @@
   },
 
   "basicInfoStep": {
-    "title": "Informações Gerais",
-    "description": "Defina as informações básicas do blueprint.",
+    "title": "Informações Básicas",
+    "description": "Preencha as informações básicas do blueprint",
     "markdownButtons": {
       "edit": "Editar",
-      "preview": "Preview"
+      "preview": "Visualizar"
     },
-    "markdownHelp": "Descreva o propósito e uso deste blueprint. Suporta formatação Markdown.",
-    "noDescription": "Sem descrição"
+    "noDescription": "Nenhuma descrição fornecida",
+    "markdownHelp": "Suporta formatação Markdown"
   },
 
   "templatesStep": {
@@ -289,5 +290,41 @@
       "title": "Erro",
       "description": "Ocorreu um erro ao processar a solicitação"
     }
-  }
+  },
+
+  "edit": {
+    "title": "Editando Blueprint: {{name}}",
+    "description": "Edite as configurações do blueprint",
+    "saveSuccess": "Blueprint atualizado com sucesso"
+  },
+
+  "sections": {
+    "basicInfo": "Informações Básicas",
+    "templates": "Templates",
+    "variables": "Variáveis"
+  },
+
+  "basicInfo": {
+    "sectionDescription": "Configure as informações gerais do blueprint"
+  },
+
+  "templates": {
+    "sectionDescription": "Selecione e gerencie os templates associados ao blueprint"
+  },
+
+  "variables": {
+    "sectionDescription": "Defina as variáveis utilizadas pelo blueprint"
+  },
+
+  "errors": {
+    "loadFailed": "Não foi possível carregar o blueprint. Verifique a conexão e tente novamente.",
+    "updateFailed": "Não foi possível atualizar o blueprint. Verifique a conexão e tente novamente.",
+    "missingId": "ID do blueprint ausente",
+    "notFound": "Blueprint não encontrado",
+    "notFoundWithId": "Não foi possível encontrar o blueprint com ID {{id}}",
+    "loadError": "Erro ao carregar o blueprint"
+  },
+
+  "newButton": "Novo Blueprint",
+  "refreshButton": "Atualizar Lista"
 }

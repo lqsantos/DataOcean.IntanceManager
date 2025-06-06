@@ -113,7 +113,28 @@
     "warnings": "Avisos",
     "buttons": {
       "close": "Fechar",
-      "understand": "Entendi"
+      "understand": "Entendi",
+      "validateAgain": "Validar Novamente"
+    },
+    "chartInfo": {
+      "title": "Informações do Chart",
+      "name": "Nome",
+      "version": "Versão",
+      "apiVersion": "Versão da API",
+      "description": "Descrição"
+    },
+    "files": {
+      "title": "Arquivos do Template",
+      "chartYaml": "Chart.yaml",
+      "valuesYaml": "values.yaml",
+      "valuesSchemaJson": "values.schema.json",
+      "ok": "OK",
+      "notFound": "Não encontrado",
+      "optional": "Opcional"
+    },
+    "branch": {
+      "validated": "Branch validado",
+      "used": "Branch em uso"
     }
   },
 

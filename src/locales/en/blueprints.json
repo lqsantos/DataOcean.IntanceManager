@@ -72,7 +72,8 @@
     "description": "Edit blueprint information",
     "buttons": {
       "save": "Save Changes",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "noChanges": "No changes to save"
     },
     "confirmClose": {
       "title": "Discard changes",
@@ -120,14 +121,14 @@
   },
 
   "basicInfoStep": {
-    "title": "General Information",
-    "description": "Define the basic information of the blueprint.",
+    "title": "Basic Information",
+    "description": "Fill in the basic information for the blueprint",
     "markdownButtons": {
       "edit": "Edit",
       "preview": "Preview"
     },
-    "markdownHelp": "Describe the purpose and use of this blueprint. Supports Markdown formatting.",
-    "noDescription": "No description"
+    "noDescription": "No description provided",
+    "markdownHelp": "Supports Markdown formatting"
   },
 
   "templatesStep": {
@@ -292,5 +293,38 @@
     "delete": "Delete Blueprint",
     "duplicate": "Duplicate Blueprint",
     "create": "Create Instance"
+  },
+
+  "edit": {
+    "title": "Editing Blueprint: {{name}}",
+    "description": "Edit the blueprint configuration",
+    "saveSuccess": "Blueprint updated successfully"
+  },
+
+  "sections": {
+    "basicInfo": "Basic Information",
+    "templates": "Templates",
+    "variables": "Variables"
+  },
+
+  "basicInfo": {
+    "sectionDescription": "Configure the general information for this blueprint"
+  },
+
+  "templates": {
+    "sectionDescription": "Select and manage templates associated with this blueprint"
+  },
+
+  "variables": {
+    "sectionDescription": "Define variables used by this blueprint"
+  },
+
+  "errors": {
+    "loadFailed": "Could not load blueprint. Please check your connection and try again.",
+    "updateFailed": "Could not update blueprint. Please check your connection and try again.",
+    "missingId": "Blueprint ID is missing",
+    "notFound": "Blueprint not found",
+    "notFoundWithId": "Could not find blueprint with ID {{id}}",
+    "loadError": "Error loading blueprint"
   }
 }
