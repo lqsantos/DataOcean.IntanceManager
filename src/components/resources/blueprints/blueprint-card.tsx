@@ -154,14 +154,6 @@ export function BlueprintCard({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <div className="text-sm">
-              <span className="font-medium">{t('blueprintCard.template')}</span>{' '}
-              <span data-testid={`blueprint-template-${blueprint.id}`}>
-                {blueprint.templateName ||
-                  t('blueprintCard.templateNotFound', 'Template não encontrado')}
-              </span>
-            </div>
-
             <div className="grid grid-cols-3 gap-1 text-sm">
               <div>
                 <span className="font-medium">{t('blueprintCard.variables')}</span>{' '}
@@ -292,17 +284,7 @@ export function BlueprintCard({
             {renderDescription(blueprint.description, 80)}
           </p>
         </div>
-        <div className="flex w-32 flex-col items-center justify-center border-r p-2">
-          <div className="text-center text-sm">
-            <div className="font-medium">{t('blueprintCard.template')}</div>{' '}
-            <div
-              className="text-muted-foreground"
-              data-testid={`blueprint-template-list-${blueprint.id}`}
-            >
-              {blueprint.templateName || t('blueprintCard.templateNotFound', 'Não encontrado')}
-            </div>
-          </div>
-        </div>
+
         <div className="flex w-24 flex-col items-center justify-center border-r p-2">
           <div className="text-center text-sm">
             <div className="font-medium">{t('blueprintCard.childTemplates')}</div>
