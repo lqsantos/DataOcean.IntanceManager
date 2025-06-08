@@ -68,6 +68,7 @@ export function BlueprintForm({
       return {
         name: blueprint.name,
         description: blueprint.description || '',
+        version: blueprint.version || '',
         applicationId: blueprint.applicationId || '',
         // Removido templateId
         selectedTemplates: blueprint.childTemplates || [],
@@ -94,6 +95,7 @@ export function BlueprintForm({
       return {
         name: blueprintData?.name || '',
         description: blueprintData?.description || '',
+        version: blueprintData?.version || '',
         applicationId: defaultApplicationId,
         // Removido templateId
         selectedTemplates,
@@ -109,19 +111,27 @@ export function BlueprintForm({
 
     // Validações específicas por passo
     if (step === 'basicInfo') {
-      // Validamos nome, descrição e applicationId no primeiro passo
+      // Validamos nome, descrição, versão e applicationId no primeiro passo
       let isValid = true;
 
       if (!data.name || data.name.length < 3) {
         form.setError('name', {
-          message: 'Nome deve ter pelo menos 3 caracteres',
+          message: t('createBlueprint.validation.nameRequired'),
         });
         isValid = false;
       }
 
       if (!data.description || data.description.length < 1) {
         form.setError('description', {
-          message: 'Descrição é obrigatória',
+          message: t('createBlueprint.validation.descriptionRequired'),
+        });
+        isValid = false;
+      }
+      
+      // Verificar se a versão foi preenchida
+      if (!data.version) {
+        form.setError('version', {
+          message: t('createBlueprint.validation.versionRequired', 'Version is required'),
         });
         isValid = false;
       }

@@ -28,6 +28,11 @@
         "placeholder": "Descrição detalhada do blueprint",
         "description": "Informações adicionais sobre este blueprint."
       },
+      "version": {
+        "label": "Versão",
+        "placeholder": "1.0.0",
+        "description": "Versão deste blueprint (ex: 1.0.0)."
+      },
       "templateId": {
         "label": "Template",
         "placeholder": "Selecione um template",
@@ -63,6 +68,7 @@
     "validation": {
       "nameRequired": "Nome deve ter pelo menos 3 caracteres",
       "descriptionRequired": "Descrição é obrigatória",
+      "versionRequired": "Versão é obrigatória",
       "templatesRequired": "É necessário associar pelo menos um template"
     }
   },

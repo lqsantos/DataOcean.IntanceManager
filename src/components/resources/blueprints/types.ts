@@ -7,6 +7,7 @@ export interface Blueprint {
   id?: string;
   name: string;
   description?: string;
+  version: string;
   applicationId: string;
   childTemplates?: BlueprintChildTemplate[];
   variables?: BlueprintVariable[];
@@ -50,9 +51,10 @@ export interface CatalogTemplate {
  */
 export const formSchema = z.object({
   // Step 1: General Information
-  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
+  name: z.string().min(3, { message: 'Name is too short' }),
   description: z.string().optional(),
-  applicationId: z.string().min(1, 'Selecione uma aplicação'),
+  version: z.string().min(1, { message: 'Version is required' }),
+  applicationId: z.string().min(1, { message: 'Select an application' }),
 
   // Optional fields defined in other steps or by the system
   __serverValidation: z.boolean().optional(), // Controle interno para validação do servidor

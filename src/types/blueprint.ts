@@ -4,6 +4,7 @@ export interface Blueprint {
   id: string;
   name: string;
   description?: string;
+  version: string; // Campo de versão adicionado
   applicationId: string; // Identificador da aplicação associada
   templateName?: string;
   createdAt: string;
@@ -33,6 +34,7 @@ export interface BlueprintChildTemplate {
 export interface CreateBlueprintDto {
   name: string;
   description?: string;
+  version: string; // Campo de versão adicionado
   applicationId: string;
   childTemplates?: Omit<BlueprintChildTemplate, 'order'>[]; // Templates associados ao blueprint
   variables?: BlueprintVariable[];
@@ -42,6 +44,7 @@ export interface UpdateBlueprintDto {
   id: string;
   name?: string;
   description?: string;
+  version?: string; // Campo de versão adicionado
   applicationId?: string;
   variables?: BlueprintVariable[];
   childTemplates?: Omit<BlueprintChildTemplate, 'templateName'>[]; // Templates filhos com ordem

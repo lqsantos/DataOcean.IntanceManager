@@ -70,6 +70,29 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
 
       <FormField
         control={form.control}
+        name="version"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="required-field">
+              {t('createBlueprint.fields.version.label')}
+            </FormLabel>
+            <FormControl>
+              <Input
+                placeholder={t('createBlueprint.fields.version.placeholder')}
+                {...field}
+                data-testid="blueprint-version-input"
+              />
+            </FormControl>
+            <FormDescription>
+              {t('createBlueprint.fields.version.description')}
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
         name="applicationId"
         render={({ field }) => (
           <FormItem>

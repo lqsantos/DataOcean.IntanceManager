@@ -28,6 +28,11 @@
         "placeholder": "Detailed blueprint description",
         "description": "Additional information about this blueprint."
       },
+      "version": {
+        "label": "Version",
+        "placeholder": "1.0.0",
+        "description": "Version of this blueprint (e.g. 1.0.0)."
+      },
       "templateId": {
         "label": "Template",
         "placeholder": "Select a template",
@@ -63,6 +68,7 @@
     "validation": {
       "nameRequired": "Name must be at least 3 characters",
       "descriptionRequired": "Description is required",
+      "versionRequired": "Version is required",
       "templatesRequired": "You must associate at least one template"
     }
   },
