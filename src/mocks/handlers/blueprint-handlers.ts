@@ -11,6 +11,7 @@ let blueprints: Blueprint[] = [
     id: '1',
     name: 'Web Application Blueprint',
     description: 'Standard web application with load balancing',
+    version: '1.0.0',
     applicationId: '1', // Frontend Web
     templateName: 'Web Application Template',
     createdAt: new Date().toISOString(),
@@ -43,6 +44,7 @@ let blueprints: Blueprint[] = [
     id: '2',
     name: 'Database Blueprint',
     description: 'PostgreSQL database with persistent storage',
+    version: '1.2.3',
     applicationId: '2', // API Gateway
     templateName: 'Database Template',
     createdAt: new Date().toISOString(),
@@ -75,6 +77,7 @@ let blueprints: Blueprint[] = [
     id: '3',
     name: 'API Service Blueprint',
     description: 'REST API service with autoscaling',
+    version: '0.9.1',
     applicationId: '3', // Auth Service
     templateName: 'API Service Template',
     createdAt: new Date().toISOString(),
@@ -142,6 +145,7 @@ export const blueprintHandlers = [
       id: uuidv4(),
       name: data.name,
       description: data.description,
+      version: data.version || '1.0.0',
       applicationId: applicationId,
       templateName: data.childTemplates?.length ? 'Template associado' : undefined, // Nome derivado de templates associados
       createdAt: new Date().toISOString(),

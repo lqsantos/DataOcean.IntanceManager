@@ -18,14 +18,13 @@ export function useBlueprintForm(form: UseFormReturn<FormValues>, mode: 'create'
   const handleStepSubmit = {
     basicInfo: (data: FormValues) => {
       if (mode === 'create') {
-        // Incluir applicationId nos dados atualizados
+        // Incluir applicationId e version nos dados atualizados
         updateBlueprintData({
           name: data.name,
           description: data.description,
+          version: data.version,
           applicationId: data.applicationId,
         });
-        // Log para debug
-        console.warn('ApplicationId being saved to context:', data.applicationId);
       }
     },
 
@@ -56,8 +55,6 @@ export function useBlueprintForm(form: UseFormReturn<FormValues>, mode: 'create'
   const hasStepErrors = (step: number) => {
     const { errors } = form.formState;
 
-    console.log('Form errors:', JSON.stringify(errors));
-
     const errorMap = {
       1: () => {
         // Verificando erros específicos no passo 1
@@ -76,8 +73,6 @@ export function useBlueprintForm(form: UseFormReturn<FormValues>, mode: 'create'
     };
 
     const hasError = errorMap[step as keyof typeof errorMap]?.() || false;
-
-    console.log(`Step ${step} has errors:`, hasError);
 
     return hasError;
   };

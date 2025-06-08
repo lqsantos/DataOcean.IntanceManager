@@ -40,6 +40,7 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
     defaultValues: {
       name: '',
       description: '',
+      version: '',
       applicationId: '',
       selectedTemplates: [],
       blueprintVariables: [],
@@ -126,6 +127,7 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
           const formValues = {
             name: loadedBlueprint.name,
             description: loadedBlueprint.description || '',
+            version: loadedBlueprint.version,
             applicationId: loadedBlueprint.applicationId,
             selectedTemplates: loadedBlueprint.childTemplates || [],
             blueprintVariables: mappedVariables,
@@ -196,6 +198,7 @@ export function EditBlueprintPage({ blueprintId }: EditBlueprintPageProps) {
         id: blueprint.id,
         name: data.name,
         description: data.description,
+        version: data.version,
         applicationId: data.applicationId,
         variables: mappedVariables,
         childTemplates: data.selectedTemplates?.map((template, index) => ({

@@ -68,6 +68,7 @@ export function BlueprintCard({
   // Calculate stats for display
   const childTemplatesCount = blueprint.childTemplates?.length || 0;
   const variablesCount = blueprint.variables?.length || 0;
+  const version = blueprint.version;
   // Não temos mais acesso direto ao helperTpl, então vamos usar variáveis como indicador
   // Considerar que há variáveis para exibir se houver variáveis definidas
   const hasVariables = variablesCount > 0;
@@ -96,13 +97,18 @@ export function BlueprintCard({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <Badge
-                variant="secondary"
-                className="mb-2"
-                data-testid={`blueprint-category-badge-${blueprint.id}`}
-              >
-                {applicationName}
-              </Badge>
+              <div className="mb-2 flex items-center gap-2">
+                <Badge variant="secondary" data-testid={`blueprint-category-badge-${blueprint.id}`}>
+                  {applicationName}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-xs"
+                  data-testid={`blueprint-version-badge-${blueprint.id}`}
+                >
+                  v{version}
+                </Badge>
+              </div>
               <CardTitle data-testid={`blueprint-name-${blueprint.id}`}>{blueprint.name}</CardTitle>
             </div>
             <DropdownMenu>
@@ -262,12 +268,21 @@ export function BlueprintCard({
             >
               {blueprint.name}
             </h3>
-            <Badge
-              variant="secondary"
-              data-testid={`blueprint-category-badge-list-${blueprint.id}`}
-            >
-              {applicationName}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="secondary"
+                data-testid={`blueprint-category-badge-list-${blueprint.id}`}
+              >
+                {applicationName}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="text-xs"
+                data-testid={`blueprint-version-badge-list-${blueprint.id}`}
+              >
+                v{version}
+              </Badge>
+            </div>
           </div>
           <p
             className="cursor-pointer text-sm text-muted-foreground hover:underline"

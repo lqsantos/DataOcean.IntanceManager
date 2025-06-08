@@ -102,6 +102,7 @@
     "template": "Template:",
     "variables": "Variables:",
     "childTemplates": "Templates:",
+    "version": "Version:",
     "createInstance": "Create Instance",
     "unknownApplication": "Unknown Application",
     "templateNotFound": "Template not found",
