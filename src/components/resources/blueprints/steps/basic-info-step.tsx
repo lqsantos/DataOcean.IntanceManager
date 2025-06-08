@@ -42,55 +42,59 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
   const { applications } = useApplications();
 
   return (
-    <div className="space-y-6" data-testid="basic-info-step">
-      <div className="mb-6">
+    <div className="space-y-4" data-testid="basic-info-step">
+      {/* Título e descrição */}
+      <div className="mb-4">
         <h2 className="text-lg font-semibold">{t('basicInfoStep.title')}</h2>
         <p className="text-sm text-muted-foreground">{t('basicInfoStep.description')}</p>
       </div>
 
-      <FormField
-        control={form.control}
-        name="name"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="required-field">
-              {t('createBlueprint.fields.name.label')}
-            </FormLabel>
-            <FormControl>
-              <Input
-                placeholder={t('createBlueprint.fields.name.placeholder')}
-                {...field}
-                data-testid="blueprint-name-input"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {/* Layout em grid para os campos de nome e versão */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* Campo de nome */}
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="required-field">
+                {t('createBlueprint.fields.name.label')}
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={t('createBlueprint.fields.name.placeholder')}
+                  {...field}
+                  data-testid="blueprint-name-input"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="version"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="required-field">
-              {t('createBlueprint.fields.version.label')}
-            </FormLabel>
-            <FormControl>
-              <Input
-                placeholder={t('createBlueprint.fields.version.placeholder')}
-                {...field}
-                data-testid="blueprint-version-input"
-              />
-            </FormControl>
-            <FormDescription>
-              {t('createBlueprint.fields.version.description')}
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+        {/* Campo de versão */}
+        <FormField
+          control={form.control}
+          name="version"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="required-field">
+                {t('createBlueprint.fields.version.label')}
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={t('createBlueprint.fields.version.placeholder')}
+                  {...field}
+                  data-testid="blueprint-version-input"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
+      {/* Campo de aplicação */}
       <FormField
         control={form.control}
         name="applicationId"
@@ -102,11 +106,10 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
             <Select
               onValueChange={(value) => {
                 field.onChange(value);
-                // Adicionar log para debug
                 console.warn('Application selected:', value);
               }}
               defaultValue={field.value}
-              value={field.value} // Adicionar o value explicitamente
+              value={field.value}
             >
               <FormControl>
                 <SelectTrigger data-testid="blueprint-application-select">
@@ -123,7 +126,7 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
                 ))}
               </SelectContent>
             </Select>
-            <FormDescription>
+            <FormDescription className="text-xs">
               {t('createBlueprint.fields.applicationId.description')}
             </FormDescription>
             <FormMessage />
@@ -131,7 +134,8 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
         )}
       />
 
-      <div className="space-y-2">
+      {/* Campo de descrição */}
+      <div className="space-y-1">
         <FormField
           control={form.control}
           name="description"
@@ -160,19 +164,21 @@ export function BasicInfoStep({ form }: BasicInfoStepProps) {
               </div>
               <FormControl>
                 {showMarkdownPreview ? (
-                  <div className="min-h-[150px] rounded-md border bg-muted/30 p-3">
+                  <div className="min-h-[120px] rounded-md border bg-muted/30 p-3">
                     <MarkdownPreview content={field.value || t('basicInfoStep.noDescription')} />
                   </div>
                 ) : (
                   <Textarea
                     placeholder={t('createBlueprint.fields.description.placeholder')}
                     {...field}
-                    rows={5}
+                    rows={4}
                     data-testid="blueprint-description-input"
                   />
                 )}
               </FormControl>
-              <FormDescription>{t('basicInfoStep.markdownHelp')}</FormDescription>
+              <FormDescription className="text-xs">
+                {t('basicInfoStep.markdownHelp')}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
