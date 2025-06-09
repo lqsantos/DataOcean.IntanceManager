@@ -80,14 +80,14 @@ export function MetadataSection() {
             placeholder={t('createBlueprint.fields.name.placeholder')}
             data-testid="blueprint-name-input"
           />
-          {state.errors.metadata?.includes('O nome é obrigatório') && (
+          {state.errors.metadata?.includes('validation.nameRequired') && (
             <p className="text-sm text-destructive" data-testid="blueprint-name-error">
-              {t('validation.nameRequired', 'O nome é obrigatório')}
+              {t('validation.nameRequired')}
             </p>
           )}
-          {state.errors.metadata?.includes('O nome deve ter pelo menos 3 caracteres') && (
+          {state.errors.metadata?.includes('validation.nameMinLength') && (
             <p className="text-sm text-destructive" data-testid="blueprint-name-min-length-error">
-              {t('validation.nameMinLength', 'O nome deve ter pelo menos 3 caracteres')}
+              {t('validation.nameMinLength')}
             </p>
           )}
         </div>
@@ -104,9 +104,9 @@ export function MetadataSection() {
             placeholder={t('createBlueprint.fields.version.placeholder')}
             data-testid="blueprint-version-input"
           />
-          {state.errors.metadata?.includes('A versão é obrigatória') && (
+          {state.errors.metadata?.includes('validation.versionRequired') && (
             <p className="text-sm text-destructive" data-testid="blueprint-version-error">
-              {t('validation.versionRequired', 'A versão é obrigatória')}
+              {t('validation.versionRequired')}
             </p>
           )}
         </div>
@@ -135,9 +135,9 @@ export function MetadataSection() {
         <p className="text-xs text-muted-foreground">
           {t('createBlueprint.fields.applicationId.description')}
         </p>
-        {state.errors.metadata?.includes('A aplicação é obrigatória') && (
+        {state.errors.metadata?.includes('validation.applicationRequired') && (
           <p className="text-sm text-destructive" data-testid="blueprint-application-error">
-            {t('validation.applicationRequired', 'A aplicação é obrigatória')}
+            {t('validation.applicationRequired')}
           </p>
         )}
       </div>
@@ -179,16 +179,16 @@ export function MetadataSection() {
         )}
 
         <p className="text-xs text-muted-foreground">{t('basicInfoStep.markdownHelp')}</p>
-        {state.errors.metadata?.includes('A descrição não pode estar vazia') && (
+        {state.errors.metadata?.includes('validation.descriptionNotEmpty') && (
           <p className="text-sm text-destructive" data-testid="blueprint-description-error">
-            {t('validation.descriptionNotEmpty', 'A descrição não pode estar vazia')}
+            {t('validation.descriptionNotEmpty')}
           </p>
         )}
       </div>
 
       {/* Campo de tags (novo campo conforme especificação) */}
       <div className="space-y-2">
-        <Label htmlFor="tags">{t('createBlueprint.fields.tags.label', 'Tags')}</Label>
+        <Label htmlFor="tags">{t('createBlueprint.fields.tags.label')}</Label>
         <Input
           id="tags"
           value={metadata.tags.join(', ')}
@@ -201,21 +201,18 @@ export function MetadataSection() {
 
             handleChange('tags', tagsArray);
           }}
-          placeholder={t(
-            'createBlueprint.fields.tags.placeholder',
-            'Adicione tags separadas por vírgula'
-          )}
+          placeholder={t('createBlueprint.fields.tags.placeholder')}
           data-testid="blueprint-tags-input"
         />
         <p className="text-xs text-muted-foreground">
-          {t('createBlueprint.fields.tags.description', 'Tags ajudam a categorizar seu blueprint')}
+          {t('createBlueprint.fields.tags.description')}
         </p>
       </div>
 
       {/* Indicador de status da validação */}
       {state.isDirty.metadata && !state.errors.metadata?.length && (
         <div className="text-sm text-green-600" data-testid="metadata-validation-success">
-          {t('validation.sectionValid', 'Informações básicas validadas com sucesso')}
+          {t('validation.sectionValid')}
         </div>
       )}
     </div>

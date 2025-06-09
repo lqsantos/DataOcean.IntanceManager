@@ -221,22 +221,22 @@ export function BlueprintFormProvider({ children }: { children: ReactNode }) {
           const metadata = sectionData as BlueprintFormData['metadata'];
 
           if (!metadata?.name?.trim()) {
-            errors.push('O nome é obrigatório');
+            errors.push('validation.nameRequired');
           } else if (metadata.name.length < 3) {
-            errors.push('O nome deve ter pelo menos 3 caracteres');
+            errors.push('validation.nameMinLength');
           }
 
           if (!metadata?.version?.trim()) {
-            errors.push('A versão é obrigatória');
+            errors.push('validation.versionRequired');
           }
 
           if (!metadata?.applicationId?.trim()) {
-            errors.push('A aplicação é obrigatória');
+            errors.push('validation.applicationRequired');
           }
 
           // Descrição é opcional, mas se fornecida deve ter conteúdo
           if (metadata?.description && metadata.description.trim().length < 1) {
-            errors.push('A descrição não pode estar vazia');
+            errors.push('validation.descriptionNotEmpty');
           }
 
           break;

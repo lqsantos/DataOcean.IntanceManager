@@ -28,6 +28,11 @@
         "placeholder": "Detailed blueprint description",
         "description": "Additional information about this blueprint."
       },
+      "tags": {
+        "label": "Tags",
+        "placeholder": "Add tags separated by commas",
+        "description": "Tags help categorize your blueprint"
+      },
       "version": {
         "label": "Version",
         "placeholder": "1.0.0",
@@ -346,6 +351,15 @@
 
   "preview": {
     "sectionDescription": "Preview the blueprint configuration"
+  },
+
+  "validation": {
+    "nameRequired": "Name is required",
+    "nameMinLength": "Name must be at least 3 characters",
+    "versionRequired": "Version is required",
+    "applicationRequired": "Application is required",
+    "descriptionNotEmpty": "Description cannot be empty",
+    "sectionValid": "Basic information validated successfully"
   },
 
   "errors": {

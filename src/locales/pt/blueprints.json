@@ -28,6 +28,11 @@
         "placeholder": "Descrição detalhada do blueprint",
         "description": "Informações adicionais sobre este blueprint."
       },
+      "tags": {
+        "label": "Tags",
+        "placeholder": "Adicione tags separadas por vírgula",
+        "description": "Tags ajudam a categorizar seu blueprint"
+      },
       "version": {
         "label": "Versão",
         "placeholder": "1.0.0",
@@ -343,6 +348,15 @@
 
   "preview": {
     "sectionDescription": "Visualize a configuração do blueprint"
+  },
+
+  "validation": {
+    "nameRequired": "O nome é obrigatório",
+    "nameMinLength": "O nome deve ter pelo menos 3 caracteres",
+    "versionRequired": "A versão é obrigatória",
+    "applicationRequired": "A aplicação é obrigatória",
+    "descriptionNotEmpty": "A descrição não pode estar vazia",
+    "sectionValid": "Informações básicas validadas com sucesso"
   },
 
   "errors": {
