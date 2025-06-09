@@ -23,11 +23,21 @@ export function BlueprintActionControls({
 
   return (
     <div className="flex justify-end gap-4 p-4">
-      <Button variant="outline" disabled={isSaving} onClick={() => window.history.back()}>
+      <Button
+        variant="outline"
+        disabled={isSaving}
+        onClick={() => window.history.back()}
+        data-testid="blueprint-cancel-button"
+      >
         {t('createBlueprint.buttons.cancel', 'Cancel')}
       </Button>
 
-      <Button variant="default" disabled={isSaving} onClick={handleSave}>
+      <Button
+        variant="default"
+        disabled={isSaving}
+        onClick={handleSave}
+        data-testid="blueprint-save-button"
+      >
         {isSaving
           ? t('editBlueprint.buttons.saving', 'Saving...')
           : t('editBlueprint.buttons.save', 'Save Changes')}

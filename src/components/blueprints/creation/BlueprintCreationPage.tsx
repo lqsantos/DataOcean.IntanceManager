@@ -1,5 +1,6 @@
 'use client';
 
+import { MetadataSection } from '@/components/blueprints/sections';
 import { BlueprintEditor } from '@/components/blueprints/shared/BlueprintEditor';
 
 /**
@@ -8,10 +9,15 @@ import { BlueprintEditor } from '@/components/blueprints/shared/BlueprintEditor'
  */
 export function BlueprintCreationPage() {
   // Use o componente compartilhado BlueprintEditor com o modo 'create'
+  // E forneça o componente de seção de metadados
   return (
     <BlueprintEditor
       mode="create"
       baseUrl="/blueprints/create"
+      testId="blueprint-creation-page"
+      sectionContent={{
+        metadata: <MetadataSection />,
+      }}
       onSave={async () => {
         // Implementar lógica específica para criação de blueprints (quando necessário)
         // Por exemplo, integração com APIs específicas para criação

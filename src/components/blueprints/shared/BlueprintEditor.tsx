@@ -38,6 +38,11 @@ export interface BlueprintEditorProps {
   sectionContent?: Partial<BlueprintSectionContent>;
 
   /**
+   * Optional test ID for component identification in tests
+   */
+  testId?: string;
+
+  /**
    * Additional actions to execute on save
    * @param mode The mode of the editor
    * @param validSections Array of validated sections
@@ -55,6 +60,7 @@ export function BlueprintEditor({
   baseUrl,
   blueprintId,
   sectionContent = {},
+  testId,
   onSave,
 }: BlueprintEditorProps) {
   const { t } = useTranslation(['blueprints', 'common']);
@@ -104,7 +110,7 @@ export function BlueprintEditor({
   // Loading state
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6" data-testid="blueprint-editor-loading">
         <Card className="p-6">{t('common:messages.loading', 'Loading...')}</Card>
       </div>
     );
@@ -146,7 +152,7 @@ export function BlueprintEditor({
 
   return (
     <BlueprintFormProvider>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6" data-testid={testId}>
         <Tabs value={activeSection}>
           <Card className="p-6">
             <BlueprintSectionNavigation
@@ -170,7 +176,10 @@ export function BlueprintEditor({
                 isSaving={isSaving}
               >
                 {sectionContent.metadata || (
-                  <div className="p-4 text-muted-foreground">
+                  <div
+                    className="p-4 text-muted-foreground"
+                    data-testid="metadata-section-placeholder"
+                  >
                     {t('sections.placeholders.metadata', 'No metadata form provided')}
                   </div>
                 )}
@@ -190,7 +199,10 @@ export function BlueprintEditor({
                 isSaving={isSaving}
               >
                 {sectionContent.templates || (
-                  <div className="p-4 text-muted-foreground">
+                  <div
+                    className="p-4 text-muted-foreground"
+                    data-testid="templates-section-placeholder"
+                  >
                     {t('sections.placeholders.templates', 'No templates form provided')}
                   </div>
                 )}
@@ -210,7 +222,10 @@ export function BlueprintEditor({
                 isSaving={isSaving}
               >
                 {sectionContent.variables || (
-                  <div className="p-4 text-muted-foreground">
+                  <div
+                    className="p-4 text-muted-foreground"
+                    data-testid="variables-section-placeholder"
+                  >
                     {t('sections.placeholders.variables', 'No variables form provided')}
                   </div>
                 )}
@@ -227,7 +242,10 @@ export function BlueprintEditor({
                 isSaving={isSaving}
               >
                 {sectionContent.defaults || (
-                  <div className="p-4 text-muted-foreground">
+                  <div
+                    className="p-4 text-muted-foreground"
+                    data-testid="defaults-section-placeholder"
+                  >
                     {t('sections.placeholders.defaults', 'No defaults form provided')}
                   </div>
                 )}
@@ -244,7 +262,10 @@ export function BlueprintEditor({
                 isSaving={isSaving}
               >
                 {sectionContent.preview || (
-                  <div className="p-4 text-muted-foreground">
+                  <div
+                    className="p-4 text-muted-foreground"
+                    data-testid="preview-section-placeholder"
+                  >
                     {t('sections.placeholders.preview', 'No preview available')}
                   </div>
                 )}

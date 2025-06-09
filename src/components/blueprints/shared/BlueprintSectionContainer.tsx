@@ -65,9 +65,18 @@ export function BlueprintSectionContainer({
 
         {/* Display validation errors */}
         {sectionErrors.length > 0 && (
-          <div className="mt-4 space-y-2" aria-live="polite">
+          <div
+            className="mt-4 space-y-2"
+            aria-live="polite"
+            data-testid={`${sectionId}-section-errors`}
+          >
             {sectionErrors.map((error, index) => (
-              <div key={index} className="text-sm text-destructive" role="alert">
+              <div
+                key={index}
+                className="text-sm text-destructive"
+                role="alert"
+                data-testid={`${sectionId}-error-${index}`}
+              >
                 {t(`validation.${error}`, error)}
               </div>
             ))}

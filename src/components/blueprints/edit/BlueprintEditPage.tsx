@@ -1,5 +1,6 @@
 'use client';
 
+import { MetadataSection } from '@/components/blueprints/sections';
 import { BlueprintEditor } from '@/components/blueprints/shared/BlueprintEditor';
 
 /**
@@ -11,10 +12,14 @@ import { BlueprintEditor } from '@/components/blueprints/shared/BlueprintEditor'
  */
 export function BlueprintEditPage({ blueprintId }: { blueprintId: string }) {
   return (
-    <BlueprintEditor 
+    <BlueprintEditor
       mode="edit"
       baseUrl={`/blueprints/edit/${blueprintId}`}
       blueprintId={blueprintId}
+      testId="blueprint-edit-page"
+      sectionContent={{
+        metadata: <MetadataSection />,
+      }}
       onSave={async () => {
         // Implementar lógica específica para atualização de blueprints
         // console.log(`Blueprint update logic executed for ID: ${blueprintId}`);
@@ -34,7 +39,7 @@ export function BlueprintEditSkeleton() {
       <div className="h-10 w-full rounded-md bg-muted" />
 
       {/* Section Content Skeleton */}
-      <div className="mt-6 p-6 rounded-md border">
+      <div className="mt-6 rounded-md border p-6">
         <div className="space-y-4">
           <div className="h-8 w-1/4 rounded bg-muted" />
           <div className="h-4 w-3/4 rounded bg-muted" />

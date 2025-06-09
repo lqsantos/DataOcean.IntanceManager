@@ -54,6 +54,7 @@ export function BlueprintSectionNavigation({
                     value={section.id}
                     disabled={isDisabled}
                     data-state={isActive ? 'active' : undefined}
+                    data-testid={`section-nav-${section.id}`}
                     className="relative"
                   >
                     {t(
