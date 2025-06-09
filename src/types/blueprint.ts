@@ -59,3 +59,26 @@ export interface BlueprintWithTemplate extends Blueprint {
     valuesYaml?: string;
   };
 }
+
+// Interface para representar os valores do formulário após a refatoração
+export interface BlueprintFormValues {
+  id?: string; // Opcional, presente apenas no modo de edição
+  name: string;
+  description: string;
+  version: string;
+  applicationId: string;
+  childTemplates: Array<{
+    templateId: string;
+    identifier: string;
+    order: number;
+    overrideValues?: string;
+  }>;
+  variables: Array<{
+    name: string;
+    type: string;
+    description: string;
+    required: boolean;
+    defaultValue?: string;
+  }>;
+  defaultValues?: Record<string, Record<string, string>>;
+}
