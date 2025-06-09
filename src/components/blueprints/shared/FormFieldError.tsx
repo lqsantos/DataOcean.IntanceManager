@@ -12,17 +12,20 @@ import { type BlueprintFormData, useBlueprintForm } from '@/contexts/blueprint-f
  *
  * @param errorKey - A chave de erro a ser verificada (deve existir no arquivo de tradução)
  * @param section - A seção do formulário (metadata, templates, etc)
+ * @param field - O nome do campo específico (como "name", "version", etc.)
  * @param testId - ID para testes automatizados
  * @param options - Opções adicionais para a tradução (interpolação)
  */
 export function FormFieldError({
   errorKey,
   section = 'metadata',
+  field,
   testId,
   options = {},
 }: {
   errorKey: string;
   section?: keyof BlueprintFormData;
+  field?: string;
   testId?: string;
   options?: Record<string, unknown>;
 }) {
@@ -32,13 +35,21 @@ export function FormFieldError({
   // Verifica se o erro específico existe na seção
   const hasError = state.errors[section]?.includes(errorKey);
 
-  if (!hasError) {
+  // Verifica se a seção está dirty
+  const isSectionDirty = state.isDirty[section] || false;
+
+  // Verifica se o campo específico está dirty (se for fornecido)
+  const isFieldDirty = field ? state.dirtyFields[section]?.[field] || false : true;
+
+  // Só exibe erro se:
+  // 1. Houver erro E
+  // 2. A seção estiver "dirty" E
+  // 3. O campo específico estiver "dirty" (se fornecido) OU não tiver campo específico
+  if (!hasError || !isSectionDirty || !isFieldDirty) {
     return null;
   }
 
   // A chave completa para o sistema de traduções
-  // Assume o formato correto baseado nas convenções do projeto
-  // Se errorKey já contém o namespace completo, usa diretamente
   const translationKey = errorKey.includes('.') ? errorKey : `validation.${errorKey}`;
 
   return (

@@ -34,18 +34,18 @@ export function MetadataSection() {
   const { t } = useTranslation(['blueprints']);
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
   const { applications } = useApplications();
-  const { state, setSectionData, validateSection, markSectionDirty } = useBlueprintForm();
+  const { state, setSectionData, validateSection, markFieldDirty } = useBlueprintForm();
 
   // Dados da seção atual
   const metadata = state.formData.metadata;
 
-  // Efeito para validação ao montar ou quando os dados mudam
+  // Efeito para validação apenas após o usuário interagir com o formulário
   useEffect(() => {
-    // Validar a seção quando montar para atualizar o estado de completude
-    if (metadata) {
+    // Validar a seção somente se ela já foi marcada como "dirty" (usuário interagiu)
+    if (metadata && state.isDirty.metadata) {
       void validateSection('metadata');
     }
-  }, [metadata, validateSection]);
+  }, [metadata, validateSection, state.isDirty.metadata]);
 
   // Handler para atualizar os dados da seção
   const handleChange = <K extends keyof typeof metadata>(field: K, value: (typeof metadata)[K]) => {
@@ -55,7 +55,9 @@ export function MetadataSection() {
     };
 
     setSectionData('metadata', updatedMetadata);
-    markSectionDirty('metadata');
+
+    // Marca apenas o campo específico como dirty
+    markFieldDirty('metadata', field as string);
 
     // A validação agora é responsabilidade do contexto
     // que mantém o estado centralizado do formulário
@@ -78,10 +80,15 @@ export function MetadataSection() {
             placeholder={t('createBlueprint.fields.name.placeholder')}
             data-testid="blueprint-name-input"
           />
-          <FormFieldError errorKey="validation.nameRequired" testId="blueprint-name-error" />
+          <FormFieldError
+            errorKey="validation.nameRequired"
+            testId="blueprint-name-error"
+            field="name"
+          />
           <FormFieldError
             errorKey="validation.nameMinLength"
             testId="blueprint-name-min-length-error"
+            field="name"
           />
         </div>
 
@@ -97,7 +104,11 @@ export function MetadataSection() {
             placeholder={t('createBlueprint.fields.version.placeholder')}
             data-testid="blueprint-version-input"
           />
-          <FormFieldError errorKey="validation.versionRequired" testId="blueprint-version-error" />
+          <FormFieldError
+            errorKey="validation.versionRequired"
+            testId="blueprint-version-error"
+            field="version"
+          />
         </div>
       </div>
 
@@ -127,6 +138,7 @@ export function MetadataSection() {
         <FormFieldError
           errorKey="validation.applicationRequired"
           testId="blueprint-application-error"
+          field="applicationId"
         />
       </div>
 
@@ -170,6 +182,7 @@ export function MetadataSection() {
         <FormFieldError
           errorKey="validation.descriptionNotEmpty"
           testId="blueprint-description-error"
+          field="description"
         />
       </div>
 

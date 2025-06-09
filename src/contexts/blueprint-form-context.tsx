@@ -42,6 +42,8 @@ interface BlueprintFormState {
   formData: BlueprintFormData;
   errors: Partial<Record<keyof BlueprintFormData, string[]>>;
   isDirty: Partial<Record<keyof BlueprintFormData, boolean>>;
+  // Add tracking of dirty fields at a field level
+  dirtyFields: Partial<Record<keyof BlueprintFormData, Record<string, boolean>>>;
   isComplete: Partial<Record<keyof BlueprintFormData, boolean>>;
   mode: 'create' | 'edit';
   editId?: string;
@@ -56,6 +58,7 @@ type BlueprintFormAction =
     }
   | { type: 'SET_SECTION_ERRORS'; section: keyof BlueprintFormData; errors: string[] }
   | { type: 'MARK_SECTION_DIRTY'; section: keyof BlueprintFormData }
+  | { type: 'MARK_FIELD_DIRTY'; section: keyof BlueprintFormData; field: string }
   | { type: 'MARK_SECTION_COMPLETE'; section: keyof BlueprintFormData; isComplete: boolean }
   | { type: 'RESET_FORM' }
   | { type: 'LOAD_BLUEPRINT'; data: BlueprintFormData; mode: 'create' | 'edit'; editId?: string };
@@ -84,6 +87,7 @@ const initialState: BlueprintFormState = {
   formData: initialFormData,
   errors: {},
   isDirty: {},
+  dirtyFields: {},
   isComplete: {},
   mode: 'create',
 };
@@ -97,6 +101,7 @@ interface BlueprintFormContextType {
   ) => void;
   setSectionErrors: (section: keyof BlueprintFormData, errors: string[]) => void;
   markSectionDirty: (section: keyof BlueprintFormData) => void;
+  markFieldDirty: (section: keyof BlueprintFormData, field: string) => void;
   markSectionComplete: (section: keyof BlueprintFormData, isComplete: boolean) => void;
   resetForm: () => void;
   loadBlueprint: (data: BlueprintFormData, mode: 'create' | 'edit', editId?: string) => void;
@@ -143,6 +148,21 @@ function blueprintFormReducer(
           [action.section]: true,
         },
       };
+    case 'MARK_FIELD_DIRTY':
+      return {
+        ...state,
+        isDirty: {
+          ...state.isDirty,
+          [action.section]: true,
+        },
+        dirtyFields: {
+          ...state.dirtyFields,
+          [action.section]: {
+            ...(state.dirtyFields[action.section] || {}),
+            [action.field]: true,
+          },
+        },
+      };
     case 'MARK_SECTION_COMPLETE':
       return {
         ...state,
@@ -162,6 +182,7 @@ function blueprintFormReducer(
         formData: action.data,
         errors: {},
         isDirty: {},
+        dirtyFields: {},
         isComplete: {},
         mode: action.mode,
         editId: action.editId,
@@ -188,6 +209,10 @@ export function BlueprintFormProvider({ children }: { children: ReactNode }) {
 
   const markSectionDirty = useCallback((section: keyof BlueprintFormData) => {
     dispatch({ type: 'MARK_SECTION_DIRTY', section });
+  }, []);
+
+  const markFieldDirty = useCallback((section: keyof BlueprintFormData, field: string) => {
+    dispatch({ type: 'MARK_FIELD_DIRTY', section, field });
   }, []);
 
   const markSectionComplete = useCallback(
@@ -374,6 +399,7 @@ export function BlueprintFormProvider({ children }: { children: ReactNode }) {
     setSectionData,
     setSectionErrors,
     markSectionDirty,
+    markFieldDirty,
     markSectionComplete,
     resetForm,
     loadBlueprint,
