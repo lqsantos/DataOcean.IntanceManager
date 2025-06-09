@@ -11,9 +11,37 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import {
   BlueprintFormProvider,
+  useBlueprintForm,
   type BlueprintSectionContent,
 } from '@/contexts/blueprint-form-context';
 import { useBlueprintNavigation, type SectionId } from '@/hooks/blueprint';
+
+// Componente para monitorar mudanças no estado de erro do formulário
+function BlueprintFormContextReader({
+  onErrorsChange,
+}: {
+  onErrorsChange: (sectionsWithErrors: SectionId[]) => void;
+}) {
+  const { state } = useBlueprintForm();
+
+  // Efeito para monitorar mudanças nos erros
+  useEffect(() => {
+    const sectionsWithErrors: SectionId[] = [];
+
+    // Checar cada seção que tenha erros
+    Object.entries(state.errors).forEach(([section, errors]) => {
+      if (errors && errors.length > 0) {
+        sectionsWithErrors.push(section as SectionId);
+      }
+    });
+
+    // Atualizar o estado no componente pai
+    onErrorsChange(sectionsWithErrors);
+  }, [state.errors, onErrorsChange]);
+
+  // Este componente não renderiza nada visualmente
+  return null;
+}
 
 export interface BlueprintEditorProps {
   /**
@@ -150,8 +178,24 @@ export function BlueprintEditor({
     }
   }, [mode, onSave, activeSection]);
 
+  // Use the form context to get sections with errors
+  const [sectionsWithErrors, setSectionsWithErrors] = useState<SectionId[]>([]);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState<boolean>(false);
+
+  // Função de salvamento modificada para registrar tentativa
+  const handleSaveWithValidation = useCallback(async () => {
+    setHasAttemptedSave(true);
+
+    if (sectionsWithErrors.length === 0) {
+      await handleSave();
+    }
+  }, [handleSave, sectionsWithErrors]);
+
   return (
     <BlueprintFormProvider>
+      {/* BlueprintFormContextReader captura os erros do contexto */}
+      <BlueprintFormContextReader onErrorsChange={setSectionsWithErrors} />
+
       <div className="flex flex-col gap-6" data-testid={testId}>
         <Tabs value={activeSection}>
           <Card className="p-6">
@@ -159,6 +203,7 @@ export function BlueprintEditor({
               activeSection={activeSection}
               onSectionChange={handleSectionChange}
               checkAccess={canAccessSection}
+              sectionsWithErrors={sectionsWithErrors}
             />
           </Card>
 
@@ -274,7 +319,14 @@ export function BlueprintEditor({
           </div>
         </Tabs>
 
-        <BlueprintActionControls mode={mode} isSaving={isSaving} handleSave={handleSave} />
+        <BlueprintActionControls
+          mode={mode}
+          isSaving={isSaving}
+          handleSave={handleSaveWithValidation}
+          sectionsWithErrors={sectionsWithErrors}
+          hasAttemptedSave={hasAttemptedSave}
+          onNavigateToSection={handleSectionChange}
+        />
       </div>
     </BlueprintFormProvider>
   );

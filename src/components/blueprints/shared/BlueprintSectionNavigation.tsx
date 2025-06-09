@@ -11,6 +11,7 @@ interface BlueprintSectionNavigationProps {
   activeSection: SectionId;
   onSectionChange: (section: SectionId) => void;
   checkAccess?: (section: SectionId) => boolean;
+  sectionsWithErrors?: SectionId[];
 }
 
 const sections: Array<{ id: SectionId }> = [
@@ -29,6 +30,7 @@ export function BlueprintSectionNavigation({
   activeSection,
   onSectionChange,
   checkAccess,
+  sectionsWithErrors = [],
 }: BlueprintSectionNavigationProps) {
   const { t } = useTranslation(['blueprints']);
 
@@ -46,6 +48,7 @@ export function BlueprintSectionNavigation({
           {sections.map((section) => {
             const isDisabled = checkAccess ? !checkAccess(section.id) : false;
             const isActive = section.id === activeSection;
+            const hasErrors = sectionsWithErrors.includes(section.id);
 
             return (
               <Tooltip key={section.id}>
@@ -55,7 +58,8 @@ export function BlueprintSectionNavigation({
                     disabled={isDisabled}
                     data-state={isActive ? 'active' : undefined}
                     data-testid={`section-nav-${section.id}`}
-                    className="relative"
+                    data-error={hasErrors ? 'true' : undefined}
+                    className={`relative ${hasErrors ? 'text-destructive' : ''}`}
                   >
                     {t(
                       section.id === 'metadata' ? 'sections.basicInfo' : `sections.${section.id}`,

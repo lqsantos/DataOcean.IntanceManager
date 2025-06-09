@@ -43,7 +43,8 @@ export function BlueprintSectionContainer({
   const { t } = useTranslation(['blueprints']);
 
   // Use the section hook to get form state and validation
-  const { sectionErrors } = useBlueprintSection(sectionId, {
+  // Não estamos mais exibindo os erros genéricos no rodapé da seção
+  const { sectionErrors: _sectionErrors } = useBlueprintSection(sectionId, {
     mode,
     sectionContent,
   });
@@ -62,26 +63,6 @@ export function BlueprintSectionContainer({
       <div className={`${isSaving ? 'pointer-events-none opacity-60' : ''}`}>
         {/* Render custom section content if provided */}
         {sectionContent[sectionId] || children}
-
-        {/* Display validation errors */}
-        {sectionErrors.length > 0 && (
-          <div
-            className="mt-4 space-y-2"
-            aria-live="polite"
-            data-testid={`${sectionId}-section-errors`}
-          >
-            {sectionErrors.map((error, index) => (
-              <div
-                key={index}
-                className="text-sm text-destructive"
-                role="alert"
-                data-testid={`${sectionId}-error-${index}`}
-              >
-                {t(`validation.${error}`, error)}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </Card>
   );

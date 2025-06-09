@@ -356,7 +356,8 @@
     "versionRequired": "A versão é obrigatória",
     "applicationRequired": "A aplicação é obrigatória",
     "descriptionNotEmpty": "A descrição não pode estar vazia",
-    "sectionValid": "Informações básicas validadas com sucesso"
+    "sectionValid": "Informações básicas validadas com sucesso",
+    "formHasErrors": "O formulário contém os seguintes erros:"
   },
 
   "errors": {

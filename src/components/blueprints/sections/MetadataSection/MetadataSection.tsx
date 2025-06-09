@@ -4,6 +4,7 @@ import { Code, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { FormFieldError } from '@/components/blueprints/shared/FormFieldError';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,12 +57,9 @@ export function MetadataSection() {
     setSectionData('metadata', updatedMetadata);
     markSectionDirty('metadata');
 
-    // Executar validação com um pequeno delay para evitar muitas validações consecutivas
-    const timer = setTimeout(() => {
-      void validateSection('metadata');
-    }, 300);
-
-    return () => clearTimeout(timer);
+    // A validação agora é responsabilidade do contexto
+    // que mantém o estado centralizado do formulário
+    void validateSection('metadata');
   };
 
   return (
@@ -80,16 +78,11 @@ export function MetadataSection() {
             placeholder={t('createBlueprint.fields.name.placeholder')}
             data-testid="blueprint-name-input"
           />
-          {state.errors.metadata?.includes('validation.nameRequired') && (
-            <p className="text-sm text-destructive" data-testid="blueprint-name-error">
-              {t('validation.nameRequired')}
-            </p>
-          )}
-          {state.errors.metadata?.includes('validation.nameMinLength') && (
-            <p className="text-sm text-destructive" data-testid="blueprint-name-min-length-error">
-              {t('validation.nameMinLength')}
-            </p>
-          )}
+          <FormFieldError errorKey="validation.nameRequired" testId="blueprint-name-error" />
+          <FormFieldError
+            errorKey="validation.nameMinLength"
+            testId="blueprint-name-min-length-error"
+          />
         </div>
 
         {/* Campo de versão */}
@@ -104,11 +97,7 @@ export function MetadataSection() {
             placeholder={t('createBlueprint.fields.version.placeholder')}
             data-testid="blueprint-version-input"
           />
-          {state.errors.metadata?.includes('validation.versionRequired') && (
-            <p className="text-sm text-destructive" data-testid="blueprint-version-error">
-              {t('validation.versionRequired')}
-            </p>
-          )}
+          <FormFieldError errorKey="validation.versionRequired" testId="blueprint-version-error" />
         </div>
       </div>
 
@@ -135,11 +124,10 @@ export function MetadataSection() {
         <p className="text-xs text-muted-foreground">
           {t('createBlueprint.fields.applicationId.description')}
         </p>
-        {state.errors.metadata?.includes('validation.applicationRequired') && (
-          <p className="text-sm text-destructive" data-testid="blueprint-application-error">
-            {t('validation.applicationRequired')}
-          </p>
-        )}
+        <FormFieldError
+          errorKey="validation.applicationRequired"
+          testId="blueprint-application-error"
+        />
       </div>
 
       {/* Campo de descrição com suporte a markdown */}
@@ -179,11 +167,10 @@ export function MetadataSection() {
         )}
 
         <p className="text-xs text-muted-foreground">{t('basicInfoStep.markdownHelp')}</p>
-        {state.errors.metadata?.includes('validation.descriptionNotEmpty') && (
-          <p className="text-sm text-destructive" data-testid="blueprint-description-error">
-            {t('validation.descriptionNotEmpty')}
-          </p>
-        )}
+        <FormFieldError
+          errorKey="validation.descriptionNotEmpty"
+          testId="blueprint-description-error"
+        />
       </div>
 
       {/* Campo de tags (novo campo conforme especificação) */}
@@ -209,12 +196,12 @@ export function MetadataSection() {
         </p>
       </div>
 
-      {/* Indicador de status da validação */}
-      {state.isDirty.metadata && !state.errors.metadata?.length && (
-        <div className="text-sm text-green-600" data-testid="metadata-validation-success">
-          {t('validation.sectionValid')}
-        </div>
-      )}
+      {/* Substitui qualquer renderização direta de erros que possa estar acontecendo */}
+      {/* com um componente que não mostra nada, mas captura qualquer saída da validação */}
+      <div style={{ display: 'none' }} aria-hidden="true" data-testid="error-messages-placeholder">
+        {/* Esta linha abaixo "captura" os erros sem exibi-los */}
+        {state.errors.metadata?.map((error) => <span key={error} hidden aria-hidden="true"></span>)}
+      </div>
     </div>
   );
 }

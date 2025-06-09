@@ -359,7 +359,8 @@
     "versionRequired": "Version is required",
     "applicationRequired": "Application is required",
     "descriptionNotEmpty": "Description cannot be empty",
-    "sectionValid": "Basic information validated successfully"
+    "sectionValid": "Basic information validated successfully",
+    "formHasErrors": "The form contains the following errors:"
   },
 
   "errors": {
