@@ -311,7 +311,21 @@
   "sections": {
     "basicInfo": "Basic Information",
     "templates": "Templates",
-    "variables": "Variables"
+    "variables": "Variables",
+    "defaults": "Default Values",
+    "preview": "Preview",
+    "basicInfo_description": "Configure the general information for this blueprint",
+    "templates_description": "Select and manage templates associated with this blueprint",
+    "variables_description": "Define variables used by this blueprint",
+    "defaults_description": "Set default values for variables",
+    "preview_description": "Preview the blueprint configuration",
+    "placeholders": {
+      "metadata": "No metadata form provided",
+      "templates": "No templates form provided",
+      "variables": "No variables form provided",
+      "defaults": "No defaults form provided",
+      "preview": "No preview available"
+    }
   },
 
   "basicInfo": {
@@ -324,6 +338,14 @@
 
   "variables": {
     "sectionDescription": "Define variables used by this blueprint"
+  },
+
+  "defaults": {
+    "sectionDescription": "Set default values for variables"
+  },
+
+  "preview": {
+    "sectionDescription": "Preview the blueprint configuration"
   },
 
   "errors": {

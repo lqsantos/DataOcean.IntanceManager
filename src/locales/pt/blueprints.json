@@ -308,7 +308,21 @@
   "sections": {
     "basicInfo": "Informações Básicas",
     "templates": "Templates",
-    "variables": "Variáveis"
+    "variables": "Variáveis",
+    "defaults": "Valores Padrão",
+    "preview": "Visualização",
+    "basicInfo_description": "Configure as informações gerais do blueprint",
+    "templates_description": "Selecione e gerencie os templates associados ao blueprint",
+    "variables_description": "Defina as variáveis utilizadas pelo blueprint",
+    "defaults_description": "Defina valores padrão para as variáveis",
+    "preview_description": "Visualize a configuração do blueprint",
+    "placeholders": {
+      "metadata": "Nenhum formulário de metadados fornecido",
+      "templates": "Nenhum formulário de templates fornecido",
+      "variables": "Nenhum formulário de variáveis fornecido",
+      "defaults": "Nenhum formulário de valores padrão fornecido",
+      "preview": "Nenhuma visualização disponível"
+    }
   },
 
   "basicInfo": {
@@ -321,6 +335,14 @@
 
   "variables": {
     "sectionDescription": "Defina as variáveis utilizadas pelo blueprint"
+  },
+
+  "defaults": {
+    "sectionDescription": "Defina valores padrão para as variáveis"
+  },
+
+  "preview": {
+    "sectionDescription": "Visualize a configuração do blueprint"
   },
 
   "errors": {

@@ -15,7 +15,7 @@ export function BlueprintCreationPage() {
       onSave={async () => {
         // Implementar lógica específica para criação de blueprints (quando necessário)
         // Por exemplo, integração com APIs específicas para criação
-        // console.log('Blueprint creation logic executed');
+        console.log('Blueprint creation logic executed');
       }}
     />
   );
