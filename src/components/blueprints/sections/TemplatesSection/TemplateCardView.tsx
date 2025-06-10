@@ -18,7 +18,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { BlueprintChildTemplate, CatalogTemplate } from '@/types/blueprint';
+import type { BlueprintChildTemplate } from '@/types/blueprint';
+import type { Template } from '@/types/template';
+
+// Tipo utilizado para representar um template no catálogo
+type CatalogTemplate = Template & {
+  version?: string;
+};
 
 interface TemplateCardViewProps {
   /** All available templates */
@@ -40,7 +46,7 @@ interface TemplateCardViewProps {
  */
 export function TemplateCardView({
   templates,
-  isLoading,
+  isLoading: _isLoading,
   selectedTemplates,
   onAddTemplate,
   onRemoveTemplate,
@@ -116,7 +122,9 @@ export function TemplateCardView({
       setEditingTemplate(null);
       setIdentifierError('');
     } else {
-      setIdentifierError(t('templatesStep.selection.identifierError'));
+      setIdentifierError(
+        t('templatesStep.selection.identifierError', 'Identifier is already in use')
+      );
     }
   };
 
@@ -218,7 +226,8 @@ export function TemplateCardView({
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="flex w-full overflow-x-auto">
           <TabsTrigger value="all">
-            {t('templatesStep.catalog.allTemplates')} ({categorizedTemplates['all']?.length || 0})
+            {t('templatesStep.catalog.allTemplates', 'All Templates')} (
+            {categorizedTemplates['all']?.length || 0})
           </TabsTrigger>
           {allCategories.map((category) => (
             <TabsTrigger key={category} value={category}>
@@ -227,7 +236,7 @@ export function TemplateCardView({
           ))}
           {categorizedTemplates['uncategorized']?.length > 0 && (
             <TabsTrigger value="uncategorized">
-              {t('templatesStep.catalog.uncategorized')} (
+              {t('templatesStep.catalog.uncategorized', 'Uncategorized')} (
               {categorizedTemplates['uncategorized']?.length})
             </TabsTrigger>
           )}
@@ -292,7 +301,9 @@ export function TemplateCardView({
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('templatesStep.selection.editIdentifier')}</DialogTitle>
+            <DialogTitle>
+              {t('templatesStep.selection.editIdentifier', 'Edit Identifier')}
+            </DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <Label htmlFor="identifier-input">{t('templatesStep.selection.identifierLabel')}</Label>
@@ -309,14 +320,17 @@ export function TemplateCardView({
             />
             {identifierError && <p className="mt-1 text-xs text-destructive">{identifierError}</p>}
             <p className="mt-2 text-xs text-muted-foreground">
-              {t('templatesStep.selection.identifierDescription')}
+              {t(
+                'templatesStep.selection.identifierDescription',
+                'Enter a unique identifier for this template'
+              )}
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              {t('common.cancel')}
+              {t('common.cancel', 'Cancel')}
             </Button>
-            <Button onClick={handleUpdateIdentifier}>{t('common.save')}</Button>
+            <Button onClick={handleUpdateIdentifier}>{t('common.save', 'Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -367,7 +381,7 @@ function TemplateCard({ template, isSelected, onAdd }: TemplateCardProps) {
             data-testid={`add-card-template-${template.id}`}
           >
             <PlusCircle className="h-4 w-4" />
-            <span className="sr-only">{t('templatesStep.catalog.add')}</span>
+            <span className="sr-only">{t('templatesStep.catalog.add', 'Add template')}</span>
           </Button>
         </div>
         <p className="line-clamp-2 text-sm text-muted-foreground">

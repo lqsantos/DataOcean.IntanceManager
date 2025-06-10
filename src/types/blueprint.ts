@@ -28,6 +28,7 @@ export interface BlueprintChildTemplate {
   templateId: string;
   templateName?: string;
   order: number; // Ordem de aplicação
+  identifier: string; // Identificador único para referência ao template
   overrideValues?: string; // Valores personalizados em formato YAML
 }
 

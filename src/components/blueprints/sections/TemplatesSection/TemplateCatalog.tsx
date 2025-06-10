@@ -10,7 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { CatalogTemplate } from '@/types/blueprint';
+import type { Template } from '@/types/template';
+
+// Tipo utilizado para representar um template no catálogo
+type CatalogTemplate = Template & {
+  version?: string;
+};
 
 interface TemplateCatalogProps {
   /** Templates to display */
@@ -93,7 +98,7 @@ export function TemplateCatalog({
                 className="h-7 text-xs"
                 onClick={() => setSelectedCategory(null)}
               >
-                {t('templatesStep.catalog.allCategories')}
+                {t('templatesStep.catalog.allCategories', 'All Categories')}
               </Button>
 
               {categories.map((category) => (
@@ -118,20 +123,23 @@ export function TemplateCatalog({
             <div {...provided.droppableProps} ref={provided.innerRef} className="h-full min-h-0">
               <ScrollArea className="h-full">
                 <div className="space-y-1 p-4">
-                  {isLoading ? (
+                  {isLoading && (
                     <div className="flex h-20 items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                       <span className="ml-2">{t('templatesStep.catalog.loading')}</span>
                     </div>
-                  ) : filteredTemplates.length === 0 ? (
+                  )}
+                  {!isLoading && filteredTemplates.length === 0 && (
                     <div className="flex h-20 items-center justify-center">
                       <p className="text-sm text-muted-foreground">
                         {searchQuery
                           ? t('templatesStep.catalog.noResults')
-                          : t('templatesStep.catalog.empty')}
+                          : t('templatesStep.catalog.empty', 'No templates available')}
                       </p>
                     </div>
-                  ) : (
+                  )}
+                  {!isLoading &&
+                    filteredTemplates.length > 0 &&
                     filteredTemplates.map((template, index) => {
                       const isAlreadySelected = selectedTemplateIds.includes(template.id);
 
@@ -183,15 +191,16 @@ export function TemplateCatalog({
                                   data-testid={`add-template-${template.id}`}
                                 >
                                   <PlusCircle className="h-4 w-4" />
-                                  <span className="sr-only">{t('templatesStep.catalog.add')}</span>
+                                  <span className="sr-only">
+                                    {t('templatesStep.catalog.add', 'Add template')}
+                                  </span>
                                 </Button>
                               </div>
                             </div>
                           )}
                         </Draggable>
                       );
-                    })
-                  )}
+                    })}
                   {provided.placeholder}
                 </div>
               </ScrollArea>

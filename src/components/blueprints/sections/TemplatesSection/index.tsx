@@ -2,7 +2,6 @@
 
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { useBlueprintForm } from '@/contexts/blueprint-form-context';
 import { useTemplateSelection } from '@/hooks/blueprint';
@@ -22,7 +21,6 @@ import { TemplateCatalog } from './TemplateCatalog';
  * 5. Add unique identifiers to each template
  */
 export function TemplatesSection() {
-  const { t } = useTranslation(['blueprints']);
   const { state, updateSection, validateSection, markSectionComplete, markSectionDirty } =
     useBlueprintForm();
 

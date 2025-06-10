@@ -64,7 +64,7 @@ export function SelectedTemplatesList({
       if (!success) {
         setIdentifierErrors((prev) => ({
           ...prev,
-          [index]: t('templatesStep.selection.identifierError'),
+          [index]: t('templatesStep.selection.identifierError', 'Identifier is already in use'),
         }));
       } else {
         setIdentifierErrors((prev) => ({

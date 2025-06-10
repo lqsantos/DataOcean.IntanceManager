@@ -54,7 +54,7 @@ export function BlueprintSectionContainer({
       <div
         className={`flex h-full flex-col border-b ${isSaving ? 'pointer-events-none opacity-60' : ''}`}
       >
-        <div className="mx-5 mb-2 mt-5 flex-shrink-0">
+        <div className="mx-5 my-2 flex-shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3">
             <h2 className="font-semibold">{t(`sections.${sectionId}`, title)}</h2>
             {description && (
