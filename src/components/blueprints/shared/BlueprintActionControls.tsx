@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type SectionId } from '@/components/blueprints/shared/BlueprintSectionNavigation';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface BlueprintActionControlsProps {
   mode: 'create' | 'edit';
@@ -13,6 +14,7 @@ interface BlueprintActionControlsProps {
   sectionsWithErrors?: SectionId[];
   hasAttemptedSave?: boolean;
   onNavigateToSection?: (section: SectionId) => void;
+  className?: string;
 }
 
 /**
@@ -26,11 +28,12 @@ export function BlueprintActionControls({
   sectionsWithErrors = [],
   hasAttemptedSave = false,
   onNavigateToSection,
+  className,
 }: BlueprintActionControlsProps) {
   const { t } = useTranslation(['blueprints', 'common']);
 
   return (
-    <div className="space-y-3 p-4">
+    <div className={cn('space-y-2 p-2', className)}>
       <div className="flex justify-end gap-4">
         <Button
           variant="outline"

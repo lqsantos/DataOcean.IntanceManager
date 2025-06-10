@@ -206,137 +206,148 @@ export function BlueprintEditor({
       {/* BlueprintFormContextReader captura os erros do contexto */}
       <BlueprintFormContextReader onErrorsChange={setSectionsWithErrors} />
 
-      <div className="flex flex-col gap-6" data-testid={testId}>
-        <Tabs value={activeSection}>
-          <Card className="p-6">
+      <div className="relative flex h-[calc(100vh-80px)] flex-col" data-testid={testId}>
+        <Tabs value={activeSection} className="flex h-full flex-col">
+          {/* Cabeçalho fixo com navegação entre seções */}
+          <div className="sticky top-0 z-20 border-b bg-background shadow-sm">
             <BlueprintSectionNavigation
               activeSection={activeSection}
               onSectionChange={handleSectionChange}
               checkAccess={canAccessSection}
               sectionsWithErrors={sectionsWithErrors}
+              className="mb-0"
             />
-          </Card>
+          </div>
 
+          {/* Área de conteúdo - sem rolagem geral */}
           <div className="flex-1">
-            {/* Metadata Section */}
-            <TabsContent value="metadata">
-              <BlueprintSectionContainer
-                sectionId="metadata"
-                title={t('sections.basicInfo', 'Basic Information')}
-                description={t(
-                  'basicInfo.sectionDescription',
-                  'Configure the basic information for this blueprint'
-                )}
-                mode={mode}
-                isSaving={isSaving}
-              >
-                {sectionContent.metadata || (
-                  <div
-                    className="p-4 text-muted-foreground"
-                    data-testid="metadata-section-placeholder"
-                  >
-                    {t('sections.placeholders.metadata', 'No metadata form provided')}
-                  </div>
-                )}
-              </BlueprintSectionContainer>
-            </TabsContent>
+            <div className="h-full px-1 py-2">
+              {/* Metadata Section */}
+              <TabsContent value="metadata" className="h-full">
+                <BlueprintSectionContainer
+                  sectionId="metadata"
+                  title={t('sections.basicInfo', 'Basic Information')}
+                  description={t(
+                    'basicInfo.sectionDescription',
+                    'Configure the basic information for this blueprint'
+                  )}
+                  mode={mode}
+                  isSaving={isSaving}
+                >
+                  {sectionContent.metadata || (
+                    <div
+                      className="p-4 text-muted-foreground"
+                      data-testid="metadata-section-placeholder"
+                    >
+                      {t('sections.placeholders.metadata', 'No metadata form provided')}
+                    </div>
+                  )}
+                </BlueprintSectionContainer>
+              </TabsContent>
 
-            {/* Templates Section */}
-            <TabsContent value="templates">
-              <BlueprintSectionContainer
-                sectionId="templates"
-                title={t('sections.templates', 'Templates')}
-                description={t(
-                  'templates.sectionDescription',
-                  'Select and manage templates associated with this blueprint'
-                )}
-                mode={mode}
-                isSaving={isSaving}
-              >
-                {sectionContent.templates || (
-                  <div
-                    className="p-4 text-muted-foreground"
-                    data-testid="templates-section-placeholder"
-                  >
-                    {t('sections.placeholders.templates', 'No templates form provided')}
-                  </div>
-                )}
-              </BlueprintSectionContainer>
-            </TabsContent>
+              {/* Templates Section */}
+              <TabsContent value="templates" className="h-full">
+                <BlueprintSectionContainer
+                  sectionId="templates"
+                  title={t('sections.templates', 'Templates')}
+                  description={t(
+                    'templates.sectionDescription',
+                    'Select and manage templates associated with this blueprint'
+                  )}
+                  mode={mode}
+                  isSaving={isSaving}
+                >
+                  {sectionContent.templates || (
+                    <div
+                      className="p-4 text-muted-foreground"
+                      data-testid="templates-section-placeholder"
+                    >
+                      {t('sections.placeholders.templates', 'No templates form provided')}
+                    </div>
+                  )}
+                </BlueprintSectionContainer>
+              </TabsContent>
 
-            {/* Variables Section */}
-            <TabsContent value="variables">
-              <BlueprintSectionContainer
-                sectionId="variables"
-                title={t('sections.variables', 'Variables')}
-                description={t(
-                  'variables.sectionDescription',
-                  'Define variables used by this blueprint'
-                )}
-                mode={mode}
-                isSaving={isSaving}
-              >
-                {sectionContent.variables || (
-                  <div
-                    className="p-4 text-muted-foreground"
-                    data-testid="variables-section-placeholder"
-                  >
-                    {t('sections.placeholders.variables', 'No variables form provided')}
-                  </div>
-                )}
-              </BlueprintSectionContainer>
-            </TabsContent>
+              {/* Variables Section */}
+              <TabsContent value="variables" className="h-full">
+                <BlueprintSectionContainer
+                  sectionId="variables"
+                  title={t('sections.variables', 'Variables')}
+                  description={t(
+                    'variables.sectionDescription',
+                    'Define variables used by this blueprint'
+                  )}
+                  mode={mode}
+                  isSaving={isSaving}
+                >
+                  {sectionContent.variables || (
+                    <div
+                      className="p-4 text-muted-foreground"
+                      data-testid="variables-section-placeholder"
+                    >
+                      {t('sections.placeholders.variables', 'No variables form provided')}
+                    </div>
+                  )}
+                </BlueprintSectionContainer>
+              </TabsContent>
 
-            {/* Defaults Section */}
-            <TabsContent value="defaults">
-              <BlueprintSectionContainer
-                sectionId="defaults"
-                title={t('sections.defaults', 'Default Values')}
-                description={t('defaults.sectionDescription', 'Set default values for variables')}
-                mode={mode}
-                isSaving={isSaving}
-              >
-                {sectionContent.defaults || (
-                  <div
-                    className="p-4 text-muted-foreground"
-                    data-testid="defaults-section-placeholder"
-                  >
-                    {t('sections.placeholders.defaults', 'No defaults form provided')}
-                  </div>
-                )}
-              </BlueprintSectionContainer>
-            </TabsContent>
+              {/* Defaults Section */}
+              <TabsContent value="defaults" className="h-full">
+                <BlueprintSectionContainer
+                  sectionId="defaults"
+                  title={t('sections.defaults', 'Default Values')}
+                  description={t('defaults.sectionDescription', 'Set default values for variables')}
+                  mode={mode}
+                  isSaving={isSaving}
+                >
+                  {sectionContent.defaults || (
+                    <div
+                      className="p-4 text-muted-foreground"
+                      data-testid="defaults-section-placeholder"
+                    >
+                      {t('sections.placeholders.defaults', 'No defaults form provided')}
+                    </div>
+                  )}
+                </BlueprintSectionContainer>
+              </TabsContent>
 
-            {/* Preview Section */}
-            <TabsContent value="preview">
-              <BlueprintSectionContainer
-                sectionId="preview"
-                title={t('sections.preview', 'Preview')}
-                description={t('preview.sectionDescription', 'Preview the blueprint configuration')}
-                mode={mode}
-                isSaving={isSaving}
-              >
-                {sectionContent.preview || (
-                  <div
-                    className="p-4 text-muted-foreground"
-                    data-testid="preview-section-placeholder"
-                  >
-                    {t('sections.placeholders.preview', 'No preview available')}
-                  </div>
-                )}
-              </BlueprintSectionContainer>
-            </TabsContent>
+              {/* Preview Section */}
+              <TabsContent value="preview" className="h-full">
+                <BlueprintSectionContainer
+                  sectionId="preview"
+                  title={t('sections.preview', 'Preview')}
+                  description={t(
+                    'preview.sectionDescription',
+                    'Preview the blueprint configuration'
+                  )}
+                  mode={mode}
+                  isSaving={isSaving}
+                >
+                  {sectionContent.preview || (
+                    <div
+                      className="p-4 text-muted-foreground"
+                      data-testid="preview-section-placeholder"
+                    >
+                      {t('sections.placeholders.preview', 'No preview available')}
+                    </div>
+                  )}
+                </BlueprintSectionContainer>
+              </TabsContent>
+            </div>
+          </div>
+
+          {/* Rodapé fixo com controles de ação */}
+          <div className="sticky bottom-0 z-20 border-t bg-background shadow-md">
+            <BlueprintActionControls
+              mode={mode}
+              isSaving={isSaving}
+              handleSave={handleSaveWithValidation}
+              sectionsWithErrors={sectionsWithErrors}
+              hasAttemptedSave={hasAttemptedSave}
+              onNavigateToSection={handleSectionChange}
+            />
           </div>
         </Tabs>
-
-        <BlueprintActionControls
-          mode={mode}
-          isSaving={isSaving}
-          handleSave={handleSaveWithValidation}
-          sectionsWithErrors={sectionsWithErrors}
-          hasAttemptedSave={hasAttemptedSave}
-          onNavigateToSection={handleSectionChange}
-        />
       </div>
     </BlueprintFormProvider>
   );

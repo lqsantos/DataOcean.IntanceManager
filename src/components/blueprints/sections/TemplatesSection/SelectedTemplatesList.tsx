@@ -64,7 +64,7 @@ export function SelectedTemplatesList({
       if (!success) {
         setIdentifierErrors((prev) => ({
           ...prev,
-          [index]: t('templatesStep.selection.identifierError'),
+          [index]: t('templatesStep.selection.identifierLabel', 'Identifier is already in use'),
         }));
       } else {
         setIdentifierErrors((prev) => ({
@@ -99,12 +99,8 @@ export function SelectedTemplatesList({
       <CardContent className="p-0">
         <Droppable droppableId="selected-templates">
           {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className="h-[calc(100%-2.5rem)]"
-            >
-              <ScrollArea className="h-[300px]">
+            <div {...provided.droppableProps} ref={provided.innerRef} className="h-full">
+              <ScrollArea className="h-full max-h-[calc(100vh-300px)]">
                 <div className="space-y-1 p-4">
                   {selectedTemplates.length === 0 ? (
                     <div className="flex h-20 flex-col items-center justify-center space-y-1">

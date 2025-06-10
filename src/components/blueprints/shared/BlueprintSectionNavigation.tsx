@@ -12,6 +12,7 @@ interface BlueprintSectionNavigationProps {
   onSectionChange: (section: SectionId) => void;
   checkAccess?: (section: SectionId) => boolean;
   sectionsWithErrors?: SectionId[];
+  className?: string;
 }
 
 const sections: Array<{ id: SectionId }> = [
@@ -31,6 +32,7 @@ export function BlueprintSectionNavigation({
   onSectionChange,
   checkAccess: _checkAccess, // Adicionado underscore para evitar erro de lint
   sectionsWithErrors = [],
+  className,
 }: BlueprintSectionNavigationProps) {
   const { t } = useTranslation(['blueprints']);
 
@@ -41,8 +43,8 @@ export function BlueprintSectionNavigation({
 
   return (
     <TooltipProvider>
-      <Tabs value={activeSection} onValueChange={handleSectionChange}>
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs value={activeSection} onValueChange={handleSectionChange} className={className}>
+        <TabsList className="grid h-8 w-full grid-cols-5">
           {sections.map((section) => {
             // Nunca desabilitar nenhuma aba, permitindo navegação livre entre todas as seções
             const isDisabled = false;
@@ -58,7 +60,7 @@ export function BlueprintSectionNavigation({
                     data-state={isActive ? 'active' : undefined}
                     data-testid={`section-nav-${section.id}`}
                     data-error={hasErrors ? 'true' : undefined}
-                    className={`relative ${hasErrors ? 'text-destructive' : ''}`}
+                    className={`relative px-2 py-0.5 text-sm ${hasErrors ? 'text-destructive' : ''}`}
                   >
                     {t(
                       section.id === 'metadata' ? 'sections.basicInfo' : `sections.${section.id}`,

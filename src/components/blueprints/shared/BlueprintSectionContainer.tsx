@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { type BlueprintSectionContent } from '@/contexts/blueprint-form-context';
 import { type SectionId } from '@/hooks/blueprint';
 import { useBlueprintSection } from '@/hooks/blueprint/use-blueprint-section';
@@ -50,9 +51,12 @@ export function BlueprintSectionContainer({
   });
 
   return (
-    <Card className="p-6" data-testid={`section-content-${sectionId}`}>
-      <div className="mb-6">
-        <h2 className="mb-2 text-xl font-semibold">{t(`sections.${sectionId}`, title)}</h2>
+    <Card
+      className="flex h-[calc(100vh-170px)] flex-col p-6"
+      data-testid={`section-content-${sectionId}`}
+    >
+      <div className="mb-4 flex-shrink-0">
+        <h2 className="mb-1 text-xl font-semibold">{t(`sections.${sectionId}`, title)}</h2>
         {description && (
           <p className="text-muted-foreground">
             {t(`${sectionId}.sectionDescription`, description)}
@@ -60,10 +64,12 @@ export function BlueprintSectionContainer({
         )}
       </div>
 
-      <div className={`${isSaving ? 'pointer-events-none opacity-60' : ''}`}>
-        {/* Render custom section content if provided */}
-        {sectionContent[sectionId] || children}
-      </div>
+      <ScrollArea className="flex-1">
+        <div className={`${isSaving ? 'pointer-events-none opacity-60' : ''}`}>
+          {/* Render custom section content if provided */}
+          {sectionContent[sectionId] || children}
+        </div>
+      </ScrollArea>
     </Card>
   );
 }

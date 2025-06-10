@@ -115,12 +115,8 @@ export function TemplateCatalog({
       <CardContent className="p-0">
         <Droppable droppableId="template-catalog" isDropDisabled={true}>
           {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className="h-[calc(100%-2.5rem)]"
-            >
-              <ScrollArea className="h-[300px]">
+            <div {...provided.droppableProps} ref={provided.innerRef} className="h-full">
+              <ScrollArea className="h-full max-h-[calc(100vh-300px)]">
                 <div className="space-y-1 p-4">
                   {isLoading ? (
                     <div className="flex h-20 items-center justify-center">

@@ -152,7 +152,7 @@ export function TemplatesSection() {
   return (
     <div className="flex h-full flex-col" data-testid="templates-section">
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-2">
           <TemplateCatalog
             templates={templatesLoading ? [] : templates}
             isLoading={templatesLoading}
