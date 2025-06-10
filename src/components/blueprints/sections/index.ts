@@ -8,8 +8,10 @@
 // Seção de informações básicas do blueprint
 export { MetadataSection } from './MetadataSection';
 
+// Seção para seleção e configuração de templates
+export { TemplatesSection } from './TemplatesSection';
+
 // As outras seções serão implementadas nas próximas entregas:
-// export { TemplatesSection } from './TemplatesSection';
 // export { VariablesSection } from './VariablesSection';
 // export { DefaultValuesSection } from './DefaultValuesSection';
 // export { PreviewSection } from './PreviewSection';

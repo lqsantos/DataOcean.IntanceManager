@@ -182,14 +182,24 @@ export function BlueprintEditor({
   const [sectionsWithErrors, setSectionsWithErrors] = useState<SectionId[]>([]);
   const [hasAttemptedSave, setHasAttemptedSave] = useState<boolean>(false);
 
-  // Função de salvamento modificada para registrar tentativa
+  // Função de salvamento modificada para sempre permitir salvar
   const handleSaveWithValidation = useCallback(async () => {
     setHasAttemptedSave(true);
 
-    if (sectionsWithErrors.length === 0) {
-      await handleSave();
+    // Sempre permite salvar, independentemente de erros
+    // Se houver erros, o usuário será alertado mas ainda poderá salvar
+    if (sectionsWithErrors.length > 0) {
+      // Mostrar aviso sobre erros, mas continuar com o salvamento
+      toast.warning(t('toast.warning.title', 'Warning'), {
+        description: t(
+          'validation.warningWithErrors',
+          'There are validation errors, but the blueprint will still be saved.'
+        ),
+      });
     }
-  }, [handleSave, sectionsWithErrors]);
+
+    await handleSave();
+  }, [handleSave, sectionsWithErrors, t]);
 
   return (
     <BlueprintFormProvider>

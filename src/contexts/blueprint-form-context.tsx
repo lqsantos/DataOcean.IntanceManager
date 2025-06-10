@@ -99,6 +99,7 @@ interface BlueprintFormContextType {
     section: T,
     data: BlueprintFormData[T]
   ) => void;
+  updateSection: (section: 'templates' | 'variables', data: any[]) => void;
   setSectionErrors: (section: keyof BlueprintFormData, errors: string[]) => void;
   markSectionDirty: (section: keyof BlueprintFormData) => void;
   markFieldDirty: (section: keyof BlueprintFormData, field: string) => void;
@@ -394,9 +395,42 @@ export function BlueprintFormProvider({ children }: { children: ReactNode }) {
     };
   }, [state.formData, state.editId]);
 
+  // Método para atualizar seções específicas, como templates e variáveis
+  const updateSection = useCallback(
+    (
+      section: 'templates' | 'variables',
+      data:
+        | Array<{ templateId: string; identifier: string; order: number }>
+        | Array<{
+            name: string;
+            type: string;
+            description: string;
+            required: boolean;
+            defaultValue?: string;
+          }>
+    ) => {
+      // Manusear cada seção específica
+      if (section === 'templates') {
+        const sectionData = {
+          selectedTemplates: data as BlueprintFormData['templates']['selectedTemplates'],
+        } as BlueprintFormData['templates'];
+
+        setSectionData('templates', sectionData);
+      } else if (section === 'variables') {
+        const sectionData = {
+          variables: data as BlueprintFormData['variables']['variables'],
+        } as BlueprintFormData['variables'];
+
+        setSectionData('variables', sectionData);
+      }
+    },
+    [setSectionData]
+  );
+
   const value: BlueprintFormContextType = {
     state,
     setSectionData,
+    updateSection,
     setSectionErrors,
     markSectionDirty,
     markFieldDirty,

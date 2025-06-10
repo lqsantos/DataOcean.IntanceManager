@@ -26,15 +26,41 @@ export const routesConfig: RouteConfig[] = [
     metadata: {
       titleKey: 'dashboard.title',
       descriptionKey: 'dashboard.description',
-      namespace: 'common'
+      namespace: 'common',
     },
+  },
+  {
+    path: '/blueprints',
+    metadata: {
+      titleKey: 'blueprints.title',
+      descriptionKey: 'blueprints.description',
+      namespace: 'blueprints',
+    },
+    children: [
+      {
+        path: '/blueprints/create',
+        metadata: {
+          titleKey: 'create.title',
+          descriptionKey: 'create.description',
+          namespace: 'blueprints',
+        },
+      },
+      {
+        path: '/blueprints/edit',
+        metadata: {
+          titleKey: 'editPage.title',
+          descriptionKey: 'editPage.description',
+          namespace: 'blueprints',
+        },
+      },
+    ],
   },
   {
     path: '/instances',
     metadata: {
       titleKey: 'instances.title',
       descriptionKey: 'instances.description',
-      namespace: 'common'
+      namespace: 'common',
     },
   },
   {
@@ -42,7 +68,7 @@ export const routesConfig: RouteConfig[] = [
     metadata: {
       titleKey: 'clusters.title',
       descriptionKey: 'clusters.description',
-      namespace: 'common'
+      namespace: 'common',
     },
   },
   {
@@ -50,7 +76,7 @@ export const routesConfig: RouteConfig[] = [
     metadata: {
       titleKey: 'gitSources.title',
       descriptionKey: 'gitSources.description',
-      namespace: 'common'
+      namespace: 'common',
     },
   },
   {
@@ -58,7 +84,7 @@ export const routesConfig: RouteConfig[] = [
     metadata: {
       titleKey: 'resources.title',
       descriptionKey: 'resources.description',
-      namespace: 'common'
+      namespace: 'common',
     },
     children: [
       {
@@ -66,7 +92,7 @@ export const routesConfig: RouteConfig[] = [
         metadata: {
           titleKey: 'resources.title', // Mantém o título pai
           descriptionKey: 'resources.templates.description',
-          namespace: 'common'
+          namespace: 'common',
         },
       },
       {
@@ -74,7 +100,7 @@ export const routesConfig: RouteConfig[] = [
         metadata: {
           titleKey: 'resources.title', // Mantém o título pai
           descriptionKey: 'resources.blueprints.description',
-          namespace: 'common'
+          namespace: 'common',
         },
       },
     ],
@@ -84,7 +110,7 @@ export const routesConfig: RouteConfig[] = [
     metadata: {
       titleKey: 'settings.title',
       descriptionKey: 'settings.description',
-      namespace: 'common'
+      namespace: 'common',
     },
   },
 ];
@@ -96,7 +122,7 @@ export function getRouteMetadata(path: string): PageMetadata {
   // Default fallback
   const defaultMetadata: PageMetadata = {
     titleKey: 'app.title',
-    namespace: 'common'
+    namespace: 'common',
   };
 
   // Se o caminho é exatamente igual ao root ou página em branco

@@ -70,30 +70,29 @@ export function useBlueprintNavigation(
 
   /**
    * Atualiza a URL com base na seção atual
+   * (Desativado para usar apenas navegação baseada em estado)
    */
   const updateUrlForSection = useCallback(
-    (section: SectionId) => {
-      if (syncWithUrl && baseUrl && hasUserNavigated) {
-        const url = `${baseUrl}/${sectionUrlMap[section]}`;
-
-        router.replace(url);
-      }
+    (_section: SectionId) => {
+      // Comentado para evitar redirecionamento para URLs separadas
+      // if (syncWithUrl && baseUrl && hasUserNavigated) {
+      //   const url = `${baseUrl}/${sectionUrlMap[_section]}`;
+      //   router.replace(url);
+      // }
     },
     [syncWithUrl, baseUrl, router, hasUserNavigated]
   );
 
   /**
-   * Muda para uma nova seção se for acessível
+   * Muda para uma nova seção - sempre permite navegação livre
    */
   const navigateToSection = useCallback(
     (section: SectionId) => {
-      if (canAccessSection(section)) {
-        setHasUserNavigated(true);
-        setActiveSection(section);
-        updateUrlForSection(section);
-      }
+      setHasUserNavigated(true);
+      setActiveSection(section);
+      updateUrlForSection(section);
     },
-    [canAccessSection, updateUrlForSection]
+    [updateUrlForSection]
   );
 
   /**
@@ -108,7 +107,7 @@ export function useBlueprintNavigation(
   }, [activeSection, getNextAvailableSection, navigateToSection]);
 
   /**
-   * Retorna para a seção anterior
+   * Retorna para a seção anterior - sempre permite navegação livre
    */
   const navigateBack = useCallback(() => {
     const sections: SectionId[] = ['metadata', 'templates', 'variables', 'defaults', 'preview'];
@@ -117,14 +116,13 @@ export function useBlueprintNavigation(
     if (currentIndex > 0) {
       const previousSection = sections[currentIndex - 1];
 
-      if (canAccessSection(previousSection)) {
-        navigateToSection(previousSection);
-      }
+      navigateToSection(previousSection);
     }
-  }, [activeSection, canAccessSection, navigateToSection]);
+  }, [activeSection, navigateToSection]);
 
   /**
    * Sincroniza a seção atual com a URL (se syncWithUrl estiver habilitado)
+   * Sempre permite navegação para qualquer seção
    */
   useEffect(() => {
     if (syncWithUrl && pathname && baseUrl) {
@@ -136,15 +134,12 @@ export function useBlueprintNavigation(
       const matchingSection = entries.find(([_, value]) => urlPart === value)?.[0];
 
       // Se encontrou uma seção na URL e é diferente da atual, atualiza
-      if (
-        matchingSection &&
-        matchingSection !== activeSection &&
-        canAccessSection(matchingSection)
-      ) {
+      // Sem verificar canAccessSection para permitir navegação livre
+      if (matchingSection && matchingSection !== activeSection) {
         setActiveSection(matchingSection);
       }
     }
-  }, [pathname, baseUrl, syncWithUrl, sectionUrlMap, canAccessSection, activeSection]);
+  }, [pathname, baseUrl, syncWithUrl, sectionUrlMap, activeSection]);
 
   // Atualiza URL na montagem inicial do componente
   useEffect(() => {

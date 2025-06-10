@@ -8,13 +8,14 @@
 // Exportando os hooks existentes
 import { useBlueprintNavigation } from './use-blueprint-navigation';
 import { useSectionValidation } from './use-section-validation';
+import { useTemplateSelection } from './use-template-selection';
 
 // Exportando os hooks do contexto
 export { useBlueprintForm } from '@/contexts/blueprint-form-context';
 export { useBlueprintSection } from './use-blueprint-section';
 
 // Re-exportando os hooks existentes
-export { useBlueprintNavigation, useSectionValidation };
+export { useBlueprintNavigation, useSectionValidation, useTemplateSelection };
 
 // Exportando tipos para reutilização
 export type {

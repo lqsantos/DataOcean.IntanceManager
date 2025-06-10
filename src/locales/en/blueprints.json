@@ -1,6 +1,19 @@
 {
   "pageTitle": "Blueprints",
-  "description": "Manage your blueprints for standardized instance creation",
+  "pageDescription": "Manage your blueprints for standardized instance creation",
+
+  "title": "Blueprints",
+  "description": "Manage and organize your blueprints",
+
+  "create": {
+    "title": "Create Blueprint",
+    "description": "Create a new blueprint for standardized instance creation"
+  },
+
+  "editPage": {
+    "title": "Edit Blueprint",
+    "description": "Modify an existing blueprint"
+  },
 
   "createBlueprint": {
     "title": "Create New Blueprint",

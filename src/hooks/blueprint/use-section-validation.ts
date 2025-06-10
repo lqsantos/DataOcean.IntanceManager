@@ -67,20 +67,10 @@ export function useSectionValidation() {
    * @param sectionId - ID da seção a verificar
    * @returns Booleano indicando se a seção pode ser acessada
    */
-  const canAccessSection = useCallback(
-    (sectionId: SectionId): boolean => {
-      const section = validations[sectionId];
-
-      // A seção de metadados sempre pode ser acessada
-      if (sectionId === 'metadata') {
-        return true;
-      }
-
-      // Para outras seções, verificamos se todas as dependências estão completas
-      return section.dependencies.every((dependencyId) => validations[dependencyId].completed);
-    },
-    [validations]
-  );
+  const canAccessSection = useCallback((_sectionId: SectionId): boolean => {
+    // Permitir navegação livre entre todas as seções
+    return true;
+  }, []);
 
   /**
    * Atualiza o estado de validação de uma seção
@@ -153,6 +143,7 @@ export function useSectionValidation() {
 
   /**
    * Obtém o próximo passo disponível após a seção atual
+   * Sempre permite avançar para a próxima seção
    *
    * @param currentSectionId - ID da seção atual
    * @returns ID da próxima seção disponível, ou undefined se não houver
@@ -173,12 +164,10 @@ export function useSectionValidation() {
         return undefined;
       }
 
-      // Retorna a próxima seção, se estiver disponível
-      const nextSectionId = sectionOrder[currentIndex + 1];
-
-      return canAccessSection(nextSectionId) ? nextSectionId : undefined;
+      // Sempre retorna a próxima seção sem verificação
+      return sectionOrder[currentIndex + 1];
     },
-    [canAccessSection]
+    []
   );
 
   return {

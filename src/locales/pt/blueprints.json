@@ -1,6 +1,19 @@
 {
   "pageTitle": "Blueprints",
-  "description": "Gerencie seus blueprints para criação padronizada de instâncias",
+  "pageDescription": "Gerencie seus blueprints para criação padronizada de instâncias",
+
+  "title": "Blueprints",
+  "description": "Gerencie e organize seus blueprints",
+
+  "create": {
+    "title": "Criar Blueprint",
+    "description": "Crie um novo blueprint para criação padronizada de instâncias"
+  },
+
+  "editPage": {
+    "title": "Editar Blueprint",
+    "description": "Modifique um blueprint existente"
+  },
 
   "createBlueprint": {
     "title": "Criar Novo Blueprint",

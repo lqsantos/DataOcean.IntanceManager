@@ -29,16 +29,14 @@ const sections: Array<{ id: SectionId }> = [
 export function BlueprintSectionNavigation({
   activeSection,
   onSectionChange,
-  checkAccess,
+  checkAccess: _checkAccess, // Adicionado underscore para evitar erro de lint
   sectionsWithErrors = [],
 }: BlueprintSectionNavigationProps) {
   const { t } = useTranslation(['blueprints']);
 
-  // Handle section change
+  // Handle section change - sempre permite navegação livre para qualquer seção
   function handleSectionChange(section: string) {
-    if (!checkAccess || checkAccess(section as SectionId)) {
-      onSectionChange(section as SectionId);
-    }
+    onSectionChange(section as SectionId);
   }
 
   return (
@@ -46,7 +44,8 @@ export function BlueprintSectionNavigation({
       <Tabs value={activeSection} onValueChange={handleSectionChange}>
         <TabsList className="grid w-full grid-cols-5">
           {sections.map((section) => {
-            const isDisabled = checkAccess ? !checkAccess(section.id) : false;
+            // Nunca desabilitar nenhuma aba, permitindo navegação livre entre todas as seções
+            const isDisabled = false;
             const isActive = section.id === activeSection;
             const hasErrors = sectionsWithErrors.includes(section.id);
 
@@ -71,14 +70,10 @@ export function BlueprintSectionNavigation({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>
-                    {isDisabled
-                      ? t(
-                          'createBlueprint.validation.notAccessible',
-                          'This section is not accessible'
-                        )
-                      : t(getSectionDescription(section.id), {
-                          defaultValue: 'Section not accessible',
-                        })}
+                    {t(getSectionDescription(section.id), {
+                      defaultValue:
+                        section.id === 'metadata' ? 'Basic Information' : `${section.id} Section`,
+                    })}
                   </p>
                 </TooltipContent>
               </Tooltip>
