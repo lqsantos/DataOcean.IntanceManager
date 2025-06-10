@@ -209,16 +209,15 @@ export function BlueprintEditor({
       <div className="grid h-[calc(100vh-80px)] grid-rows-[auto_1fr_auto]" data-testid={testId}>
         <Tabs value={activeSection} className="contents">
           {/* Cabeçalho fixo com navegação entre seções */}
-          <div className="border-b bg-background shadow-sm">
-            <BlueprintSectionNavigation
-              activeSection={activeSection}
-              onSectionChange={handleSectionChange}
-              checkAccess={canAccessSection}
-              sectionsWithErrors={sectionsWithErrors}
-              className="mb-0"
-            />
-          </div>
-          <div className="overflow-hidden">
+          <BlueprintSectionNavigation
+            activeSection={activeSection}
+            onSectionChange={handleSectionChange}
+            checkAccess={canAccessSection}
+            sectionsWithErrors={sectionsWithErrors}
+            className="mb-0"
+          />
+
+          <div className="overflow-hidden py-2">
             {/* Metadata Section */}
             <TabsContent value="metadata" className="h-full">
               <BlueprintSectionContainer
@@ -330,7 +329,7 @@ export function BlueprintEditor({
           </div>
 
           {/* Rodapé com controles de ação */}
-          <div className="border-t bg-background py-4 shadow-md">
+          <div className="mb-3 bg-background">
             <BlueprintActionControls
               mode={mode}
               isSaving={isSaving}

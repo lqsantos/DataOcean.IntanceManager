@@ -50,17 +50,22 @@ export function BlueprintSectionContainer({
   });
 
   return (
-    <Card className="flex h-full flex-col p-5" data-testid={`section-content-${sectionId}`}>
-      <div className={`flex h-full flex-col ${isSaving ? 'pointer-events-none opacity-60' : ''}`}>
-        <div className="mb-4 flex-shrink-0">
-          <h2 className="mb-1 font-semibold">{t(`sections.${sectionId}`, title)}</h2>
-          {description && (
-            <p className="text-muted-foreground">
-              {t(`${sectionId}.sectionDescription`, description)}
-            </p>
-          )}
+    <Card className="flex h-full flex-col" data-testid={`section-content-${sectionId}`}>
+      <div
+        className={`flex h-full flex-col border-b ${isSaving ? 'pointer-events-none opacity-60' : ''}`}
+      >
+        <div className="mx-5 mb-2 mt-5 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3">
+            <h2 className="font-semibold">{t(`sections.${sectionId}`, title)}</h2>
+            {description && (
+              <p className="text-sm text-muted-foreground">
+                {t(`${sectionId}.sectionDescription`, description)}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="border-b shadow-lg" />
+        <div className="m-5 min-h-0 flex-1 overflow-hidden pb-2">
           {/* Render custom section content if provided */}
           {sectionContent[sectionId] || children}
         </div>
