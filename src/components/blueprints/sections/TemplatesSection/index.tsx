@@ -152,19 +152,23 @@ export function TemplatesSection() {
   return (
     <div className="flex h-full flex-col" data-testid="templates-section">
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-2">
-          <TemplateCatalog
-            templates={templatesLoading ? [] : templates}
-            isLoading={templatesLoading}
-            onAddTemplate={addTemplate}
-            selectedTemplateIds={selectedTemplates.map((t) => t.templateId)}
-          />
-          <SelectedTemplatesList
-            selectedTemplates={selectedTemplates}
-            onRemoveTemplate={removeTemplate}
-            onUpdateIdentifier={updateTemplateIdentifier}
-            getTemplateName={getTemplateName}
-          />
+        <div className="grid h-full min-h-0 grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="flex h-full min-h-0 flex-col">
+            <TemplateCatalog
+              templates={templatesLoading ? [] : templates}
+              isLoading={templatesLoading}
+              onAddTemplate={addTemplate}
+              selectedTemplateIds={selectedTemplates.map((t) => t.templateId)}
+            />
+          </div>
+          <div className="flex h-full min-h-0 flex-col">
+            <SelectedTemplatesList
+              selectedTemplates={selectedTemplates}
+              onRemoveTemplate={removeTemplate}
+              onUpdateIdentifier={updateTemplateIdentifier}
+              getTemplateName={getTemplateName}
+            />
+          </div>
         </div>
       </DragDropContext>
     </div>

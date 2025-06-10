@@ -67,8 +67,8 @@ export function TemplateCatalog({
     });
 
   return (
-    <Card className="h-full">
-      <div className="border-b border-border p-4">
+    <Card className="flex h-full min-h-0 flex-col">
+      <div className="flex-shrink-0 border-b border-border p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-medium">{t('templatesStep.catalog.title')}</h3>
         </div>
@@ -112,11 +112,11 @@ export function TemplateCatalog({
         </div>
       </div>
 
-      <CardContent className="p-0">
+      <CardContent className="min-h-0 flex-1 p-0">
         <Droppable droppableId="template-catalog" isDropDisabled={true}>
           {(provided) => (
-            <div {...provided.droppableProps} ref={provided.innerRef} className="h-full">
-              <ScrollArea className="h-full max-h-[calc(100vh-300px)]">
+            <div {...provided.droppableProps} ref={provided.innerRef} className="h-full min-h-0">
+              <ScrollArea className="h-full">
                 <div className="space-y-1 p-4">
                   {isLoading ? (
                     <div className="flex h-20 items-center justify-center">
