@@ -150,7 +150,7 @@ export function TemplatesSection() {
   };
 
   return (
-    <div className="flex h-full flex-col" data-testid="templates-section">
+    <div className="h-full" data-testid="templates-section">
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid h-full min-h-0 grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="flex h-full min-h-0 flex-col">

@@ -51,7 +51,7 @@ export function BlueprintSectionContainer({
 
   return (
     <Card className="flex h-full flex-col p-5" data-testid={`section-content-${sectionId}`}>
-      <div className={isSaving ? 'pointer-events-none opacity-60' : ''}>
+      <div className={`flex h-full flex-col ${isSaving ? 'pointer-events-none opacity-60' : ''}`}>
         <div className="mb-4 flex-shrink-0">
           <h2 className="mb-1 font-semibold">{t(`sections.${sectionId}`, title)}</h2>
           {description && (
@@ -60,8 +60,10 @@ export function BlueprintSectionContainer({
             </p>
           )}
         </div>
-        {/* Render custom section content if provided */}
-        {sectionContent[sectionId] || children}
+        <div className="min-h-0 flex-1 overflow-hidden">
+          {/* Render custom section content if provided */}
+          {sectionContent[sectionId] || children}
+        </div>
       </div>
     </Card>
   );

@@ -206,10 +206,7 @@ export function BlueprintEditor({
       {/* BlueprintFormContextReader captura os erros do contexto */}
       <BlueprintFormContextReader onErrorsChange={setSectionsWithErrors} />
 
-      <div
-        className="relative grid h-[calc(100vh-80px)] grid-rows-[auto_1fr_auto]"
-        data-testid={testId}
-      >
+      <div className="grid h-[calc(100vh-80px)] grid-rows-[auto_1fr_auto]" data-testid={testId}>
         <Tabs value={activeSection} className="contents">
           {/* Cabeçalho fixo com navegação entre seções */}
           <div className="border-b bg-background shadow-sm">
@@ -221,7 +218,7 @@ export function BlueprintEditor({
               className="mb-0"
             />
           </div>
-          <div className="min-h-0">
+          <div className="overflow-hidden">
             {/* Metadata Section */}
             <TabsContent value="metadata" className="h-full">
               <BlueprintSectionContainer
@@ -333,7 +330,7 @@ export function BlueprintEditor({
           </div>
 
           {/* Rodapé com controles de ação */}
-          <div className="mb-4 mt-4 border-t bg-background shadow-md">
+          <div className="border-t bg-background py-4 shadow-md">
             <BlueprintActionControls
               mode={mode}
               isSaving={isSaving}

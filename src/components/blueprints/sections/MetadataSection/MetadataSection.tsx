@@ -65,7 +65,7 @@ export function MetadataSection() {
   };
 
   return (
-    <div className="space-y-6" data-testid="metadata-section">
+    <div className="h-full space-y-6 overflow-auto" data-testid="metadata-section">
       {/* Layout em grid para os campos de nome e versão */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Campo de nome */}
