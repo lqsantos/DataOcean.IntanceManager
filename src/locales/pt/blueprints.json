@@ -352,7 +352,45 @@
   },
 
   "variables": {
-    "sectionDescription": "Defina as variáveis utilizadas pelo blueprint"
+    "sectionDescription": "Defina as variáveis utilizadas pelo blueprint",
+    "title": "Variáveis",
+    "addVariable": "Adicionar Variável",
+    "searchPlaceholder": "Pesquisar variáveis...",
+    "noVariablesFound": "Nenhuma variável encontrada.",
+    "variableEditor": {
+      "addTitle": "Adicionar Variável",
+      "editTitle": "Editar Variável",
+      "name": "Nome",
+      "namePlaceholder": "nome_variavel",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Descreva para que esta variável é utilizada",
+      "expression": "Expressão",
+      "showSyntaxHelp": "Mostrar ajuda de sintaxe",
+      "saveVariable": "Salvar Variável",
+      "cancel": "Cancelar",
+      "deleteVariable": "Excluir Variável",
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "nameFormat": "Nome deve começar com uma letra e conter apenas letras, números e sublinhados",
+        "nameDuplicate": "Este nome já está em uso",
+        "valueRequired": "Valor é obrigatório",
+        "unbalancedDelimiters": "Delimitadores de template não balanceados"
+      }
+    },
+    "deleteDialog": {
+      "title": "Excluir Variável",
+      "description": "Tem certeza que deseja excluir a variável \"{{name}}\"? Esta ação não pode ser desfeita.",
+      "cancel": "Cancelar",
+      "confirm": "Excluir"
+    },
+    "notifications": {
+      "added": "Variável adicionada",
+      "addedDescription": "{{name}} foi adicionada",
+      "updated": "Variável atualizada",
+      "updatedDescription": "{{name}} foi atualizada",
+      "deleted": "Variável excluída",
+      "deletedDescription": "{{name}} foi removida"
+    }
   },
 
   "defaults": {

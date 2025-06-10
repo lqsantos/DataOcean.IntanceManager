@@ -355,7 +355,45 @@
   },
 
   "variables": {
-    "sectionDescription": "Define variables used by this blueprint"
+    "sectionDescription": "Define variables used by this blueprint",
+    "title": "Variables",
+    "addVariable": "Add Variable",
+    "searchPlaceholder": "Search variables...",
+    "noVariablesFound": "No variables found.",
+    "variableEditor": {
+      "addTitle": "Add Variable",
+      "editTitle": "Edit Variable",
+      "name": "Name",
+      "namePlaceholder": "variable_name",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what this variable is used for",
+      "expression": "Expression",
+      "showSyntaxHelp": "Show syntax help",
+      "saveVariable": "Save Variable",
+      "cancel": "Cancel",
+      "deleteVariable": "Delete Variable",
+      "validation": {
+        "nameRequired": "Name is required",
+        "nameFormat": "Name must start with a letter and contain only letters, numbers, and underscores",
+        "nameDuplicate": "This name is already in use",
+        "valueRequired": "Value is required",
+        "unbalancedDelimiters": "Unbalanced template delimiters"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete Variable",
+      "description": "Are you sure you want to delete the variable \"{{name}}\"? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "notifications": {
+      "added": "Variable added",
+      "addedDescription": "{{name}} has been added",
+      "updated": "Variable updated",
+      "updatedDescription": "{{name}} has been updated",
+      "deleted": "Variable deleted",
+      "deletedDescription": "{{name}} has been removed"
+    }
   },
 
   "defaults": {

@@ -11,7 +11,9 @@ export { MetadataSection } from './MetadataSection';
 // Seção para seleção e configuração de templates
 export { TemplatesSection } from './TemplatesSection';
 
+// Seção para definição de variáveis
+export { default as VariablesSection } from './variables-section';
+
 // As outras seções serão implementadas nas próximas entregas:
-// export { VariablesSection } from './VariablesSection';
 // export { DefaultValuesSection } from './DefaultValuesSection';
 // export { PreviewSection } from './PreviewSection';

@@ -1,6 +1,10 @@
 'use client';
 
-import { MetadataSection } from '@/components/blueprints/sections';
+import {
+  MetadataSection,
+  TemplatesSection,
+  VariablesSection,
+} from '@/components/blueprints/sections';
 import { BlueprintEditor } from '@/components/blueprints/shared/BlueprintEditor';
 
 /**
@@ -19,6 +23,8 @@ export function BlueprintEditPage({ blueprintId }: { blueprintId: string }) {
       testId="blueprint-edit-page"
       sectionContent={{
         metadata: <MetadataSection />,
+        templates: <TemplatesSection />,
+        variables: <VariablesSection />,
       }}
       onSave={async () => {
         // Implementar lógica específica para atualização de blueprints
