@@ -79,7 +79,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
 
         {/* Conteúdo principal */}
-        <main className="flex-1 overflow-y-auto px-6 pb-8 pt-24" data-testid="main-layout-main">
+        <main className="flex-1 px-6 pb-8 pt-24" data-testid="main-layout-main">
           <div className="mx-auto w-full" data-testid="main-layout-children-container">
             {children}
           </div>
