@@ -217,7 +217,7 @@ export function BlueprintEditor({
             className="mb-0"
           />
 
-          <div className="overflow-hidden py-2">
+          <div className="flex-1 overflow-hidden py-2">
             {/* Metadata Section */}
             <TabsContent value="metadata" className="h-full">
               <BlueprintSectionContainer

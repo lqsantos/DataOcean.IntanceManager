@@ -84,7 +84,7 @@ export function SelectedTemplatesList({
   };
 
   return (
-    <Card className="flex h-full min-h-0 flex-col">
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex-shrink-0 border-b border-border p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-medium">{t('templatesStep.selection.title')}</h3>
@@ -96,12 +96,16 @@ export function SelectedTemplatesList({
         </div>
       </div>
 
-      <CardContent className="min-h-0 flex-1 p-0">
+      <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
         <Droppable droppableId="selected-templates">
           {(provided) => (
-            <div {...provided.droppableProps} ref={provided.innerRef} className="h-full min-h-0">
-              <ScrollArea className="h-full">
-                <div className="space-y-1 p-4">
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="flex h-full min-h-0 flex-col"
+            >
+              <ScrollArea className="h-full flex-1 overflow-visible" type="always">
+                <div className="w-full space-y-1 p-4">
                   {selectedTemplates.length === 0 ? (
                     <div className="flex h-20 flex-col items-center justify-center space-y-1">
                       <p className="text-sm text-muted-foreground">
@@ -124,7 +128,7 @@ export function SelectedTemplatesList({
                             {...provided.draggableProps}
                             className={`mb-2 rounded-lg border p-3 ${
                               snapshot.isDragging ? 'border-primary bg-primary/5' : 'border-border'
-                            } relative space-y-2`}
+                            } relative w-full max-w-full break-inside-avoid space-y-2 overflow-hidden`}
                             data-testid={`selected-template-${index}`}
                           >
                             <div className="flex items-start justify-between">
@@ -193,7 +197,7 @@ export function SelectedTemplatesList({
                       </Draggable>
                     ))
                   )}
-                  {provided.placeholder}
+                  <div className="min-h-4">{provided.placeholder}</div>
                 </div>
               </ScrollArea>
             </div>
