@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -18,14 +19,7 @@ export const TemplateTabsNavigation: React.FC<TemplateTabsNavigationProps> = ({
   selectedTemplateId,
   onSelectTemplate,
 }) => {
-  // Mock translation for now
-  const t = (key: string) => {
-    const translations: Record<string, string> = {
-      'defaultValues.noTemplates': 'No templates available',
-    };
-
-    return translations[key] || key;
-  };
+  const { t } = useTranslation(['blueprints']);
 
   if (!templates || templates.length === 0) {
     return (

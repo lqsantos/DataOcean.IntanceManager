@@ -286,6 +286,9 @@
     "list": "Visualização em Lista"
   },
 
+  "newButton": "Novo Blueprint",
+  "refreshButton": "Atualizar",
+
   "actions": {
     "refresh": "Atualizar",
     "edit": "Editar Blueprint",
@@ -439,7 +442,8 @@
     "errors": {
       "title": "Erro",
       "failedToLoad": "Falha ao carregar esquemas de template"
-    }
+    },
+    "noTemplates": "Nenhum template disponível"
   },
 
   "viewToggle": {
@@ -480,5 +484,15 @@
   "booleanEditor": {
     "true": "Verdadeiro",
     "false": "Falso"
+  },
+
+  "arrayEditor": {
+    "fromTemplate": "Array (do template)",
+    "editInYaml": "Array (editar na visualização YAML)"
+  },
+
+  "objectEditor": {
+    "fromTemplate": "Objeto (do template)",
+    "configureFields": "Objeto (configurar campos individuais)"
   }
 }

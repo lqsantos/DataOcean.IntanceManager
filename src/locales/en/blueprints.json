@@ -439,6 +439,7 @@
     "description": "Configure default values for templates",
     "noTemplatesTitle": "No Templates Selected",
     "noTemplatesDescription": "Please select templates in the previous section before configuring default values.",
+    "noTemplates": "No templates available",
     "errors": {
       "title": "Error",
       "failedToLoad": "Failed to load template schemas"
@@ -483,5 +484,15 @@
   "booleanEditor": {
     "true": "True",
     "false": "False"
+  },
+
+  "arrayEditor": {
+    "fromTemplate": "Array (from template)",
+    "editInYaml": "Array (edit in YAML view)"
+  },
+
+  "objectEditor": {
+    "fromTemplate": "Object (from template)",
+    "configureFields": "Object (configure individual fields)"
   }
 }
