@@ -22,9 +22,10 @@ Para garantir a qualidade e consistência do código durante esta refatoração,
 
 1. Migrar de um modal wizard para uma página dedicada de criação/edição
 2. Implementar navegação por seções dinâmicas em vez de steps lineares
-3. Adicionar uma nova etapa para configuração de valores default por template
-4. Melhorar a visualização e interação durante o processo de criação
-5. Implementar preview do resultado final
+3. Adicionar uma nova seção para estabelecimento de contrato de configuração entre blueprint e instâncias
+4. Implementar controles granulares de exposição e override para cada campo nos templates
+5. Melhorar a visualização e interação durante o processo de criação
+6. Implementar preview do resultado final
 
 ## Arquitetura Proposta
 
@@ -102,9 +103,12 @@ Para garantir a qualidade e consistência do código durante esta refatoração,
 #### Entrega 3.1: Seção de Valores Default
 
 - Criar novo componente `DefaultValuesSection`
-- Implementar interface para configurar valores para cada template
+- Implementar interface tabular para contrato de configuração
+- Desenvolver controles granulares de exposição e permissões de override por campo
 - Adicionar suporte para interpolação de variáveis
-- Desenvolver validação contextual baseada nas variáveis definidas
+- Desenvolver validação contextual baseada nas variáveis e schema dos templates
+- Implementar visualização de contrato final entre blueprint e instâncias
+- Para detalhes completos, consultar o documento `/docs/blueprint-values.md`
 
 #### Entrega 3.2: Seção de Preview
 
@@ -226,21 +230,28 @@ Para garantir a qualidade e consistência do código durante esta refatoração,
 
 ### 4. Seção de Valores Default
 
-**Objetivo**: Configurar valores específicos para cada template selecionado.
+**Objetivo**: Estabelecer um contrato de configuração entre o blueprint e suas instâncias, definindo valores padrão, controle de exposição e permissões de override.
 
 **Funcionalidades**:
 
-- Editor por template com campos específicos
+- Interface baseada em tabela para controle de campo por campo
+- Definição de origem dos valores (template ou blueprint)
+- Controle de exposição de campos para instâncias
+- Configuração de permissões de override por campo
 - Interpolação de variáveis com autocompletion
 - Validação contextual baseada em schema
-- Preview de efeito das configurações
+- Preview do contrato de configuração resultante
 
 **Componentes**:
 
-- Tabs para cada template selecionado
-- Editor de configuração com highlight de sintaxe
+- Tabs para navegação entre templates
+- Visualização tabular hierárquica de campos
+- Controles granulares de exposição e override
+- Editor YAML alternativo para usuários avançados
 - Sistema de validação em tempo real
-- Visualizador de interpolação de variáveis
+- Filtros e buscas para campos em templates complexos
+
+> **Nota**: Para detalhes completos sobre a implementação desta seção, consulte o documento [`/docs/blueprint-values.md`](../docs/blueprint-values.md) que contém a especificação detalhada da UI/UX, arquitetura de componentes, fluxo de usuário e responsabilidades entre frontend e backend.
 
 ### 5. Seção de Preview
 
@@ -360,7 +371,7 @@ Exemplo de conteúdo para o README.md:
 ````markdown
 # DefaultValuesSection
 
-Este componente gerencia a configuração de valores padrão para templates em um blueprint.
+Este componente gerencia o contrato de configuração entre blueprint e instâncias, permitindo definir valores padrão, exposição de campos e permissões de override.
 
 ## Uso
 
@@ -368,29 +379,35 @@ Este componente gerencia a configuração de valores padrão para templates em u
 <DefaultValuesSection
   templates={selectedTemplates}
   variables={definedVariables}
-  defaultValues={existingDefaultValues}
-  onChange={handleDefaultValuesChange}
+  defaultValuesContract={existingContract}
+  onChange={handleContractChange}
 />
 ```
 
 ### Fluxo de Dados
 
-1. O componente recebe templates selecionados e variáveis definidas
-2. Para cada template, um formulário de valores padrão é exibido
-3. Valores podem incluir interpolações de variáveis usando a sintaxe ${variableName}
-4. O componente valida que as variáveis referenciadas existam
-5. Mudanças são reportadas através do callback onChange
+1. O componente carrega schemas/valores para templates selecionados
+2. Para cada template, exibe uma interface de controle por campo
+3. Usuário define para cada campo:
+   - Se o valor vem do template ou é definido no blueprint
+   - Se o campo é exposto para as instâncias
+   - Se as instâncias podem sobrescrever o valor
+4. Valores podem incluir interpolações com a sintaxe Helm `{{ .Values.variableName }}`
+5. O componente gera e persiste um contrato de configuração
 
 ### Componentes Internos
 
-- **TemplateSelector**: Permite alternar entre os templates selecionados
-- **DefaultValueForm**: Formulário específico para cada tipo de template
-- **VariableInterpolationField**: Campo com suporte para interpolação de variáveis
+- **TemplateTabsNavigation**: Navegação entre templates do blueprint
+- **TemplateFieldsTable**: Interface tabular de controle por campo
+- **TemplateYamlEditor**: Editor alternativo para usuários avançados
+- **ValidationFeedback**: Exibição de erros e avisos de validação
+- **ContractPreview**: Visualização do contrato resultante
 
 ### Dependências
 
-- Depende de variáveis definidas na seção anterior (VariablesSection)
 - Depende de templates selecionados na seção de Templates
+- Utiliza schema dos templates para renderização baseada em tipo
+- Para detalhes completos de implementação, ver `/docs/blueprint-values.md`
 ````
 
 ### Arquivos de Índice como Documentação
@@ -474,8 +491,10 @@ Essas práticas de documentação são:
 ### Serviço de Blueprints
 
 - Adicionar suporte para salvamento parcial (rascunhos)
-- Estender endpoints para incluir novos dados de valores default
-- Implementar validação de blueprint completo no servidor
+- Estender endpoints para incluir contrato de configuração (valores, exposição, permissões)
+- Fornecer schemas de templates para renderização orientada a tipo
+- Implementar validação de contrato de configuração no servidor
+- Validar blueprint completo antes de salvar
 
 ### API Mock com MSW
 
