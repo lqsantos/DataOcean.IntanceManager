@@ -421,5 +421,67 @@
     "notFound": "Blueprint not found",
     "notFoundWithId": "Could not find blueprint with ID {{id}}",
     "loadError": "Error loading blueprint"
+  },
+
+  "defaultValues": {
+    "editor": {
+      "title": "Default Values Editor",
+      "availableVariables": "Available Variables",
+      "resetButton": "Reset",
+      "applyButton": "Apply Changes"
+    },
+    "validation": {
+      "errorTitle": "Validation Errors",
+      "warningTitle": "Validation Warnings",
+      "atPath": "at path: {{path}}"
+    },
+    "title": "Default Values",
+    "description": "Configure default values for templates",
+    "noTemplatesTitle": "No Templates Selected",
+    "noTemplatesDescription": "Please select templates in the previous section before configuring default values.",
+    "errors": {
+      "title": "Error",
+      "failedToLoad": "Failed to load template schemas"
+    }
+  },
+
+  "viewToggle": {
+    "table": "Table View",
+    "yaml": "YAML View"
+  },
+
+  "tableView": {
+    "field": "Field",
+    "type": "Type",
+    "defaultValue": "Default Value",
+    "blueprintValue": "Blueprint Value",
+    "expose": "Expose",
+    "override": "Allow Override",
+    "empty": "No fields available"
+  },
+
+  "filters": {
+    "search": {
+      "placeholder": "Search fields..."
+    },
+    "type": {
+      "all": "All Types",
+      "string": "String",
+      "number": "Number",
+      "boolean": "Boolean",
+      "object": "Object",
+      "array": "Array"
+    },
+    "onlyCustomized": "Only Customized",
+    "onlyExposed": "Only Exposed"
+  },
+
+  "stringEditor": {
+    "insertVariable": "Insert Variable"
+  },
+
+  "booleanEditor": {
+    "true": "True",
+    "false": "False"
   }
 }

@@ -4,25 +4,14 @@
  */
 
 import { AlertCircle, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import type { ValidationFeedbackProps } from './types';
 
 export const ValidationFeedback = ({ errors, warnings = [] }: ValidationFeedbackProps) => {
-  // Mock translation for now
-  const t = (key: string, params?: { path: string }) => {
-    const translations: Record<string, string> = {
-      'defaultValues.validation.errorTitle': 'Validation Errors',
-      'defaultValues.validation.warningTitle': 'Validation Warnings',
-    };
-
-    if (key === 'defaultValues.validation.atPath' && params) {
-      return `at path: ${params.path}`;
-    }
-
-    return translations[key] || key;
-  };
+  const { t } = useTranslation(['blueprints']);
 
   // No errors or warnings to show
   if (errors.length === 0 && warnings.length === 0) {

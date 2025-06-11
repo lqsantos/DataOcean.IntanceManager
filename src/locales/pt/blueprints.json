@@ -412,14 +412,73 @@
   },
 
   "errors": {
-    "loadFailed": "Não foi possível carregar o blueprint. Verifique a conexão e tente novamente.",
-    "updateFailed": "Não foi possível atualizar o blueprint. Verifique a conexão e tente novamente.",
-    "missingId": "ID do blueprint ausente",
+    "loadFailed": "Não foi possível carregar o blueprint. Verifique sua conexão e tente novamente.",
+    "updateFailed": "Não foi possível atualizar o blueprint. Verifique sua conexão e tente novamente.",
+    "missingId": "ID do Blueprint está faltando",
     "notFound": "Blueprint não encontrado",
-    "notFoundWithId": "Não foi possível encontrar o blueprint com ID {{id}}",
-    "loadError": "Erro ao carregar o blueprint"
+    "notFoundWithId": "Não foi possível encontrar blueprint com o ID {{id}}",
+    "loadError": "Erro ao carregar blueprint"
   },
 
-  "newButton": "Novo Blueprint",
-  "refreshButton": "Atualizar Lista"
+  "defaultValues": {
+    "editor": {
+      "title": "Editor de Valores Padrão",
+      "availableVariables": "Variáveis Disponíveis",
+      "resetButton": "Reiniciar",
+      "applyButton": "Aplicar Mudanças"
+    },
+    "validation": {
+      "errorTitle": "Erros de Validação",
+      "warningTitle": "Avisos de Validação",
+      "atPath": "no caminho: {{path}}"
+    },
+    "title": "Valores Padrão",
+    "description": "Configure valores padrão para templates",
+    "noTemplatesTitle": "Nenhum Template Selecionado",
+    "noTemplatesDescription": "Por favor, selecione templates na seção anterior antes de configurar valores padrão.",
+    "errors": {
+      "title": "Erro",
+      "failedToLoad": "Falha ao carregar esquemas de template"
+    }
+  },
+
+  "viewToggle": {
+    "table": "Visualização em Tabela",
+    "yaml": "Visualização em YAML"
+  },
+
+  "tableView": {
+    "field": "Campo",
+    "type": "Tipo",
+    "defaultValue": "Valor Padrão",
+    "blueprintValue": "Valor do Blueprint",
+    "expose": "Expor",
+    "override": "Permitir Substituição",
+    "empty": "Nenhum campo disponível"
+  },
+
+  "filters": {
+    "search": {
+      "placeholder": "Buscar campos..."
+    },
+    "type": {
+      "all": "Todos os Tipos",
+      "string": "Texto",
+      "number": "Número",
+      "boolean": "Booleano",
+      "object": "Objeto",
+      "array": "Lista"
+    },
+    "onlyCustomized": "Apenas Personalizados",
+    "onlyExposed": "Apenas Expostos"
+  },
+
+  "stringEditor": {
+    "insertVariable": "Inserir Variável"
+  },
+
+  "booleanEditor": {
+    "true": "Verdadeiro",
+    "false": "Falso"
+  }
 }

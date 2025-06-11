@@ -55,14 +55,21 @@ export function validateYamlAgainstSchema(
 
   // If there's a document to validate against schema
   if (syntaxResult.document) {
-    // Validate required fields
-    validateRequiredFields(syntaxResult.document, fields, errors);
+    // Ensure document is an object (not an array)
+    if (!Array.isArray(syntaxResult.document)) {
+      // Validate required fields
+      validateRequiredFields(syntaxResult.document, fields, errors);
 
-    // Validate types
-    validateValueTypes(syntaxResult.document, fields, errors);
+      // Validate types
+      validateValueTypes(syntaxResult.document, fields, errors);
 
-    // Check for unknown fields
-    checkForUnknownFields(syntaxResult.document, fields, warnings);
+      // Check for unknown fields
+      checkForUnknownFields(syntaxResult.document, fields, warnings);
+    } else {
+      errors.push({
+        message: 'Root YAML document must be an object, not an array',
+      });
+    }
   }
 
   return {
@@ -340,7 +347,8 @@ export function updateFieldsFromYaml(
 
     const updatedField: DefaultValueField = {
       ...field,
-      value: value !== undefined ? value : field.value,
+      // Preserve the type of the original value if the new value is undefined
+      value: value !== undefined ? (value as typeof field.value) : field.value,
     };
 
     // Recursively update children if they exist

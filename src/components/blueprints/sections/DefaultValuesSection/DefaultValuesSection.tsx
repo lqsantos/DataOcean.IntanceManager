@@ -6,6 +6,7 @@
 
 import { AlertCircle } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,20 +36,7 @@ export const DefaultValuesSection = () => {
     value: variable.defaultValue || '',
   }));
 
-  // Mock translation for now
-  const t = (key: string) => {
-    const translations: Record<string, string> = {
-      'defaultValues.title': 'Default Values',
-      'defaultValues.description': 'Configure default values for templates',
-      'defaultValues.noTemplatesTitle': 'No Templates Selected',
-      'defaultValues.noTemplatesDescription':
-        'Please select templates in the previous section before configuring default values.',
-      'defaultValues.errors.title': 'Error',
-      'defaultValues.errors.failedToLoad': 'Failed to load template schemas',
-    };
-
-    return translations[key] || key;
-  };
+  const { t } = useTranslation(['blueprints']);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
