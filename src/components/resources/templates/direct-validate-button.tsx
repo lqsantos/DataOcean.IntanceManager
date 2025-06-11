@@ -291,7 +291,6 @@ export function DirectValidateButton({
 
         // Resultado de validação - adapta com base no status (success, error ou generic-error)
         const isSuccess = validationResult.isValid && validationResult.status === 'success';
-        const isGenericError = validationResult.status === 'generic-error';
 
         return (
           <>
@@ -310,11 +309,11 @@ export function DirectValidateButton({
                 }`}
               >
                 {isSuccess ? (
-                  <CheckCircle className="h-5 w-5" />
+                  <CheckCircle className="h-5 w-5" data-testid="validation-success-icon" />
                 ) : (
-                  <AlertCircle className="h-5 w-5" />
+                  <AlertCircle className="h-5 w-5" data-testid="validation-error-icon" />
                 )}
-                <h3 className="text-base font-medium">
+                <h3 className="text-base font-medium" data-testid="validation-result-message">
                   {isSuccess
                     ? t('validateTemplate.valid.title')
                     : `${t('validateTemplate.invalid.title')}: ${validationResult.message}`}
@@ -387,13 +386,20 @@ export function DirectValidateButton({
 
               {/* Erros específicos */}
               {!isSuccess && validationResult.errors && validationResult.errors.length > 0 && (
-                <div className="rounded-md bg-destructive/10 p-2.5 text-sm">
+                <div
+                  className="rounded-md bg-destructive/10 p-2.5 text-sm"
+                  data-testid="validation-errors-container"
+                >
                   <p className="mb-1 font-medium text-destructive">
                     ❌ {t('validateTemplate.errors')}:
                   </p>
                   <div className="ml-4 space-y-0.5">
                     {validationResult.errors.map((error, index) => (
-                      <p key={index} className="text-destructive">
+                      <p
+                        key={index}
+                        className="text-destructive"
+                        data-testid={`validation-error-${index}`}
+                      >
                         - {error}
                       </p>
                     ))}

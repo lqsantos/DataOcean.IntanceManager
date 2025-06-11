@@ -38,12 +38,8 @@ import { useCreateTemplateModal } from '@/contexts/create-template-modal-context
 import { DirectValidateButton } from './direct-validate-button';
 
 export function CreateTemplateModal() {
-  console.log('🟢 [CreateTemplateModal] Renderizando componente');
-
   const { t } = useTranslation('templates');
   const { isOpen, isLoading, closeModal, createTemplate } = useCreateTemplateModal();
-
-  console.log('🟢 [CreateTemplateModal] Estado do modal:', { isOpen, isLoading });
 
   // Define schema for form validation
   const templateFormSchema = z.object({
@@ -78,8 +74,6 @@ export function CreateTemplateModal() {
 
   // Reset form when modal opens/closes
   useEffect(() => {
-    console.log('🟢 [CreateTemplateModal] useEffect isOpen:', isOpen);
-
     if (isOpen) {
       form.reset({
         name: '',
@@ -94,7 +88,6 @@ export function CreateTemplateModal() {
   // Form submission handler - separado do componente de validação
   // e só é executado no clique no botão de criar
   const handleSubmit = async (values: TemplateFormValues) => {
-    console.log('🟢 [CreateTemplateModal] handleSubmit chamado com valores:', values);
     await createTemplate(values);
   };
 
@@ -113,13 +106,12 @@ export function CreateTemplateModal() {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        console.log('🟢 [CreateTemplateModal] Dialog onOpenChange:', open);
-
         // Garantir que o fechamento da modal não afeta o fluxo de validação
         if (!open) {
           closeModal();
         }
       }}
+      data-testid="create-template-dialog"
     >
       <DialogContent className="sm:max-w-[600px]" data-testid="create-template-modal">
         <DialogHeader>
@@ -130,11 +122,7 @@ export function CreateTemplateModal() {
         <Form {...form}>
           <form
             // Use onSubmit apenas para criação, nunca para validação
-            onSubmit={(e) => {
-              console.log('🟢 [CreateTemplateModal] Form onSubmit evento disparado');
-              // Proceder com o submit normal do formulário
-              form.handleSubmit(handleSubmit)(e);
-            }}
+            onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4"
             data-testid="create-template-form"
           >
@@ -172,15 +160,19 @@ export function CreateTemplateModal() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {templateCategories.map((category) => (
-                          <SelectItem
-                            key={category}
-                            value={category}
-                            data-testid={`template-category-option-${category.toLowerCase()}`}
-                          >
-                            {t(`createTemplate.fields.category.options.${category.toLowerCase()}`)}
-                          </SelectItem>
-                        ))}
+                        {templateCategories.map((category) => {
+                          const categoryKey = category.toLowerCase();
+
+                          return (
+                            <SelectItem
+                              key={category}
+                              value={category}
+                              data-testid={`template-category-option-${categoryKey}`}
+                            >
+                              {category}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -233,6 +225,7 @@ export function CreateTemplateModal() {
                   templateId={null}
                   repositoryUrl={form.watch('repositoryUrl')}
                   chartPath={form.watch('chartPath')}
+                  data-testid="template-validate-button"
                 />
               </div>
             </div>
@@ -263,9 +256,7 @@ export function CreateTemplateModal() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={(e) => {
-                  console.log('🟢 [CreateTemplateModal] Botão Cancelar clicado');
-                  e.preventDefault();
+                onClick={() => {
                   closeModal();
                 }}
                 data-testid="create-template-cancel-button"
@@ -276,9 +267,6 @@ export function CreateTemplateModal() {
                 type="submit"
                 disabled={isLoading}
                 data-testid="create-template-submit-button"
-                onClick={(e) => {
-                  console.log('🟢 [CreateTemplateModal] Botão Criar Template clicado');
-                }}
               >
                 {isLoading ? (
                   <>

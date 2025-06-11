@@ -235,6 +235,7 @@ export function ResourceTemplateForm({ template, onSubmit }: ResourceTemplateFor
               templateId={template?.id}
               repositoryUrl={form.watch('repositoryUrl')}
               chartPath={form.watch('chartPath')}
+              data-testid="edit-template-validate-button"
             />
           </div>
         </div>
