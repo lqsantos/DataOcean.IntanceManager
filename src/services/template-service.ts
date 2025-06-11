@@ -1,10 +1,19 @@
+import type { DefaultValueField } from '@/components/blueprints/sections/DefaultValuesSection/types';
 import type { CreateTemplateDto, Template, UpdateTemplateDto } from '@/types/template';
+
+// Interface for template schema validation
 
 // Interface para validação direta com dados
 interface ValidateTemplateDataParams {
   repositoryUrl: string;
   chartPath: string;
   branch: string;
+}
+
+// Response type for fetchTemplateSchemaForDefaultValues
+interface TemplateSchemaResponse {
+  fields: DefaultValueField[];
+  rawYaml: string;
 }
 
 export const templateService = {
@@ -184,6 +193,33 @@ export const templateService = {
             : 'Verifique se o repositório e o caminho estão corretos.',
         ],
       };
+    }
+  },
+
+  /**
+   * Fetches template schema and default values for a given template ID
+   * @param templateId - The ID of the template to fetch
+   * @returns Template schema with fields and raw YAML
+   */
+  async fetchTemplateSchemaForDefaultValues(templateId: string): Promise<TemplateSchemaResponse> {
+    try {
+      console.log(`Fetching schema for template ID: ${templateId}`);
+      const response = await fetch(`/api/templates/${templateId}/schema`);
+
+      console.log(`Response status: ${response.status}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch schema for template ${templateId}`);
+      }
+
+      const data = await response.json();
+
+      console.log('Schema data received:', data);
+
+      return data;
+    } catch (error) {
+      console.error(`Error fetching template schema for ${templateId}`, error);
+      throw new Error(`Failed to load schema for template ${templateId}`);
     }
   },
 };

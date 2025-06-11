@@ -1,260 +1,31 @@
 import { delay, http, HttpResponse } from 'msw';
 
 import { createRandomId } from '@/lib/id-utils';
+import type { Template } from '@/types/template';
 
-import { templates } from '../data/templates';
+import { generateMockSchemaForTemplate } from '../data/template-schemas';
+import { generateValidationResponse, USE_PREDICTABLE_MOCK } from '../data/template-validation';
+import { templates as devTemplates } from '../data/templates';
+import { testTemplates } from '../data/test-templates';
+import { createValidationResponse } from '../data/test-validation';
 
-// Permite controlar se o comportamento do mock será aleatório ou previsível
-// Usar process.env.NODE_ENV === 'test' para detectar se está em teste automaticamente
-const USE_PREDICTABLE_MOCK =
-  process.env.USE_PREDICTABLE_MOCK === 'true' || process.env.NODE_ENV === 'test';
+// Use different template data based on environment
+const templates = USE_PREDICTABLE_MOCK ? testTemplates : devTemplates;
 
-// Função para criar respostas de validação aleatórias ou previsíveis para testes
-const generateValidationResponse = (
-  branch: string,
-  forceResult?: 'success' | 'error' | 'generic-error'
-) => {
-  // Se estamos em ambiente de teste, usamos resultados previsíveis baseados no branch
-  if (USE_PREDICTABLE_MOCK) {
-    // No ambiente de teste, o resultado é determinado pelo branch ou pelo parâmetro forceResult
-    const resultType =
-      forceResult ||
-      (branch === 'main'
-        ? 'success'
-        : branch === 'error'
-          ? 'error'
-          : branch === 'generic-error'
-            ? 'generic-error'
-            : 'success');
-
-    // Base para todos os resultados
-    const baseResult = {
-      branch,
-      status: resultType,
-    };
-
-    if (resultType === 'success') {
-      return {
-        ...baseResult,
-        isValid: true,
-        message: `Template validado com sucesso na branch "${branch}".`,
-        chartInfo: {
-          name: 'test-chart',
-          version: '1.0.0',
-          apiVersion: 'v2',
-          description: 'Chart de teste para validação',
-        },
-        files: {
-          chartYaml: true,
-          valuesYaml: true,
-          valuesSchemaJson: branch === 'with-schema',
-        },
-        warnings:
-          branch === 'with-warnings'
-            ? [
-                'Adicione um arquivo values.schema.json para habilitar o editor visual de valores.',
-                'Considere adicionar mais documentação no README.md.',
-              ]
-            : [],
-      };
-    } else if (resultType === 'error') {
-      return {
-        ...baseResult,
-        isValid: false,
-        message: 'Arquivo Chart.yaml não encontrado no caminho informado.',
-        errors: ['Arquivo Chart.yaml não encontrado no caminho informado.'],
-        files: {
-          chartYaml: false,
-          valuesYaml: true,
-          valuesSchemaJson: false,
-        },
-      };
-    } else {
-      return {
-        ...baseResult,
-        isValid: false,
-        message: 'Verifique se o repositório e o caminho estão corretos.',
-        errors: ['Erro inesperado durante a validação.'],
-      };
-    }
-  }
-  // Em ambiente de desenvolvimento, usamos resultados aleatórios para testes manuais
-  else {
-    // Determinar o resultado: success (60%), error (30%), generic-error (10%) por padrão
-    // ou usar o resultado forçado se fornecido
-    const resultType =
-      forceResult ||
-      (Math.random() < 0.6 ? 'success' : Math.random() < 0.9 ? 'error' : 'generic-error');
-
-    // Base para todos os resultados
-    const baseResult = {
-      branch,
-      status: resultType,
-    };
-
-    // Exemplo de erros que podem ocorrer
-    const possibleErrors = [
-      'Arquivo Chart.yaml não encontrado no caminho informado.',
-      'Não foi possível acessar o repositório na branch especificada.',
-      'O arquivo values.yaml contém sintaxe YAML inválida.',
-      'O chart não segue as convenções de nomenclatura padrão.',
-      'Formato do Chart.yaml não está em conformidade com a especificação Helm.',
-      'Falha na autenticação com o repositório Git.',
-      'Timeout ao acessar o repositório Git. Tente novamente mais tarde.',
-    ];
-
-    // Exemplo de avisos/recomendações
-    const possibleWarnings = [
-      'Adicione um arquivo values.schema.json para habilitar o editor visual de valores.',
-      'Considere adicionar mais documentação no README.md.',
-      'Versão apiVersion está desatualizada, considere usar v2.',
-      'Faltam metadados importantes como maintainers e appVersion no Chart.yaml.',
-      'Valores sensíveis como senhas devem ser parametrizados.',
-      'Considere adicionar testes automatizados para o chart.',
-      'Chart não inclui recursos para monitoramento, considere adicionar.',
-    ];
-
-    // Para resultados de sucesso
-    if (resultType === 'success') {
-      // Randomizar se alguns arquivos estão presentes
-      const hasValuesSchema = Math.random() > 0.5;
-
-      // Adicionar algumas recomendações aleatoriamente
-      const warningCount = Math.floor(Math.random() * 3); // 0 a 2 recomendações
-      const warnings =
-        warningCount > 0
-          ? possibleWarnings.sort(() => 0.5 - Math.random()).slice(0, warningCount)
-          : [];
-
-      return {
-        ...baseResult,
-        isValid: true,
-        message: `Template validado com sucesso na branch "${branch}".`,
-        chartInfo: {
-          name: `example-chart-${Math.floor(Math.random() * 100)}`,
-          version: `${Math.floor(Math.random() * 10)}.${Math.floor(Math.random() * 10)}.${Math.floor(Math.random() * 10)}`,
-          apiVersion: Math.random() > 0.3 ? 'v2' : 'v1',
-          description:
-            Math.random() > 0.3 ? 'Um chart exemplo para demonstração da validação' : undefined,
-        },
-        files: {
-          chartYaml: true, // Sempre verdadeiro para sucesso
-          valuesYaml: true, // Sempre verdadeiro para sucesso
-          valuesSchemaJson: hasValuesSchema,
-        },
-        warnings,
-      };
-    }
-    // Para erros de validação específicos
-    else if (resultType === 'error') {
-      // Escolher um erro aleatório
-      const errorIndex = Math.floor(Math.random() * possibleErrors.length);
-      const error = possibleErrors[errorIndex];
-
-      return {
-        ...baseResult,
-        isValid: false,
-        message: error,
-        errors: [error],
-        // Dependendo do erro, alguns arquivos podem estar presentes
-        files: {
-          chartYaml: errorIndex !== 0, // Se o erro for "Chart.yaml não encontrado", então é falso
-          valuesYaml: Math.random() > 0.3, // 70% de chance de ter values.yaml
-          valuesSchemaJson: Math.random() > 0.7, // 30% de chance de ter values.schema.json
-        },
-      };
-    }
-    // Para erros genéricos/inesperados
-    else {
-      return {
-        ...baseResult,
-        isValid: false,
-        message: 'Verifique se o repositório e o caminho estão corretos.',
-        errors: ['Erro inesperado durante a validação.'],
-      };
-    }
-  }
-};
+// =============================================================================
+// HANDLERS UNIFICADOS
+// =============================================================================
 
 export const templateHandlers = [
+  // =========================================================================
+  // CRUD OPERATIONS
+  // =========================================================================
+
   // Get all templates
   http.get('/api/templates', async () => {
-    await delay(500);
+    await delay(USE_PREDICTABLE_MOCK ? 100 : 500);
 
     return HttpResponse.json(templates);
-  }),
-
-  // Create template
-  http.post('/api/templates', async ({ request }) => {
-    const newTemplate = await request.json();
-    const createdTemplate = {
-      id: createRandomId(),
-      ...newTemplate,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    templates.push(createdTemplate);
-
-    await delay(1000);
-
-    return HttpResponse.json(createdTemplate, { status: 201 });
-  }),
-
-  // Validate template data
-  http.post('/api/templates/validate', async ({ request }) => {
-    const data = await request.json();
-    const { branch } = data;
-
-    // Gerar uma resposta baseada no ambiente (teste ou desenvolvimento)
-    const validationResult = generateValidationResponse(
-      branch
-      // Você pode forçar um tipo específico descomentando uma das opções abaixo
-      // 'success',
-      // 'error',
-      // 'generic-error',
-    );
-
-    await delay(USE_PREDICTABLE_MOCK ? 100 : Math.random() * 2000 + 500);
-
-    if (!validationResult.isValid) {
-      // Para erros, retornar status 400
-      return HttpResponse.json(validationResult, { status: 400 });
-    }
-
-    return HttpResponse.json(validationResult, { status: 200 });
-  }),
-
-  // Validate existing template
-  http.post('/api/templates/:id/validate', async ({ params, request }) => {
-    const { id } = params;
-    const url = new URL(request.url);
-    const branch = url.searchParams.get('branch') || 'main';
-    const template = templates.find((t) => t.id === id);
-
-    if (!template) {
-      await delay(USE_PREDICTABLE_MOCK ? 50 : 500);
-
-      return HttpResponse.json({ message: 'Template not found' }, { status: 404 });
-    }
-
-    // Gerar uma resposta baseada no ambiente (teste ou desenvolvimento)
-    const validationResult = generateValidationResponse(
-      branch
-      // Você pode forçar um tipo específico descomentando uma das opções abaixo
-      // 'success',
-      // 'error',
-      // 'generic-error',
-    );
-
-    await delay(USE_PREDICTABLE_MOCK ? 100 : Math.random() * 2000 + 500);
-
-    if (!validationResult.isValid) {
-      // Para erros, retornar status 400
-      return HttpResponse.json(validationResult, { status: 400 });
-    }
-
-    return HttpResponse.json(validationResult, { status: 200 });
   }),
 
   // Get template by id
@@ -266,15 +37,39 @@ export const templateHandlers = [
       return HttpResponse.json({ message: 'Template not found' }, { status: 404 });
     }
 
-    await delay(500);
+    await delay(USE_PREDICTABLE_MOCK ? 100 : 500);
 
     return HttpResponse.json(template);
+  }),
+
+  // Create template
+  http.post('/api/templates', async ({ request }) => {
+    const newTemplateData = (await request.json()) as Record<string, unknown>;
+
+    // Criar um objeto Template com todos os campos necessários
+    const createdTemplate: Template = {
+      id: createRandomId(),
+      name: (newTemplateData.name as string) || 'Unnamed Template',
+      description: (newTemplateData.description as string) || '',
+      category: (newTemplateData.category as string) || 'default',
+      repositoryUrl: (newTemplateData.repositoryUrl as string) || '',
+      chartPath: (newTemplateData.chartPath as string) || '',
+      isActive: newTemplateData.isActive === undefined ? true : Boolean(newTemplateData.isActive),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    templates.push(createdTemplate);
+
+    await delay(USE_PREDICTABLE_MOCK ? 200 : 1000);
+
+    return HttpResponse.json(createdTemplate, { status: 201 });
   }),
 
   // Update template
   http.put('/api/templates/:id', async ({ params, request }) => {
     const { id } = params;
-    const updatedTemplate = await request.json();
+    const updatedTemplateData = (await request.json()) as Record<string, unknown>;
     const templateIndex = templates.findIndex((t) => t.id === id);
 
     if (templateIndex === -1) {
@@ -283,13 +78,13 @@ export const templateHandlers = [
 
     const updated = {
       ...templates[templateIndex],
-      ...updatedTemplate,
+      ...(updatedTemplateData as Partial<Template>),
       updatedAt: new Date().toISOString(),
     };
 
     templates[templateIndex] = updated;
 
-    await delay(1000);
+    await delay(USE_PREDICTABLE_MOCK ? 200 : 1000);
 
     return HttpResponse.json(updated);
   }),
@@ -305,8 +100,157 @@ export const templateHandlers = [
 
     templates.splice(templateIndex, 1);
 
-    await delay(1000);
+    await delay(USE_PREDICTABLE_MOCK ? 200 : 1000);
 
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // =========================================================================
+  // TEMPLATE VALIDATION OPERATIONS
+  // =========================================================================
+
+  // Validate template data
+  http.post('/api/templates/validate', async ({ request }) => {
+    const data = (await request.json()) as {
+      repositoryUrl: string;
+      chartPath: string;
+      branch?: string;
+    };
+    const { branch = 'main' } = data;
+
+    let validationResult;
+
+    if (USE_PREDICTABLE_MOCK) {
+      // Use simplified validation response in tests
+      validationResult = createValidationResponse(
+        !branch.includes('error'), // isValid is true unless branch contains "error"
+        branch
+      );
+    } else {
+      // Use detailed validation response in development
+      validationResult = generateValidationResponse(branch);
+    }
+
+    await delay(USE_PREDICTABLE_MOCK ? 100 : Math.random() * 1500 + 500);
+
+    if (!validationResult.isValid) {
+      return HttpResponse.json(validationResult, { status: 400 });
+    }
+
+    return HttpResponse.json(validationResult);
+  }),
+
+  // Validate existing template
+  http.post('/api/templates/:id/validate', async ({ params, request }) => {
+    const { id } = params;
+    const data = (await request.json()) as { branch?: string };
+    const { branch = 'main' } = data;
+
+    const template = templates.find((t) => t.id === id);
+
+    if (!template) {
+      await delay(USE_PREDICTABLE_MOCK ? 50 : 500);
+
+      return HttpResponse.json({ message: 'Template not found' }, { status: 404 });
+    }
+
+    let validationResult;
+
+    if (USE_PREDICTABLE_MOCK) {
+      // Use simplified validation response in tests
+      validationResult = createValidationResponse(
+        !branch.includes('error'), // isValid is true unless branch contains "error"
+        branch
+      );
+    } else {
+      // Use detailed validation response in development
+      validationResult = generateValidationResponse(branch);
+    }
+
+    await delay(USE_PREDICTABLE_MOCK ? 100 : Math.random() * 1500 + 500);
+
+    if (!validationResult.isValid) {
+      return HttpResponse.json(validationResult, { status: 400 });
+    }
+
+    return HttpResponse.json(validationResult);
+  }),
+
+  // =========================================================================
+  // TEMPLATE SCHEMA OPERATIONS
+  // =========================================================================
+
+  // Get template schema (migrado de template-schema-handlers.ts)
+  http.get('/api/templates/:id/schema', async ({ params }) => {
+    const { id } = params;
+
+    if (!id) {
+      return new HttpResponse(null, {
+        status: 400,
+        statusText: 'Bad Request: Missing template ID',
+      });
+    }
+
+    // 'non-existent-template' is a special ID to test 404 error
+    if (id === 'non-existent-template') {
+      return new HttpResponse(null, {
+        status: 404,
+        statusText: 'Template not found',
+      });
+    }
+
+    // In test mode, ensure we always return a schema for test template IDs
+    if (USE_PREDICTABLE_MOCK) {
+      console.log(`TEST MODE - Generating schema for template ID: ${id}`);
+
+      // Generate schema based on template ID
+      let templateType = 'generic';
+
+      if (id.includes('database')) {
+        templateType = 'database';
+      } else if (id.includes('application')) {
+        templateType = 'application';
+      } else if (id.includes('network')) {
+        templateType = 'network';
+      } else if (id.includes('generic')) {
+        templateType = 'generic';
+      }
+
+      // Get the corresponding schema data
+      const schemaData = generateMockSchemaForTemplate(templateType);
+
+      await delay(100); // Short delay in test mode
+
+      return HttpResponse.json(schemaData);
+    }
+
+    // For development mode, verify if template exists
+    const template = templates.find((t) => t.id === id);
+
+    if (!template) {
+      return new HttpResponse(null, {
+        status: 404,
+        statusText: 'Template not found',
+      });
+    }
+
+    await delay(USE_PREDICTABLE_MOCK ? 100 : 500);
+
+    try {
+      console.log(`Generating schema for template ID: ${id}`);
+      // Generate mock schema response based on template ID
+      const schemaData = generateMockSchemaForTemplate(id.toString());
+
+      console.log('Schema generated successfully:', schemaData);
+
+      return HttpResponse.json(schemaData);
+    } catch (error) {
+      console.error('MSW error generating template schema:', error);
+
+      return new HttpResponse(null, {
+        status: 500,
+        statusText: 'Error generating template schema',
+      });
+    }
   }),
 ];

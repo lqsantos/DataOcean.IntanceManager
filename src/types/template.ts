@@ -29,6 +29,7 @@ export interface UpdateTemplateDto {
   repositoryUrl?: string;
   chartPath?: string;
   isActive?: boolean;
+  lastValidatedAt?: string;
 }
 
 export interface TemplateChartInfo {

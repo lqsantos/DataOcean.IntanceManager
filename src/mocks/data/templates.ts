@@ -1,7 +1,9 @@
 /**
  * Mock data for templates
  */
-export const templates = [
+import type { Template } from '@/types/template';
+
+export const templates: Template[] = [
   // Category: Application
   {
     id: '1',
