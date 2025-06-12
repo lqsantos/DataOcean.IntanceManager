@@ -29,7 +29,7 @@ export interface BlueprintFormData {
       defaultValue?: string;
     }>;
   };
-  defaults: {
+  values: {
     values: Record<string, Record<string, string>>;
   };
   preview?: {
@@ -78,7 +78,7 @@ const initialFormData: BlueprintFormData = {
   variables: {
     variables: [],
   },
-  defaults: {
+  values: {
     values: {},
   },
 };
@@ -315,21 +315,21 @@ export function BlueprintFormProvider({ children }: { children: ReactNode }) {
           break;
         }
 
-        case 'defaults': {
-          const defaults = sectionData as BlueprintFormData['defaults'];
+        case 'values': {
+          const values = sectionData as BlueprintFormData['values'];
           const templates = state.formData.templates?.selectedTemplates || [];
           const variables = state.formData.variables?.variables || [];
 
           // Verificar se há valores default para todos os templates
           templates.forEach((template) => {
-            if (!defaults?.values[template.identifier]) {
-              errors.push(`Valores padrão necessários para o template: ${template.identifier}`);
+            if (!values?.values[template.identifier]) {
+              errors.push(`Valores necessários para o template: ${template.identifier}`);
             }
           });
 
-          // Verificar interpolações inválidas nos valores padrão
-          Object.entries(defaults?.values || {}).forEach(([_templateId, values]) => {
-            Object.entries(values).forEach(([_key, value]) => {
+          // Verificar interpolações inválidas nos valores
+          Object.entries(values?.values || {}).forEach(([_templateId, templateValues]) => {
+            Object.entries(templateValues).forEach(([_key, value]) => {
               // Verificar interpolações de variáveis (formato ${var})
               const matches = value.match(/\${([^}]+)}/g) || [];
 
@@ -390,7 +390,7 @@ export function BlueprintFormProvider({ children }: { children: ReactNode }) {
       applicationId: state.formData.metadata?.applicationId || '',
       childTemplates: state.formData.templates?.selectedTemplates || [],
       variables: state.formData.variables?.variables || [],
-      defaultValues: state.formData.defaults?.values || {},
+      defaultValues: state.formData.values?.values || {},
       id: state.editId,
     };
   }, [state.formData, state.editId]);
@@ -462,6 +462,6 @@ export interface BlueprintSectionContent {
   metadata: ReactNode;
   templates: ReactNode;
   variables: ReactNode;
-  defaults: ReactNode;
+  values: ReactNode;
   preview: ReactNode;
 }

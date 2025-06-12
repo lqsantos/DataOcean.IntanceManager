@@ -287,21 +287,24 @@ export function BlueprintEditor({
               </BlueprintSectionContainer>
             </TabsContent>
 
-            {/* Defaults Section */}
-            <TabsContent value="defaults" className="h-full">
+            {/* Values Section */}
+            <TabsContent value="values" className="h-full">
               <BlueprintSectionContainer
-                sectionId="defaults"
-                title={t('sections.defaults', 'Default Values')}
-                description={t('defaults.sectionDescription', 'Set default values for variables')}
+                sectionId="values"
+                title={t('sections.values', 'Values')}
+                description={t(
+                  'values.sectionDescription',
+                  'Configure values and visibility for template fields'
+                )}
                 mode={mode}
                 isSaving={isSaving}
               >
-                {sectionContent.defaults || (
+                {sectionContent.values || (
                   <div
                     className="p-4 text-muted-foreground"
-                    data-testid="defaults-section-placeholder"
+                    data-testid="values-section-placeholder"
                   >
-                    {t('sections.placeholders.defaults', 'No defaults form provided')}
+                    {t('sections.placeholders.values', 'No values configuration provided')}
                   </div>
                 )}
               </BlueprintSectionContainer>

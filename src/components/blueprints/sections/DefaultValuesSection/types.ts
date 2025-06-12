@@ -94,11 +94,16 @@ export interface DefaultValuesContract {
 }
 
 /**
- * Props for the DefaultValuesSection component
+ * Props for the ValidationFeedback component
  */
 export interface ValidationFeedbackProps {
   errors: Array<{ message: string; path?: string[] }>;
   warnings?: Array<{ message: string; path?: string[] }>;
+  variableWarnings?: Array<{
+    message: string;
+    path?: string[];
+    variableName?: string;
+  }>;
 }
 
 export interface TemplateValueEditorProps {

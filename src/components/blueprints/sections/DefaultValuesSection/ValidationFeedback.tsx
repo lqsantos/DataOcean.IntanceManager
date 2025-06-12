@@ -1,20 +1,25 @@
 /**
  * ValidationFeedback component
- * Displays validation errors and warnings for the YAML editor
+ * Displays validation errors and warnings for the YAML editor,
+ * schema validation and variable validation.
  */
 
 import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 import type { ValidationFeedbackProps } from './types';
 
-export const ValidationFeedback = ({ errors, warnings = [] }: ValidationFeedbackProps) => {
-  const { t } = useTranslation(['blueprints']);
+export const ValidationFeedback = ({
+  errors,
+  warnings = [],
+  variableWarnings = [],
+}: ValidationFeedbackProps) => {
+  const { t } = useTranslation('blueprints', { keyPrefix: 'defaultValues.validation' });
 
-  // No errors or warnings to show
-  if (errors.length === 0 && warnings.length === 0) {
+  if (errors.length === 0 && warnings.length === 0 && variableWarnings.length === 0) {
     return null;
   }
 
@@ -24,7 +29,7 @@ export const ValidationFeedback = ({ errors, warnings = [] }: ValidationFeedback
       {errors.length > 0 && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('defaultValues.validation.errorTitle')}</AlertTitle>
+          <AlertTitle>{t('errorTitle')}</AlertTitle>
           <AlertDescription className="mt-2">
             <ul className="list-disc space-y-1 pl-5">
               {errors.map((error, index) => (
@@ -32,7 +37,7 @@ export const ValidationFeedback = ({ errors, warnings = [] }: ValidationFeedback
                   {error.message}
                   {error.path && (
                     <span className="block text-xs opacity-75">
-                      {t('defaultValues.validation.atPath', { path: error.path.join('.') })}
+                      {t('atPath', { path: error.path.join('.') })}
                     </span>
                   )}
                 </li>
@@ -46,7 +51,7 @@ export const ValidationFeedback = ({ errors, warnings = [] }: ValidationFeedback
       {warnings.length > 0 && (
         <Alert className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20">
           <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-          <AlertTitle>{t('defaultValues.validation.warningTitle')}</AlertTitle>
+          <AlertTitle>{t('warningTitle')}</AlertTitle>
           <AlertDescription className="mt-2">
             <ul className="list-disc space-y-1 pl-5">
               {warnings.map((warning, index) => (
@@ -54,7 +59,34 @@ export const ValidationFeedback = ({ errors, warnings = [] }: ValidationFeedback
                   {warning.message}
                   {warning.path && (
                     <span className="block text-xs opacity-75">
-                      {t('defaultValues.validation.atPath', { path: warning.path.join('.') })}
+                      {t('atPath', { path: warning.path.join('.') })}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Variable warnings */}
+      {variableWarnings.length > 0 && (
+        <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+          <AlertTriangle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertTitle>{t('warningTitle')}</AlertTitle>
+          <AlertDescription className="mt-2">
+            <ul className="list-disc space-y-1 pl-5">
+              {variableWarnings.map((warning, index) => (
+                <li key={`var-warning-${index}`} data-testid={`variable-warning-${index}`}>
+                  {warning.message}
+                  {warning.variableName && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      {warning.variableName}
+                    </Badge>
+                  )}
+                  {warning.path && (
+                    <span className="block text-xs opacity-75">
+                      {t('atPath', { path: warning.path.join('.') })}
                     </span>
                   )}
                 </li>

@@ -330,18 +330,18 @@
     "basicInfo": "Informações Básicas",
     "templates": "Templates",
     "variables": "Variáveis",
-    "defaults": "Valores Padrão",
+    "values": "Valores",
     "preview": "Visualização",
     "basicInfo_description": "Configure as informações gerais do blueprint",
     "templates_description": "Selecione e gerencie os templates associados ao blueprint",
     "variables_description": "Defina as variáveis utilizadas pelo blueprint",
-    "defaults_description": "Defina valores padrão para as variáveis",
+    "values_description": "Configure valores e visibilidade para campos do template",
     "preview_description": "Visualize a configuração do blueprint",
     "placeholders": {
       "metadata": "Nenhum formulário de metadados fornecido",
       "templates": "Nenhum formulário de templates fornecido",
       "variables": "Nenhum formulário de variáveis fornecido",
-      "defaults": "Nenhum formulário de valores padrão fornecido",
+      "values": "Nenhuma configuração de valores fornecida",
       "preview": "Nenhuma visualização disponível"
     }
   },
@@ -396,7 +396,7 @@
     }
   },
 
-  "defaults": {
+  "values": {
     "sectionDescription": "Defina valores padrão para as variáveis"
   },
 
@@ -430,11 +430,6 @@
       "resetButton": "Reiniciar",
       "applyButton": "Aplicar Mudanças"
     },
-    "validation": {
-      "errorTitle": "Erros de Validação",
-      "warningTitle": "Avisos de Validação",
-      "atPath": "no caminho: {{path}}"
-    },
     "title": "Valores Padrão",
     "description": "Configure valores padrão para templates",
     "noTemplatesTitle": "Nenhum Template Selecionado",
@@ -443,7 +438,21 @@
       "title": "Erro",
       "failedToLoad": "Falha ao carregar esquemas de template"
     },
-    "noTemplates": "Nenhum template disponível"
+    "noTemplates": "Nenhum template disponível",
+    "batchActions": {
+      "exposeAll": "Expor todos os campos",
+      "exposeAllDescription": "Tornar todos os campos editáveis no formulário de criação de instância",
+      "hideAll": "Ocultar todos os campos",
+      "hideAllDescription": "Ocultar todos os campos do formulário de criação de instância",
+      "resetAll": "Redefinir todos os campos",
+      "resetAllDescription": "Redefinir todos os campos para os padrões do template"
+    },
+    "validation": {
+      "errorTitle": "Erro de Validação",
+      "warningTitle": "Aviso de Validação",
+      "variableWarningTitle": "Aviso de Validação de Variável",
+      "atPath": "em {{path}}"
+    }
   },
 
   "viewToggle": {

@@ -64,7 +64,7 @@ export function useBlueprintNavigation(
     metadata: 'metadata',
     templates: 'templates',
     variables: 'variables',
-    defaults: 'defaults',
+    values: 'values',
     preview: 'preview',
   };
 
@@ -110,7 +110,7 @@ export function useBlueprintNavigation(
    * Retorna para a seção anterior - sempre permite navegação livre
    */
   const navigateBack = useCallback(() => {
-    const sections: SectionId[] = ['metadata', 'templates', 'variables', 'defaults', 'preview'];
+    const sections: SectionId[] = ['metadata', 'templates', 'variables', 'values', 'preview'];
     const currentIndex = sections.indexOf(activeSection);
 
     if (currentIndex > 0) {

@@ -15,6 +15,9 @@ import { useBlueprintForm } from '@/contexts/blueprint-form-context';
 import { fetchTemplateSchemaForDefaultValues } from '@/services/template-schema-service';
 import { logError } from '@/utils/errorLogger';
 
+import { BatchActions } from './BatchActions';
+import { ContractPreview } from './ContractPreview';
+import { ErrorBoundary } from './ErrorBoundary';
 import { TemplateTabsNavigation } from './TemplateTabsNavigation';
 import { TemplateValueEditor } from './TemplateValueEditor';
 import type { DefaultValuesContract, TemplateDefaultValues } from './types';
@@ -46,6 +49,8 @@ export const DefaultValuesSection = () => {
   });
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
+  // Variable warnings are now handled by the TemplateValueEditor
+
   // Initialize or update the default values contract when templates change
   useEffect(() => {
     const initializeDefaultValues = async () => {
@@ -61,7 +66,7 @@ export const DefaultValuesSection = () => {
 
         // Helper function to check if existing values match current templates
         const initialValuesMatchTemplates = (): boolean => {
-          const currentValues = state.formData.defaults.values;
+          const currentValues = state.formData.values.values;
 
           return (
             Object.keys(currentValues).length === selectedTemplates.length &&
@@ -73,7 +78,7 @@ export const DefaultValuesSection = () => {
         if (initialValuesMatchTemplates()) {
           // Convert form context values to our contract format
           const templateValues = selectedTemplates.map((template) => {
-            const templateValues = state.formData.defaults.values[template.id] || {};
+            const templateValues = state.formData.values.values[template.id] || {};
 
             return {
               templateId: template.id,
@@ -134,7 +139,7 @@ export const DefaultValuesSection = () => {
           valuesForContext[schema.templateId] = { yaml: schema.rawYaml };
         });
 
-        setSectionData('defaults', { values: valuesForContext });
+        setSectionData('values', { values: valuesForContext });
       } catch (error) {
         logError(error, 'Error initializing default values contract');
         setError('Failed to load template schemas');
@@ -147,7 +152,7 @@ export const DefaultValuesSection = () => {
     const timeoutId = setTimeout(initializeDefaultValues, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedTemplates, state.formData.defaults.values, setSectionData]);
+  }, [selectedTemplates, state.formData.values.values, setSectionData]);
 
   // Handle template tab selection
   const handleSelectTemplate = useCallback((templateId: string) => {
@@ -168,13 +173,13 @@ export const DefaultValuesSection = () => {
       setDefaultValuesContract(updatedContract);
 
       // Update form context
-      const currentValues = { ...state.formData.defaults.values };
+      const currentValues = { ...state.formData.values.values };
 
       currentValues[updatedTemplateValues.templateId] = { yaml: updatedTemplateValues.rawYaml };
 
-      setSectionData('defaults', { values: currentValues });
+      setSectionData('values', { values: currentValues });
     },
-    [defaultValuesContract, state.formData.defaults.values, setSectionData]
+    [defaultValuesContract, state.formData.values.values, setSectionData, blueprintVariables]
   );
 
   // Render content based on state
@@ -218,16 +223,41 @@ export const DefaultValuesSection = () => {
 
     return (
       <>
-        <TemplateTabsNavigation
-          templates={selectedTemplates}
-          selectedTemplateId={selectedTemplateId}
-          onSelectTemplate={handleSelectTemplate}
-        />
-        <TemplateValueEditor
-          templateValues={selectedTemplate}
-          blueprintVariables={blueprintVariables}
-          onChange={handleTemplateValueChange}
-        />
+        <ErrorBoundary>
+          <TemplateTabsNavigation
+            templates={selectedTemplates}
+            selectedTemplateId={selectedTemplateId}
+            onSelectTemplate={handleSelectTemplate}
+          />
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <div className="mb-4">
+            <BatchActions
+              fields={selectedTemplate.fields}
+              onFieldsChange={(updatedFields) => {
+                const updatedTemplate = {
+                  ...selectedTemplate,
+                  fields: updatedFields,
+                };
+
+                handleTemplateValueChange(updatedTemplate);
+              }}
+            />
+          </div>
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <TemplateValueEditor
+            templateValues={selectedTemplate}
+            blueprintVariables={blueprintVariables}
+            onChange={handleTemplateValueChange}
+          />
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <ContractPreview contract={defaultValuesContract} />
+        </ErrorBoundary>
       </>
     );
   };

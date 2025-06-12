@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-export type SectionId = 'metadata' | 'templates' | 'variables' | 'defaults' | 'preview';
+export type SectionId = 'metadata' | 'templates' | 'variables' | 'values' | 'preview';
 
 interface BlueprintSectionNavigationProps {
   activeSection: SectionId;
@@ -19,7 +19,7 @@ const sections: Array<{ id: SectionId }> = [
   { id: 'metadata' },
   { id: 'templates' },
   { id: 'variables' },
-  { id: 'defaults' },
+  { id: 'values' },
   { id: 'preview' },
 ];
 

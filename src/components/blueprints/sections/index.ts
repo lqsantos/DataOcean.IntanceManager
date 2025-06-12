@@ -14,6 +14,8 @@ export { TemplatesSection } from './TemplatesSection';
 // Seção para definição de variáveis
 export { default as VariablesSection } from './variables-section';
 
-// As outras seções serão implementadas nas próximas entregas:
-// export { DefaultValuesSection } from './DefaultValuesSection';
+// Seção para configuração de valores dos templates
+export { DefaultValuesSection as ValuesSection } from './DefaultValuesSection';
+
+// Seção de preview (será implementada nas próximas entregas)
 // export { PreviewSection } from './PreviewSection';

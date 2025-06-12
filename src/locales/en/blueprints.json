@@ -330,18 +330,18 @@
     "basicInfo": "Basic Information",
     "templates": "Templates",
     "variables": "Variables",
-    "defaults": "Default Values",
+    "values": "Values",
     "preview": "Preview",
     "basicInfo_description": "Configure the general information for this blueprint",
     "templates_description": "Select and manage templates associated with this blueprint",
     "variables_description": "Define variables used by this blueprint",
-    "defaults_description": "Set default values for variables",
+    "values_description": "Configure values and visibility for template fields",
     "preview_description": "Preview the blueprint configuration",
     "placeholders": {
       "metadata": "No metadata form provided",
       "templates": "No templates form provided",
       "variables": "No variables form provided",
-      "defaults": "No defaults form provided",
+      "values": "No values configuration provided",
       "preview": "No preview available"
     }
   },
@@ -396,7 +396,7 @@
     }
   },
 
-  "defaults": {
+  "values": {
     "sectionDescription": "Set default values for variables"
   },
 
@@ -430,10 +430,19 @@
       "resetButton": "Reset",
       "applyButton": "Apply Changes"
     },
+    "batchActions": {
+      "exposeAll": "Expose all fields",
+      "exposeAllDescription": "Make all fields editable in the instance creation form",
+      "hideAll": "Hide all fields",
+      "hideAllDescription": "Hide all fields from the instance creation form",
+      "resetAll": "Reset all fields",
+      "resetAllDescription": "Reset all fields to template defaults"
+    },
     "validation": {
-      "errorTitle": "Validation Errors",
-      "warningTitle": "Validation Warnings",
-      "atPath": "at path: {{path}}"
+      "errorTitle": "Validation Error",
+      "warningTitle": "Validation Warning",
+      "variableWarningTitle": "Variable Validation Warning",
+      "atPath": "at {{path}}"
     },
     "title": "Default Values",
     "description": "Configure default values for templates",

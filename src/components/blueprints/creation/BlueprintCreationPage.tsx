@@ -3,6 +3,7 @@
 import {
   MetadataSection,
   TemplatesSection,
+  ValuesSection,
   VariablesSection,
 } from '@/components/blueprints/sections';
 import { BlueprintEditor } from '@/components/blueprints/shared/BlueprintEditor';
@@ -23,6 +24,7 @@ export function BlueprintCreationPage() {
         metadata: <MetadataSection />,
         templates: <TemplatesSection />,
         variables: <VariablesSection />,
+        values: <ValuesSection />,
       }}
       onSave={async () => {
         // Implementar lógica específica para criação de blueprints (quando necessário)

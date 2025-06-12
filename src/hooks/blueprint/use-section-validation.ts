@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 export type ValidationStatus = 'valid' | 'invalid' | 'not-validated';
-export type SectionId = 'metadata' | 'templates' | 'variables' | 'defaults' | 'preview';
+export type SectionId = 'metadata' | 'templates' | 'variables' | 'values' | 'preview';
 
 export interface SectionValidation {
   status: ValidationStatus;
@@ -15,7 +15,7 @@ export interface SectionValidations {
   metadata: SectionValidation;
   templates: SectionValidation;
   variables: SectionValidation;
-  defaults: SectionValidation;
+  values: SectionValidation;
   preview: SectionValidation;
 }
 
@@ -39,7 +39,7 @@ const defaultValidations: SectionValidations = {
     completed: false,
     dependencies: ['templates'],
   },
-  defaults: {
+  values: {
     status: 'not-validated',
     errors: [],
     completed: false,
@@ -150,13 +150,7 @@ export function useSectionValidation() {
    */
   const getNextAvailableSection = useCallback(
     (currentSectionId: SectionId): SectionId | undefined => {
-      const sectionOrder: SectionId[] = [
-        'metadata',
-        'templates',
-        'variables',
-        'defaults',
-        'preview',
-      ];
+      const sectionOrder: SectionId[] = ['metadata', 'templates', 'variables', 'values', 'preview'];
       const currentIndex = sectionOrder.indexOf(currentSectionId);
 
       // Se for a última seção, não há próxima

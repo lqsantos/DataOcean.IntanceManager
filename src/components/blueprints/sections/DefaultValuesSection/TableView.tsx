@@ -4,7 +4,7 @@
  */
 
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import React, { type ReactNode, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 import type { DefaultValueField, TemplateDefaultValues } from './types';
 import { ValueSourceType } from './types';
@@ -384,16 +385,19 @@ export const TableView: React.FC<TableViewProps> = ({
 
   // Recursively render fields
   const renderFields = useCallback(
-    (fields: DefaultValueField[], depth = 0): React.ReactNode => {
+    (fields: DefaultValueField[], depth = 0): ReactNode => {
       return fields.map((field) => {
-        const isObject = field.type === 'object';
-        const hasChildren = isObject && field.children && field.children.length > 0;
+        const children = field.children ?? [];
+        const hasChildren = field.type === 'object' && children.length > 0;
         const expanded = isFieldExpanded(field.path.join('.'));
 
         return (
-          <>
-            <TableRow key={field.key} data-testid={`field-row-${field.key}`}>
-              <TableCell style={{ paddingLeft: `${depth * 16 + 8}px` }} className="w-2/6">
+          <React.Fragment key={field.path.join('.')}>
+            <TableRow className={cn('group/row', depth > 0 && 'bg-muted/50')}>
+              <TableCell
+                className="w-1/3"
+                style={{ paddingLeft: `${depth * 2 + 1}rem` }}
+              >
                 {hasChildren ? (
                   <Button
                     variant="ghost"
@@ -443,8 +447,8 @@ export const TableView: React.FC<TableViewProps> = ({
                 />
               </TableCell>
             </TableRow>
-            {hasChildren && expanded && field.children && renderFields(field.children, depth + 1)}
-          </>
+            {hasChildren && expanded && renderFields(children, depth + 1)}
+          </React.Fragment>
         );
       });
     },

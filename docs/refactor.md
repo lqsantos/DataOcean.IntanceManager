@@ -94,7 +94,7 @@ Para garantir a qualidade e consistência do código durante esta refatoração,
 #### Entrega 2.3: Seção de Variáveis
 
 - Migrar componente `VariablesStep` para `VariablesSection`
-- Adicionar previsualização de uso das variáveis
+- Adicionar pre visualização de uso das variáveis
 - Melhorar editor de variáveis com sugestões e validação em tempo real
 - Implementar categorização de variáveis
 
@@ -475,14 +475,11 @@ Essas práticas de documentação são:
 ### Internacionalização
 
 - Extrair todas as strings para arquivos de tradução
-- Usar chaves de tradução consistentes seguindo padrão de namespaces
-- Implementar pluralização e interpolação conforme necessário
-- Testar a interface com textos de diferentes comprimentos
+- Usar chaves de tradução consistentes seguindo padrão ja estabelecido pelo projeto.
 
 ### Versionamento e Documentação
 
 - Documentar de forma clara todas as mudanças na API
-- Manter changelogs detalhados para cada entrega
 - Adicionar comentários JSDoc para funções e componentes complexos
 - Criar documentação de uso para novas funcionalidades
 

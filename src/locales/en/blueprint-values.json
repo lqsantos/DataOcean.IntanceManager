@@ -1,0 +1,28 @@
+{
+  "defaultValues": {
+    "contractPreview": {
+      "title": "Configuration Contract",
+      "description": "Preview the configuration contract between this blueprint and its instances",
+      "summary": "This blueprint exposes {{exposedCount}} fields across {{templateCount}} templates, with {{overridableCount}} fields allowing instance override.",
+      "fields": "fields",
+      "viewContract": "View Contract",
+      "download": "Download JSON"
+    },
+    "batchActions": {
+      "exposeAll": "Expose All Fields",
+      "exposeAllTooltip": "Make all fields in this template visible to instances",
+      "hideAll": "Hide All Fields",
+      "hideAllTooltip": "Hide all fields from instances",
+      "resetDefaults": "Reset to Defaults",
+      "resetDefaultsTooltip": "Reset all values to template defaults"
+    },
+    "validation": {
+      "errorTitle": "Validation Errors",
+      "warningTitle": "Warnings",
+      "variableWarningTitle": "Variable Issues",
+      "atPath": "at path: {{path}}",
+      "undeclaredVariable": "Undeclared variable: {{name}}",
+      "schemaViolation": "Schema validation error"
+    }
+  }
+}

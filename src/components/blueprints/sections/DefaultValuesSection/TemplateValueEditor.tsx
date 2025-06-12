@@ -35,14 +35,22 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
   // Editor state
   const [editorContent, setEditorContent] = useState(templateValues.rawYaml);
   const [debouncedContent] = useDebounce(editorContent, 500);
-  const [validation, setValidation] = useState<{
+
+  type ValidationWarning = { message: string; path?: string[] };
+  type VariableWarning = { message: string; path?: string[]; variableName?: string };
+
+  interface ValidationState {
     isValid: boolean;
-    errors: Array<{ message: string; path?: string[] }>;
-    warnings: Array<{ message: string; path?: string[] }>;
-  }>({
+    errors: ValidationWarning[];
+    warnings: ValidationWarning[];
+    variableWarnings: VariableWarning[];
+  }
+
+  const [validation, setValidation] = useState<ValidationState>({
     isValid: true,
     errors: [],
     warnings: [],
+    variableWarnings: [],
   });
   const [isEditorReady, setIsEditorReady] = useState(false);
 
@@ -67,26 +75,122 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
       return;
     }
 
-    const validationResult = validateYamlAgainstSchema(debouncedContent, templateValues.fields);
+    const validateContent = async () => {
+      try {
+        // First validate basic YAML structure
+        const validationResult = validateYamlAgainstSchema(debouncedContent, templateValues.fields);
 
-    setValidation({
-      isValid: validationResult.isValid,
-      errors: validationResult.errors || [],
-      warnings: validationResult.warnings || [],
-    });
+        // If valid, collect other validation results
+        if (validationResult.isValid && validationResult.document) {
+          const document = validationResult.document as Record<string, unknown>;
+          const updatedFields = updateFieldsFromYaml(templateValues.fields, document);
 
-    // If valid, update the template values with new values from YAML
-    if (validationResult.isValid && validationResult.document) {
-      const document = validationResult.document as Record<string, unknown>;
-      const updatedFields = updateFieldsFromYaml(templateValues.fields, document);
+          // Update validation state with basic YAML results
+          const validationState = {
+            isValid: validationResult.isValid,
+            errors: validationResult.errors || [],
+            warnings: validationResult.warnings || [],
+            variableWarnings: [],
+          };
 
-      onChange({
-        ...templateValues,
-        fields: updatedFields,
-        rawYaml: debouncedContent,
-      });
-    }
-  }, [debouncedContent, templateValues, onChange]);
+          // Get declared variable names
+          const declaredVariableNames = blueprintVariables.map((v) => v.name);
+
+          // Import and run variable validation
+          const variableValidator = await import('./utils/variable-validator');
+          const variableWarnings = variableValidator.validateVariables(
+            updatedFields,
+            declaredVariableNames
+          );
+
+          // Create a new validation state object with all warnings
+          const newValidationState: ValidationState = {
+            isValid: validationState.isValid,
+            errors: validationState.errors,
+            warnings: validationState.warnings,
+            variableWarnings: [], // Start with empty array
+          };
+
+          // Add each variable warning one by one to avoid type issues
+          variableWarnings.forEach((warning) => {
+            newValidationState.variableWarnings.push({
+              message: warning.message,
+              path: warning.path,
+              variableName: warning.variableName,
+            });
+          });
+
+          // Try to get schema validation if available
+          try {
+            const { fetchTemplateJsonSchema } = await import('@/services/template-schema-service');
+            const jsonSchema = await fetchTemplateJsonSchema(templateValues.templateId);
+
+            // Import and run schema validation
+            const schemaValidator = await import('./utils/schema-validator');
+            const schemaResults = schemaValidator.validateFieldsAgainstSchema(
+              updatedFields,
+              jsonSchema
+            );
+
+            // Add schema errors to validation state
+            const schemaErrors = schemaResults
+              .filter((result) => !result.isValid)
+              .flatMap((result) => result.errors);
+
+            // Create a new validation state instead of mutating
+            const hasSchemaErrors = schemaErrors.length > 0;
+
+            // Update with schema validation results
+            const updatedValidationState = {
+              isValid: !hasSchemaErrors && validationState.isValid,
+              errors: [...validationState.errors, ...schemaErrors],
+              warnings: validationState.warnings,
+              variableWarnings: validationState.variableWarnings,
+            };
+
+            // Just use our own safely typed ValidationState
+            setValidation({
+              isValid: !hasSchemaErrors && validationResult.isValid,
+              errors: [...(validationResult.errors || []), ...schemaErrors],
+              warnings: validationResult.warnings || [],
+              variableWarnings: validationState.variableWarnings,
+            });
+
+            // Only return if no validation errors
+            return updatedValidationState.isValid;
+          } catch (error) {
+            // Schema validation is optional, so just log the error
+            console.error('Schema validation failed:', error);
+          }
+
+          // Update the validation state
+          // Use the new validation state object
+          setValidation(newValidationState);
+
+          // Only update fields if all validations pass
+          if (validationState.errors.length === 0) {
+            onChange({
+              ...templateValues,
+              fields: updatedFields,
+              rawYaml: debouncedContent,
+            });
+          }
+        } else {
+          // If basic YAML validation failed, just update with those results
+          setValidation({
+            isValid: validationResult.isValid,
+            errors: validationResult.errors || [],
+            warnings: validationResult.warnings || [],
+            variableWarnings: [],
+          });
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+      }
+    };
+
+    validateContent();
+  }, [debouncedContent, templateValues, onChange, blueprintVariables]);
 
   // Setup completion items for variables
   const handleEditorMount = useCallback(() => {
@@ -282,7 +386,11 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
 
         {/* Validation Feedback - shown in both views */}
         <div className="mt-4">
-          <ValidationFeedback errors={validation.errors} warnings={validation.warnings} />
+          <ValidationFeedback
+            errors={validation.errors}
+            warnings={validation.warnings}
+            variableWarnings={validation.variableWarnings}
+          />
         </div>
       </CardContent>
     </Card>
