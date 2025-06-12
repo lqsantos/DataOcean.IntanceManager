@@ -397,7 +397,52 @@
   },
 
   "values": {
-    "sectionDescription": "Defina valores padrão para as variáveis"
+    "sectionDescription": "Configure valores para os campos do template e controle sua visibilidade",
+    "editor": {
+      "title": "Editor de Valores",
+      "availableVariables": "Variáveis Disponíveis",
+      "resetButton": "Reiniciar",
+      "applyButton": "Aplicar Mudanças"
+    },
+    "contractPreview": {
+      "title": "Contrato de Configuração",
+      "description": "Visualize o contrato de configuração entre este blueprint e suas instâncias",
+      "viewContract": "Ver Contrato",
+      "downloadJson": "Baixar JSON",
+      "dialogTitle": "Contrato de Configuração"
+    },
+    "batchActions": {
+      "exposeAll": "Expor todos os campos",
+      "exposeAllDescription": "Tornar todos os campos editáveis no formulário de criação de instância",
+      "hideAll": "Ocultar todos os campos",
+      "hideAllDescription": "Ocultar todos os campos do formulário de criação de instância",
+      "resetAll": "Redefinir todos os campos",
+      "resetAllDescription": "Redefinir todos os campos para os padrões do template"
+    },
+    "validation": {
+      "errorTitle": "Erro de Validação",
+      "warningTitle": "Aviso de Validação",
+      "variableWarningTitle": "Aviso de Validação de Variável",
+      "atPath": "em {{path}}"
+    },
+    "title": "Valores",
+    "description": "Configure valores para templates",
+    "noTemplatesTitle": "Nenhum Template Selecionado",
+    "noTemplatesDescription": "Por favor, selecione templates na seção anterior antes de configurar valores.",
+    "noTemplates": "Nenhum template disponível",
+    "errors": {
+      "title": "Erro",
+      "failedToLoad": "Falha ao carregar esquemas de template"
+    },
+    "table": {
+      "field": "Campo",
+      "type": "Tipo",
+      "defaultValue": "Padrão do Template",
+      "value": "Valor do Blueprint",
+      "exposed": "Expor",
+      "overridable": "Permitir Sobrescrever",
+      "noFields": "Nenhum campo disponível"
+    }
   },
 
   "preview": {
@@ -423,51 +468,9 @@
     "loadError": "Erro ao carregar blueprint"
   },
 
-  "defaultValues": {
-    "editor": {
-      "title": "Editor de Valores Padrão",
-      "availableVariables": "Variáveis Disponíveis",
-      "resetButton": "Reiniciar",
-      "applyButton": "Aplicar Mudanças"
-    },
-    "title": "Valores Padrão",
-    "description": "Configure valores padrão para templates",
-    "noTemplatesTitle": "Nenhum Template Selecionado",
-    "noTemplatesDescription": "Por favor, selecione templates na seção anterior antes de configurar valores padrão.",
-    "errors": {
-      "title": "Erro",
-      "failedToLoad": "Falha ao carregar esquemas de template"
-    },
-    "noTemplates": "Nenhum template disponível",
-    "batchActions": {
-      "exposeAll": "Expor todos os campos",
-      "exposeAllDescription": "Tornar todos os campos editáveis no formulário de criação de instância",
-      "hideAll": "Ocultar todos os campos",
-      "hideAllDescription": "Ocultar todos os campos do formulário de criação de instância",
-      "resetAll": "Redefinir todos os campos",
-      "resetAllDescription": "Redefinir todos os campos para os padrões do template"
-    },
-    "validation": {
-      "errorTitle": "Erro de Validação",
-      "warningTitle": "Aviso de Validação",
-      "variableWarningTitle": "Aviso de Validação de Variável",
-      "atPath": "em {{path}}"
-    }
-  },
-
   "viewToggle": {
     "table": "Visualização em Tabela",
     "yaml": "Visualização em YAML"
-  },
-
-  "tableView": {
-    "field": "Campo",
-    "type": "Tipo",
-    "defaultValue": "Valor Padrão",
-    "blueprintValue": "Valor do Blueprint",
-    "expose": "Expor",
-    "override": "Permitir Substituição",
-    "empty": "Nenhum campo disponível"
   },
 
   "filters": {

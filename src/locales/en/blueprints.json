@@ -397,7 +397,52 @@
   },
 
   "values": {
-    "sectionDescription": "Set default values for variables"
+    "sectionDescription": "Configure values for template fields and control their visibility",
+    "editor": {
+      "title": "Values Editor",
+      "availableVariables": "Available Variables",
+      "resetButton": "Reset",
+      "applyButton": "Apply Changes"
+    },
+    "contractPreview": {
+      "title": "Configuration Contract",
+      "description": "Preview the configuration contract between this blueprint and its instances",
+      "viewContract": "View Contract",
+      "downloadJson": "Download JSON",
+      "dialogTitle": "Configuration Contract"
+    },
+    "batchActions": {
+      "exposeAll": "Expose all fields",
+      "exposeAllDescription": "Make all fields editable in the instance creation form",
+      "hideAll": "Hide all fields",
+      "hideAllDescription": "Hide all fields from the instance creation form",
+      "resetAll": "Reset all fields",
+      "resetAllDescription": "Reset all fields to template defaults"
+    },
+    "validation": {
+      "errorTitle": "Validation Error",
+      "warningTitle": "Validation Warning",
+      "variableWarningTitle": "Variable Validation Warning",
+      "atPath": "at {{path}}"
+    },
+    "title": "Values",
+    "description": "Configure values for templates",
+    "noTemplatesTitle": "No Templates Selected",
+    "noTemplatesDescription": "Please select templates in the previous section before configuring values.",
+    "noTemplates": "No templates available",
+    "errors": {
+      "title": "Error",
+      "failedToLoad": "Failed to load template schemas"
+    },
+    "table": {
+      "field": "Field",
+      "type": "Type",
+      "defaultValue": "Template Default",
+      "value": "Blueprint Value",
+      "exposed": "Expose",
+      "overridable": "Allow Override",
+      "noFields": "No fields available"
+    }
   },
 
   "preview": {
@@ -423,51 +468,9 @@
     "loadError": "Error loading blueprint"
   },
 
-  "defaultValues": {
-    "editor": {
-      "title": "Default Values Editor",
-      "availableVariables": "Available Variables",
-      "resetButton": "Reset",
-      "applyButton": "Apply Changes"
-    },
-    "batchActions": {
-      "exposeAll": "Expose all fields",
-      "exposeAllDescription": "Make all fields editable in the instance creation form",
-      "hideAll": "Hide all fields",
-      "hideAllDescription": "Hide all fields from the instance creation form",
-      "resetAll": "Reset all fields",
-      "resetAllDescription": "Reset all fields to template defaults"
-    },
-    "validation": {
-      "errorTitle": "Validation Error",
-      "warningTitle": "Validation Warning",
-      "variableWarningTitle": "Variable Validation Warning",
-      "atPath": "at {{path}}"
-    },
-    "title": "Default Values",
-    "description": "Configure default values for templates",
-    "noTemplatesTitle": "No Templates Selected",
-    "noTemplatesDescription": "Please select templates in the previous section before configuring default values.",
-    "noTemplates": "No templates available",
-    "errors": {
-      "title": "Error",
-      "failedToLoad": "Failed to load template schemas"
-    }
-  },
-
   "viewToggle": {
     "table": "Table View",
     "yaml": "YAML View"
-  },
-
-  "tableView": {
-    "field": "Field",
-    "type": "Type",
-    "defaultValue": "Default Value",
-    "blueprintValue": "Blueprint Value",
-    "expose": "Expose",
-    "override": "Allow Override",
-    "empty": "No fields available"
   },
 
   "filters": {

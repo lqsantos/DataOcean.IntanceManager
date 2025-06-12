@@ -17,7 +17,7 @@ export const ValidationFeedback = ({
   warnings = [],
   variableWarnings = [],
 }: ValidationFeedbackProps) => {
-  const { t } = useTranslation('blueprints', { keyPrefix: 'defaultValues.validation' });
+  const { t } = useTranslation('blueprints', { keyPrefix: 'values.validation' });
 
   if (errors.length === 0 && warnings.length === 0 && variableWarnings.length === 0) {
     return null;

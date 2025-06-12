@@ -76,7 +76,7 @@ describe('ContractPreview', () => {
     render(<ContractPreview contract={mockContract} />);
 
     // Check that the title is rendered
-    expect(screen.getByText('blueprints:defaultValues.contractPreview.title')).toBeInTheDocument();
+    expect(screen.getByText('values.contractPreview.title')).toBeInTheDocument();
 
     // Check for summary information
     expect(screen.getByText('API Service')).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe('ContractPreview', () => {
     render(<ContractPreview contract={mockContract} />);
 
     // Click the view contract button
-    fireEvent.click(screen.getByText('blueprints:defaultValues.contractPreview.viewContract'));
+    fireEvent.click(screen.getByText('values.contractPreview.viewContract'));
 
     // Check if dialog is open (dialog title is visible)
     expect(screen.getByRole('dialog')).toBeInTheDocument();

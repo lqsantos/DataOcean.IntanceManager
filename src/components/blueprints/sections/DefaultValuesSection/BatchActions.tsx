@@ -21,7 +21,7 @@ interface BatchActionsProps {
  * Component for batch actions on fields
  */
 export function BatchActions({ fields, onFieldsChange }: BatchActionsProps) {
-  const { t } = useTranslation('blueprints', { keyPrefix: 'defaultValues.batchActions' });
+  const { t } = useTranslation('blueprints', { keyPrefix: 'values.batchActions' });
 
   /**
    * Set the exposed property for all fields

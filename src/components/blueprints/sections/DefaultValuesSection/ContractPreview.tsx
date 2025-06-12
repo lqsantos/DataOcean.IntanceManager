@@ -5,6 +5,7 @@
 
 import { Download, Eye } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,12 @@ interface ContractPreviewProps {
 export function ContractPreview({ contract }: ContractPreviewProps) {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('yaml');
+  const { t } = useTranslation(['blueprints']);
+
+  // Don't render anything if the contract is not initialized
+  if (!contract?.initialized) {
+    return null;
+  }
 
   /**
    * Extract only exposed fields from a field array
@@ -39,7 +46,7 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
       if (!field) {
         return acc;
       }
-      
+
       if (field.exposed) {
         // For object fields, recursively process their children
         if (field.type === 'object' && field.children) {
@@ -81,7 +88,7 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
       if (!field) {
         return count;
       }
-      
+
       let fieldCount = field[property] ? 1 : 0;
 
       if (field.children) {
@@ -183,8 +190,8 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
     return (
       <div className="space-y-4 text-sm">
         <p>
-          This blueprint exposes {exposedCount} fields across {templateCount}{' '}
-          templates, with {overridableCount} fields allowing instance override.
+          This blueprint exposes {exposedCount} fields across {templateCount} templates, with{' '}
+          {overridableCount} fields allowing instance override.
         </p>
 
         <div className="space-y-2">
@@ -217,7 +224,7 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle>Configuration Contract</DialogTitle>
+            <DialogTitle>{t('values.contractPreview.dialogTitle')}</DialogTitle>
           </DialogHeader>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -242,7 +249,7 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
           <div className="flex justify-end">
             <Button onClick={downloadContract}>
               <Download className="mr-2 h-4 w-4" />
-              Download JSON
+              {t('values.contractPreview.downloadJson')}
             </Button>
           </div>
         </DialogContent>
@@ -253,10 +260,8 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
   return (
     <Card className="mt-6" data-testid="contract-preview">
       <CardHeader className="pb-3">
-        <CardTitle>Configuration Contract</CardTitle>
-        <CardDescription>
-          Preview the configuration contract between this blueprint and its instances
-        </CardDescription>
+        <CardTitle>{t('values.contractPreview.title')}</CardTitle>
+        <CardDescription>{t('values.contractPreview.description')}</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -265,7 +270,7 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
         <div className="mt-4 flex justify-end">
           <Button variant="outline" onClick={() => setIsPreviewOpen(true)}>
             <Eye className="mr-2 h-4 w-4" />
-            View Contract
+            {t('values.contractPreview.viewContract')}
           </Button>
         </div>
 

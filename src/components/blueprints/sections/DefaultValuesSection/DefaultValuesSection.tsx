@@ -188,8 +188,8 @@ export const DefaultValuesSection = () => {
       return (
         <Alert data-testid="no-templates-alert">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('defaultValues.noTemplatesTitle')}</AlertTitle>
-          <AlertDescription>{t('defaultValues.noTemplatesDescription')}</AlertDescription>
+          <AlertTitle>{t('values.noTemplatesTitle')}</AlertTitle>
+          <AlertDescription>{t('values.noTemplatesDescription')}</AlertDescription>
         </Alert>
       );
     }
@@ -207,7 +207,7 @@ export const DefaultValuesSection = () => {
       return (
         <Alert variant="destructive" data-testid="error-alert">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('defaultValues.errors.title')}</AlertTitle>
+          <AlertTitle>{t('values.errors.title')}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       );
@@ -265,8 +265,8 @@ export const DefaultValuesSection = () => {
   return (
     <Card className="w-full" data-testid="default-values-section">
       <CardHeader>
-        <CardTitle>{t('defaultValues.title')}</CardTitle>
-        <CardDescription>{t('defaultValues.description')}</CardDescription>
+        <CardTitle>{t('values.title')}</CardTitle>
+        <CardDescription>{t('values.description')}</CardDescription>
       </CardHeader>
       <CardContent>{renderContent()}</CardContent>
     </Card>

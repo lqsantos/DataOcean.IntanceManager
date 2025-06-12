@@ -273,7 +273,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
     <Card className="mt-4" data-testid="template-value-editor">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle>{t('defaultValues.editor.title')}</CardTitle>
+          <CardTitle>{t('values.editor.title')}</CardTitle>
           <div>
             <Badge variant="outline" className="mr-2">
               {templateValues.templateName}
@@ -335,7 +335,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
             {/* Variable Help */}
             {blueprintVariables.length > 0 && (
               <div className="mt-4 text-sm">
-                <p className="mb-2 font-medium">{t('defaultValues.editor.availableVariables')}</p>
+                <p className="mb-2 font-medium">{t('values.editor.availableVariables')}</p>
                 <div className="flex flex-wrap gap-2">
                   {blueprintVariables.map((variable) => (
                     <Badge
@@ -363,7 +363,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
                 onClick={() => setEditorContent(templateValues.rawYaml)}
                 data-testid="reset-editor-button"
               >
-                {t('defaultValues.editor.resetButton')}
+                {t('values.editor.resetButton')}
               </Button>
               <Button
                 disabled={!validation.isValid}
@@ -378,7 +378,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
                 }}
                 data-testid="apply-changes-button"
               >
-                {t('defaultValues.editor.applyButton')}
+                {t('values.editor.applyButton')}
               </Button>
             </div>
           </>

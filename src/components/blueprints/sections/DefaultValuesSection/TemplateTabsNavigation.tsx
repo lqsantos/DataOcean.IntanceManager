@@ -24,7 +24,7 @@ export const TemplateTabsNavigation: React.FC<TemplateTabsNavigationProps> = ({
   if (!templates || templates.length === 0) {
     return (
       <div className="py-4 text-center text-muted-foreground" data-testid="template-tabs-empty">
-        {t('defaultValues.noTemplates')}
+        {t('values.noTemplates')}
       </div>
     );
   }

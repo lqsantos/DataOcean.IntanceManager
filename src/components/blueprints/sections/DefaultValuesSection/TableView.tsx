@@ -467,16 +467,12 @@ export const TableView: React.FC<TableViewProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-1/3">{t('defaultValues.table.field')}</TableHead>
-            <TableHead className="w-1/12">{t('defaultValues.table.type')}</TableHead>
-            <TableHead className="w-1/6">{t('defaultValues.table.defaultValue')}</TableHead>
-            <TableHead className="w-1/6">{t('defaultValues.table.value')}</TableHead>
-            <TableHead className="w-1/12 text-center">
-              {t('defaultValues.table.exposed')}
-            </TableHead>
-            <TableHead className="w-1/12 text-center">
-              {t('defaultValues.table.overridable')}
-            </TableHead>
+            <TableHead className="w-1/3">{t('values.table.field')}</TableHead>
+            <TableHead className="w-1/12">{t('values.table.type')}</TableHead>
+            <TableHead className="w-1/6">{t('values.table.defaultValue')}</TableHead>
+            <TableHead className="w-1/6">{t('values.table.value')}</TableHead>
+            <TableHead className="w-1/12 text-center">{t('values.table.exposed')}</TableHead>
+            <TableHead className="w-1/12 text-center">{t('values.table.overridable')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -486,9 +482,7 @@ export const TableView: React.FC<TableViewProps> = ({
             <TableRow>
               <TableCell colSpan={6} className="text-center">
                 <Alert>
-                  <AlertDescription>
-                    {t('defaultValues.table.noFields')}
-                  </AlertDescription>
+                  <AlertDescription>{t('values.table.noFields')}</AlertDescription>
                 </Alert>
               </TableCell>
             </TableRow>

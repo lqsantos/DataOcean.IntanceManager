@@ -100,7 +100,7 @@ Example:
 
 2. **Accessibility & UX**
 
-- Clear labels and toggles for editability/source
+- Clear labels and toggles for edit/source
 - Contextual explanations and tooltips
 - Keyboard navigable table
 - Visual distinction between source types
