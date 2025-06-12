@@ -61,8 +61,10 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps, ErrorBoundaryStat
           </div>
           <div className="space-y-4">
             <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Something went wrong</AlertTitle>
+              <div className="mb-2 flex items-center">
+                <AlertCircle className="mr-2 h-5 w-5" />
+                <AlertTitle>Something went wrong</AlertTitle>
+              </div>
               <AlertDescription className="mt-2">
                 <p className="mb-4">
                   An error occurred while rendering this component. Please try again or contact

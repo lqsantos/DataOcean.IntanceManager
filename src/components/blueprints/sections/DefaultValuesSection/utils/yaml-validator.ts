@@ -98,7 +98,7 @@ function validateRequiredFields(
 
       if (!fieldExists) {
         errors.push({
-          message: `Required field "${field.displayName || field.key}" is missing`,
+          message: `Required field "${field.key}" is missing`,
           path: field.path,
         });
       }
@@ -140,7 +140,7 @@ function validateValueTypes(
 
     if (!isValid) {
       errors.push({
-        message: `Field "${field.displayName || field.key}" has invalid type. Expected ${field.type}.`,
+        message: `Field "${field.key}" has invalid type. Expected ${field.type}.`,
         path: field.path,
       });
     }

@@ -416,7 +416,7 @@ export const TableView: React.FC<TableViewProps> = ({
                 ) : (
                   <span className="ml-6"></span>
                 )}
-                {field.displayName || field.key}
+                {field.key}
               </TableCell>
               <TableCell className="w-1/12">{field.type}</TableCell>
               <TableCell className="w-1/6">

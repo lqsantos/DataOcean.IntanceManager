@@ -66,8 +66,9 @@ export function BlueprintSectionContainer({
               </p>
             )}
           </div>
+          <div className="mt-2 border-b shadow-lg" />
         </div>
-        <div className="border-b shadow-lg" />
+
         <div className="mx-5 mb-2 mt-5 flex h-full min-h-0 flex-1 flex-col overflow-hidden">
           {/* Render custom section content if provided */}
           <div className="h-full flex-1 overflow-hidden">

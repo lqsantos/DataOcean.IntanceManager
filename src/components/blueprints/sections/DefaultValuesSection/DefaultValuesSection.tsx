@@ -208,8 +208,10 @@ export const DefaultValuesSection = () => {
     if (selectedTemplates.length === 0) {
       return (
         <Alert data-testid="no-templates-alert">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('values.noTemplatesTitle')}</AlertTitle>
+          <div className="mb-2 flex items-center">
+            <AlertCircle className="mr-2 h-5 w-5 text-muted-foreground" />
+            <AlertTitle>{t('values.noTemplatesTitle')}</AlertTitle>
+          </div>
           <AlertDescription>{t('values.noTemplatesDescription')}</AlertDescription>
         </Alert>
       );
@@ -227,8 +229,10 @@ export const DefaultValuesSection = () => {
     if (error) {
       return (
         <Alert variant="destructive" data-testid="error-alert">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('values.errors.title')}</AlertTitle>
+          <div className="mb-2 flex items-center">
+            <AlertCircle className="mr-2 h-5 w-5" />
+            <AlertTitle>{t('values.errors.title')}</AlertTitle>
+          </div>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       );
