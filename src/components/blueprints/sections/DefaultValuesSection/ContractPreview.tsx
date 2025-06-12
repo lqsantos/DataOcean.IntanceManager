@@ -8,7 +8,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -258,13 +257,13 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
   };
 
   return (
-    <Card className="mt-6" data-testid="contract-preview">
-      <CardHeader className="pb-3">
-        <CardTitle>{t('values.contractPreview.title')}</CardTitle>
-        <CardDescription>{t('values.contractPreview.description')}</CardDescription>
-      </CardHeader>
+    <div className="mt-6 border rounded-md p-4" data-testid="contract-preview">
+      <div className="mb-4 border-b pb-3">
+        <h3 className="text-lg font-medium">{t('values.contractPreview.title')}</h3>
+        <p className="text-sm text-muted-foreground">{t('values.contractPreview.description')}</p>
+      </div>
 
-      <CardContent>
+      <div className="space-y-4">
         {generateContractSummary()}
 
         <div className="mt-4 flex justify-end">
@@ -275,7 +274,7 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
         </div>
 
         {renderContractPreview()}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -10,7 +10,6 @@ import { Component } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { logError } from '@/utils/errorLogger';
 
 interface ErrorBoundaryProps {
@@ -53,14 +52,14 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps, ErrorBoundaryStat
       }
 
       return (
-        <Card className="border-red-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
+        <div className="border border-red-200 rounded-md p-4">
+          <div className="mb-4 border-b pb-3">
+            <h3 className="flex items-center gap-2 text-red-600 text-lg font-medium">
               <AlertCircle className="h-5 w-5" />
               Error in Blueprint Values Section
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div>
+          <div className="space-y-4">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Something went wrong</AlertTitle>
@@ -77,8 +76,8 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps, ErrorBoundaryStat
                 <Button onClick={this.resetError}>Try Again</Button>
               </AlertDescription>
             </Alert>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       );
     }
 

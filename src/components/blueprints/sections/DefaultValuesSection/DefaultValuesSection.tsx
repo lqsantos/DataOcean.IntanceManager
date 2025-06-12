@@ -9,7 +9,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBlueprintForm } from '@/contexts/blueprint-form-context';
 import { fetchTemplateSchemaForDefaultValues } from '@/services/template-schema-service';
@@ -286,12 +285,8 @@ export const DefaultValuesSection = () => {
   };
 
   return (
-    <Card className="w-full" data-testid="default-values-section">
-      <CardHeader>
-        <CardTitle>{t('values.title')}</CardTitle>
-        <CardDescription>{t('values.description')}</CardDescription>
-      </CardHeader>
-      <CardContent>{renderContent()}</CardContent>
-    </Card>
+    <section className="w-full space-y-6" data-testid="default-values-section">
+      <div className="space-y-6">{renderContent()}</div>
+    </section>
   );
 };

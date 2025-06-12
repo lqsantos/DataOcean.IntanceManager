@@ -12,7 +12,6 @@ import { useDebounce } from 'use-debounce';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import type { FilterOptions } from './FilterControls';
 import { FilterControls } from './FilterControls';
@@ -270,10 +269,10 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
   }, [templateValues.fields, filters]);
 
   return (
-    <Card className="mt-4" data-testid="template-value-editor">
-      <CardHeader className="pb-3">
+    <div className="mt-4 border rounded-md p-4" data-testid="template-value-editor">
+      <div className="pb-3 border-b mb-4">
         <div className="flex items-center justify-between">
-          <CardTitle>{t('values.editor.title')}</CardTitle>
+          <h3 className="text-lg font-medium">{t('values.editor.title')}</h3>
           <div>
             <Badge variant="outline" className="mr-2">
               {templateValues.templateName}
@@ -281,8 +280,8 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
             <Badge variant="secondary">{templateValues.templateVersion}</Badge>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="space-y-4">
         {/* View Toggle */}
         <ViewToggle viewMode={viewMode} onViewModeChange={handleViewModeChange} />
 
@@ -392,7 +391,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
             variableWarnings={validation.variableWarnings}
           />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
