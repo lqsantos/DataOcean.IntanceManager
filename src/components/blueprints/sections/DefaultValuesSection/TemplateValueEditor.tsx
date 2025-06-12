@@ -269,8 +269,8 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
   }, [templateValues.fields, filters]);
 
   return (
-    <div className="mt-4 border rounded-md p-4" data-testid="template-value-editor">
-      <div className="pb-3 border-b mb-4">
+    <div className="mt-4 rounded-md border p-4" data-testid="template-value-editor">
+      <div className="mb-4 border-b pb-3">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">{t('values.editor.title')}</h3>
           <div>

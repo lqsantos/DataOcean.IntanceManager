@@ -52,9 +52,9 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps, ErrorBoundaryStat
       }
 
       return (
-        <div className="border border-red-200 rounded-md p-4">
+        <div className="rounded-md border border-red-200 p-4">
           <div className="mb-4 border-b pb-3">
-            <h3 className="flex items-center gap-2 text-red-600 text-lg font-medium">
+            <h3 className="flex items-center gap-2 text-lg font-medium text-red-600">
               <AlertCircle className="h-5 w-5" />
               Error in Blueprint Values Section
             </h3>

@@ -257,7 +257,7 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
   };
 
   return (
-    <div className="mt-6 border rounded-md p-4" data-testid="contract-preview">
+    <div className="mt-6 rounded-md border p-4" data-testid="contract-preview">
       <div className="mb-4 border-b pb-3">
         <h3 className="text-lg font-medium">{t('values.contractPreview.title')}</h3>
         <p className="text-sm text-muted-foreground">{t('values.contractPreview.description')}</p>
