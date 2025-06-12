@@ -464,31 +464,37 @@ export const TableView: React.FC<TableViewProps> = ({
 
   return (
     <div className="mt-4" data-testid="table-view">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-1/3">{t('values.table.field')}</TableHead>
-            <TableHead className="w-1/12">{t('values.table.type')}</TableHead>
-            <TableHead className="w-1/6">{t('values.table.defaultValue')}</TableHead>
-            <TableHead className="w-1/6">{t('values.table.value')}</TableHead>
-            <TableHead className="w-1/12 text-center">{t('values.table.exposed')}</TableHead>
-            <TableHead className="w-1/12 text-center">{t('values.table.overridable')}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {fields.length > 0 ? (
-            renderFields(fields)
-          ) : (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center">
-                <Alert>
-                  <AlertDescription>{t('values.table.noFields')}</AlertDescription>
-                </Alert>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <div className="rounded-md border">
+        <div className="max-h-[600px] overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 z-10 bg-background">
+              <TableRow>
+                <TableHead className="w-1/3">{t('values.table.field')}</TableHead>
+                <TableHead className="w-1/12">{t('values.table.type')}</TableHead>
+                <TableHead className="w-1/6">{t('values.table.defaultValue')}</TableHead>
+                <TableHead className="w-1/6">{t('values.table.value')}</TableHead>
+                <TableHead className="w-1/12 text-center">{t('values.table.exposed')}</TableHead>
+                <TableHead className="w-1/12 text-center">
+                  {t('values.table.overridable')}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {fields.length > 0 ? (
+                renderFields(fields)
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    <Alert>
+                      <AlertDescription>{t('values.table.noFields')}</AlertDescription>
+                    </Alert>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 };

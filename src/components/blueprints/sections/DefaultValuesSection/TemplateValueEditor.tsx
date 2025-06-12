@@ -5,9 +5,10 @@
  */
 
 import Editor from '@monaco-editor/react';
-import { Loader2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 
 import { Badge } from '@/components/ui/badge';
@@ -17,9 +18,8 @@ import { BatchActions } from './BatchActions';
 import type { FilterOptions } from './FilterControls';
 import { FilterControls } from './FilterControls';
 import { TableView } from './TableView';
-import type { DefaultValueField, TemplateValueEditorProps } from './types';
+import type { TemplateDefaultValues, TemplateValueEditorProps } from './types';
 import { validateYamlAgainstSchema } from './utils/yaml-validator';
-import { ValidationFeedback } from './ValidationFeedback';
 import { ViewMode, ViewToggle } from './ViewToggle';
 
 export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
@@ -68,6 +68,106 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
       setEditorContent(value);
     }
   }, []);
+
+  // Show validation feedback as toast notifications
+  const showValidationToasts = useCallback(
+    (validationState: ValidationState) => {
+      // Dismiss all existing validation toasts
+      toast.dismiss('validation-errors');
+      toast.dismiss('validation-warnings');
+      toast.dismiss('variable-warnings');
+
+      // Show error toasts if any
+      if (validationState.errors.length > 0) {
+        toast.error(
+          <div>
+            <div className="mb-2 flex items-center">
+              <AlertCircle className="mr-2 h-5 w-5" />
+              <span className="font-semibold">{t('values.validation.errorTitle')}</span>
+            </div>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {validationState.errors.map((error, index) => (
+                <li key={`error-${index}`} data-testid={`validation-error-${index}`}>
+                  {error.message}
+                  {error.path && (
+                    <span className="block text-xs opacity-75">
+                      {t('values.validation.atPath', { path: error.path.join('.') })}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>,
+          {
+            id: 'validation-errors',
+            duration: 8000,
+          }
+        );
+      }
+
+      // Show warning toasts if any
+      if (validationState.warnings.length > 0) {
+        toast.warning(
+          <div>
+            <div className="mb-2 flex items-center">
+              <AlertTriangle className="mr-2 h-5 w-5" />
+              <span className="font-semibold">{t('values.validation.warningTitle')}</span>
+            </div>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {validationState.warnings.map((warning, index) => (
+                <li key={`warning-${index}`} data-testid={`validation-warning-${index}`}>
+                  {warning.message}
+                  {warning.path && (
+                    <span className="block text-xs opacity-75">
+                      {t('values.validation.atPath', { path: warning.path.join('.') })}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>,
+          {
+            id: 'validation-warnings',
+            duration: 8000,
+          }
+        );
+      }
+
+      // Show variable warning toasts if any
+      if (validationState.variableWarnings.length > 0) {
+        toast.info(
+          <div>
+            <div className="mb-2 flex items-center">
+              <AlertTriangle className="mr-2 h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="font-semibold">{t('values.validation.warningTitle')}</span>
+            </div>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {validationState.variableWarnings.map((warning, index) => (
+                <li key={`var-warning-${index}`} data-testid={`variable-warning-${index}`}>
+                  {warning.message}
+                  {warning.variableName && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      {warning.variableName}
+                    </Badge>
+                  )}
+                  {warning.path && (
+                    <span className="block text-xs opacity-75">
+                      {t('values.validation.atPath', { path: warning.path.join('.') })}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>,
+          {
+            id: 'variable-warnings',
+            duration: 8000,
+          }
+        );
+      }
+    },
+    [t]
+  );
 
   // Validate editor content when it changes
   useEffect(() => {
@@ -118,7 +218,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
           usedVariables.forEach((variableName) => {
             if (!declaredVariableNames.includes(variableName)) {
               variableWarnings.push({
-                message: t('values.validation.variableNotDeclared', { variableName }),
+                message: `Variable "${variableName}" is not declared in blueprint variables`,
                 variableName,
               });
             }
@@ -137,18 +237,21 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
               const schemas = await fetchTemplateJsonSchema(templateValues.templateId);
 
               // Validate against all schema parts
-              const validationResults = schemas.map((schema) => {
-                try {
-                  return { isValid: true, errors: [] }; // Placeholder for actual validation
-                } catch (err) {
-                  return { isValid: false, errors: [{ message: String(err) }] };
-                }
-              });
+              // Assuming schemas is an array of json schema objects
+              const validationResults = Array.isArray(schemas)
+                ? schemas.map((_: unknown) => {
+                    try {
+                      return { isValid: true, errors: [] }; // Placeholder for actual validation
+                    } catch (err) {
+                      return { isValid: false, errors: [{ message: String(err) }] };
+                    }
+                  })
+                : [];
 
               // Collect errors from schema validation
               const schemaErrors = validationResults
-                .filter((result) => !result.isValid)
-                .flatMap((result) => result.errors);
+                .filter((result: { isValid: boolean }) => !result.isValid)
+                .flatMap((result: { errors: Array<{ message: string }> }) => result.errors);
 
               // Update validation state with schema results
               const hasSchemaErrors = schemaErrors.length > 0;
@@ -164,28 +267,50 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
           }
 
           setValidation(updatedState);
+
+          // Show toast notifications for warnings and variable warnings
+          if (updatedState.warnings.length > 0 || updatedState.variableWarnings.length > 0) {
+            showValidationToasts(updatedState);
+          }
         } else {
           // YAML is invalid, update state with parse errors
-          setValidation({
+          const updatedState = {
             isValid: false,
             errors: validationResult.errors,
             warnings: validationResult.warnings || [],
             variableWarnings: [],
-          });
+          };
+
+          setValidation(updatedState);
+
+          // Show toast notifications for errors
+          showValidationToasts(updatedState);
         }
       } catch (error) {
         // Something went wrong with validation
-        setValidation({
+        const errorState = {
           isValid: false,
           errors: [{ message: String(error) }],
           warnings: [],
           variableWarnings: [],
-        });
+        };
+
+        setValidation(errorState);
+
+        // Show toast notifications for errors
+        showValidationToasts(errorState);
       }
     };
 
     validateContent().catch(console.error);
-  }, [debouncedContent, blueprintVariables, t, templateValues.fields, templateValues.templateId]);
+  }, [
+    debouncedContent,
+    blueprintVariables,
+    t,
+    templateValues.fields,
+    templateValues.templateId,
+    showValidationToasts,
+  ]);
 
   // Filter fields based on current filters
   const filteredFields = useMemo(() => {
@@ -199,23 +324,23 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
         filters.searchQuery &&
         !field.key.toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
         !(field.description || '').toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
-        !(field.path || '').toLowerCase().includes(filters.searchQuery.toLowerCase())
+        !field.path.join('.').toLowerCase().includes(filters.searchQuery.toLowerCase())
       ) {
         return false;
       }
 
       // Apply exposed filter
-      if (filters.showOnlyExposed && !field.exposed) {
+      if (filters.onlyExposed && !field.exposed) {
         return false;
       }
 
       // Apply customized filter
-      if (filters.showOnlyCustomized && field.source !== 'blueprint') {
+      if (filters.onlyCustomized && field.source !== 'blueprint') {
         return false;
       }
 
       // Apply overridable filter
-      if (filters.showOnlyOverridable && !field.allowInstanceOverride) {
+      if (filters.fieldType === 'overridable' && !field.overridable) {
         return false;
       }
 
@@ -235,15 +360,10 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
 
   // Handle field updates from table view
   const handleFieldsUpdate = useCallback(
-    (updatedFields: DefaultValueField[]) => {
-      const updatedTemplate = {
-        ...templateValues,
-        fields: updatedFields,
-      };
-
-      onChange(updatedTemplate);
+    (updatedTemplateValues: TemplateDefaultValues) => {
+      onChange(updatedTemplateValues);
     },
-    [templateValues, onChange]
+    [onChange]
   );
 
   return (
@@ -286,7 +406,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
                 fields: filteredFields,
               }}
               onChange={handleFieldsUpdate}
-              showControls={true}
+              blueprintVariables={blueprintVariables}
             />
           </>
         ) : (
@@ -299,7 +419,6 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
               <Editor
                 height="400px"
                 language="yaml"
-                theme="vs-dark"
                 value={editorContent}
                 onChange={handleEditorChange}
                 options={{
@@ -358,6 +477,12 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
                       ...templateValues,
                       rawYaml: editorContent,
                     });
+
+                    // Show success toast
+                    toast.success('Changes applied successfully');
+                  } else {
+                    // Show validation errors as toast
+                    showValidationToasts(validation);
                   }
                 }}
                 data-testid="apply-changes-button"
@@ -367,15 +492,6 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
             </div>
           </>
         )}
-
-        {/* Validation Feedback - shown in both views */}
-        <div className="mt-4">
-          <ValidationFeedback
-            errors={validation.errors}
-            warnings={validation.warnings}
-            variableWarnings={validation.variableWarnings}
-          />
-        </div>
       </div>
     </div>
   );
