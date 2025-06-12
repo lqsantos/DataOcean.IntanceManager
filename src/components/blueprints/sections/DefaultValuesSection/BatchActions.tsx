@@ -15,12 +15,13 @@ import { ValueSourceType } from './types';
 interface BatchActionsProps {
   fields: DefaultValueField[];
   onFieldsChange: (updatedFields: DefaultValueField[]) => void;
+  compact?: boolean; // If true, use more compact styling for inline display
 }
 
 /**
  * Component for batch actions on fields
  */
-export function BatchActions({ fields, onFieldsChange }: BatchActionsProps) {
+export function BatchActions({ fields, onFieldsChange, compact = false }: BatchActionsProps) {
   const { t } = useTranslation('blueprints', { keyPrefix: 'values.batchActions' });
 
   /**
@@ -71,7 +72,7 @@ export function BatchActions({ fields, onFieldsChange }: BatchActionsProps) {
   };
 
   return (
-    <div className="mb-4 flex space-x-2" data-testid="batch-actions">
+    <div className={`flex space-x-2 ${compact ? '' : 'mb-4'}`} data-testid="batch-actions">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -81,8 +82,8 @@ export function BatchActions({ fields, onFieldsChange }: BatchActionsProps) {
               onClick={() => setAllFieldsExposure(true)}
               data-testid="expose-all-fields"
             >
-              <Eye className="mr-2 h-4 w-4" />
-              {t('exposeAll')}
+              <Eye className={compact ? 'h-4 w-4' : 'mr-2 h-4 w-4'} />
+              {compact ? '' : t('exposeAll')}
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('exposeAllDescription')}</TooltipContent>
@@ -98,8 +99,8 @@ export function BatchActions({ fields, onFieldsChange }: BatchActionsProps) {
               onClick={() => setAllFieldsExposure(false)}
               data-testid="hide-all-fields"
             >
-              <EyeOff className="mr-2 h-4 w-4" />
-              {t('hideAll')}
+              <EyeOff className={compact ? 'h-4 w-4' : 'mr-2 h-4 w-4'} />
+              {compact ? '' : t('hideAll')}
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('hideAllDescription')}</TooltipContent>
@@ -115,8 +116,8 @@ export function BatchActions({ fields, onFieldsChange }: BatchActionsProps) {
               onClick={resetAllToDefaults}
               data-testid="reset-to-defaults"
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              {t('resetAll')}
+              <RefreshCw className={compact ? 'h-4 w-4' : 'mr-2 h-4 w-4'} />
+              {compact ? '' : t('resetAll')}
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('resetAllDescription')}</TooltipContent>

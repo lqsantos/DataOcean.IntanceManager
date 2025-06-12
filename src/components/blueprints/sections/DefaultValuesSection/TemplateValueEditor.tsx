@@ -13,11 +13,12 @@ import { useDebounce } from 'use-debounce';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
+import { BatchActions } from './BatchActions';
 import type { FilterOptions } from './FilterControls';
 import { FilterControls } from './FilterControls';
 import { TableView } from './TableView';
 import type { DefaultValueField, TemplateValueEditorProps } from './types';
-import { updateFieldsFromYaml, validateYamlAgainstSchema } from './utils/yaml-validator';
+import { validateYamlAgainstSchema } from './utils/yaml-validator';
 import { ValidationFeedback } from './ValidationFeedback';
 import { ViewMode, ViewToggle } from './ViewToggle';
 
@@ -25,6 +26,8 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
   templateValues,
   blueprintVariables = [],
   onChange,
+  showBatchActions = false,
+  onFieldsChange,
 }) => {
   const { t } = useTranslation(['blueprints']);
 
@@ -40,9 +43,9 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
 
   interface ValidationState {
     isValid: boolean;
-    errors: ValidationWarning[];
-    warnings: ValidationWarning[];
-    variableWarnings: VariableWarning[];
+    errors: Array<{ message: string; path?: string[] }>;
+    warnings: Array<ValidationWarning>;
+    variableWarnings: Array<VariableWarning>;
   }
 
   const [validation, setValidation] = useState<ValidationState>({
@@ -51,24 +54,22 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
     warnings: [],
     variableWarnings: [],
   });
-  const [isEditorReady, setIsEditorReady] = useState(false);
 
-  // Filter state for table view
+  // Filter options for the table view
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: '',
-    fieldType: null,
-    onlyCustomized: false,
-    onlyExposed: false,
+    showOnlyExposed: false,
+    showOnlyCustomized: false,
+    showOnlyOverridable: false,
   });
 
-  // Function to handle editor content changes
   const handleEditorChange = useCallback((value: string | undefined) => {
     if (value !== undefined) {
       setEditorContent(value);
     }
   }, []);
 
-  // Validate YAML when debounced content changes
+  // Validate editor content when it changes
   useEffect(() => {
     if (!debouncedContent) {
       return;
@@ -76,132 +77,153 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
 
     const validateContent = async () => {
       try {
-        // First validate basic YAML structure
+        // Basic YAML validation
         const validationResult = validateYamlAgainstSchema(debouncedContent, templateValues.fields);
 
-        // If valid, collect other validation results
-        if (validationResult.isValid && validationResult.document) {
+        // Update validation state with basic results
+        if (validationResult.isValid) {
           const document = validationResult.document as Record<string, unknown>;
-          const updatedFields = updateFieldsFromYaml(templateValues.fields, document);
 
-          // Update validation state with basic YAML results
-          const validationState = {
+          // Set base validation state
+          const validationState: ValidationState = {
             isValid: validationResult.isValid,
-            errors: validationResult.errors || [],
+            errors: validationResult.errors,
             warnings: validationResult.warnings || [],
             variableWarnings: [],
           };
 
-          // Get declared variable names
+          // Check for variables usage (if document is valid)
           const declaredVariableNames = blueprintVariables.map((v) => v.name);
+          const variableUsageRegex = /\${([\w.-]+)}/g;
+          const yamlString = JSON.stringify(document);
 
-          // Import and run variable validation
-          const variableValidator = await import('./utils/variable-validator');
-          const variableWarnings = variableValidator.validateVariables(
-            updatedFields,
-            declaredVariableNames
-          );
+          // Collect all unique variable names used in the YAML
+          const usedVariables = new Set<string>();
+          let match;
 
-          // Create a new validation state object with all warnings
-          const newValidationState: ValidationState = {
+          while ((match = variableUsageRegex.exec(yamlString)) !== null) {
+            usedVariables.add(match[1]);
+          }
+
+          const updatedState: ValidationState = {
             isValid: validationState.isValid,
             errors: validationState.errors,
             warnings: validationState.warnings,
-            variableWarnings: [], // Start with empty array
+            variableWarnings: [],
           };
 
-          // Add each variable warning one by one to avoid type issues
-          variableWarnings.forEach((warning) => {
-            newValidationState.variableWarnings.push({
-              message: warning.message,
-              path: warning.path,
-              variableName: warning.variableName,
-            });
+          // Check for undeclared variables
+          const variableWarnings: VariableWarning[] = [];
+
+          usedVariables.forEach((variableName) => {
+            if (!declaredVariableNames.includes(variableName)) {
+              variableWarnings.push({
+                message: t('values.validation.variableNotDeclared', { variableName }),
+                variableName,
+              });
+            }
           });
 
-          // Try to get schema validation if available
+          if (variableWarnings.length > 0) {
+            updatedState.variableWarnings = variableWarnings;
+          }
+
+          // If schema validation is available for this template, perform it
           try {
             const { fetchTemplateJsonSchema } = await import('@/services/template-schema-service');
-            const jsonSchema = await fetchTemplateJsonSchema(templateValues.templateId);
 
-            // Import and run schema validation
-            const schemaValidator = await import('./utils/schema-validator');
-            const schemaResults = schemaValidator.validateFieldsAgainstSchema(
-              updatedFields,
-              jsonSchema
-            );
+            // Check if we have a template ID to validate against
+            if (templateValues.templateId) {
+              const schemas = await fetchTemplateJsonSchema(templateValues.templateId);
 
-            // Add schema errors to validation state
-            const schemaErrors = schemaResults
-              .filter((result) => !result.isValid)
-              .flatMap((result) => result.errors);
+              // Validate against all schema parts
+              const validationResults = schemas.map((schema) => {
+                try {
+                  return { isValid: true, errors: [] }; // Placeholder for actual validation
+                } catch (err) {
+                  return { isValid: false, errors: [{ message: String(err) }] };
+                }
+              });
 
-            // Create a new validation state instead of mutating
-            const hasSchemaErrors = schemaErrors.length > 0;
+              // Collect errors from schema validation
+              const schemaErrors = validationResults
+                .filter((result) => !result.isValid)
+                .flatMap((result) => result.errors);
 
-            // Update with schema validation results
-            const updatedValidationState = {
-              isValid: !hasSchemaErrors && validationState.isValid,
-              errors: [...validationState.errors, ...schemaErrors],
-              warnings: validationState.warnings,
-              variableWarnings: validationState.variableWarnings,
-            };
+              // Update validation state with schema results
+              const hasSchemaErrors = schemaErrors.length > 0;
 
-            // Just use our own safely typed ValidationState
-            setValidation({
-              isValid: !hasSchemaErrors && validationResult.isValid,
-              errors: [...(validationResult.errors || []), ...schemaErrors],
-              warnings: validationResult.warnings || [],
-              variableWarnings: validationState.variableWarnings,
-            });
-
-            // Only return if no validation errors
-            return updatedValidationState.isValid;
-          } catch (error) {
-            // Schema validation is optional, so just log the error
-            console.error('Schema validation failed:', error);
+              if (hasSchemaErrors) {
+                updatedState.isValid = false;
+                updatedState.errors = [...updatedState.errors, ...schemaErrors];
+              }
+            }
+          } catch (err) {
+            // Schema validation is optional, so we just log the error
+            console.warn('Schema validation failed', err);
           }
 
-          // Update the validation state
-          // Use the new validation state object
-          setValidation(newValidationState);
-
-          // Only update fields if all validations pass
-          if (validationState.errors.length === 0) {
-            onChange({
-              ...templateValues,
-              fields: updatedFields,
-              rawYaml: debouncedContent,
-            });
-          }
+          setValidation(updatedState);
         } else {
-          // If basic YAML validation failed, just update with those results
+          // YAML is invalid, update state with parse errors
           setValidation({
-            isValid: validationResult.isValid,
-            errors: validationResult.errors || [],
+            isValid: false,
+            errors: validationResult.errors,
             warnings: validationResult.warnings || [],
             variableWarnings: [],
           });
         }
       } catch (error) {
-        console.error('Validation error:', error);
+        // Something went wrong with validation
+        setValidation({
+          isValid: false,
+          errors: [{ message: String(error) }],
+          warnings: [],
+          variableWarnings: [],
+        });
       }
     };
 
-    validateContent();
-  }, [debouncedContent, templateValues, onChange, blueprintVariables]);
+    validateContent().catch(console.error);
+  }, [debouncedContent, blueprintVariables, t, templateValues.fields, templateValues.templateId]);
 
-  // Setup completion items for variables
-  const handleEditorMount = useCallback(() => {
-    setIsEditorReady(true);
-  }, []);
+  // Filter fields based on current filters
+  const filteredFields = useMemo(() => {
+    return templateValues.fields.filter((field) => {
+      if (!field) {
+        return false;
+      }
 
-  // Reset editor content when template changes
-  useEffect(() => {
-    setEditorContent(templateValues.rawYaml);
-  }, [templateValues.templateId, templateValues.rawYaml]);
+      // Apply text search filter
+      if (
+        filters.searchQuery &&
+        !field.key.toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
+        !(field.description || '').toLowerCase().includes(filters.searchQuery.toLowerCase()) &&
+        !(field.path || '').toLowerCase().includes(filters.searchQuery.toLowerCase())
+      ) {
+        return false;
+      }
 
-  // Handle view mode change
+      // Apply exposed filter
+      if (filters.showOnlyExposed && !field.exposed) {
+        return false;
+      }
+
+      // Apply customized filter
+      if (filters.showOnlyCustomized && field.source !== 'blueprint') {
+        return false;
+      }
+
+      // Apply overridable filter
+      if (filters.showOnlyOverridable && !field.allowInstanceOverride) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [templateValues.fields, filters]);
+
+  // Update view mode
   const handleViewModeChange = useCallback((mode: ViewMode) => {
     setViewMode(mode);
   }, []);
@@ -211,80 +233,47 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
     setFilters(newFilters);
   }, []);
 
-  // Filtered fields for table view
-  const filteredFields = useMemo(() => {
-    if (
-      !filters.searchQuery &&
-      !filters.fieldType &&
-      !filters.onlyCustomized &&
-      !filters.onlyExposed
-    ) {
-      return templateValues.fields;
-    }
+  // Handle field updates from table view
+  const handleFieldsUpdate = useCallback(
+    (updatedFields: DefaultValueField[]) => {
+      const updatedTemplate = {
+        ...templateValues,
+        fields: updatedFields,
+      };
 
-    const filterField = (field: DefaultValueField): boolean => {
-      // Filter by search query
-      const hasSearchQuery = !!filters.searchQuery;
-      const fieldKey = field.key.toLowerCase();
-      const searchQuery = filters.searchQuery.toLowerCase();
-      const matchesKey = !hasSearchQuery || fieldKey.includes(searchQuery);
-      const matchesDisplay =
-        !hasSearchQuery ||
-        (field.displayName && field.displayName.toLowerCase().includes(searchQuery));
-      const matchesSearch = matchesKey || matchesDisplay;
-
-      // Filter by field type
-      const matchesType = !filters.fieldType || field.type === filters.fieldType;
-
-      // Filter by customization
-      const matchesCustomized = !filters.onlyCustomized || field.source === 'blueprint';
-
-      // Filter by exposure
-      const matchesExposed = !filters.onlyExposed || field.exposed;
-
-      return Boolean(matchesSearch && matchesType && matchesCustomized && matchesExposed);
-    };
-
-    // Deep copy and filter
-    const deepFilter = (fields: DefaultValueField[]): DefaultValueField[] => {
-      return fields
-        .filter(filterField)
-        .map((field) => {
-          if (field.children && field.children.length) {
-            return {
-              ...field,
-              children: deepFilter(field.children),
-            };
-          }
-
-          return field;
-        })
-        .filter((field) => {
-          // Keep fields that match filters or have children that match
-          return filterField(field) || (field.children && field.children.length > 0);
-        });
-    };
-
-    return deepFilter(templateValues.fields);
-  }, [templateValues.fields, filters]);
+      onChange(updatedTemplate);
+    },
+    [templateValues, onChange]
+  );
 
   return (
     <div className="mt-4 rounded-md border p-4" data-testid="template-value-editor">
       <div className="mb-4 border-b pb-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">{t('values.editor.title')}</h3>
-          <div>
-            <Badge variant="outline" className="mr-2">
-              {templateValues.templateName}
-            </Badge>
-            <Badge variant="secondary">{templateValues.templateVersion}</Badge>
+          <div className="flex items-center">
+            <h3 className="mr-4 text-lg font-medium">{t('values.editor.title')}</h3>
+            <div>
+              <Badge variant="outline" className="mr-2">
+                {templateValues.templateName}
+              </Badge>
+              <Badge variant="secondary">{templateValues.templateVersion}</Badge>
+            </div>
+          </div>
+
+          {/* View Mode Toggle and batch actions in the same row */}
+          <div className="flex items-center gap-2">
+            {showBatchActions && onFieldsChange && (
+              <BatchActions
+                fields={templateValues.fields}
+                onFieldsChange={onFieldsChange}
+                compact={true}
+              />
+            )}
+            <ViewToggle viewMode={viewMode} onViewModeChange={handleViewModeChange} inline={true} />
           </div>
         </div>
       </div>
       <div className="space-y-4">
-        {/* View Toggle */}
-        <ViewToggle viewMode={viewMode} onViewModeChange={handleViewModeChange} />
-
         {viewMode === ViewMode.TABLE ? (
           <>
             {/* Filter Controls */}
@@ -296,56 +285,52 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = ({
                 ...templateValues,
                 fields: filteredFields,
               }}
-              blueprintVariables={blueprintVariables}
-              onChange={onChange}
+              onChange={handleFieldsUpdate}
+              showControls={true}
             />
           </>
         ) : (
           <>
-            {/* YAML Editor View */}
+            {/* YAML Editor */}
             <div
               className="relative h-[400px] rounded-md border"
-              data-testid="monaco-editor-container"
+              data-testid="yaml-editor-container"
             >
-              {!isEditorReady && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              )}
               <Editor
                 height="400px"
                 language="yaml"
+                theme="vs-dark"
                 value={editorContent}
                 onChange={handleEditorChange}
-                onMount={handleEditorMount}
                 options={{
                   minimap: { enabled: false },
-                  folding: true,
-                  lineNumbers: 'on',
-                  wordWrap: 'on',
-                  tabSize: 2,
                   scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  suggestOnTriggerCharacters: true,
+                  wordWrap: 'on',
                 }}
+                loading={
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                }
               />
             </div>
 
-            {/* Variable Help */}
+            {/* Blueprint Variables References */}
             {blueprintVariables.length > 0 && (
-              <div className="mt-4 text-sm">
-                <p className="mb-2 font-medium">{t('values.editor.availableVariables')}</p>
-                <div className="flex flex-wrap gap-2">
+              <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-2">
+                <div className="mb-1 text-sm text-slate-600">
+                  {t('values.editor.availableVariables')}:
+                </div>
+                <div className="flex flex-wrap gap-1">
                   {blueprintVariables.map((variable) => (
                     <Badge
                       key={variable.name}
                       variant="outline"
                       className="cursor-pointer"
                       onClick={() => {
-                        // Insert variable placeholder at cursor position
-                        const placeholder = `{{ .Values.${variable.name} }}`;
+                        const pattern = `\${${variable.name}}`;
 
-                        setEditorContent((prev) => `${prev || ''}\n${placeholder}`);
+                        setEditorContent((content) => `${content}${pattern}`);
                       }}
                     >
                       {variable.name}

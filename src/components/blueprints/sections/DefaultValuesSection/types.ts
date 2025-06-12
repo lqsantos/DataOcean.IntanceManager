@@ -110,6 +110,8 @@ export interface TemplateValueEditorProps {
   templateValues: TemplateDefaultValues;
   blueprintVariables?: Array<{ name: string; value: string }>;
   onChange: (updatedValues: TemplateDefaultValues) => void;
+  showBatchActions?: boolean; // Whether to show batch actions in the header
+  onFieldsChange?: (updatedFields: DefaultValueField[]) => void; // Callback for field changes from batch actions
 }
 
 export interface DefaultValuesSectionProps {

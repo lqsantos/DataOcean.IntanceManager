@@ -17,9 +17,14 @@ export enum ViewMode {
 interface ViewToggleProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  inline?: boolean; // If true, remove margin and adjust styling for inline display
 }
 
-export const ViewToggle: React.FC<ViewToggleProps> = ({ viewMode, onViewModeChange }) => {
+export const ViewToggle: React.FC<ViewToggleProps> = ({
+  viewMode,
+  onViewModeChange,
+  inline = false,
+}) => {
   const { t } = useTranslation(['blueprints']);
 
   const handleChangeView = useCallback(
@@ -32,7 +37,7 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ viewMode, onViewModeChan
   );
 
   return (
-    <div className="mb-4 flex justify-end" data-testid="view-toggle">
+    <div className={`flex ${inline ? '' : 'mb-4'} justify-end`} data-testid="view-toggle">
       <ToggleGroup type="single" value={viewMode} onValueChange={handleChangeView}>
         <ToggleGroupItem
           value={ViewMode.TABLE}

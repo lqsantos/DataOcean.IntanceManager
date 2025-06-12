@@ -14,7 +14,6 @@ import { useBlueprintForm } from '@/contexts/blueprint-form-context';
 import { fetchTemplateSchemaForDefaultValues } from '@/services/template-schema-service';
 import { logError } from '@/utils/errorLogger';
 
-import { BatchActions } from './BatchActions';
 import { ContractPreview } from './ContractPreview';
 import { ErrorBoundary } from './ErrorBoundary';
 import { TemplateTabsNavigation } from './TemplateTabsNavigation';
@@ -254,26 +253,19 @@ export const DefaultValuesSection = () => {
         </ErrorBoundary>
 
         <ErrorBoundary>
-          <div className="mb-4">
-            <BatchActions
-              fields={selectedTemplate.fields}
-              onFieldsChange={(updatedFields) => {
-                const updatedTemplate = {
-                  ...selectedTemplate,
-                  fields: updatedFields,
-                };
-
-                handleTemplateValueChange(updatedTemplate);
-              }}
-            />
-          </div>
-        </ErrorBoundary>
-
-        <ErrorBoundary>
           <TemplateValueEditor
             templateValues={selectedTemplate}
             blueprintVariables={blueprintVariables}
             onChange={handleTemplateValueChange}
+            showBatchActions={true}
+            onFieldsChange={(updatedFields: DefaultValueField[]) => {
+              const updatedTemplate = {
+                ...selectedTemplate,
+                fields: updatedFields,
+              };
+
+              handleTemplateValueChange(updatedTemplate);
+            }}
           />
         </ErrorBoundary>
 
