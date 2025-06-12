@@ -7,6 +7,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { type ReactNode, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -51,6 +52,9 @@ export const TableView: React.FC<TableViewProps> = ({
     (fieldPath: string) => Boolean(expandedFields[fieldPath]),
     [expandedFields]
   );
+
+  // Safety check for fields array
+  const fields = templateValues?.fields || [];
 
   // Handle value source change (template vs blueprint)
   const _handleSourceChange = useCallback(
@@ -394,10 +398,7 @@ export const TableView: React.FC<TableViewProps> = ({
         return (
           <React.Fragment key={field.path.join('.')}>
             <TableRow className={cn('group/row', depth > 0 && 'bg-muted/50')}>
-              <TableCell
-                className="w-1/3"
-                style={{ paddingLeft: `${depth * 2 + 1}rem` }}
-              >
+              <TableCell className="w-1/3" style={{ paddingLeft: `${depth * 2 + 1}rem` }}>
                 {hasChildren ? (
                   <Button
                     variant="ghost"
@@ -466,21 +467,29 @@ export const TableView: React.FC<TableViewProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('tableView.field')}</TableHead>
-            <TableHead>{t('tableView.type')}</TableHead>
-            <TableHead>{t('tableView.defaultValue')}</TableHead>
-            <TableHead>{t('tableView.blueprintValue')}</TableHead>
-            <TableHead className="text-center">{t('tableView.expose')}</TableHead>
-            <TableHead className="text-center">{t('tableView.override')}</TableHead>
+            <TableHead className="w-1/3">{t('defaultValues.table.field')}</TableHead>
+            <TableHead className="w-1/12">{t('defaultValues.table.type')}</TableHead>
+            <TableHead className="w-1/6">{t('defaultValues.table.defaultValue')}</TableHead>
+            <TableHead className="w-1/6">{t('defaultValues.table.value')}</TableHead>
+            <TableHead className="w-1/12 text-center">
+              {t('defaultValues.table.exposed')}
+            </TableHead>
+            <TableHead className="w-1/12 text-center">
+              {t('defaultValues.table.overridable')}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {templateValues.fields.length > 0 ? (
-            renderFields(templateValues.fields)
+          {fields.length > 0 ? (
+            renderFields(fields)
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="py-4 text-center">
-                {t('tableView.empty')}
+              <TableCell colSpan={6} className="text-center">
+                <Alert>
+                  <AlertDescription>
+                    {t('defaultValues.table.noFields')}
+                  </AlertDescription>
+                </Alert>
               </TableCell>
             </TableRow>
           )}

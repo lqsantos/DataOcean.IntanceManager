@@ -29,9 +29,17 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
    * Extract only exposed fields from a field array
    */
   const getExposedFields = (
-    fields: DefaultValueField[]
+    fields: DefaultValueField[] | undefined
   ): Record<string, Record<string, unknown>> => {
+    if (!fields || !Array.isArray(fields)) {
+      return {};
+    }
+
     return fields.reduce((acc: Record<string, Record<string, unknown>>, field) => {
+      if (!field) {
+        return acc;
+      }
+      
       if (field.exposed) {
         // For object fields, recursively process their children
         if (field.type === 'object' && field.children) {
@@ -62,10 +70,18 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
    * Count fields with a specific property set to true
    */
   const countFieldsWithProperty = (
-    fields: DefaultValueField[],
+    fields: DefaultValueField[] | undefined,
     property: 'exposed' | 'overridable'
   ): number => {
+    if (!fields || !Array.isArray(fields)) {
+      return 0;
+    }
+
     return fields.reduce((count, field) => {
+      if (!field) {
+        return count;
+      }
+      
       let fieldCount = field[property] ? 1 : 0;
 
       if (field.children) {
@@ -79,8 +95,16 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
   /**
    * Count exposed fields in templates
    */
-  const countExposedFields = (templates: TemplateDefaultValues[]): number => {
+  const countExposedFields = (templates: TemplateDefaultValues[] | undefined): number => {
+    if (!templates || !Array.isArray(templates)) {
+      return 0;
+    }
+
     return templates.reduce((count, template) => {
+      if (!template?.fields) {
+        return count;
+      }
+
       return count + countFieldsWithProperty(template.fields, 'exposed');
     }, 0);
   };
@@ -88,8 +112,16 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
   /**
    * Count overridable fields in templates
    */
-  const countOverridableFields = (templates: TemplateDefaultValues[]): number => {
+  const countOverridableFields = (templates: TemplateDefaultValues[] | undefined): number => {
+    if (!templates || !Array.isArray(templates)) {
+      return 0;
+    }
+
     return templates.reduce((count, template) => {
+      if (!template?.fields) {
+        return count;
+      }
+
       return count + countFieldsWithProperty(template.fields, 'overridable');
     }, 0);
   };
@@ -98,6 +130,10 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
    * Generate an exposed contract with only exposed fields
    */
   const generateExposedContract = () => {
+    if (!contract?.templateValues) {
+      return { templateValues: [] };
+    }
+
     return {
       templateValues: contract.templateValues.map((template) => ({
         templateId: template.templateId,
@@ -125,24 +161,38 @@ export function ContractPreview({ contract }: ContractPreviewProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url); // Clean up the URL object
   };
 
   /**
    * Generate a human-readable summary of the contract
    */
   const generateContractSummary = () => {
+    if (!contract?.templateValues) {
+      return (
+        <div className="space-y-4 text-sm">
+          <p>No template values available.</p>
+        </div>
+      );
+    }
+
     const exposedCount = countExposedFields(contract.templateValues);
     const overridableCount = countOverridableFields(contract.templateValues);
+    const templateCount = contract.templateValues.length;
 
     return (
       <div className="space-y-4 text-sm">
         <p>
-          This blueprint exposes {exposedCount} fields across {contract.templateValues.length}{' '}
+          This blueprint exposes {exposedCount} fields across {templateCount}{' '}
           templates, with {overridableCount} fields allowing instance override.
         </p>
 
         <div className="space-y-2">
           {contract.templateValues.map((template) => {
+            if (!template) {
+              return null;
+            }
+
             const templateExposedCount = countExposedFields([template]);
 
             return (

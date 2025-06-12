@@ -7,6 +7,10 @@
 import type { DefaultValueField } from '../components/blueprints/sections/DefaultValuesSection/types';
 import { logError } from '../utils/errorLogger';
 
+// Constantes para retry
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
 // Response type for fetchTemplateSchemaForDefaultValues
 export interface TemplateSchemaResponse {
   fields: DefaultValueField[];
@@ -18,6 +22,15 @@ export interface TemplateSchemaResponse {
 export interface SchemaValidationResponse {
   isValid: boolean;
   errors: Array<{ message: string; path?: string[] }>;
+}
+
+/**
+ * Helper function para delay entre retries
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 /**
@@ -93,25 +106,57 @@ export async function validateTemplateValues(
 }
 
 /**
- * Fetches the complete JSON Schema for a template
+ * Fetches the complete JSON Schema for a template with retry
  * @param templateId - The ID of the template to fetch schema for
  * @returns The full JSON Schema for the template
  */
 export async function fetchTemplateJsonSchema(
-  templateId: string
+  templateId: string,
+  retryCount = 0
 ): Promise<Record<string, unknown>> {
   try {
     const response = await fetch(`/api/templates/${templateId}/json-schema`);
+    const contentType = response.headers.get('content-type');
 
     if (!response.ok) {
+      const errorData = contentType?.includes('application/json')
+        ? await response.json()
+        : { error: response.statusText };
+
+      // Se for 404, não tentar novamente
+      if (response.status === 404) {
+        throw new Error(`Template não encontrado: ${templateId}`);
+      }
+
+      // Se ainda tiver tentativas e for um erro recuperável, tentar novamente
+      if (retryCount < MAX_RETRIES && response.status >= 500) {
+        console.warn(`Tentativa ${retryCount + 1} de ${MAX_RETRIES} falhou, tentando novamente...`);
+
+        await sleep(RETRY_DELAY_MS);
+
+        return fetchTemplateJsonSchema(templateId, retryCount + 1);
+      }
+
       throw new Error(
-        `Failed to fetch JSON Schema for template ${templateId}. Status: ${response.status}`
+        errorData.message || `Falha ao buscar JSON Schema para template ${templateId}`
       );
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    return data;
   } catch (error) {
     logError(error, `Error fetching JSON Schema for template ${templateId}`);
-    throw new Error(`Failed to load JSON Schema for template ${templateId}`);
+
+    // Se ainda tiver tentativas e for um erro de rede, tentar novamente
+    if (retryCount < MAX_RETRIES && error instanceof TypeError) {
+      console.warn(`Tentativa ${retryCount + 1} de ${MAX_RETRIES} falhou, tentando novamente...`);
+
+      await sleep(RETRY_DELAY_MS);
+
+      return fetchTemplateJsonSchema(templateId, retryCount + 1);
+    }
+
+    throw new Error(`Falha ao carregar JSON Schema para template ${templateId}`);
   }
 }

@@ -253,4 +253,87 @@ export const templateHandlers = [
       });
     }
   }),
+
+  // Get template JSON Schema
+  http.get('/api/templates/:id/json-schema', async ({ params }) => {
+    try {
+      const { id } = params;
+
+      if (!id) {
+        return new HttpResponse(JSON.stringify({ error: 'ID do template é obrigatório' }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+
+      // Short delay to simulate network
+      await delay(USE_PREDICTABLE_MOCK ? 100 : Math.min(500, Math.random() * 1000));
+
+      // Find the template
+      const template = templates.find((t) => t.id === id);
+
+      if (!template) {
+        console.error('Template não encontrado:', id);
+
+        return new HttpResponse(
+          JSON.stringify({
+            error: 'Template não encontrado',
+            message: `Não foi possível encontrar o template com ID ${id}`,
+          }),
+          {
+            status: 404,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      try {
+        // Log para debug
+        console.log('Gerando schema para template:', {
+          id: template.id,
+          name: template.name,
+          category: template.category,
+        });
+
+        // Generate the schema
+        const schema = generateMockSchemaForTemplate(template);
+
+        return HttpResponse.json(schema);
+      } catch (error) {
+        console.error('Erro ao gerar schema:', error);
+
+        return new HttpResponse(
+          JSON.stringify({
+            error: 'Erro interno',
+            message: 'Falha ao gerar schema do template',
+          }),
+          {
+            status: 500,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Erro no handler:', error);
+
+      return new HttpResponse(
+        JSON.stringify({
+          error: 'Erro interno',
+          message: 'Erro inesperado ao processar a requisição',
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+  }),
 ];
