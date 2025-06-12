@@ -402,6 +402,7 @@
       "title": "Values Editor",
       "availableVariables": "Available Variables",
       "resetButton": "Reset",
+      "formatYaml": "Format YAML",
       "applyButton": "Apply Changes"
     },
     "contractPreview": {
@@ -442,6 +443,32 @@
       "exposed": "Expose",
       "overridable": "Allow Override",
       "noFields": "No fields available"
+    },
+    "validationMessages": {
+      "validationFailed": "Validation failed: 1 error found",
+      "validationFailedPlural": "Validation failed: {{count}} errors found",
+      "attention": "Attention: 1 warning found",
+      "attentionPlural": "Attention: {{count}} warnings found",
+      "successMessage": "Validation completed successfully",
+      "viewDetails": "View details",
+      "errorDialogTitle": "Validation errors",
+      "warningDialogTitle": "Validation warnings",
+      "dialogDescription": "Check the details of the problems found in the validation",
+      "closeButton": "Close",
+      "errorCount": "1 error found",
+      "errorCountPlural": "{{count}} errors found",
+      "warningCount": "1 warning found",
+      "warningCountPlural": "{{count}} warnings found",
+      "variableWarningCount": "1 variable issue",
+      "variableWarningCountPlural": "{{count}} variable issues",
+      "inPath": "in: {{path}}",
+      "required": "Required field",
+      "templateHasErrors": "Template has validation errors",
+      "templateHasWarnings": "Template has validation warnings"
+    },
+    "toast": {
+      "successApplied": "Changes applied successfully",
+      "errorApplied": "Could not apply changes due to validation errors"
     }
   },
 

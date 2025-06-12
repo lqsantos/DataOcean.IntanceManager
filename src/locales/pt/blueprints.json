@@ -402,6 +402,7 @@
       "title": "Editor de Valores",
       "availableVariables": "Variáveis Disponíveis",
       "resetButton": "Reiniciar",
+      "formatYaml": "Formatar YAML",
       "applyButton": "Aplicar Mudanças"
     },
     "contractPreview": {
@@ -442,6 +443,32 @@
       "exposed": "Expor",
       "overridable": "Permitir Sobrescrever",
       "noFields": "Nenhum campo disponível"
+    },
+    "validationMessages": {
+      "validationFailed": "Falha na validação: 1 erro encontrado",
+      "validationFailedPlural": "Falha na validação: {{count}} erros encontrados",
+      "attention": "Atenção: 1 aviso encontrado",
+      "attentionPlural": "Atenção: {{count}} avisos encontrados",
+      "successMessage": "Validação concluída com sucesso",
+      "viewDetails": "Ver detalhes",
+      "errorDialogTitle": "Erros de validação",
+      "warningDialogTitle": "Avisos de validação",
+      "dialogDescription": "Confira os detalhes dos problemas encontrados na validação",
+      "closeButton": "Fechar",
+      "errorCount": "1 erro encontrado",
+      "errorCountPlural": "{{count}} erros encontrados",
+      "warningCount": "1 aviso encontrado",
+      "warningCountPlural": "{{count}} avisos encontrados",
+      "variableWarningCount": "1 problema com variáveis",
+      "variableWarningCountPlural": "{{count}} problemas com variáveis",
+      "inPath": "em: {{path}}",
+      "required": "Campo obrigatório",
+      "templateHasErrors": "Template com erros de validação",
+      "templateHasWarnings": "Template com avisos de validação"
+    },
+    "toast": {
+      "successApplied": "Alterações aplicadas com sucesso",
+      "errorApplied": "Não foi possível aplicar as alterações devido a erros de validação"
     }
   },
 

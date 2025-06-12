@@ -154,6 +154,20 @@ export interface TemplateValueEditorProps {
 
   // Callback when values change
   onChange: (updatedValues: TemplateDefaultValues) => void;
+
+  // Callback when validation state changes
+  onValidationChange?: (
+    isValid: boolean,
+    errors: Array<{ message: string; path?: string[] }>,
+    warnings: Array<{ message: string; path?: string[] }>,
+    variableWarnings: Array<{ message: string; path?: string[]; variableName?: string }>
+  ) => void;
+
+  // Whether to show batch actions
+  showBatchActions?: boolean;
+
+  // Callback when fields change via batch actions
+  onFieldsChange?: (fields: DefaultValueField[]) => void;
 }
 
 /**

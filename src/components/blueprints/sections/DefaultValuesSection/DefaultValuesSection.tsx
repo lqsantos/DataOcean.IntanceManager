@@ -46,8 +46,45 @@ export const DefaultValuesSection = () => {
     initialized: false,
   });
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [templatesValidation, setTemplatesValidation] = useState<
+    Record<
+      string,
+      {
+        hasErrors: boolean;
+        hasWarnings: boolean;
+      }
+    >
+  >({});
 
-  // Variable warnings are now handled by the TemplateValueEditor
+  // Função para atualizar o estado de validação
+  const updateTemplateValidation = useCallback(
+    (
+      templateId: string,
+      isValid: boolean,
+      errors: Array<{ message: string; path?: string[] }> = [],
+      warnings: Array<{ message: string; path?: string[] }> = [],
+      variableWarnings: Array<{ message: string; path?: string[]; variableName?: string }> = []
+    ) => {
+      // Only update if the validation state has actually changed
+      setTemplatesValidation((prev) => {
+        const current = prev[templateId];
+        const hasErrors = errors.length > 0;
+        const hasWarnings = warnings.length > 0 || variableWarnings.length > 0;
+
+        // If the validation state hasn't changed, don't trigger a re-render
+        if (current && current.hasErrors === hasErrors && current.hasWarnings === hasWarnings) {
+          return prev;
+        }
+
+        // Otherwise, update the state with the new values
+        return {
+          ...prev,
+          [templateId]: { hasErrors, hasWarnings },
+        };
+      });
+    },
+    []
+  );
 
   // Initialize or update the default values contract when templates change
   useEffect(() => {
@@ -253,6 +290,7 @@ export const DefaultValuesSection = () => {
             templates={selectedTemplates}
             selectedTemplateId={selectedTemplateId}
             onSelectTemplate={handleSelectTemplate}
+            validationState={templatesValidation}
           />
         </ErrorBoundary>
 
@@ -269,6 +307,15 @@ export const DefaultValuesSection = () => {
               };
 
               handleTemplateValueChange(updatedTemplate);
+            }}
+            onValidationChange={(isValid, errors, warnings, variableWarnings) => {
+              updateTemplateValidation(
+                selectedTemplate.templateId,
+                isValid,
+                errors,
+                warnings,
+                variableWarnings
+              );
             }}
           />
         </ErrorBoundary>
