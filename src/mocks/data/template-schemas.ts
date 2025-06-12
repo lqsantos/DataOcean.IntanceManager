@@ -1,6 +1,6 @@
 import type { DefaultValueField } from '@/components/blueprints/sections/DefaultValuesSection/types';
 
-import { getMockFieldsByType } from './template-fields';
+import { getMockFieldsByType, templateSpecificGenerators } from './template-fields';
 
 // Helper para determinar o tipo do template
 function determineTemplateType(
@@ -25,11 +25,51 @@ function determineTemplateType(
 
 // Mock data for template schemas
 export function generateMockSchemaForTemplate(templateIdOrType: string) {
-  // Determina o tipo do template
-  const templateType = determineTemplateType(templateIdOrType);
+  // Verifica se temos um gerador específico para este template ID
+  let fields: DefaultValueField[];
+  let templateName: string;
+  let templateType: string;
 
-  // Get mock fields based on template type
-  const fields = getMockFieldsByType(templateType);
+  if (templateSpecificGenerators[templateIdOrType]) {
+    // Usar gerador específico para o template ID
+    console.log(`Using specific field generator for template ID: ${templateIdOrType}`);
+    fields = templateSpecificGenerators[templateIdOrType]();
+
+    // Atribuir nomes para templates específicos
+    switch (templateIdOrType) {
+      case '1':
+        templateName = 'Basic Web Application';
+        templateType = 'application';
+        break;
+      case '2':
+        templateName = 'React Frontend';
+        templateType = 'application';
+        break;
+      case '4':
+        templateName = 'PostgreSQL Database';
+        templateType = 'database';
+        break;
+      case '5':
+        templateName = 'MongoDB Deployment';
+        templateType = 'database';
+        break;
+      case '7':
+        templateName = 'Nginx Ingress Controller';
+        templateType = 'infrastructure';
+        break;
+      default:
+        templateName = `Template ${templateIdOrType}`;
+        templateType = 'generic';
+    }
+  } else {
+    // Fallback: usar gerador baseado no tipo
+    const genericType = determineTemplateType(templateIdOrType);
+
+    console.log(`Using generic field generator for type: ${genericType}`);
+    fields = getMockFieldsByType(genericType);
+    templateName = `Generic ${genericType.charAt(0).toUpperCase() + genericType.slice(1)} Template`;
+    templateType = genericType;
+  }
 
   // Prepare the object form for YAML conversion
   const rawObject = createRawObjectFromFields(fields);
@@ -44,8 +84,8 @@ export function generateMockSchemaForTemplate(templateIdOrType: string) {
     jsonSchema: {
       $schema: 'http://json-schema.org/draft-07/schema#',
       type: 'object',
-      title: `${templateType.charAt(0).toUpperCase() + templateType.slice(1)} Template`,
-      description: `A ${templateType} template for demonstration`,
+      title: templateName || `Template ${templateIdOrType}`,
+      description: `${templateName} (${templateType}) - Template configuration for ID ${templateIdOrType}`,
     },
   };
 }
