@@ -55,25 +55,25 @@ export const BooleanEditor: React.FC<ValueEditorProps<boolean>> = ({
 );
 
 export const ObjectEditor: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
-  <div className="flex items-center justify-between w-full">
-    <span className={`text-sm ${disabled ? 'text-muted-foreground' : 'text-blue-600 font-medium'}`}>
+  <div className="flex w-full items-center justify-between">
+    <span className={`text-sm ${disabled ? 'text-muted-foreground' : 'font-medium text-blue-600'}`}>
       Complex Object
     </span>
     <span className={`text-xs italic ${disabled ? 'text-muted-foreground' : 'text-blue-600'}`}>
-      {disabled 
-        ? '(uses template values)' 
-        : '(click ▶ to expand)'}
+      {disabled ? '(uses template values)' : '(click ▶ to expand)'}
     </span>
   </div>
 );
 
 export const ArrayEditor: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
   <div className="flex items-center">
-    <span className={`text-sm ${disabled ? 'text-muted-foreground' : 'text-amber-600 font-medium'}`}>
+    <span
+      className={`text-sm ${disabled ? 'text-muted-foreground' : 'font-medium text-amber-600'}`}
+    >
       Array
     </span>
     {!disabled && (
-      <span className="text-xs ml-2 px-1.5 py-0.5 bg-amber-50 border border-amber-200 rounded-md text-amber-700 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-500">
+      <span className="ml-2 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-500">
         YAML view only
       </span>
     )}

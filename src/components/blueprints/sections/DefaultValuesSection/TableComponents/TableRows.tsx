@@ -68,13 +68,11 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
             <Button
               variant="ghost"
               size="sm"
-              className="h-5 px-1.5 text-[10px] text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              className="h-5 px-1.5 text-[10px] text-blue-600 hover:bg-blue-50 hover:text-blue-700"
               onClick={() => {
                 // Copy template value to blueprint value and change source
-                const value = field.originalValue !== undefined 
-                  ? field.originalValue 
-                  : field.value;
-                
+                const value = field.originalValue !== undefined ? field.originalValue : field.value;
+
                 onValueChange(field, value);
                 onSourceChange(field, ValueSourceType.BLUEPRINT);
               }}
@@ -84,7 +82,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
             </Button>
           );
         }
-        
+
         // For blueprint values, show Reset button
         if (field.source === ValueSourceType.BLUEPRINT) {
           return (
@@ -99,7 +97,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
             </Button>
           );
         }
-        
+
         return null;
       },
       [onSourceChange, onValueChange]
@@ -110,15 +108,16 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
       (field: DefaultValueField) => {
         // Check if value is from template or customized in blueprint
         const isFromTemplate = field.source === ValueSourceType.TEMPLATE;
-        
+
         // For object fields, we always show customized UI
         const isObjectType = field.type === 'object';
-        
+
         // Cell background classes based on source
-        const cellClasses = isFromTemplate && !isObjectType
-          ? 'bg-slate-50 dark:bg-slate-900/30 rounded border border-dashed border-slate-200 dark:border-slate-700 px-2 py-1'
-          : '';
-        
+        const cellClasses =
+          isFromTemplate && !isObjectType
+            ? 'bg-slate-50 dark:bg-slate-900/30 rounded border border-dashed border-slate-200 dark:border-slate-700 px-2 py-1'
+            : '';
+
         switch (field.type) {
           case 'string':
             return (
@@ -128,7 +127,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                     <span className="text-muted-foreground">
                       {field.originalValue !== undefined ? String(field.originalValue) : ''}
                     </span>
-                    <span className="ml-2 text-xs text-muted-foreground italic">
+                    <span className="ml-2 text-xs italic text-muted-foreground">
                       (from template)
                     </span>
                   </div>
@@ -149,7 +148,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                 {isFromTemplate ? (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">{Number(field.originalValue)}</span>
-                    <span className="ml-2 text-xs text-muted-foreground italic">
+                    <span className="ml-2 text-xs italic text-muted-foreground">
                       (from template)
                     </span>
                   </div>
@@ -171,7 +170,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                     <span className="text-muted-foreground">
                       {field.originalValue !== undefined ? String(field.originalValue) : ''}
                     </span>
-                    <span className="ml-2 text-xs text-muted-foreground italic">
+                    <span className="ml-2 text-xs italic text-muted-foreground">
                       (from template)
                     </span>
                   </div>
@@ -187,14 +186,14 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
 
           case 'object':
             return <ObjectEditor disabled={isFromTemplate} />;
-            
+
           case 'array':
             return (
               <div className={cellClasses}>
                 {isFromTemplate ? (
                   <div className="flex items-center justify-between">
                     <ArrayEditor disabled={true} />
-                    <span className="ml-2 text-xs text-muted-foreground italic">
+                    <span className="ml-2 text-xs italic text-muted-foreground">
                       (from template)
                     </span>
                   </div>
@@ -203,7 +202,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                 )}
               </div>
             );
-            
+
           default:
             return <span className="text-muted-foreground">-</span>;
         }
@@ -239,16 +238,9 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                       )}
                     </Button>
                   ) : null}
-                  <span
-                    className={cn(
-                      'text-sm',
-                      isRequired ? 'font-semibold' : ''
-                    )}
-                  >
+                  <span className={cn('text-sm', isRequired ? 'font-semibold' : '')}>
                     {field.key}
-                    {isRequired && (
-                      <span className="ml-1 text-red-500">*</span>
-                    )}
+                    {isRequired && <span className="ml-1 text-red-500">*</span>}
                   </span>
 
                   {field.description && (
@@ -267,9 +259,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                 <TableCell className="w-1/6">
                   <div className="flex items-center justify-between">
                     <div className="w-full">{renderValueEditor(field)}</div>
-                    <div className="ml-2 flex">
-                      {renderActionButton(field)}
-                    </div>
+                    <div className="ml-2 flex">{renderActionButton(field)}</div>
                   </div>
                 </TableCell>
 
