@@ -20,7 +20,7 @@ import { ContractPreview } from './ContractPreview';
 import { ErrorBoundary } from './ErrorBoundary';
 import { TemplateTabsNavigation } from './TemplateTabsNavigation';
 import { TemplateValueEditor } from './TemplateValueEditor';
-import type { DefaultValuesContract, TemplateDefaultValues } from './types';
+import type { DefaultValueField, DefaultValuesContract, TemplateDefaultValues } from './types';
 
 export const DefaultValuesSection = () => {
   // Get blueprint form data from context
@@ -80,15 +80,18 @@ export const DefaultValuesSection = () => {
           const templateValues = selectedTemplates.map((template) => {
             const templateValues = state.formData.values.values[template.id] || {};
 
+            // Try to get fields from the stored context or default to empty array
+            const fields = (templateValues.fields as DefaultValueField[]) || [];
+
             return {
               templateId: template.id,
               templateName: template.name,
               templateVersion: template.version,
-              fields: [], // In a real implementation, this would be reconstructed from the values
+              fields: fields,
               rawYaml:
-                typeof templateValues === 'string'
-                  ? templateValues
-                  : JSON.stringify(templateValues, null, 2),
+                typeof templateValues.yaml === 'string'
+                  ? templateValues.yaml
+                  : JSON.stringify(templateValues.yaml || {}, null, 2),
             };
           });
 
@@ -98,7 +101,14 @@ export const DefaultValuesSection = () => {
           };
 
           setDefaultValuesContract(contract);
-          setSelectedTemplateId(templateValues[0]?.templateId || '');
+
+          // Only set the selected template ID if one isn't already selected or the current selection is invalid
+          if (
+            !selectedTemplateId ||
+            !templateValues.some((t) => t.templateId === selectedTemplateId)
+          ) {
+            setSelectedTemplateId(templateValues[0]?.templateId || '');
+          }
           setLoading(false);
 
           return;
@@ -130,13 +140,23 @@ export const DefaultValuesSection = () => {
         };
 
         setDefaultValuesContract(newContract);
-        setSelectedTemplateId(templateSchemas[0]?.templateId || '');
+
+        // Only set the selected template ID if one isn't already selected or the current selection is invalid
+        if (
+          !selectedTemplateId ||
+          !templateSchemas.some((t) => t.templateId === selectedTemplateId)
+        ) {
+          setSelectedTemplateId(templateSchemas[0]?.templateId || '');
+        }
 
         // Update the form context with new values
-        const valuesForContext: Record<string, Record<string, string>> = {};
+        const valuesForContext: Record<string, Record<string, unknown>> = {};
 
         templateSchemas.forEach((schema) => {
-          valuesForContext[schema.templateId] = { yaml: schema.rawYaml };
+          valuesForContext[schema.templateId] = {
+            yaml: schema.rawYaml,
+            fields: schema.fields, // Preserve fields in the context
+          };
         });
 
         setSectionData('values', { values: valuesForContext });
@@ -175,11 +195,14 @@ export const DefaultValuesSection = () => {
       // Update form context
       const currentValues = { ...state.formData.values.values };
 
-      currentValues[updatedTemplateValues.templateId] = { yaml: updatedTemplateValues.rawYaml };
+      currentValues[updatedTemplateValues.templateId] = {
+        yaml: updatedTemplateValues.rawYaml,
+        fields: updatedTemplateValues.fields,
+      };
 
       setSectionData('values', { values: currentValues });
     },
-    [defaultValuesContract, state.formData.values.values, setSectionData, blueprintVariables]
+    [defaultValuesContract, state.formData.values.values, setSectionData]
   );
 
   // Render content based on state

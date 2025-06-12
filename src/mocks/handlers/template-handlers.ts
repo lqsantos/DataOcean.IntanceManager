@@ -199,41 +199,6 @@ export const templateHandlers = [
       });
     }
 
-    // In test mode, ensure we always return a schema for test template IDs
-    if (USE_PREDICTABLE_MOCK) {
-      console.log(`TEST MODE - Generating schema for template ID: ${id}`);
-
-      // Generate schema based on template ID
-      let templateType = 'generic';
-
-      if (id.includes('database')) {
-        templateType = 'database';
-      } else if (id.includes('application')) {
-        templateType = 'application';
-      } else if (id.includes('network')) {
-        templateType = 'network';
-      } else if (id.includes('generic')) {
-        templateType = 'generic';
-      }
-
-      // Get the corresponding schema data
-      const schemaData = generateMockSchemaForTemplate(templateType);
-
-      await delay(100); // Short delay in test mode
-
-      return HttpResponse.json(schemaData);
-    }
-
-    // For development mode, verify if template exists
-    const template = templates.find((t) => t.id === id);
-
-    if (!template) {
-      return new HttpResponse(null, {
-        status: 404,
-        statusText: 'Template not found',
-      });
-    }
-
     await delay(USE_PREDICTABLE_MOCK ? 100 : 500);
 
     try {
@@ -241,7 +206,7 @@ export const templateHandlers = [
       // Generate mock schema response based on template ID
       const schemaData = generateMockSchemaForTemplate(id.toString());
 
-      console.log('Schema generated successfully:', schemaData);
+      console.log('Schema generated successfully with fields:', schemaData.fields.length);
 
       return HttpResponse.json(schemaData);
     } catch (error) {
@@ -300,7 +265,7 @@ export const templateHandlers = [
         });
 
         // Generate the schema
-        const schema = generateMockSchemaForTemplate(template);
+        const schema = generateMockSchemaForTemplate(template.id);
 
         return HttpResponse.json(schema);
       } catch (error) {

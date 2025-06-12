@@ -30,7 +30,7 @@ export interface BlueprintFormData {
     }>;
   };
   values: {
-    values: Record<string, Record<string, string>>;
+    values: Record<string, Record<string, unknown>>;
   };
   preview?: {
     valid: boolean;
@@ -331,9 +331,10 @@ export function BlueprintFormProvider({ children }: { children: ReactNode }) {
           Object.entries(values?.values || {}).forEach(([_templateId, templateValues]) => {
             Object.entries(templateValues).forEach(([_key, value]) => {
               // Verificar interpolações de variáveis (formato ${var})
-              const matches = value.match(/\${([^}]+)}/g) || [];
+              const valueStr = typeof value === 'string' ? value : '';
+              const matches = valueStr.match(/\${([^}]+)}/g) || [];
 
-              matches.forEach((match) => {
+              matches.forEach((match: string) => {
                 const varName = match.substring(2, match.length - 1);
 
                 if (!variables.some((v) => v.name === varName)) {
@@ -390,7 +391,7 @@ export function BlueprintFormProvider({ children }: { children: ReactNode }) {
       applicationId: state.formData.metadata?.applicationId || '',
       childTemplates: state.formData.templates?.selectedTemplates || [],
       variables: state.formData.variables?.variables || [],
-      defaultValues: state.formData.values?.values || {},
+      defaultValues: convertValuesToStringFormat(state.formData.values?.values || {}),
       id: state.editId,
     };
   }, [state.formData, state.editId]);
@@ -455,6 +456,32 @@ export function useBlueprintForm() {
   }
 
   return context;
+}
+
+// Helper function to convert values from unknown to string format for API
+function convertValuesToStringFormat(
+  values: Record<string, Record<string, unknown>>
+): Record<string, Record<string, string>> {
+  const result: Record<string, Record<string, string>> = {};
+
+  Object.keys(values).forEach((templateId) => {
+    result[templateId] = {};
+    const templateValues = values[templateId];
+
+    // Extract yaml value and convert other values as needed
+    if (templateValues.yaml !== undefined) {
+      result[templateId].yaml = String(templateValues.yaml);
+    }
+
+    // Add other string conversions as needed
+    Object.keys(templateValues).forEach((key) => {
+      if (key !== 'fields' && templateValues[key] !== undefined) {
+        result[templateId][key] = String(templateValues[key]);
+      }
+    });
+  });
+
+  return result;
 }
 
 // Form data types

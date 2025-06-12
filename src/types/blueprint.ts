@@ -81,5 +81,5 @@ export interface BlueprintFormValues {
     required: boolean;
     defaultValue?: string;
   }>;
-  defaultValues?: Record<string, Record<string, string>>;
+  defaultValues?: Record<string, Record<string, unknown>>;
 }

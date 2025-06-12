@@ -1,126 +1,75 @@
-import type { Template } from '@/types/template';
+import type { DefaultValueField } from '@/components/blueprints/sections/DefaultValuesSection/types';
 
-// Helper function for generating chart description
-export function generateChartDescription(): string | undefined {
-  return Math.random() > 0.3 ? 'Um chart exemplo para demonstração da validação' : undefined;
-}
+import { getMockFieldsByType } from './template-fields';
 
 // Helper para determinar o tipo do template
 function determineTemplateType(
-  template: Template
+  templateId: string
 ): 'database' | 'application' | 'network' | 'generic' {
-  // Primeiro tenta usar a categoria oficial
-  if (template.category?.toLowerCase() === 'database') {
+  const idLower = templateId.toLowerCase();
+
+  if (idLower.includes('database') || idLower.includes('db')) {
     return 'database';
   }
 
-  if (template.category?.toLowerCase() === 'application') {
+  if (idLower.includes('application') || idLower.includes('app')) {
     return 'application';
   }
 
-  if (
-    template.category?.toLowerCase() === 'infrastructure' ||
-    template.category?.toLowerCase() === 'network'
-  ) {
+  if (idLower.includes('network') || idLower.includes('infra')) {
     return 'network';
-  }
-
-  // Fallback: tenta inferir pelo nome se não tiver categoria
-  if (template.name) {
-    const nameLower = template.name.toLowerCase();
-
-    if (nameLower.includes('database') || nameLower.includes('db')) {
-      return 'database';
-    }
-
-    if (nameLower.includes('application') || nameLower.includes('app')) {
-      return 'application';
-    }
-
-    if (nameLower.includes('network') || nameLower.includes('infrastructure')) {
-      return 'network';
-    }
   }
 
   return 'generic';
 }
 
 // Mock data for template schemas
-export const generateMockSchemaForTemplate = (template: Template) => {
-  if (!template) {
-    throw new Error('Template é obrigatório para gerar o schema');
-  }
-
+export function generateMockSchemaForTemplate(templateIdOrType: string) {
   // Determina o tipo do template
-  const templateType = determineTemplateType(template);
+  const templateType = determineTemplateType(templateIdOrType);
 
-  // Get properties based on template type
-  let schemaProperties;
+  // Get mock fields based on template type
+  const fields = getMockFieldsByType(templateType);
 
-  if (templateType === 'database') {
-    schemaProperties = getDatabaseSchemaProperties();
-  } else if (templateType === 'application') {
-    schemaProperties = getApplicationSchemaProperties();
-  } else {
-    schemaProperties = getGenericSchemaProperties();
-  }
+  // Prepare the object form for YAML conversion
+  const rawObject = createRawObjectFromFields(fields);
 
-  // Return the mocked JSON Schema
+  // Convert to YAML string
+  const rawYaml = JSON.stringify(rawObject, null, 2);
+
+  // Return the schema with fields and YAML
   return {
-    $schema: 'http://json-schema.org/draft-07/schema#',
-    type: 'object',
-    properties: schemaProperties,
-    required: ['name'],
-    title: template.name,
-    description: template.description,
-  };
-};
-
-// Helper functions to generate schema properties for different types
-function getDatabaseSchemaProperties() {
-  return {
-    database: {
+    fields,
+    rawYaml,
+    jsonSchema: {
+      $schema: 'http://json-schema.org/draft-07/schema#',
       type: 'object',
-      properties: {
-        name: { type: 'string' },
-        engine: { type: 'string', enum: ['postgres', 'mysql', 'mongodb'] },
-        version: { type: 'string' },
-        resources: {
-          type: 'object',
-          properties: {
-            cpu: { type: 'string' },
-            memory: { type: 'string' },
-          },
-        },
-      },
-      required: ['name', 'engine'],
+      title: `${templateType.charAt(0).toUpperCase() + templateType.slice(1)} Template`,
+      description: `A ${templateType} template for demonstration`,
     },
   };
 }
 
-function getApplicationSchemaProperties() {
-  return {
-    application: {
-      type: 'object',
-      properties: {
-        replicas: { type: 'integer', minimum: 1 },
-        image: {
-          type: 'object',
-          properties: {
-            repository: { type: 'string' },
-            tag: { type: 'string' },
-          },
-          required: ['repository'],
-        },
-      },
-    },
-  };
-}
+function createRawObjectFromFields(fields: DefaultValueField[]): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
 
-function getGenericSchemaProperties() {
-  return {
-    name: { type: 'string' },
-    description: { type: 'string' },
-    enabled: { type: 'boolean', default: true },
-  };
+  // Process each top-level field
+  fields.forEach((field) => {
+    let current = result;
+    const pathParts = field.path.slice(0, -1); // All parts except the last one
+    const lastPart = field.path[field.path.length - 1];
+
+    // Build the nested structure
+    pathParts.forEach((part) => {
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part] as Record<string, unknown>;
+    });
+
+    // Set the value at the leaf
+    current[lastPart] = field.value;
+  });
+
+  return result;
 }
