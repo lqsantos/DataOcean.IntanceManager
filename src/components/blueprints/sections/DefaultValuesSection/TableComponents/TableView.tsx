@@ -116,24 +116,42 @@ export const TableView: React.FC<TableViewProps> = React.memo(
           showValidationFeedback={showValidationFeedback}
         />
 
-        {/* Required Fields Legend */}
-        <div className="mb-2 text-sm text-muted-foreground">
-          <span className="mr-1 font-bold text-red-500">*</span>
-          {t('values.validationMessages.required')}
-        </div>
-
-        {/* Table */}
+        {/* Table Container with fixed height and scrollable content */}
         <div className="rounded-md border">
-          <div className="max-h-[600px] overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-background">
+          {/* Use a container with fixed height for vertical scrolling */}
+          <div style={{ height: '500px', overflow: 'auto' }}>
+            {/* Standard table layout */}
+            <Table className="min-w-full table-fixed border-collapse">
+              <TableHeader>
                 <TableRow>
-                  <TableHead className="w-1/3">{t('values.table.field')}</TableHead>
-                  <TableHead className="w-1/12">{t('values.table.type')}</TableHead>
-                  <TableHead className="w-1/6">{t('values.table.defaultValue')}</TableHead>
-                  <TableHead className="w-1/6">{t('values.table.value')}</TableHead>
-                  <TableHead className="w-1/12 text-center">{t('values.table.exposed')}</TableHead>
-                  <TableHead className="w-1/12 text-center">
+                  <TableHead
+                    className="sticky top-0 z-10 w-1/3 bg-background"
+                    style={{ width: '33%' }}
+                  >
+                    {t('values.table.field')}
+                  </TableHead>
+                  <TableHead
+                    className="sticky top-0 z-10 w-24 bg-background"
+                    style={{ width: '8%' }}
+                  >
+                    {t('values.table.type')}
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 bg-background" style={{ width: '17%' }}>
+                    {t('values.table.defaultValue')}
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 bg-background" style={{ width: '25%' }}>
+                    {t('values.table.value')}
+                  </TableHead>
+                  <TableHead
+                    className="sticky top-0 z-10 bg-background text-center"
+                    style={{ width: '8.5%' }}
+                  >
+                    {t('values.table.exposed')}
+                  </TableHead>
+                  <TableHead
+                    className="sticky top-0 z-10 bg-background text-center"
+                    style={{ width: '8.5%' }}
+                  >
                     {t('values.table.overridable')}
                   </TableHead>
                 </TableRow>
@@ -161,6 +179,12 @@ export const TableView: React.FC<TableViewProps> = React.memo(
               </TableBody>
             </Table>
           </div>
+        </div>
+
+        {/* Required Fields Legend */}
+        <div className="mt-2 text-right text-sm text-muted-foreground">
+          <span className="mr-1 font-bold text-red-500">*</span>
+          {t('values.validationMessages.required')}
         </div>
       </div>
     );

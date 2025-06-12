@@ -42,6 +42,8 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
     blueprintVariables,
     showValidationFeedback,
   }) => {
+    // const { t } = useTranslation(['blueprints']);
+
     // State for expanded fields
     const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
 
@@ -221,8 +223,8 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
 
           return (
             <React.Fragment key={field.path.join('.')}>
-              <TableRow className={cn('group/row', depth > 0 && 'bg-muted/50')}>
-                <TableCell className="w-1/3" style={{ paddingLeft: `${depth * 2 + 1}rem` }}>
+              <TableRow className={cn(depth > 0 && 'bg-muted/50')}>
+                <TableCell style={{ paddingLeft: `${depth * 2 + 1}rem` }}>
                   {hasChildren ? (
                     <Button
                       variant="ghost"
@@ -248,22 +250,20 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                   )}
                 </TableCell>
 
-                <TableCell className="text-nowrap w-1/12 text-xs text-muted-foreground">
-                  {field.type}
-                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">{field.type}</TableCell>
 
-                <TableCell className="w-1/6 text-xs text-muted-foreground">
+                <TableCell className="text-xs text-muted-foreground">
                   {field.originalValue !== undefined ? String(field.originalValue) : '-'}
                 </TableCell>
 
-                <TableCell className="w-1/6">
+                <TableCell>
                   <div className="flex items-center justify-between">
                     <div className="w-full">{renderValueEditor(field)}</div>
                     <div className="ml-2 flex">{renderActionButton(field)}</div>
                   </div>
                 </TableCell>
 
-                <TableCell className="w-1/12 text-center">
+                <TableCell className="text-center">
                   <Switch
                     checked={field.exposed}
                     onCheckedChange={(checked) => onExposeChange(field, checked)}
@@ -271,7 +271,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="w-1/12 text-center">
+                <TableCell className="text-center">
                   <Switch
                     checked={field.overridable}
                     onCheckedChange={(checked) => onOverrideChange(field, checked)}

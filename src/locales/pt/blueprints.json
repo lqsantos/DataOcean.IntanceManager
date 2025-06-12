@@ -442,7 +442,10 @@
       "value": "Valor do Blueprint",
       "exposed": "Expor",
       "overridable": "Permitir Sobrescrever",
-      "noFields": "Nenhum campo disponível"
+      "noFields": "Nenhum campo disponível",
+      "customize": "Personalizar",
+      "reset": "Redefinir",
+      "fromTemplate": "do template"
     },
     "validationMessages": {
       "validationFailed": "Falha na validação: 1 erro encontrado",

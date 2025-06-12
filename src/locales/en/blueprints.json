@@ -442,7 +442,10 @@
       "value": "Blueprint Value",
       "exposed": "Expose",
       "overridable": "Allow Override",
-      "noFields": "No fields available"
+      "noFields": "No fields available",
+      "customize": "Customize",
+      "reset": "Reset",
+      "fromTemplate": "from template"
     },
     "validationMessages": {
       "validationFailed": "Validation failed: 1 error found",
