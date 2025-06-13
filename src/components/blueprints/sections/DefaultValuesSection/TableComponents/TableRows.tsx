@@ -32,6 +32,16 @@ interface TableRowsProps {
   showValidationFeedback: boolean;
 }
 
+// Constantes para larguras de coluna - garante consistência com o cabeçalho
+export const COLUMN_WIDTHS = {
+  field: '33%',
+  type: '8%',
+  defaultValue: '17%',
+  value: '25%',
+  exposed: '8.5%',
+  overridable: '8.5%',
+};
+
 export const TableRows: React.FC<TableRowsProps> = React.memo(
   ({
     fields,
@@ -224,7 +234,9 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
           return (
             <React.Fragment key={field.path.join('.')}>
               <TableRow className={cn(depth > 0 && 'bg-muted/50', 'table-row-adjustable')}>
-                <TableCell style={{ paddingLeft: `${depth * 2 + 1}rem`, width: '33%' }}>
+                <TableCell
+                  style={{ paddingLeft: `${depth * 2 + 1}rem`, width: COLUMN_WIDTHS.field }}
+                >
                   {hasChildren ? (
                     <Button
                       variant="ghost"
@@ -250,22 +262,28 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                   )}
                 </TableCell>
 
-                <TableCell className="text-xs text-muted-foreground" style={{ width: '8%' }}>
+                <TableCell
+                  className="text-xs text-muted-foreground"
+                  style={{ width: COLUMN_WIDTHS.type }}
+                >
                   {field.type}
                 </TableCell>
 
-                <TableCell className="text-xs text-muted-foreground" style={{ width: '17%' }}>
+                <TableCell
+                  className="text-xs text-muted-foreground"
+                  style={{ width: COLUMN_WIDTHS.defaultValue }}
+                >
                   {field.originalValue !== undefined ? String(field.originalValue) : '-'}
                 </TableCell>
 
-                <TableCell style={{ width: '25%' }}>
+                <TableCell style={{ width: COLUMN_WIDTHS.value }}>
                   <div className="flex items-center justify-between">
                     <div className="w-full">{renderValueEditor(field)}</div>
                     <div className="ml-2 flex">{renderActionButton(field)}</div>
                   </div>
                 </TableCell>
 
-                <TableCell className="text-center" style={{ width: '8.5%' }}>
+                <TableCell className="text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
                   <Switch
                     checked={field.exposed}
                     onCheckedChange={(checked) => onExposeChange(field, checked)}
@@ -273,7 +291,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="text-center" style={{ width: '8.5%' }}>
+                <TableCell className="text-center" style={{ width: COLUMN_WIDTHS.overridable }}>
                   <Switch
                     checked={field.overridable}
                     onCheckedChange={(checked) => onOverrideChange(field, checked)}

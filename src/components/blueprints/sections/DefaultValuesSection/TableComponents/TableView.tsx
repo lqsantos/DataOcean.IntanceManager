@@ -20,7 +20,8 @@ import {
 import type { DefaultValueField, TemplateDefaultValues, ValueSourceType } from '../types';
 
 import * as FieldService from './fieldUpdateService';
-import { TableRows } from './TableRows';
+// Importando componentes e constantes
+import { COLUMN_WIDTHS, TableRows } from './TableRows';
 import { ValidationDisplay } from './ValidationDisplay';
 
 export interface TableViewProps {
@@ -117,39 +118,36 @@ export const TableView: React.FC<TableViewProps> = React.memo(
           showValidationFeedback={showValidationFeedback}
         />
 
-        {/* Table Container with flex layout for proper scrolling */}
-        <div className="flex h-full max-h-[calc(100vh-13rem)] min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
-          {/* Table header fixo */}
-          <div className="flex-shrink-0 bg-background">
-            <Table className="min-w-full table-fixed border-collapse">
-              <TableHeader>
+        {/* Table Container com uma única área de scroll para sincronizar cabeçalho e corpo */}
+        <div className="flex h-full max-h-[calc(100vh-11rem)] min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
+          {/* ScrollArea englobando toda a tabela para scroll horizontal sincronizado */}
+          <ScrollArea className="synchronized-scroll h-full flex-1 pb-4" type="always">
+            <Table className="w-full min-w-full table-fixed border-collapse">
+              {/* Cabeçalho com position sticky */}
+              <TableHeader className="sticky-table-header">
                 <TableRow>
-                  <TableHead className="w-1/3" style={{ width: '33%' }}>
+                  <TableHead style={{ width: COLUMN_WIDTHS.field }}>
                     {t('values.table.field')}
                   </TableHead>
-                  <TableHead className="w-24" style={{ width: '8%' }}>
+                  <TableHead style={{ width: COLUMN_WIDTHS.type }}>
                     {t('values.table.type')}
                   </TableHead>
-                  <TableHead className="" style={{ width: '17%' }}>
+                  <TableHead style={{ width: COLUMN_WIDTHS.defaultValue }}>
                     {t('values.table.defaultValue')}
                   </TableHead>
-                  <TableHead className="" style={{ width: '25%' }}>
+                  <TableHead style={{ width: COLUMN_WIDTHS.value }}>
                     {t('values.table.value')}
                   </TableHead>
-                  <TableHead className="text-center" style={{ width: '8.5%' }}>
+                  <TableHead className="text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
                     {t('values.table.exposed')}
                   </TableHead>
-                  <TableHead className="text-center" style={{ width: '8.5%' }}>
+                  <TableHead className="text-center" style={{ width: COLUMN_WIDTHS.overridable }}>
                     {t('values.table.overridable')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
-            </Table>
-          </div>
 
-          {/* Conteúdo da tabela com scroll usando o componente ScrollArea */}
-          <ScrollArea className="h-full flex-1 pb-4" type="auto">
-            <Table className="min-w-full table-fixed border-collapse">
+              {/* Corpo da tabela */}
               <TableBody className="pb-8">
                 {fields.length > 0 ? (
                   <TableRows

@@ -156,6 +156,22 @@
     0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
+/* Animação para o botão flutuante */
+@keyframes floatingAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.floating-button-animation {
+  animation: floatingAnimation 0.5s ease-out;
+}
+
 /* Glassmorphism */
 .glass {
   background: rgba(var(--background), 0.5);
@@ -185,6 +201,63 @@
   .floating-button:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Estilos para melhorar a tabela de valores com cabeçalho fixo */
+  .sticky-table-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: hsl(var(--background));
+    background-clip: padding-box;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Remover bordas duplicadas quando cabeçalho é sticky */
+  .sticky-table-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  /* Garantir que o scroll horizontal esteja sincronizado */
+  .synchronized-scroll {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  /* Melhorias para a rolagem da tabela */
+  .synchronized-scroll .data-[state='hidden']::-webkit-scrollbar {
+    display: none;
+  }
+
+  .synchronized-scroll ::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+
+  .synchronized-scroll ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  .synchronized-scroll ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted));
+    border-radius: 5px;
+  }
+
+  .synchronized-scroll table {
+    table-layout: fixed;
+    min-width: 100%;
+    width: 100%;
+  }
+
+  /* Transição suave entre os modos */
+  .template-value-editor {
+    transition: all 0.3s ease-in-out;
   }
 }
 
@@ -218,4 +291,79 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+/* Expanded Mode - Fullscreen Editor */
+.editor-expanded-mode {
+  position: fixed;
+  inset: 2rem;
+  z-index: 50;
+  background-color: hsl(var(--background));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-expanded-mode .editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  position: relative;
+}
+
+.editor-expanded-mode .editor-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, hsl(var(--primary) / 0.3), transparent);
+}
+
+.editor-expanded-mode .editor-content {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Overlay para o modo fullscreen */
+.fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4); /* Fundo escuro semi-transparente mais forte */
+  backdrop-filter: blur(2px); /* Efeito de desfoque sutil no fundo */
+  z-index: 49; /* Abaixo do editor expandido */
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.editor-expanded-animation {
+  animation: scaleIn 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

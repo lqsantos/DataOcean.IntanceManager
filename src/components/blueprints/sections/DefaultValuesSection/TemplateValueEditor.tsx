@@ -5,7 +5,7 @@
  */
 
 import Editor from '@monaco-editor/react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Maximize, Minimize } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import { useDebounce } from 'use-debounce';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 import { BatchActions } from './BatchActions';
 import type { FilterOptions } from './FilterControls';
@@ -35,6 +36,14 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
 
     // View mode state (table or YAML)
     const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TABLE);
+
+    // Estado para controlar o modo expandido
+    const [isExpandedMode, setIsExpandedMode] = useState<boolean>(false);
+
+    // Toggle function for expanded mode
+    const toggleExpandedMode = useCallback(() => {
+      setIsExpandedMode((prev) => !prev);
+    }, []);
 
     // Editor state
     const [editorContent, setEditorContent] = useState(templateValues.rawYaml);
@@ -260,167 +269,204 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
     );
 
     return (
-      <div
-        className="mt-4 flex flex-col overflow-hidden rounded-md border p-4"
-        data-testid="template-value-editor"
-      >
-        <div className="mb-4 border-b pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <h3 className="mr-4 text-lg font-medium">{t('values.editor.title')}</h3>
-              <div>
-                <Badge variant="outline" className="mr-2">
-                  {templateValues.templateName}
-                </Badge>
-                <Badge variant="secondary">{templateValues.templateVersion}</Badge>
+      <>
+        {isExpandedMode && <div className="fullscreen-overlay" />}
+        <div
+          className={cn(
+            'template-value-editor mt-1 flex flex-col overflow-hidden rounded-md border',
+            isExpandedMode ? 'editor-expanded-mode editor-expanded-animation' : 'p-2'
+          )}
+          data-testid="template-value-editor"
+        >
+          <div className={isExpandedMode ? 'editor-header' : 'mb-1 border-b pb-1'}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center text-sm">
+                {!isExpandedMode && (
+                  <h3 className="mr-2 font-medium">{t('values.editor.title')}</h3>
+                )}
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="mr-1">
+                    {templateValues.templateName}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {templateValues.templateVersion}
+                  </Badge>
+                </div>
               </div>
-            </div>
 
-            {/* View Mode Toggle and batch actions in the same row */}
-            <div className="flex items-center gap-2">
-              {showBatchActions && onFieldsChange && (
-                <BatchActions
-                  fields={templateValues.fields}
-                  onFieldsChange={onFieldsChange}
-                  compact={true}
+              {/* View Mode Toggle, batch actions, and expand button in the same row */}
+              <div className="flex items-center gap-1">
+                {showBatchActions && onFieldsChange && (
+                  <BatchActions
+                    fields={templateValues.fields}
+                    onFieldsChange={onFieldsChange}
+                    compact={true}
+                  />
+                )}
+                <ViewToggle
+                  viewMode={viewMode}
+                  onViewModeChange={handleViewModeChange}
+                  inline={true}
                 />
-              )}
-              <ViewToggle
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-                inline={true}
-              />
+                <Button
+                  variant={isExpandedMode ? 'outline' : 'ghost'}
+                  size="icon"
+                  className={cn(
+                    'h-8 w-8 transition-all',
+                    isExpandedMode && 'border-primary text-primary hover:bg-primary/10'
+                  )}
+                  onClick={toggleExpandedMode}
+                  title={isExpandedMode ? 'Exit Fullscreen' : 'Fullscreen Mode'}
+                  data-testid="expand-mode-toggle"
+                >
+                  {isExpandedMode ? (
+                    <Minimize className="h-4 w-4" />
+                  ) : (
+                    <Maximize className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">
+                    {isExpandedMode ? 'Exit Fullscreen' : 'Fullscreen Mode'}
+                  </span>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {viewMode === ViewMode.TABLE ? (
-            <div className="flex flex-1 flex-col overflow-hidden">
-              {/* Filter Controls */}
-              <FilterControls filters={filters} onFilterChange={handleFilterChange} />
-
-              {/* Table View com h-full e flex-1 para preencher o espaço disponível */}
-              <div className="h-full min-h-0 flex-1 overflow-hidden pb-1">
-                <TableView
-                  templateValues={{
-                    ...templateValues,
-                    fields: filteredFields,
-                  }}
-                  onChange={handleFieldsUpdate}
-                  blueprintVariables={blueprintVariables}
-                  validationState={validation}
-                  showValidationFeedback={showValidationFeedback}
+          <div
+            className={isExpandedMode ? 'editor-content' : 'flex flex-1 flex-col overflow-hidden'}
+          >
+            {viewMode === ViewMode.TABLE ? (
+              <div className="flex flex-1 flex-col overflow-hidden">
+                {/* Filter Controls */}
+                <FilterControls
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  compact={true}
+                  isExpandedMode={isExpandedMode}
                 />
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* YAML Editor - adapt to available space */}
-              <div
-                className="relative min-h-[400px] flex-1 rounded-md border"
-                data-testid="yaml-editor-container"
-              >
-                <Editor
-                  height="400px"
-                  language="yaml"
-                  value={editorContent}
-                  onChange={handleEditorChange}
-                  options={{
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    wordWrap: 'on',
-                  }}
-                  loading={
-                    <div className="flex h-full items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  }
-                />
-              </div>
 
-              {/* Blueprint Variables References */}
-              {blueprintVariables.length > 0 && (
-                <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-2">
-                  <div className="mb-1 text-sm text-slate-600">
-                    {t('values.editor.availableVariables')}:
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {blueprintVariables.map((variable) => (
-                      <Badge
-                        key={variable.name}
-                        variant="outline"
-                        className="cursor-pointer"
-                        onClick={() => {
-                          const pattern = `\${${variable.name}}`;
-
-                          setEditorContent((content) => `${content}${pattern}`);
-                        }}
-                      >
-                        {variable.name}
-                      </Badge>
-                    ))}
-                  </div>
+                {/* Table View com h-full e flex-1 para preencher o espaço disponível */}
+                <div className="h-full min-h-0 flex-1 overflow-hidden pb-1">
+                  <TableView
+                    templateValues={{
+                      ...templateValues,
+                      fields: filteredFields,
+                    }}
+                    onChange={handleFieldsUpdate}
+                    blueprintVariables={blueprintVariables}
+                    validationState={validation}
+                    showValidationFeedback={showValidationFeedback}
+                  />
                 </div>
-              )}
-
-              {/* Actions */}
-              <div className="mt-6 flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setEditorContent(templateValues.rawYaml)}
-                  data-testid="reset-editor-button"
+              </div>
+            ) : (
+              <>
+                {/* YAML Editor - adapt to available space */}
+                <div
+                  className="relative min-h-[400px] flex-1 rounded-md border"
+                  data-testid="yaml-editor-container"
                 >
-                  {t('values.editor.resetButton')}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const formattedYaml = formatYaml(editorContent);
+                  <Editor
+                    height="400px"
+                    language="yaml"
+                    value={editorContent}
+                    onChange={handleEditorChange}
+                    options={{
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      wordWrap: 'on',
+                    }}
+                    loading={
+                      <div className="flex h-full items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    }
+                  />
+                </div>
 
-                    setEditorContent(formattedYaml);
-                  }}
-                  data-testid="format-yaml-button"
-                >
-                  {t('values.editor.formatYaml')}
-                </Button>
-                <Button
-                  disabled={!validation.isValid}
-                  onClick={() => {
-                    // Sempre ativar o feedback de validação ao tentar aplicar
-                    setShowValidationFeedback(true);
+                {/* Blueprint Variables References */}
+                {blueprintVariables.length > 0 && (
+                  <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-2">
+                    <div className="mb-1 text-sm text-slate-600">
+                      {t('values.editor.availableVariables')}:
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {blueprintVariables.map((variable) => (
+                        <Badge
+                          key={variable.name}
+                          variant="outline"
+                          className="cursor-pointer"
+                          onClick={() => {
+                            const pattern = `\${${variable.name}}`;
 
-                    if (validation.isValid) {
-                      // Format the YAML for consistency
+                            setEditorContent((content) => `${content}${pattern}`);
+                          }}
+                        >
+                          {variable.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="mt-6 flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditorContent(templateValues.rawYaml)}
+                    data-testid="reset-editor-button"
+                  >
+                    {t('values.editor.resetButton')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
                       const formattedYaml = formatYaml(editorContent);
 
-                      // Apply changes if valid with formatted YAML
-                      onChange({
-                        ...templateValues,
-                        rawYaml: formattedYaml,
-                      });
-
-                      // Update editor with formatted YAML
                       setEditorContent(formattedYaml);
+                    }}
+                    data-testid="format-yaml-button"
+                  >
+                    {t('values.editor.formatYaml')}
+                  </Button>
+                  <Button
+                    disabled={!validation.isValid}
+                    onClick={() => {
+                      // Sempre ativar o feedback de validação ao tentar aplicar
+                      setShowValidationFeedback(true);
 
-                      // Show success toast
-                      toast.success(t('values.toast.successApplied'));
+                      if (validation.isValid) {
+                        // Format the YAML for consistency
+                        const formattedYaml = formatYaml(editorContent);
 
-                      // Reset o estado da validação após aplicar mudanças válidas
-                      setShowValidationFeedback(false);
-                    } else {
-                      // Validation errors are now shown in the TableView modal
-                      toast.error(t('values.toast.errorApplied'));
-                    }
-                  }}
-                  data-testid="apply-changes-button"
-                >
-                  {t('values.editor.applyButton')}
-                </Button>
-              </div>
-            </>
-          )}
+                        // Apply changes if valid with formatted YAML
+                        onChange({
+                          ...templateValues,
+                          rawYaml: formattedYaml,
+                        });
+
+                        // Update editor with formatted YAML
+                        setEditorContent(formattedYaml);
+
+                        // Show success toast
+                        toast.success(t('values.toast.successApplied'));
+
+                        // Reset o estado da validação após aplicar mudanças válidas
+                        setShowValidationFeedback(false);
+                      } else {
+                        // Validation errors are now shown in the TableView modal
+                        toast.error(t('values.toast.errorApplied'));
+                      }
+                    }}
+                    data-testid="apply-changes-button"
+                  >
+                    {t('values.editor.applyButton')}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 );

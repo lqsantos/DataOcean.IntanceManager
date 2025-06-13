@@ -27,6 +27,9 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
   const [activeTab, setActiveTab] = useState('summary');
   const { t } = useTranslation(['blueprints']);
 
+  // Posição do botão flutuante (pode ser ajustada via props)
+  const buttonPosition = 'bottom-4 right-4';
+
   // Don't render anything if the contract is not initialized
   if (!contract?.initialized) {
     return null;
@@ -263,7 +266,7 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
           <TooltipTrigger asChild>
             <Button
               onClick={() => setIsPreviewOpen(true)}
-              className="floating-button h-14 w-14"
+              className={`floating-button floating-button-animation fixed ${buttonPosition} z-10 h-12 w-12`}
               variant="default"
               data-testid="contract-preview-button"
             >

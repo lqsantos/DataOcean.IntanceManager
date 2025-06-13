@@ -28,9 +28,16 @@ export interface FilterOptions {
 interface FilterControlsProps {
   filters: FilterOptions;
   onFilterChange: (filters: FilterOptions) => void;
+  compact?: boolean; // Nova propriedade para compactar ainda mais o layout
+  isExpandedMode?: boolean; // Opção para passar o estado expandido e ajustar a UI
 }
 
-export const FilterControls: React.FC<FilterControlsProps> = ({ filters, onFilterChange }) => {
+export const FilterControls: React.FC<FilterControlsProps> = ({
+  filters,
+  onFilterChange,
+  compact = false,
+  isExpandedMode = false,
+}) => {
   const { t } = useTranslation(['blueprints']);
 
   const handleSearchChange = useCallback(
@@ -74,12 +81,15 @@ export const FilterControls: React.FC<FilterControlsProps> = ({ filters, onFilte
   );
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-4" data-testid="filter-controls">
-      <div className="relative min-w-[200px] flex-1">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+    <div
+      className={`flex flex-wrap items-center gap-2 ${compact ? 'mb-2' : 'mb-3'}`}
+      data-testid="filter-controls"
+    >
+      <div className="relative min-w-[180px] flex-1">
+        <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           placeholder={t('filters.search.placeholder')}
-          className="pl-8"
+          className={`pl-7 ${compact ? 'h-8 py-1 text-sm' : ''}`}
           value={filters.searchQuery}
           onChange={handleSearchChange}
           data-testid="search-input"
@@ -87,7 +97,10 @@ export const FilterControls: React.FC<FilterControlsProps> = ({ filters, onFilte
       </div>
 
       <Select value={filters.fieldType || 'all'} onValueChange={handleTypeChange}>
-        <SelectTrigger className="w-[140px]" data-testid="type-filter">
+        <SelectTrigger
+          className={`${compact ? 'h-8 w-[120px] text-sm' : 'w-[140px]'}`}
+          data-testid="type-filter"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -112,24 +125,30 @@ export const FilterControls: React.FC<FilterControlsProps> = ({ filters, onFilte
         </SelectContent>
       </Select>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
         <Switch
           checked={filters.onlyCustomized}
           onCheckedChange={handleCustomizedChange}
           id="customized-filter"
           data-testid="customized-filter"
+          className={compact ? 'h-4 w-8' : ''}
         />
-        <Label htmlFor="customized-filter">{t('filters.onlyCustomized')}</Label>
+        <Label htmlFor="customized-filter" className={compact ? 'text-xs' : ''}>
+          {t('filters.onlyCustomized')}
+        </Label>
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
         <Switch
           checked={filters.onlyExposed}
           onCheckedChange={handleExposedChange}
           id="exposed-filter"
           data-testid="exposed-filter"
+          className={compact ? 'h-4 w-8' : ''}
         />
-        <Label htmlFor="exposed-filter">{t('filters.onlyExposed')}</Label>
+        <Label htmlFor="exposed-filter" className={compact ? 'text-xs' : ''}>
+          {t('filters.onlyExposed')}
+        </Label>
       </div>
     </div>
   );
