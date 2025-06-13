@@ -120,9 +120,9 @@ export const TableView: React.FC<TableViewProps> = React.memo(
 
         {/* Table Container com uma única área de scroll para sincronizar cabeçalho e corpo */}
         <div className="flex h-full max-h-[calc(100vh-11rem)] min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
-          {/* ScrollArea englobando toda a tabela para scroll horizontal sincronizado */}
-          <ScrollArea className="synchronized-scroll h-full flex-1 pb-4" type="always">
-            <Table className="w-full min-w-full table-fixed border-collapse">
+          {/* ScrollArea englobando toda a tabela para scroll horizontal sincronizado - altura fixa */}
+          <ScrollArea className="synchronized-scroll h-full flex-1">
+            <Table className="w-full min-w-full table-fixed">
               {/* Cabeçalho com position sticky */}
               <TableHeader className="sticky-table-header">
                 <TableRow>
@@ -170,13 +170,10 @@ export const TableView: React.FC<TableViewProps> = React.memo(
                 )}
               </TableBody>
             </Table>
-            {/* Espaçador para garantir que a última linha seja totalmente visível */}
-            <div className="h-10" aria-hidden="true"></div>
           </ScrollArea>
         </div>
-
-        {/* Required Fields Legend */}
-        <div className="mt-2 text-right text-sm text-muted-foreground">
+        {/* Required Fields Legend - movida para dentro da área de scroll, mas fixada visualmente */}
+        <div className="mb-2 text-right text-sm">
           <span className="mr-1 font-bold text-red-500">*</span>
           {t('values.validationMessages.required')}
         </div>
