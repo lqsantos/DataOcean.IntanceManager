@@ -8,19 +8,26 @@ import { useTranslation } from 'react-i18next';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 import type { DefaultValueField, EnhancedTableViewProps, TemplateDefaultValues } from '../types';
 import { ValueSourceType } from '../types';
 import { valueConfigurationToLegacyFields } from '../ValueConfigurationConverter';
 
-// Importando componentes e constantes
-import { EnhancedTableRows } from './EnhancedTableRows';
 import * as FieldService from './fieldUpdateService';
-import { COLUMN_WIDTHS } from './TableRows';
+// Importando componentes e constantes
+import { COLUMN_WIDTHS, TableRows } from './TableRows';
 import { ValidationDisplay } from './ValidationDisplay';
 // Import do serviço para atualização da nova estrutura tipada
 import * as ValueConfigFieldService from './valueConfigFieldUpdateService';
+
 // Props clássicas (legado)
 export interface TableViewProps {
   templateValues: TemplateDefaultValues;
@@ -264,75 +271,78 @@ export const TableView: React.FC<CombinedTableViewProps> = React.memo((props) =>
   );
 
   return (
-    <div className="mt-4 flex h-full min-h-0 flex-col" data-testid="table-view">
-      {/* Validation Display Component */}
-      <ValidationDisplay
-        validationState={validationState}
-        showValidationFeedback={showValidationFeedback}
-      />
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Espaço para validação */}
+      {showValidationFeedback && validationState && !validationState.isValid && (
+        <div className="mb-2">
+          <Alert variant="error" className="py-2">
+            <AlertDescription>
+              <ValidationDisplay
+                errors={validationState.errors}
+                warnings={validationState.warnings}
+              />
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
 
-      {/* Table Container com uma única área de scroll para sincronizar cabeçalho e corpo */}
-      <div className="flex h-full max-h-[calc(100vh-11rem)] min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
-        <ScrollArea className="synchronized-scroll h-full flex-1">
-          <div className="relative w-full overflow-x-auto">
-            <table className="w-full min-w-full table-fixed caption-bottom text-sm">
-              <TableHeader className="sticky-table-header">
+      {/* Tabela principal com scroll area */}
+      <ScrollArea className="h-full overflow-auto">
+        <div data-testid="table-view" className="pb-4">
+          <Table className="border-separate border-spacing-0">
+            {/* Cabeçalho fixo */}
+            <TableHeader className="sticky top-0 z-10 bg-background">
+              <TableRow>
+                <TableHead className="w-[45%]" style={{ width: COLUMN_WIDTHS.field }}>
+                  {t('values.table.fieldName')}
+                </TableHead>
+                <TableHead className="w-[10%]" style={{ width: COLUMN_WIDTHS.type }}>
+                  {t('values.table.type')}
+                </TableHead>
+                <TableHead className="w-[12%]" style={{ width: COLUMN_WIDTHS.defaultValue }}>
+                  {t('values.table.defaultValue')}
+                </TableHead>
+                <TableHead className="w-[20%]" style={{ width: COLUMN_WIDTHS.value }}>
+                  {t('values.table.value')}
+                </TableHead>
+                <TableHead className="w-[5%] text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
+                  {t('values.table.exposed')}
+                </TableHead>
+                <TableHead
+                  className="w-[6%] text-center"
+                  style={{ width: COLUMN_WIDTHS.overridable }}
+                >
+                  {t('values.table.overridable')}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+
+            {/* Corpo da tabela com campos */}
+            <TableBody>
+              {fields.length === 0 ? (
                 <TableRow>
-                  <TableHead style={{ width: COLUMN_WIDTHS.field }}>
-                    {t('values.table.field')}
-                  </TableHead>
-                  <TableHead style={{ width: COLUMN_WIDTHS.type }}>
-                    {t('values.table.type')}
-                  </TableHead>
-                  <TableHead style={{ width: COLUMN_WIDTHS.defaultValue }}>
-                    {t('values.table.defaultValue')}
-                  </TableHead>
-                  <TableHead style={{ width: COLUMN_WIDTHS.value }}>
-                    {t('values.table.value')}
-                  </TableHead>
-                  <TableHead className="text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
-                    {t('values.table.exposed')}
-                  </TableHead>
-                  <TableHead className="text-center" style={{ width: COLUMN_WIDTHS.overridable }}>
-                    {t('values.table.overridable')}
-                  </TableHead>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    {t('values.table.noFields')}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody className="pb-8">
-                {fields.length > 0 ? (
-                  <EnhancedTableRows
-                    fields={fields}
-                    valueConfig={valueConfiguration || undefined}
-                    useTypedValueConfiguration={useTypedValueConfiguration}
-                    onSourceChange={handleSourceChange}
-                    onValueChange={handleValueChange}
-                    onExposeChange={handleExposeChange}
-                    onOverrideChange={handleOverrideChange}
-                    onValueConfigChange={onValueConfigurationChange}
-                    blueprintVariables={blueprintVariables}
-                    showValidationFeedback={showValidationFeedback}
-                  />
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center">
-                      <Alert>
-                        <AlertDescription>{t('values.table.noFields')}</AlertDescription>
-                      </Alert>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </table>
-          </div>
-        </ScrollArea>
-      </div>
-      {/* Required Fields Legend - movida para dentro da área de scroll, mas fixada visualmente */}
-      <div className="mb-2 text-right text-sm">
-        <span className="mr-1 font-bold text-red-500">*</span>
-        {t('values.validationMessages.required')}
-      </div>
+              ) : (
+                <TableRows
+                  fields={fields}
+                  onSourceChange={handleSourceChange}
+                  onValueChange={handleValueChange}
+                  onExposeChange={handleExposeChange}
+                  onOverrideChange={handleOverrideChange}
+                  blueprintVariables={blueprintVariables}
+                  showValidationFeedback={showValidationFeedback}
+                />
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </ScrollArea>
     </div>
   );
 });
 
+// Add display name to the memoized component
 TableView.displayName = 'TableView';

@@ -515,8 +515,13 @@
       "object": "Object",
       "array": "Array"
     },
-    "onlyCustomized": "Only Customized",
-    "onlyExposed": "Only Exposed"
+    "onlyCustomized": "Customized",
+    "onlyExposed": "Exposed",
+    "clear": "Clear",
+    "quickFilters": {
+      "customized": "Customized",
+      "complex": "Complex"
+    }
   },
 
   "stringEditor": {

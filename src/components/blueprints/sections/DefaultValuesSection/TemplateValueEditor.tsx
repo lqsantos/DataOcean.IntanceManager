@@ -4,26 +4,31 @@
  * Includes both table view and YAML editor view with toggle
  */
 
-import Editor from '@monaco-editor/react';
-import { Loader2, Maximize, Minimize } from 'lucide-react';
+import { Maximize, Minimize } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { ValueConfiguration, ValueType } from '@/types/blueprint';
+import { valueConfigurationToYaml, yamlToValueConfiguration } from '@/types/blueprint';
 
 import { BatchActions } from './BatchActions';
+import { EnhancedFilterControls } from './EnhancedFilterControls';
 import type { FilterOptions } from './FilterControls';
-import { FilterControls } from './FilterControls';
-import { TableView } from './TableView';
-import type { TemplateDefaultValues, TemplateValueEditorProps } from './types';
-import { formatYaml, validateYamlAgainstSchema } from './utils';
-import { ViewMode, ViewToggle } from './ViewToggle';
+import { TableView } from './TableComponents/TableView';
+import type { EnhancedTemplateValueEditorProps, TemplateDefaultValues } from './types';
+import { ValueSourceType } from './types';
+// Importamos apenas a função de validação que ainda é necessária para o TableView
+import { validateYamlAgainstSchema } from './utils';
+import {
+  filterValueConfigurationFields,
+  legacyFieldsToValueConfiguration,
+} from './ValueConfigurationConverter';
 
-export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.memo(
+export const TemplateValueEditor: React.FC<EnhancedTemplateValueEditorProps> = React.memo(
   ({
     templateValues,
     blueprintVariables = [],
@@ -31,23 +36,41 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
     showBatchActions = false,
     onFieldsChange,
     onValidationChange,
+    useTypedValueConfiguration = false,
+    onValueConfigurationChange,
   }) => {
     const { t } = useTranslation(['blueprints']);
 
-    // View mode state (table or YAML)
-    const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TABLE);
-
     // Estado para controlar o modo expandido
     const [isExpandedMode, setIsExpandedMode] = useState<boolean>(false);
+
+    // Estado para armazenar a configuração tipada quando useTypedValueConfiguration=true
+    const [valueConfig, setValueConfig] = useState<ValueConfiguration | null>(
+      useTypedValueConfiguration ? legacyFieldsToValueConfiguration(templateValues.fields) : null
+    );
+
+    // Efeito para converter os campos quando mudam e estamos usando a configuração tipada
+    useEffect(() => {
+      if (useTypedValueConfiguration) {
+        // Converter os campos da estrutura antiga para a nova quando mudam
+        const newConfig = legacyFieldsToValueConfiguration(templateValues.fields);
+
+        setValueConfig(newConfig);
+
+        // Notificar o componente pai sobre a mudança na configuração tipada
+        if (onValueConfigurationChange) {
+          onValueConfigurationChange(newConfig);
+        }
+      }
+    }, [useTypedValueConfiguration, templateValues.fields, onValueConfigurationChange]);
 
     // Toggle function for expanded mode
     const toggleExpandedMode = useCallback(() => {
       setIsExpandedMode((prev) => !prev);
     }, []);
 
-    // Editor state
-    const [editorContent, setEditorContent] = useState(templateValues.rawYaml);
-    const [debouncedContent] = useDebounce(editorContent, 500);
+    // Mantemos o debouncedContent para validação, mas agora sempre baseado no rawYaml
+    const [debouncedContent] = useDebounce(templateValues.rawYaml, 500);
 
     type ValidationWarning = { message: string; path?: string[] };
     type VariableWarning = { message: string; path?: string[]; variableName?: string };
@@ -77,11 +100,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
       onlyCustomized: false,
     });
 
-    const handleEditorChange = useCallback((value: string | undefined) => {
-      if (value !== undefined) {
-        setEditorContent(value);
-      }
-    }, []);
+    // handleEditorChange removido - não é mais necessário
 
     // Removed showValidationToasts - validation feedback is now shown in TableView modal
 
@@ -201,6 +220,34 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
 
     // Filter fields based on current filters
     const filteredFields = useMemo(() => {
+      // Se estamos usando a nova estrutura tipada, usamos o filterValueConfigurationFields
+      if (useTypedValueConfiguration && valueConfig) {
+        const filteredConfig = filterValueConfigurationFields(valueConfig, filters);
+        // Converte de volta para o formato antigo para compatibilidade com os componentes atuais
+
+        type FieldValue = string | number | boolean | Record<string, unknown> | unknown[] | null;
+
+        return Object.values(filteredConfig).map((fieldConfig) => {
+          const pathString = fieldConfig.path;
+          const pathParts = pathString.split('.');
+
+          return {
+            key: pathString,
+            displayName: pathParts[pathParts.length - 1],
+            value: fieldConfig.value as FieldValue,
+            originalValue: fieldConfig.templateDefault as FieldValue | undefined,
+            source: fieldConfig.isCustomized ? ValueSourceType.BLUEPRINT : ValueSourceType.TEMPLATE,
+            exposed: fieldConfig.isExposed,
+            overridable: fieldConfig.isOverridable,
+            required: fieldConfig.isRequired ?? false,
+            type: fieldConfig.type,
+            path: pathParts,
+            children: [],
+          };
+        });
+      }
+
+      // Caso contrário, usamos o filtro tradicional
       return templateValues.fields.filter((field) => {
         if (!field) {
           return false;
@@ -227,21 +274,34 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
         }
 
         // Apply type filter
-        if (filters.fieldType) {
-          if (filters.fieldType === 'overridable' && !field.overridable) {
-            return false;
-          } else if (filters.fieldType === 'required' && !field.required) {
+        if (filters.fieldType && filters.fieldType !== 'all') {
+          if (field.type !== filters.fieldType) {
             return false;
           }
         }
 
         return true;
       });
-    }, [templateValues.fields, filters]);
+    }, [templateValues.fields, filters, useTypedValueConfiguration, valueConfig]);
 
-    // Update view mode
-    const handleViewModeChange = useCallback((mode: ViewMode) => {
-      setViewMode(mode);
+    // Funcionalidades para conversão YAML <-> ValueConfiguration
+    // Estas funções estão disponíveis para uso futuro na integração com outras partes do sistema
+    const _convertYamlToValueConfig = useCallback(
+      (yaml: string): ValueConfiguration => {
+        // Extrair as informações de tipo e valores padrão dos campos atuais
+        const templateFieldsInfo = templateValues.fields.map((field) => ({
+          path: field.path.join('.'),
+          type: field.type as ValueType,
+          defaultValue: field.originalValue,
+        }));
+
+        return yamlToValueConfiguration(yaml, templateFieldsInfo);
+      },
+      [templateValues.fields]
+    );
+
+    const _convertValueConfigToYaml = useCallback((config: ValueConfiguration): string => {
+      return valueConfigurationToYaml(config);
     }, []);
 
     // Handle filter changes
@@ -263,9 +323,21 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
     const handleFieldsUpdate = useCallback(
       (updatedTemplateValues: TemplateDefaultValues) => {
         handleValueChange();
+
+        // Se estamos usando a configuração tipada, atualizamos o estado e notificamos o pai
+        if (useTypedValueConfiguration) {
+          const newConfig = legacyFieldsToValueConfiguration(updatedTemplateValues.fields);
+
+          setValueConfig(newConfig);
+
+          if (onValueConfigurationChange) {
+            onValueConfigurationChange(newConfig);
+          }
+        }
+
         onChange(updatedTemplateValues);
       },
-      [onChange, handleValueChange]
+      [onChange, handleValueChange, useTypedValueConfiguration, onValueConfigurationChange]
     );
 
     return (
@@ -303,11 +375,7 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
                     compact={true}
                   />
                 )}
-                <ViewToggle
-                  viewMode={viewMode}
-                  onViewModeChange={handleViewModeChange}
-                  inline={true}
-                />
+                {/* ViewToggle removido, mantendo apenas o modo TABLE */}
                 <Button
                   variant={isExpandedMode ? 'outline' : 'ghost'}
                   size="icon"
@@ -334,136 +402,48 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
           <div
             className={isExpandedMode ? 'editor-content' : 'flex flex-1 flex-col overflow-hidden'}
           >
-            {viewMode === ViewMode.TABLE ? (
-              <div className="flex flex-1 flex-col overflow-hidden">
-                {/* Filter Controls */}
-                <FilterControls
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                  compact={true}
-                  isExpandedMode={isExpandedMode}
-                />
-
-                {/* Table View com h-full e flex-1 para preencher o espaço disponível */}
-                <div className="h-full min-h-0 flex-1 overflow-hidden pb-1">
-                  <TableView
-                    templateValues={{
-                      ...templateValues,
+            {/* Table View é a única opção disponível agora */}
+            <div className="flex flex-1 flex-col overflow-hidden">
+              {/* Filter Controls */}
+              <EnhancedFilterControls
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                valueConfiguration={valueConfig || undefined}
+                useTypedValueConfiguration={useTypedValueConfiguration}
+                onFilteredValueConfigChange={(filteredFields) => {
+                  // Se estamos usando a estrutura tipada e temos um handler para notificar mudanças
+                  if (useTypedValueConfiguration && onValueConfigurationChange && valueConfig) {
+                    // Criamos uma nova configuração com apenas os campos filtrados
+                    const filteredConfig = {
+                      ...valueConfig,
                       fields: filteredFields,
-                    }}
-                    onChange={handleFieldsUpdate}
-                    blueprintVariables={blueprintVariables}
-                    validationState={validation}
-                    showValidationFeedback={showValidationFeedback}
-                  />
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* YAML Editor - adapt to available space */}
-                <div
-                  className="relative min-h-[400px] flex-1 rounded-md border"
-                  data-testid="yaml-editor-container"
-                >
-                  <Editor
-                    height="400px"
-                    language="yaml"
-                    value={editorContent}
-                    onChange={handleEditorChange}
-                    options={{
-                      minimap: { enabled: false },
-                      scrollBeyondLastLine: false,
-                      wordWrap: 'on',
-                    }}
-                    loading={
-                      <div className="flex h-full items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                      </div>
+                    };
+
+                    // Opcionalmente, podemos notificar o componente pai sobre os campos filtrados
+                    // Isso permite que componentes externos façam otimizações com base no filtro
+                    if (onValueConfigurationChange) {
+                      onValueConfigurationChange(filteredConfig, true); // O segundo parâmetro indica que são campos filtrados
                     }
-                  />
-                </div>
+                  }
+                }}
+                compact={true}
+                _isExpandedMode={isExpandedMode}
+              />
 
-                {/* Blueprint Variables References */}
-                {blueprintVariables.length > 0 && (
-                  <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-2">
-                    <div className="mb-1 text-sm text-slate-600">
-                      {t('values.editor.availableVariables')}:
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {blueprintVariables.map((variable) => (
-                        <Badge
-                          key={variable.name}
-                          variant="outline"
-                          className="cursor-pointer"
-                          onClick={() => {
-                            const pattern = `\${${variable.name}}`;
-
-                            setEditorContent((content) => `${content}${pattern}`);
-                          }}
-                        >
-                          {variable.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="mt-6 flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setEditorContent(templateValues.rawYaml)}
-                    data-testid="reset-editor-button"
-                  >
-                    {t('values.editor.resetButton')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const formattedYaml = formatYaml(editorContent);
-
-                      setEditorContent(formattedYaml);
-                    }}
-                    data-testid="format-yaml-button"
-                  >
-                    {t('values.editor.formatYaml')}
-                  </Button>
-                  <Button
-                    disabled={!validation.isValid}
-                    onClick={() => {
-                      // Sempre ativar o feedback de validação ao tentar aplicar
-                      setShowValidationFeedback(true);
-
-                      if (validation.isValid) {
-                        // Format the YAML for consistency
-                        const formattedYaml = formatYaml(editorContent);
-
-                        // Apply changes if valid with formatted YAML
-                        onChange({
-                          ...templateValues,
-                          rawYaml: formattedYaml,
-                        });
-
-                        // Update editor with formatted YAML
-                        setEditorContent(formattedYaml);
-
-                        // Show success toast
-                        toast.success(t('values.toast.successApplied'));
-
-                        // Reset o estado da validação após aplicar mudanças válidas
-                        setShowValidationFeedback(false);
-                      } else {
-                        // Validation errors are now shown in the TableView modal
-                        toast.error(t('values.toast.errorApplied'));
-                      }
-                    }}
-                    data-testid="apply-changes-button"
-                  >
-                    {t('values.editor.applyButton')}
-                  </Button>
-                </div>
-              </>
-            )}
+              {/* Table View com h-full e flex-1 para preencher o espaço disponível */}
+              <div className="h-full min-h-0 flex-1 overflow-hidden pb-1">
+                <TableView
+                  templateValues={{
+                    ...templateValues,
+                    fields: filteredFields,
+                  }}
+                  onChange={handleFieldsUpdate}
+                  blueprintVariables={blueprintVariables}
+                  validationState={validation}
+                  showValidationFeedback={showValidationFeedback}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </>

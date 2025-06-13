@@ -509,14 +509,19 @@
     },
     "type": {
       "all": "Todos os Tipos",
-      "string": "Texto",
+      "string": "String",
       "number": "Número",
       "boolean": "Booleano",
       "object": "Objeto",
-      "array": "Lista"
+      "array": "Array"
     },
-    "onlyCustomized": "Apenas Personalizados",
-    "onlyExposed": "Apenas Expostos"
+    "onlyCustomized": "Customizados",
+    "onlyExposed": "Expostos",
+    "clear": "Limpar",
+    "quickFilters": {
+      "customized": "Customizados",
+      "complex": "Complexos"
+    }
   },
 
   "stringEditor": {

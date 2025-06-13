@@ -3,6 +3,9 @@
  * These types define the contract of configuration between blueprint and instances.
  */
 
+// Importação dos novos tipos da estrutura tipada
+import type { ValueConfiguration } from '@/types/blueprint';
+
 /**
  * Enum for the source of a default value
  */
@@ -182,6 +185,78 @@ export interface ValidationFeedbackProps {
 }
 
 /**
- * Validation result from YAML validation
+ * Interface que estende TemplateDefaultValues para incluir a nova estrutura tipada
+ * Facilita a migração gradual do sistema antigo para o novo
  */
-// Removed duplicate YamlValidationResult interface to avoid conflicts
+export interface EnhancedTemplateDefaultValues extends TemplateDefaultValues {
+  // Nova estrutura tipada de configuração de valores
+  valueConfiguration?: ValueConfiguration;
+}
+
+/**
+ * Props estendidas para o TemplateValueEditor que incluem a nova estrutura tipada
+ */
+export interface EnhancedTemplateValueEditorProps extends TemplateValueEditorProps {
+  // Indica se deve usar a nova estrutura tipada em vez do formato antigo
+  useTypedValueConfiguration?: boolean;
+
+  // Callback específico para quando a configuração tipada é alterada
+  // O segundo parâmetro indica se é uma configuração filtrada (importante para otimizações de UI)
+  onValueConfigurationChange?: (
+    valueConfig: ValueConfiguration,
+    isFilteredConfig?: boolean
+  ) => void;
+}
+
+/**
+ * Props estendidas para o TableView que incluem a nova estrutura tipada
+ */
+export interface EnhancedTableViewProps {
+  // Values no formato antigo ou híbrido
+  templateValues: TemplateDefaultValues | EnhancedTemplateDefaultValues;
+
+  // Flag para indicar se deve usar a estrutura tipada
+  useTypedValueConfiguration?: boolean;
+
+  // Valor da configuração tipada (opcional, se useTypedValueConfiguration = true)
+  valueConfiguration?: ValueConfiguration;
+
+  // Variáveis do blueprint para substituição
+  blueprintVariables: Array<{ name: string; value: string }>;
+
+  // Callback quando os valores são alterados
+  onChange: (updatedTemplateValues: TemplateDefaultValues) => void;
+
+  // Callback específico para quando a configuração tipada é alterada
+  // O segundo parâmetro indica se é uma configuração filtrada (importante para otimizações de UI)
+  onValueConfigurationChange?: (
+    valueConfig: ValueConfiguration,
+    isFilteredConfig?: boolean
+  ) => void;
+
+  // Estado de validação
+  validationState?: {
+    isValid: boolean;
+    errors: Array<{ message: string; path?: string[] }>;
+    warnings: Array<{ message: string; path?: string[] }>;
+    variableWarnings: Array<{ message: string; path?: string[]; variableName?: string }>;
+  };
+
+  // Flag para mostrar feedback de validação
+  showValidationFeedback?: boolean;
+}
+
+/**
+ * Funções utilitárias para conversão entre as estruturas antiga e nova
+ */
+
+/**
+ * Converte a estrutura antiga (DefaultValueField[]) para a nova estrutura tipada (ValueConfiguration)
+ */
+export interface ValueConfigurationConverter {
+  // Converte os campos antigos para a estrutura tipada
+  legacyFieldsToValueConfiguration: (fields: DefaultValueField[]) => ValueConfiguration;
+
+  // Converte a estrutura tipada para campos antigos (para compatibilidade)
+  valueConfigurationToLegacyFields: (valueConfig: ValueConfiguration) => DefaultValueField[];
+}
