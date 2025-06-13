@@ -14,7 +14,7 @@ import { useBlueprintForm } from '@/contexts/blueprint-form-context';
 import { fetchTemplateSchemaForDefaultValues } from '@/services/template-schema-service';
 import { logError } from '@/utils/errorLogger';
 
-import { ContractPreview } from './ContractPreview';
+import { ContractFloatingButton } from './ContractFloatingButton';
 import { ErrorBoundary } from './ErrorBoundary';
 import { TemplateTabsNavigation } from './TemplateTabsNavigation';
 import { TemplateValueEditor } from './TemplateValueEditor';
@@ -320,16 +320,19 @@ export const DefaultValuesSection = () => {
           />
         </ErrorBoundary>
 
+        {/* Contract preview como botão flutuante no canto inferior direito */}
         <ErrorBoundary>
-          <ContractPreview contract={defaultValuesContract} />
+          <div className="fixed bottom-8 right-8 z-50">
+            <ContractFloatingButton contract={defaultValuesContract} />
+          </div>
         </ErrorBoundary>
       </>
     );
   };
 
   return (
-    <section className="w-full space-y-6" data-testid="default-values-section">
-      <div className="space-y-6">{renderContent()}</div>
+    <section className="flex h-full w-full flex-col" data-testid="default-values-section">
+      <div className="flex flex-1 flex-col overflow-hidden">{renderContent()}</div>
     </section>
   );
 };

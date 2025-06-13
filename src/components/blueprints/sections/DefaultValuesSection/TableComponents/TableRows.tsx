@@ -223,8 +223,8 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
 
           return (
             <React.Fragment key={field.path.join('.')}>
-              <TableRow className={cn(depth > 0 && 'bg-muted/50')}>
-                <TableCell style={{ paddingLeft: `${depth * 2 + 1}rem` }}>
+              <TableRow className={cn(depth > 0 && 'bg-muted/50', 'table-row-adjustable')}>
+                <TableCell style={{ paddingLeft: `${depth * 2 + 1}rem`, width: '33%' }}>
                   {hasChildren ? (
                     <Button
                       variant="ghost"
@@ -250,20 +250,22 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                   )}
                 </TableCell>
 
-                <TableCell className="text-xs text-muted-foreground">{field.type}</TableCell>
+                <TableCell className="text-xs text-muted-foreground" style={{ width: '8%' }}>
+                  {field.type}
+                </TableCell>
 
-                <TableCell className="text-xs text-muted-foreground">
+                <TableCell className="text-xs text-muted-foreground" style={{ width: '17%' }}>
                   {field.originalValue !== undefined ? String(field.originalValue) : '-'}
                 </TableCell>
 
-                <TableCell>
+                <TableCell style={{ width: '25%' }}>
                   <div className="flex items-center justify-between">
                     <div className="w-full">{renderValueEditor(field)}</div>
                     <div className="ml-2 flex">{renderActionButton(field)}</div>
                   </div>
                 </TableCell>
 
-                <TableCell className="text-center">
+                <TableCell className="text-center" style={{ width: '8.5%' }}>
                   <Switch
                     checked={field.exposed}
                     onCheckedChange={(checked) => onExposeChange(field, checked)}
@@ -271,7 +273,7 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="text-center">
+                <TableCell className="text-center" style={{ width: '8.5%' }}>
                   <Switch
                     checked={field.overridable}
                     onCheckedChange={(checked) => onOverrideChange(field, checked)}

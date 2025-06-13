@@ -7,6 +7,7 @@ import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Table,
   TableBody,
@@ -109,54 +110,47 @@ export const TableView: React.FC<TableViewProps> = React.memo(
     );
 
     return (
-      <div className="mt-4" data-testid="table-view">
+      <div className="mt-4 flex h-full min-h-0 flex-col" data-testid="table-view">
         {/* Validation Display Component */}
         <ValidationDisplay
           validationState={validationState}
           showValidationFeedback={showValidationFeedback}
         />
 
-        {/* Table Container with fixed height and scrollable content */}
-        <div className="rounded-md border">
-          {/* Use a container with fixed height for vertical scrolling */}
-          <div style={{ height: '500px', overflow: 'auto' }}>
-            {/* Standard table layout */}
+        {/* Table Container with flex layout for proper scrolling */}
+        <div className="flex h-full max-h-[calc(100vh-13rem)] min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
+          {/* Table header fixo */}
+          <div className="flex-shrink-0 bg-background">
             <Table className="min-w-full table-fixed border-collapse">
               <TableHeader>
                 <TableRow>
-                  <TableHead
-                    className="sticky top-0 z-10 w-1/3 bg-background"
-                    style={{ width: '33%' }}
-                  >
+                  <TableHead className="w-1/3" style={{ width: '33%' }}>
                     {t('values.table.field')}
                   </TableHead>
-                  <TableHead
-                    className="sticky top-0 z-10 w-24 bg-background"
-                    style={{ width: '8%' }}
-                  >
+                  <TableHead className="w-24" style={{ width: '8%' }}>
                     {t('values.table.type')}
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-background" style={{ width: '17%' }}>
+                  <TableHead className="" style={{ width: '17%' }}>
                     {t('values.table.defaultValue')}
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-background" style={{ width: '25%' }}>
+                  <TableHead className="" style={{ width: '25%' }}>
                     {t('values.table.value')}
                   </TableHead>
-                  <TableHead
-                    className="sticky top-0 z-10 bg-background text-center"
-                    style={{ width: '8.5%' }}
-                  >
+                  <TableHead className="text-center" style={{ width: '8.5%' }}>
                     {t('values.table.exposed')}
                   </TableHead>
-                  <TableHead
-                    className="sticky top-0 z-10 bg-background text-center"
-                    style={{ width: '8.5%' }}
-                  >
+                  <TableHead className="text-center" style={{ width: '8.5%' }}>
                     {t('values.table.overridable')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+            </Table>
+          </div>
+
+          {/* Conteúdo da tabela com scroll usando o componente ScrollArea */}
+          <ScrollArea className="h-full flex-1 pb-4" type="auto">
+            <Table className="min-w-full table-fixed border-collapse">
+              <TableBody className="pb-8">
                 {fields.length > 0 ? (
                   <TableRows
                     fields={fields}
@@ -178,7 +172,9 @@ export const TableView: React.FC<TableViewProps> = React.memo(
                 )}
               </TableBody>
             </Table>
-          </div>
+            {/* Espaçador para garantir que a última linha seja totalmente visível */}
+            <div className="h-10" aria-hidden="true"></div>
+          </ScrollArea>
         </div>
 
         {/* Required Fields Legend */}

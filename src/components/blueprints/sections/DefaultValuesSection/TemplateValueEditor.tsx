@@ -260,7 +260,10 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
     );
 
     return (
-      <div className="mt-4 rounded-md border p-4" data-testid="template-value-editor">
+      <div
+        className="mt-4 flex flex-col overflow-hidden rounded-md border p-4"
+        data-testid="template-value-editor"
+      >
         <div className="mb-4 border-b pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -290,29 +293,31 @@ export const TemplateValueEditor: React.FC<TemplateValueEditorProps> = React.mem
             </div>
           </div>
         </div>
-        <div className="space-y-4">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {viewMode === ViewMode.TABLE ? (
-            <>
+            <div className="flex flex-1 flex-col overflow-hidden">
               {/* Filter Controls */}
               <FilterControls filters={filters} onFilterChange={handleFilterChange} />
 
-              {/* Table View */}
-              <TableView
-                templateValues={{
-                  ...templateValues,
-                  fields: filteredFields,
-                }}
-                onChange={handleFieldsUpdate}
-                blueprintVariables={blueprintVariables}
-                validationState={validation}
-                showValidationFeedback={showValidationFeedback}
-              />
-            </>
+              {/* Table View com h-full e flex-1 para preencher o espaço disponível */}
+              <div className="h-full min-h-0 flex-1 overflow-hidden pb-1">
+                <TableView
+                  templateValues={{
+                    ...templateValues,
+                    fields: filteredFields,
+                  }}
+                  onChange={handleFieldsUpdate}
+                  blueprintVariables={blueprintVariables}
+                  validationState={validation}
+                  showValidationFeedback={showValidationFeedback}
+                />
+              </div>
+            </div>
           ) : (
             <>
-              {/* YAML Editor */}
+              {/* YAML Editor - adapt to available space */}
               <div
-                className="relative h-[400px] rounded-md border"
+                className="relative min-h-[400px] flex-1 rounded-md border"
                 data-testid="yaml-editor-container"
               >
                 <Editor

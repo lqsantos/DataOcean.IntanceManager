@@ -168,6 +168,27 @@
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
 
+/* Table and UI Component Styles */
+@layer utilities {
+  /* Estilos para linhas da tabela */
+  .table-row-adjustable {
+    min-height: 3rem;
+  }
+
+  /* Floating button styles */
+  .floating-button {
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease-in-out;
+  }
+
+  .floating-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Gradientes */
 .gradient-purple {
   background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
 }
@@ -189,6 +210,9 @@
   padding: 1px;
   background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
