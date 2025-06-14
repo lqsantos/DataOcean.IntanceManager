@@ -333,6 +333,120 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       return filtered;
     }, [templateValues.fields, filterState]);
 
+    // Efeito para preservar o estado de campos expandidos quando os campos são modificados
+    // Este efeito resolve o problema de colapso automático ao customizar campos
+    useEffect(() => {
+      // Se não houver campos expandidos ou filtros de busca ativos, não faz nada
+      if (expandedPaths.size === 0) {
+        return;
+      }
+
+      // Precisamos criar uma estrutura de referência para os campos atuais
+      const pathsMap = new Map<string, DefaultValueField>();
+
+      // Função recursiva para mapear todos os campos pela sua path
+      const mapFieldsByPath = (fields: DefaultValueField[]) => {
+        fields.forEach((field) => {
+          const fullPath = field.path.join('.');
+
+          pathsMap.set(fullPath, field);
+
+          // Recursivamente mapeia os filhos
+          if (field.children && field.children.length > 0) {
+            mapFieldsByPath(field.children);
+          }
+        });
+      };
+
+      // Inicia o mapeamento a partir dos campos raiz
+      if (templateValues.fields) {
+        mapFieldsByPath(templateValues.fields);
+      }
+
+      // Preservar os campos expandidos, mas remover aqueles que não existem mais
+      setExpandedPaths((prev) => {
+        const validPaths = new Set<string>();
+
+        // Verifica cada caminho expandido e mantém apenas os que ainda existem
+        [...prev].forEach((path) => {
+          if (pathsMap.has(path)) {
+            validPaths.add(path);
+          }
+        });
+
+        // Se o número de caminhos válidos for igual ao número original, não há alterações
+        if (validPaths.size === prev.size) {
+          return prev;
+        }
+
+        // Caso contrário, retorna o conjunto atualizado de caminhos expandidos
+        return validPaths;
+      });
+    }, [templateValues.fields, expandedPaths]);
+
+    // Efeito adicional para garantir que campos customizados permaneçam expandidos
+    useEffect(() => {
+      // Procura por campos customizados na estrutura
+      const customizedFields: DefaultValueField[] = [];
+
+      // Função recursiva para encontrar todos os campos customizados
+      const findCustomizedFields = (fields: DefaultValueField[]) => {
+        fields.forEach((field) => {
+          if (field.source === ValueSourceType.BLUEPRINT) {
+            customizedFields.push(field);
+          }
+
+          // Recursivamente procura nos filhos
+          if (field.children && field.children.length > 0) {
+            findCustomizedFields(field.children);
+          }
+        });
+      };
+
+      // Inicia a busca a partir dos campos raiz
+      if (templateValues.fields) {
+        findCustomizedFields(templateValues.fields);
+      }
+
+      // Se encontrarmos campos customizados, garantimos que seus pais estejam expandidos
+      if (customizedFields.length > 0) {
+        // Mantém um registro de quais campos adicionamos para expansão
+        const pathsToExpand = new Set<string>();
+
+        // Para cada campo customizado, expandimos seus campos pai
+        customizedFields.forEach((field) => {
+          // Obtém o caminho do campo customizado
+          const fullPath = field.path.join('.');
+          const segments = field.path;
+
+          // Se o campo for um objeto aninhado, também garantimos que ele esteja expandido
+          if (field.type === 'object' && !expandedPaths.has(fullPath)) {
+            pathsToExpand.add(fullPath);
+          }
+
+          // Expandimos todos os pais deste campo (exceto o próprio campo)
+          for (let i = 1; i < segments.length; i++) {
+            const parentPath = segments.slice(0, i).join('.');
+
+            if (!expandedPaths.has(parentPath)) {
+              pathsToExpand.add(parentPath);
+            }
+          }
+        });
+
+        // Se temos novos caminhos para expandir, atualizamos o estado
+        if (pathsToExpand.size > 0) {
+          setExpandedPaths((prev) => {
+            const newPaths = new Set(prev);
+
+            pathsToExpand.forEach((path) => newPaths.add(path));
+
+            return newPaths;
+          });
+        }
+      }
+    }, [templateValues.fields, expandedPaths]);
+
     return (
       <div className="mb-4 h-full min-h-0 flex-1 space-y-4">
         <div
