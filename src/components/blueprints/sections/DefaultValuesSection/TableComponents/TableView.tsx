@@ -33,6 +33,9 @@ export interface TableViewProps {
     variableWarnings: Array<{ message: string; path?: string[]; variableName?: string }>;
   };
   showValidationFeedback?: boolean;
+  // Novos props para expansão automática de campos aninhados
+  expandedPaths?: Set<string>;
+  toggleFieldExpansion?: (path: string) => void;
 }
 
 // Props tipadas para o componente
@@ -45,6 +48,8 @@ export const TableView: React.FC<CombinedTableViewProps> = React.memo((props) =>
     templateValues,
     validationState,
     showValidationFeedback = false,
+    expandedPaths,
+    toggleFieldExpansion,
   } = props;
 
   const { t } = useTranslation(['blueprints']);
@@ -311,6 +316,8 @@ export const TableView: React.FC<CombinedTableViewProps> = React.memo((props) =>
                     onValueConfigChange={onValueConfigurationChange}
                     blueprintVariables={blueprintVariables}
                     showValidationFeedback={showValidationFeedback}
+                    expandedPaths={expandedPaths}
+                    toggleFieldExpansion={toggleFieldExpansion}
                   />
                 ) : (
                   <TableRow>

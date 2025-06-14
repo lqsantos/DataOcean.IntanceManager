@@ -244,6 +244,10 @@ export interface EnhancedTableViewProps {
 
   // Flag para mostrar feedback de validação
   showValidationFeedback?: boolean;
+
+  // Props para expansão automática de campos
+  expandedPaths?: Set<string>;
+  toggleFieldExpansion?: (path: string) => void;
 }
 
 /**

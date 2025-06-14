@@ -30,6 +30,9 @@ interface TableRowsProps {
   onOverrideChange: (field: DefaultValueField, overridable: boolean) => void;
   blueprintVariables: Array<{ name: string; value: string }>;
   showValidationFeedback: boolean;
+  // Props para expansão automática de campos
+  expandedPaths?: Set<string>;
+  toggleFieldExpansion?: (path: string) => void;
 }
 
 // Constantes para larguras de coluna - garante consistência com o cabeçalho
@@ -51,24 +54,39 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
     onOverrideChange,
     blueprintVariables,
     showValidationFeedback,
+    expandedPaths,
+    toggleFieldExpansion: externalToggleFieldExpansion,
   }) => {
     // const { t } = useTranslation(['blueprints']);
 
-    // State for expanded fields
+    // State for expanded fields - usado quando não recebemos props externos
     const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
 
-    // Toggle field expansion
-    const toggleFieldExpansion = useCallback((fieldPath: string) => {
-      setExpandedFields((prev) => ({
-        ...prev,
-        [fieldPath]: !prev[fieldPath],
-      }));
-    }, []);
+    // Toggle field expansion - usa o callback externo se disponível
+    const toggleFieldExpansion = useCallback(
+      (fieldPath: string) => {
+        if (externalToggleFieldExpansion) {
+          externalToggleFieldExpansion(fieldPath);
+        } else {
+          setExpandedFields((prev) => ({
+            ...prev,
+            [fieldPath]: !prev[fieldPath],
+          }));
+        }
+      },
+      [externalToggleFieldExpansion]
+    );
 
-    // Check if a field is expanded
+    // Check if a field is expanded - usa o Set externo se disponível
     const isFieldExpanded = useCallback(
-      (fieldPath: string) => Boolean(expandedFields[fieldPath]),
-      [expandedFields]
+      (fieldPath: string) => {
+        if (expandedPaths) {
+          return expandedPaths.has(fieldPath);
+        }
+
+        return Boolean(expandedFields[fieldPath]);
+      },
+      [expandedFields, expandedPaths]
     );
 
     // Render action button based on field state

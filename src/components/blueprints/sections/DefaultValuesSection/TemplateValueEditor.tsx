@@ -74,6 +74,9 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       customized: false,
     });
 
+    // Estado para controlar campos expandidos na tabela (usado para expansão automática na busca)
+    const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+
     // Compute typed config only when fields change
     const computedValueConfig = useMemo(() => {
       if (useTypedValueConfiguration) {
@@ -115,8 +118,6 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       }
     }, [useTypedValueConfiguration, _valueConfig, onValueConfigurationChange, computedValueConfig]);
 
-    // Removido cálculo de tipos disponíveis que não é mais necessário com a nova interface de filtragem
-
     // Toggle function for expanded mode
     const toggleExpandedMode = useCallback(() => {
       setIsExpandedMode((prev) => !prev);
@@ -134,6 +135,104 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       },
       [filterState]
     );
+
+    // Toggle function for field expansion - improved to handle both adding and removing paths
+    const toggleFieldExpansion = useCallback((path: string) => {
+      setExpandedPaths((prev) => {
+        const newPaths = new Set(prev);
+
+        if (newPaths.has(path)) {
+          newPaths.delete(path);
+
+          // If a parent path is collapsed, also collapse all child paths
+          // This prevents orphaned expanded child paths when parent is collapsed
+          const pathWithDot = `${path}.`;
+
+          [...newPaths].forEach((existingPath) => {
+            if (existingPath.startsWith(pathWithDot)) {
+              newPaths.delete(existingPath);
+            }
+          });
+        } else {
+          newPaths.add(path);
+        }
+
+        return newPaths;
+      });
+    }, []);
+
+    // Function to expand all parent paths of a given field path
+    // This ensures all parent nodes are expanded to reveal a nested match
+    const expandParentPaths = useCallback((fieldPath: string) => {
+      if (!fieldPath) {
+        return;
+      }
+
+      const segments = fieldPath.split('.');
+
+      // Create all parent paths (all paths except the full path itself)
+      const parentPaths: string[] = [];
+
+      for (let i = 1; i < segments.length; i++) {
+        parentPaths.push(segments.slice(0, i).join('.'));
+      }
+
+      // Add all parent paths to the expanded set
+      setExpandedPaths((prev) => {
+        const newPaths = new Set(prev);
+
+        // Add all parent paths
+        parentPaths.forEach((path) => newPaths.add(path));
+
+        return newPaths;
+      });
+    }, []);
+
+    // Effect to automatically expand parent fields when search text changes
+    // or when filter criteria change that might affect which fields are shown
+    useEffect(() => {
+      // If search is cleared, reset expanded paths
+      if (!filterState.fieldName) {
+        setExpandedPaths(new Set());
+
+        return;
+      }
+
+      // Array to collect all paths of fields that match the search
+      const matchingPaths: string[] = [];
+
+      // Helper function to recursively search through all fields and their children
+      const findMatchingFields = (fields: DefaultValueField[]) => {
+        fields.forEach((field) => {
+          const fieldPath = field.path.join('.');
+          const searchTerm = filterState.fieldName.toLowerCase();
+
+          // Check if this field matches the search in any way
+          const keyMatch = field.key.toLowerCase().includes(searchTerm);
+          const displayNameMatch = field.displayName
+            ? field.displayName.toLowerCase().includes(searchTerm)
+            : false;
+          const pathMatch = fieldPath.toLowerCase().includes(searchTerm);
+
+          if (keyMatch || displayNameMatch || pathMatch) {
+            matchingPaths.push(fieldPath);
+          }
+
+          // Recursively check children
+          if (field.children && field.children.length > 0) {
+            findMatchingFields(field.children);
+          }
+        });
+      };
+
+      // Start recursive search from the root fields
+      if (templateValues.fields) {
+        findMatchingFields(templateValues.fields);
+      }
+
+      // Expand parent paths for all matching fields
+      matchingPaths.forEach(expandParentPaths);
+    }, [filterState.fieldName, templateValues.fields, expandParentPaths]);
 
     // Implementação da lógica de filtragem de campos baseada nos novos filtros simplificados
     const filteredFields = useMemo(() => {
@@ -285,6 +384,8 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
                   }}
                   onChange={onChange}
                   blueprintVariables={blueprintVariables}
+                  expandedPaths={expandedPaths}
+                  toggleFieldExpansion={toggleFieldExpansion}
                 />
               </div>
             </div>

@@ -505,7 +505,8 @@
 
   "filters": {
     "search": {
-      "placeholder": "Search fields by name or path..."
+      "placeholder": "Search fields by name or path...",
+      "nestedFieldsPlaceholder": "Search fields by name or path (expands nested matches)..."
     },
     "type": {
       "all": "All Types",

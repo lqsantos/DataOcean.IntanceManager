@@ -505,7 +505,8 @@
 
   "filters": {
     "search": {
-      "placeholder": "Buscar campos por nome ou caminho..."
+      "placeholder": "Buscar campos por nome ou caminho...",
+      "nestedFieldsPlaceholder": "Buscar campos por nome ou caminho (expande campos aninhados)..."
     },
     "type": {
       "all": "Todos os Tipos",
