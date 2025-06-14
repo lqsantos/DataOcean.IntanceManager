@@ -508,6 +508,8 @@
       "placeholder": "Buscar campos por nome ou caminho...",
       "nestedFieldsPlaceholder": "Buscar campos por nome ou caminho (expande campos aninhados)..."
     },
+    "expandAll": "Expandir Todos",
+    "collapseAll": "Colapsar Todos",
     "type": {
       "all": "Todos os Tipos",
       "string": "String",

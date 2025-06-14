@@ -4,7 +4,7 @@
  * Simplified to focus on name search, exposed and overridable fields
  */
 
-import { Code, Eye, Pencil, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Code, Eye, Pencil, Search, X } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -22,6 +22,8 @@ export interface FilterState {
 interface EnhancedFilterControlsProps {
   onFilterChange: (filters: FilterState) => void;
   currentFilters: FilterState;
+  onExpandAllFields?: () => void;
+  onCollapseAllFields?: () => void;
 }
 
 const initialFilters: FilterState = {
@@ -34,6 +36,8 @@ const initialFilters: FilterState = {
 export const EnhancedFilterControls = React.memo(function EnhancedFilterControls({
   onFilterChange,
   currentFilters,
+  onExpandAllFields,
+  onCollapseAllFields,
 }: EnhancedFilterControlsProps) {
   const { t } = useTranslation('blueprints');
 
@@ -122,6 +126,33 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
             {t('filters.clear')}
           </Button>
         )}
+
+        {/* Botões de Expandir/Colapsar todos os campos */}
+        <div className="ml-auto flex gap-2">
+          {onExpandAllFields && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExpandAllFields}
+              title={t('filters.expandAll')}
+            >
+              <ChevronDown className="mr-2 h-4 w-4" />
+              {t('filters.expandAll')}
+            </Button>
+          )}
+
+          {onCollapseAllFields && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onCollapseAllFields}
+              title={t('filters.collapseAll')}
+            >
+              <ChevronUp className="mr-2 h-4 w-4" />
+              {t('filters.collapseAll')}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -161,6 +161,34 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       });
     }, []);
 
+    // Function to expand all object fields at all levels
+    const expandAllFields = useCallback(() => {
+      const allExpandablePaths = new Set<string>();
+
+      // Helper function to recursively collect all expandable paths
+      const collectExpandablePaths = (fields: DefaultValueField[]) => {
+        fields.forEach((field) => {
+          if (field.type === 'object' && field.children && field.children.length > 0) {
+            // Add this object field's path
+            allExpandablePaths.add(field.path.join('.'));
+            // Recursively process its children
+            collectExpandablePaths(field.children);
+          }
+        });
+      };
+
+      // Start collecting from root fields
+      collectExpandablePaths(templateValues.fields || []);
+
+      // Update the expanded paths state with all expandable paths
+      setExpandedPaths(allExpandablePaths);
+    }, [templateValues.fields]);
+
+    // Function to collapse all fields (clear all expanded paths)
+    const collapseAllFields = useCallback(() => {
+      setExpandedPaths(new Set());
+    }, []);
+
     // Function to expand all parent paths of a given field path
     // This ensures all parent nodes are expanded to reveal a nested match
     const expandParentPaths = useCallback((fieldPath: string) => {
@@ -374,6 +402,8 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
               <EnhancedFilterControls
                 currentFilters={filterState}
                 onFilterChange={handleFilterChange}
+                onExpandAllFields={expandAllFields}
+                onCollapseAllFields={collapseAllFields}
               />
 
               <div className="h-full min-h-0 flex-1 overflow-hidden pb-1">

@@ -508,6 +508,8 @@
       "placeholder": "Search fields by name or path...",
       "nestedFieldsPlaceholder": "Search fields by name or path (expands nested matches)..."
     },
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All",
     "type": {
       "all": "All Types",
       "string": "String",
