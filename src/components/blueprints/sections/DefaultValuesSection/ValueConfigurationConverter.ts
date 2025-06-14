@@ -181,3 +181,165 @@ export function updateValueConfigurationField(
     fields: updatedFields,
   };
 }
+
+/**
+ * Função para mesclar duas configurações de valor
+ * Útil para atualizar uma configuração existente com valores novos
+ */
+export function mergeValueConfigurations(
+  base: ValueConfiguration,
+  updates: ValueConfiguration
+): ValueConfiguration {
+  const result = { ...base };
+  const mergedFields = { ...base.fields };
+
+  // Adicionar ou atualizar campos do objeto de atualização
+  Object.entries(updates.fields).forEach(([path, fieldConfig]) => {
+    // Se o campo já existir, mantemos propriedades do tipo
+    if (path in mergedFields) {
+      const currentField = mergedFields[path];
+
+      if (currentField.type === fieldConfig.type) {
+        // Se os tipos forem iguais, atualizamos preservando valores específicos do tipo
+        if (currentField.type === 'object' && fieldConfig.type === 'object') {
+          const currentObjField = currentField as ObjectFieldConfiguration;
+          const updateObjField = fieldConfig as ObjectFieldConfiguration;
+
+          mergedFields[path] = {
+            ...currentObjField,
+            ...updateObjField,
+            // Manter as propriedades do objeto atual, mas adicionar novas do objeto de atualização
+            properties: { ...currentObjField.properties, ...updateObjField.properties },
+          } as ObjectFieldConfiguration;
+        } else if (currentField.type === 'array' && fieldConfig.type === 'array') {
+          const currentArrField = currentField as ArrayFieldConfiguration;
+          const updateArrField = fieldConfig as ArrayFieldConfiguration;
+
+          mergedFields[path] = {
+            ...currentArrField,
+            ...updateArrField,
+            // Apenas substitui o array completo pois IDs podem ter mudado
+          } as ArrayFieldConfiguration;
+        } else {
+          // Tipos simples
+          mergedFields[path] = {
+            ...currentField,
+            ...fieldConfig,
+          };
+        }
+      } else {
+        // Se os tipos forem diferentes, usamos o novo tipo (pode ter havido refatoração)
+        mergedFields[path] = fieldConfig;
+      }
+    } else {
+      // Se o campo não existir, adicionamos normalmente
+      mergedFields[path] = fieldConfig;
+    }
+  });
+
+  result.fields = mergedFields;
+
+  return result;
+}
+
+/**
+ * Função para limpar campos não utilizados de uma configuração
+ * Útil para remover campos obsoletos após mudanças nos templates
+ */
+export function cleanupUnusedFields(
+  valueConfig: ValueConfiguration,
+  validPaths: string[]
+): ValueConfiguration {
+  const validPathsSet = new Set(validPaths);
+  const cleanedFields: Record<string, FieldConfiguration> = {};
+
+  // Manter apenas campos que estão na lista de caminhos válidos
+  Object.entries(valueConfig.fields).forEach(([path, field]) => {
+    if (validPathsSet.has(path)) {
+      cleanedFields[path] = field;
+    }
+  });
+
+  return {
+    ...valueConfig,
+    fields: cleanedFields,
+  };
+}
+
+/**
+ * Conta o número de campos em uma configuração com uma propriedade específica
+ */
+export function countFieldsWithProperty(
+  valueConfig: ValueConfiguration,
+  property: keyof SimpleFieldConfiguration,
+  value: unknown = true
+): number {
+  return Object.values(valueConfig.fields).reduce((count, field) => {
+    // @ts-ignore - Temos que ignorar o erro de tipagem aqui pois estamos acessando dinamicamente
+    const propertyValue = field[property];
+
+    return count + (propertyValue === value ? 1 : 0);
+  }, 0);
+}
+
+/**
+ * Retorna todos os campos customizados de uma configuração
+ */
+export function getCustomizedFields(
+  valueConfig: ValueConfiguration
+): Record<string, FieldConfiguration> {
+  const result: Record<string, FieldConfiguration> = {};
+
+  Object.entries(valueConfig.fields).forEach(([path, field]) => {
+    if (field.isCustomized) {
+      result[path] = field;
+    }
+  });
+
+  return result;
+}
+
+/**
+ * Retorna todos os campos expostos de uma configuração
+ */
+export function getExposedFields(
+  valueConfig: ValueConfiguration
+): Record<string, FieldConfiguration> {
+  const result: Record<string, FieldConfiguration> = {};
+
+  Object.entries(valueConfig.fields).forEach(([path, field]) => {
+    if (field.isExposed) {
+      result[path] = field;
+    }
+  });
+
+  return result;
+}
+
+/**
+ * Converte dados do formato legado para o formato tipado se necessário,
+ * ou retorna os dados tipados diretamente se já estiverem no formato correto.
+ * Útil como camada de compatibilidade durante a migração.
+ */
+export function ensureValueConfiguration(
+  data: DefaultValueField[] | ValueConfiguration | undefined
+): ValueConfiguration | undefined {
+  if (!data) {
+    return undefined;
+  }
+
+  // Se já é um ValueConfiguration, retorna diretamente
+  if ('fields' in data && typeof data.fields === 'object') {
+    return data as ValueConfiguration;
+  }
+
+  // Se é um array, assume que é um array de DefaultValueField
+  if (Array.isArray(data)) {
+    return legacyFieldsToValueConfiguration(data);
+  }
+
+  // Se chegou aqui, não conseguimos converter
+  console.warn('Failed to convert data to ValueConfiguration:', data);
+
+  return undefined;
+}

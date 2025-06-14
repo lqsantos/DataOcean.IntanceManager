@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBlueprintForm } from '@/contexts/blueprint-form-context';
 import { fetchTemplateSchemaForDefaultValues } from '@/services/template-schema-service';
+import type { ValueConfiguration } from '@/types/blueprint';
 import { logError } from '@/utils/errorLogger';
 
 import { ContractFloatingButton } from './ContractFloatingButton';
@@ -19,6 +20,11 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { TemplateTabsNavigation } from './TemplateTabsNavigation';
 import { TemplateValueEditor } from './TemplateValueEditor';
 import type { DefaultValueField, DefaultValuesContract, TemplateDefaultValues } from './types';
+import { legacyFieldsToValueConfiguration } from './ValueConfigurationConverter';
+
+// Flag para controlar a migração gradual para a nova estrutura tipada
+// No futuro, quando toda a aplicação estiver migrada, pode ser removido e definido como true permanentemente
+const USE_TYPED_VALUE_CONFIGURATION = true;
 
 export const DefaultValuesSection = () => {
   // Get blueprint form data from context
@@ -45,6 +51,10 @@ export const DefaultValuesSection = () => {
     templateValues: [],
     initialized: false,
   });
+
+  // Estados adicionais para ValueConfiguration
+  const [valueConfigMap, setValueConfigMap] = useState<Record<string, ValueConfiguration>>({});
+
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [templatesValidation, setTemplatesValidation] = useState<
     Record<
@@ -195,8 +205,8 @@ export const DefaultValuesSection = () => {
         });
 
         setSectionData('values', { values: valuesForContext });
-      } catch (error) {
-        logError(error, 'Error initializing default values contract');
+      } catch (err) {
+        logError('Error initializing default values:', String(err));
         setError('Failed to load template schemas');
       } finally {
         setLoading(false);
@@ -214,6 +224,52 @@ export const DefaultValuesSection = () => {
     setSelectedTemplateId(templateId);
   }, []);
 
+  // Handle value configuration changes (nova função)
+  const handleValueConfigurationChange = useCallback(
+    (templateId: string, updatedValueConfig: ValueConfiguration, isFilteredConfig = false) => {
+      // Se não for configuração filtrada, atualizamos o estado
+      if (!isFilteredConfig) {
+        // Check if the value config has actually changed
+        setValueConfigMap((prev) => {
+          const currentConfig = prev[templateId];
+
+          // Skip update if the configuration is identical (deep comparison)
+          if (
+            currentConfig &&
+            JSON.stringify(currentConfig) === JSON.stringify(updatedValueConfig)
+          ) {
+            return prev; // Return unchanged state to avoid re-render
+          }
+
+          // Otherwise update with new config
+          return {
+            ...prev,
+            [templateId]: updatedValueConfig,
+          };
+        });
+
+        // Atualizamos também no form context para ser salvo - only if needed
+        const currentValues = { ...state.formData.values.values };
+        const currentConfig = currentValues[templateId]?.valueConfiguration;
+
+        // Skip update if the configuration is identical (deep comparison)
+        if (currentConfig && JSON.stringify(currentConfig) === JSON.stringify(updatedValueConfig)) {
+          return; // Skip update to avoid unnecessary state changes
+        }
+
+        if (!currentValues[templateId]) {
+          currentValues[templateId] = {};
+        }
+
+        // Armazenamos a configuração tipada no formato do estado do formulário
+        currentValues[templateId].valueConfiguration = updatedValueConfig;
+
+        setSectionData('values', { values: currentValues });
+      }
+    },
+    [state.formData.values.values, setSectionData]
+  );
+
   // Handle template value changes
   const handleTemplateValueChange = useCallback(
     (updatedTemplateValues: TemplateDefaultValues) => {
@@ -227,15 +283,40 @@ export const DefaultValuesSection = () => {
 
       setDefaultValuesContract(updatedContract);
 
-      // Update form context
-      const currentValues = { ...state.formData.values.values };
+      // Se estamos usando a configuração tipada, convertemos os campos para ValueConfiguration
+      if (USE_TYPED_VALUE_CONFIGURATION) {
+        const valueConfig = legacyFieldsToValueConfiguration(updatedTemplateValues.fields);
 
-      currentValues[updatedTemplateValues.templateId] = {
-        yaml: updatedTemplateValues.rawYaml,
-        fields: updatedTemplateValues.fields,
-      };
+        setValueConfigMap((prev) => ({
+          ...prev,
+          [updatedTemplateValues.templateId]: valueConfig,
+        }));
 
-      setSectionData('values', { values: currentValues });
+        // Update form context with both formats
+        const currentValues = { ...state.formData.values.values };
+
+        if (!currentValues[updatedTemplateValues.templateId]) {
+          currentValues[updatedTemplateValues.templateId] = {};
+        }
+
+        currentValues[updatedTemplateValues.templateId] = {
+          yaml: updatedTemplateValues.rawYaml,
+          fields: updatedTemplateValues.fields,
+          valueConfiguration: valueConfig, // Adicionamos a configuração tipada
+        };
+
+        setSectionData('values', { values: currentValues });
+      } else {
+        // Original behavior without typed configuration
+        const currentValues = { ...state.formData.values.values };
+
+        currentValues[updatedTemplateValues.templateId] = {
+          yaml: updatedTemplateValues.rawYaml,
+          fields: updatedTemplateValues.fields,
+        };
+
+        setSectionData('values', { values: currentValues });
+      }
     },
     [defaultValuesContract, state.formData.values.values, setSectionData]
   );
@@ -317,13 +398,21 @@ export const DefaultValuesSection = () => {
                 variableWarnings
               );
             }}
+            // Nova estrutura tipada
+            useTypedValueConfiguration={USE_TYPED_VALUE_CONFIGURATION}
+            onValueConfigurationChange={(valueConfig, isFiltered) =>
+              handleValueConfigurationChange(selectedTemplate.templateId, valueConfig, isFiltered)
+            }
           />
         </ErrorBoundary>
 
         {/* Contract preview como botão flutuante no canto inferior direito */}
         <ErrorBoundary>
           <div className="fixed bottom-8 right-8 z-50">
-            <ContractFloatingButton contract={defaultValuesContract} />
+            <ContractFloatingButton
+              contract={defaultValuesContract}
+              valueConfigMap={USE_TYPED_VALUE_CONFIGURATION ? valueConfigMap : undefined}
+            />
           </div>
         </ErrorBoundary>
       </>

@@ -28,15 +28,13 @@ export interface FilterOptions {
 interface FilterControlsProps {
   filters: FilterOptions;
   onFilterChange: (filters: FilterOptions) => void;
-  compact?: boolean; // Nova propriedade para compactar ainda mais o layout
-  isExpandedMode?: boolean; // Opção para passar o estado expandido e ajustar a UI
+  compact?: boolean; // Propriedade para usar layout compacto
 }
 
 export const FilterControls: React.FC<FilterControlsProps> = ({
   filters,
   onFilterChange,
   compact = false,
-  isExpandedMode = false,
 }) => {
   const { t } = useTranslation(['blueprints']);
 

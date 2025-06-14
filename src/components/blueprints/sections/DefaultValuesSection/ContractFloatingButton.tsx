@@ -11,21 +11,27 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { ValueConfiguration } from '@/types/blueprint';
 
 import type { DefaultValueField, DefaultValuesContract, TemplateDefaultValues } from './types';
+import { countFieldsWithProperty, getExposedFields } from './ValueConfigurationConverter';
 
 interface ContractFloatingButtonProps {
   contract: DefaultValuesContract;
+  valueConfigMap?: Record<string, ValueConfiguration>;
 }
 
 /**
  * ContractFloatingButton component that shows a floating button
  * to access the configuration contract in a dialog
  */
-export function ContractFloatingButton({ contract }: ContractFloatingButtonProps) {
+export function ContractFloatingButton({ contract, valueConfigMap }: ContractFloatingButtonProps) {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('summary');
   const { t } = useTranslation(['blueprints']);
+
+  // Flag para indicar se devemos usar a estrutura tipada
+  const useTypedValueConfiguration = !!valueConfigMap && Object.keys(valueConfigMap).length > 0;
 
   // Posição do botão flutuante (pode ser ajustada via props)
   const buttonPosition = 'bottom-4 right-4';
@@ -36,9 +42,9 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
   }
 
   /**
-   * Extract only exposed fields from a field array
+   * Extract only exposed fields from a field array (for legacy structure)
    */
-  const getExposedFields = (
+  const getExposedFieldsLegacy = (
     fields: DefaultValueField[] | undefined
   ): Record<string, Record<string, unknown>> => {
     if (!fields || !Array.isArray(fields)) {
@@ -53,7 +59,7 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
       if (field.exposed) {
         // For object fields, recursively process their children
         if (field.type === 'object' && field.children) {
-          const exposedChildren = getExposedFields(field.children);
+          const exposedChildren = getExposedFieldsLegacy(field.children);
 
           if (Object.keys(exposedChildren).length > 0) {
             acc[field.key] = {
@@ -77,9 +83,9 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
   };
 
   /**
-   * Count fields with a specific property set to true
+   * Count fields with a specific property set to true (for legacy structure)
    */
-  const countFieldsWithProperty = (
+  const countFieldsWithPropertyLegacy = (
     fields: DefaultValueField[] | undefined,
     property: 'exposed' | 'overridable'
   ): number => {
@@ -95,7 +101,7 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
       let fieldCount = field[property] ? 1 : 0;
 
       if (field.children) {
-        fieldCount += countFieldsWithProperty(field.children, property);
+        fieldCount += countFieldsWithPropertyLegacy(field.children, property);
       }
 
       return count + fieldCount;
@@ -110,12 +116,26 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
       return 0;
     }
 
+    if (useTypedValueConfiguration && valueConfigMap) {
+      // Usar a nova estrutura tipada para contar campos expostos
+      return templates.reduce((count, template) => {
+        const valueConfig = valueConfigMap[template.templateId];
+
+        if (!valueConfig) {
+          return count;
+        }
+
+        return count + countFieldsWithProperty(valueConfig, 'isExposed');
+      }, 0);
+    }
+
+    // Fallback para o formato legado
     return templates.reduce((count, template) => {
       if (!template?.fields) {
         return count;
       }
 
-      return count + countFieldsWithProperty(template.fields, 'exposed');
+      return count + countFieldsWithPropertyLegacy(template.fields, 'exposed');
     }, 0);
   };
 
@@ -127,12 +147,26 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
       return 0;
     }
 
+    if (useTypedValueConfiguration && valueConfigMap) {
+      // Usar a nova estrutura tipada para contar campos sobreescrevíveis
+      return templates.reduce((count, template) => {
+        const valueConfig = valueConfigMap[template.templateId];
+
+        if (!valueConfig) {
+          return count;
+        }
+
+        return count + countFieldsWithProperty(valueConfig, 'isOverridable');
+      }, 0);
+    }
+
+    // Fallback para o formato legado
     return templates.reduce((count, template) => {
       if (!template?.fields) {
         return count;
       }
 
-      return count + countFieldsWithProperty(template.fields, 'overridable');
+      return count + countFieldsWithPropertyLegacy(template.fields, 'overridable');
     }, 0);
   };
 
@@ -144,12 +178,51 @@ export function ContractFloatingButton({ contract }: ContractFloatingButtonProps
       return { templateValues: [] };
     }
 
+    if (useTypedValueConfiguration && valueConfigMap) {
+      // Usar a nova estrutura tipada para gerar o contrato
+      return {
+        templateValues: contract.templateValues.map((template) => {
+          const valueConfig = valueConfigMap[template.templateId];
+
+          if (!valueConfig) {
+            return {
+              templateId: template.templateId,
+              templateName: template.templateName,
+              templateVersion: template.templateVersion,
+              exposedFields: {},
+            };
+          }
+
+          const exposedFields = getExposedFields(valueConfig);
+
+          // Convertemos para o formato esperado pelo contrato
+          const exposedContract: Record<string, Record<string, unknown>> = {};
+
+          Object.entries(exposedFields).forEach(([path, field]) => {
+            exposedContract[path] = {
+              value: field.value,
+              overridable: field.isOverridable,
+              source: field.isCustomized ? 'blueprint' : 'template',
+            };
+          });
+
+          return {
+            templateId: template.templateId,
+            templateName: template.templateName,
+            templateVersion: template.templateVersion,
+            exposedFields: exposedContract,
+          };
+        }),
+      };
+    }
+
+    // Fallback para o formato legado
     return {
       templateValues: contract.templateValues.map((template) => ({
         templateId: template.templateId,
         templateName: template.templateName,
         templateVersion: template.templateVersion,
-        exposedFields: getExposedFields(template.fields),
+        exposedFields: getExposedFieldsLegacy(template.fields),
       })),
     };
   };

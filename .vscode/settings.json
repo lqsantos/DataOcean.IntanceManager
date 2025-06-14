@@ -26,5 +26,12 @@
     "typescriptreact": "javascript"
   },
   "tailwindCSS.experimental.classRegex": ["clsx\\(([^)]*)\\)", "cn\\(([^)]*)\\)"],
-  "cSpell.words": ["Booleano", "expressao", "monaco", "testid"]
+  "cSpell.words": [
+    "Booleano",
+    "expressao",
+    "monaco",
+    "sobreescrevíveis",
+    "sobreescritíveis",
+    "testid"
+  ]
 }
