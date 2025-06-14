@@ -139,9 +139,6 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                     <span className="text-muted-foreground">
                       {field.originalValue !== undefined ? String(field.originalValue) : ''}
                     </span>
-                    <span className="ml-2 text-xs italic text-muted-foreground">
-                      (from template)
-                    </span>
                   </div>
                 ) : (
                   <StringEditor
@@ -160,9 +157,6 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                 {isFromTemplate ? (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">{Number(field.originalValue)}</span>
-                    <span className="ml-2 text-xs italic text-muted-foreground">
-                      (from template)
-                    </span>
                   </div>
                 ) : (
                   <NumberEditor
@@ -181,9 +175,6 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">
                       {field.originalValue !== undefined ? String(field.originalValue) : ''}
-                    </span>
-                    <span className="ml-2 text-xs italic text-muted-foreground">
-                      (from template)
                     </span>
                   </div>
                 ) : (
@@ -205,9 +196,6 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                 {isFromTemplate ? (
                   <div className="flex items-center justify-between">
                     <ArrayEditor disabled={true} />
-                    <span className="ml-2 text-xs italic text-muted-foreground">
-                      (from template)
-                    </span>
                   </div>
                 ) : (
                   <ArrayEditor disabled={false} />

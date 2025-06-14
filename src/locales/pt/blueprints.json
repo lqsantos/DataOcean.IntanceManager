@@ -505,7 +505,7 @@
 
   "filters": {
     "search": {
-      "placeholder": "Buscar campos..."
+      "placeholder": "Buscar campos por nome ou caminho..."
     },
     "type": {
       "all": "Todos os Tipos",

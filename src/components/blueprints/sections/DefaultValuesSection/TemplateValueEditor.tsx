@@ -151,17 +151,33 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
         return templateValues.fields;
       }
 
-      const filtered = templateValues.fields.filter((field) => {
-        // Filtro por nome do campo (busca case-insensitive)
+      // Função auxiliar que verifica se um campo ou seus filhos atendem aos critérios de busca
+      const fieldMatchesFilters = (field: DefaultValueField): boolean => {
+        // Verificação para o campo atual
         if (filterState.fieldName) {
           const searchTerm = filterState.fieldName.toLowerCase();
           const keyMatch = field.key.toLowerCase().includes(searchTerm);
           const displayNameMatch = field.displayName
             ? field.displayName.toLowerCase().includes(searchTerm)
             : false;
+          const pathMatch = field.path.join('.').toLowerCase().includes(searchTerm);
 
-          if (!keyMatch && !displayNameMatch) {
-            return false;
+          // Se este campo não corresponde diretamente, mas temos filhos, devemos verificá-los também
+          if (!keyMatch && !displayNameMatch && !pathMatch) {
+            // Se temos filhos, verificamos se algum deles corresponde
+            if (field.children && field.children.length > 0) {
+              // Se algum filho corresponder, este campo deve ser incluído
+              const hasMatchingChild = field.children.some((childField) =>
+                fieldMatchesFilters(childField)
+              );
+
+              if (!hasMatchingChild) {
+                return false;
+              }
+            } else {
+              // Sem filhos e sem correspondência direta
+              return false;
+            }
           }
         }
 
@@ -182,7 +198,10 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
         }
 
         return true;
-      });
+      };
+
+      // Aplicamos o filtro em todos os campos raiz
+      const filtered = templateValues.fields.filter(fieldMatchesFilters);
 
       return filtered;
     }, [templateValues.fields, filterState]);

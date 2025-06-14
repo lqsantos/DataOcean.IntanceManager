@@ -59,9 +59,7 @@ export const ObjectEditor: React.FC<{ disabled?: boolean }> = ({ disabled }) => 
     <span className={`text-sm ${disabled ? 'text-muted-foreground' : 'font-medium text-blue-600'}`}>
       Complex Object
     </span>
-    <span className={`text-xs italic ${disabled ? 'text-muted-foreground' : 'text-blue-600'}`}>
-      {disabled ? '(uses template values)' : '(click ▶ to expand)'}
-    </span>
+    {!disabled && <span className="text-xs italic text-blue-600">(click ▶ to expand)</span>}
   </div>
 );
 
