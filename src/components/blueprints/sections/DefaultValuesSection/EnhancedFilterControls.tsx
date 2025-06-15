@@ -5,7 +5,7 @@
  */
 
 import { ChevronDown, ChevronUp, Code, Eye, Pencil, Search, X } from 'lucide-react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,13 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
 }: EnhancedFilterControlsProps) {
   const { t } = useTranslation('blueprints');
 
+  // Não vamos logar diretamente no corpo do componente para evitar loop de renderização
+
+  // Log de alterações nos filtros sem causar loops
+  useEffect(() => {
+    console.warn('[EnhancedFilterControls] currentFilters:', currentFilters);
+  }, [currentFilters]);
+
   const handleFilterChange = useCallback(
     (key: keyof FilterState, value: string | boolean) => {
       // Não atualizar se o valor não mudou
@@ -53,17 +60,22 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
         [key]: value,
       };
 
+      console.warn(`[EnhancedFilterControls] Alterando filtro ${key}:`, value);
       onFilterChange(newFilters);
     },
     [currentFilters, onFilterChange]
   );
 
   const handleClearFilters = useCallback(() => {
+    console.warn('[EnhancedFilterControls] Limpando todos os filtros manualmente');
     onFilterChange(initialFilters);
   }, [onFilterChange]);
 
+  // Removemos o efeito que dependia de forceFilterClear
+
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      console.warn('[EnhancedFilterControls] Alterando texto de busca para:', e.target.value);
       handleFilterChange('fieldName', e.target.value);
     },
     [handleFilterChange]

@@ -74,6 +74,8 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       customized: false,
     });
 
+    // Removemos o estado de forceFilterClear para evitar ciclos desnecessários
+
     // Estado para controlar campos expandidos na tabela (usado para expansão automática na busca)
     const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
@@ -131,10 +133,21 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
           return;
         }
 
+        console.warn('[TemplateValueEditor] Atualizando filtros:', newFilters);
         setFilterState(newFilters);
       },
       [filterState]
     );
+
+    // Log de alterações no filterState para debug sem causar loops de renderização
+    useEffect(() => {
+      console.warn(
+        '[TemplateValueEditor] Estado de filtros atualizado:',
+        JSON.stringify(filterState)
+      );
+    }, [JSON.stringify(filterState)]);
+
+    // Removemos o efeito para resetar os filtros, agora isso é feito diretamente no handleForceFilterClear
 
     // Toggle function for field expansion - improved to handle both adding and removing paths
     const toggleFieldExpansion = useCallback((path: string) => {
@@ -219,6 +232,9 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
     // Effect to automatically expand parent fields when search text changes
     // or when filter criteria change that might affect which fields are shown
     useEffect(() => {
+      // Log para debug
+      console.warn('[TemplateValueEditor] Campo de busca alterado:', filterState.fieldName);
+
       // If search is cleared, reset expanded paths
       if (!filterState.fieldName) {
         setExpandedPaths(new Set());
@@ -262,27 +278,48 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       matchingPaths.forEach(expandParentPaths);
     }, [filterState.fieldName, templateValues.fields, expandParentPaths]);
 
-    // Implementação da lógica de filtragem de campos baseada nos novos filtros simplificados
+    // Implementação da lógica de filtragem de campos baseada nos filtros simplificados
+    // Usamos useMemo para hasActiveFilters para garantir que ele seja recalculado
+    // somente quando filterState mudar
+    const hasActiveFilters = useMemo(() => {
+      const active =
+        !!filterState.fieldName ||
+        filterState.exposed ||
+        filterState.overridable ||
+        filterState.customized;
+
+      // Movido para dentro de um useEffect para evitar logs no corpo do componente
+      return active;
+    }, [filterState]);
+
+    // Log separado em useEffect para evitar logs no corpo do componente
+    useEffect(() => {
+      console.warn('[TemplateValueEditor] Verificando filtros:', {
+        hasActiveFilters,
+        filterState,
+        fieldsLength: templateValues.fields?.length || 0,
+      });
+    }, [hasActiveFilters, filterState, templateValues.fields?.length]);
+
+    // Memo separado para o cálculo dos campos filtrados
     const filteredFields = useMemo(() => {
       if (!templateValues.fields) {
         return [];
       }
 
       // Se não há filtros ativos, retornamos todos os campos
-      if (
-        !filterState.fieldName &&
-        !filterState.exposed &&
-        !filterState.overridable &&
-        !filterState.customized
-      ) {
+      if (!hasActiveFilters) {
         return templateValues.fields;
       }
+
+      // Guardando os valores em constantes para evitar acesso repetido a objetos
+      const { fieldName, exposed, overridable, customized } = filterState;
+      const searchTerm = fieldName ? fieldName.toLowerCase() : '';
 
       // Função auxiliar que verifica se um campo ou seus filhos atendem aos critérios de busca
       const fieldMatchesFilters = (field: DefaultValueField): boolean => {
         // Verificação para o campo atual
-        if (filterState.fieldName) {
-          const searchTerm = filterState.fieldName.toLowerCase();
+        if (searchTerm) {
           const keyMatch = field.key.toLowerCase().includes(searchTerm);
           const displayNameMatch = field.displayName
             ? field.displayName.toLowerCase().includes(searchTerm)
@@ -309,17 +346,17 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
         }
 
         // Filtro por campos expostos
-        if (filterState.exposed && !field.exposed) {
+        if (exposed && !field.exposed) {
           return false;
         }
 
         // Filtro por campos sobreescritíveis
-        if (filterState.overridable && !field.overridable) {
+        if (overridable && !field.overridable) {
           return false;
         }
 
         // Filtro por campos customizados (que foram alterados pelo blueprint)
-        if (filterState.customized && field.source === ValueSourceType.TEMPLATE) {
+        if (customized && field.source === ValueSourceType.TEMPLATE) {
           // Se o filtro está ativo, retorna falso para qualquer campo que NÃO foi customizado
           return false;
         }
@@ -328,10 +365,17 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       };
 
       // Aplicamos o filtro em todos os campos raiz
-      const filtered = templateValues.fields.filter(fieldMatchesFilters);
+      return templateValues.fields.filter(fieldMatchesFilters);
+    }, [templateValues.fields, filterState, hasActiveFilters]);
 
-      return filtered;
-    }, [templateValues.fields, filterState]);
+    // Efeito para detectar mudanças no array filteredFields
+    useEffect(() => {
+      console.warn(
+        '[TemplateValueEditor] filteredFields mudou:',
+        `${filteredFields.length} itens, filtros ativos:`,
+        JSON.stringify(filterState)
+      );
+    }, [filteredFields.length, JSON.stringify(filterState)]);
 
     // Efeito para preservar o estado de campos expandidos quando os campos são modificados
     // Este efeito resolve o problema de colapso automático ao customizar campos
@@ -447,6 +491,19 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
       }
     }, [templateValues.fields, expandedPaths]);
 
+    // Função para forçar limpeza de filtros (usada quando um campo é customizado)
+    const handleForceFilterClear = useCallback(() => {
+      console.warn('[TemplateValueEditor] Forçando limpeza de filtros');
+
+      // Limpeza direta sem setTimeout para evitar múltiplas atualizações de estado
+      setFilterState({
+        fieldName: '',
+        exposed: false,
+        overridable: false,
+        customized: false,
+      });
+    }, []);
+
     return (
       <div className="mb-4 h-full min-h-0 flex-1 space-y-4">
         <div
@@ -521,12 +578,163 @@ export const TemplateValueEditor = React.memo<EnhancedTemplateValueEditorProps>(
               />
 
               <div className="h-full min-h-0 flex-1 overflow-hidden pb-1">
+                {/* 
+                Forçamos re-renderização completa da tabela quando os filtros mudam
+                Usamos filterState como parte da chave para garantir re-renderização quando necessário 
+              */}
                 <TableView
+                  key={`table-view-${hasActiveFilters ? 'filtered' : 'all'}-${JSON.stringify(filterState)}`}
                   templateValues={{
                     ...templateValues,
                     fields: filteredFields,
                   }}
-                  onChange={onChange}
+                  onChange={(updatedValues) => {
+                    // Primeiro, chame o handler original para atualizar os dados
+                    onChange(updatedValues);
+
+                    // Removemos a verificação de forceFilterClear porque o estado foi removido
+
+                    console.warn('[TemplateValueEditor] TableView onChange chamado');
+
+                    // Detecta se houve customização de valores
+                    const wasCustomized = (() => {
+                      let foundCustomization = false;
+
+                      // Função recursiva para procurar campos customizados
+                      const findCustomizedDiff = (
+                        original: DefaultValueField[],
+                        updated: DefaultValueField[]
+                      ) => {
+                        // Cria mapas para comparação rápida
+                        const originalMap = new Map(original.map((f) => [f.path.join('.'), f]));
+
+                        // Verifica cada campo atualizado
+                        updated.forEach((updatedField) => {
+                          const path = updatedField.path.join('.');
+                          const originalField = originalMap.get(path);
+
+                          // Se encontrou um campo que mudou de TEMPLATE para BLUEPRINT
+                          if (
+                            originalField &&
+                            originalField.source === ValueSourceType.TEMPLATE &&
+                            updatedField.source === ValueSourceType.BLUEPRINT
+                          ) {
+                            console.warn(
+                              `[TemplateValueEditor] Campo customizado detectado: ${path}`
+                            );
+                            foundCustomization = true;
+                          }
+
+                          // Recursivamente verifica filhos
+                          if (
+                            !foundCustomization &&
+                            updatedField.children &&
+                            originalField &&
+                            originalField.children
+                          ) {
+                            findCustomizedDiff(originalField.children, updatedField.children);
+                          }
+                        });
+                      };
+
+                      // Inicia o processo de comparação
+                      if (templateValues.fields && updatedValues.fields) {
+                        findCustomizedDiff(templateValues.fields, updatedValues.fields);
+                      }
+
+                      return foundCustomization;
+                    })();
+
+                    // Se detectamos customização, forçamos a limpeza dos filtros
+                    if (wasCustomized) {
+                      console.warn(
+                        '[TemplateValueEditor] Customização detectada, forçando limpeza de filtros'
+                      );
+
+                      // Chamamos apenas handleForceFilterClear para evitar múltiplas atualizações de estado
+                      handleForceFilterClear();
+                    }
+
+                    // Verifica se os filtros atuais ainda são aplicáveis após a mudança
+                    // Especialmente importante após customizar ou resetar campos
+
+                    // Verifica se algum filtro está ativo
+                    const hasActiveFilters =
+                      filterState.customized ||
+                      filterState.fieldName ||
+                      filterState.exposed ||
+                      filterState.overridable;
+
+                    if (hasActiveFilters) {
+                      // Funções auxiliares para verificação de filtros
+                      const hasCustomizedFields = (fields: DefaultValueField[]): boolean => {
+                        return fields.some((field) => {
+                          if (field.source === ValueSourceType.BLUEPRINT) {
+                            return true;
+                          }
+
+                          if (field.children && field.children.length > 0) {
+                            return hasCustomizedFields(field.children);
+                          }
+
+                          return false;
+                        });
+                      };
+
+                      // Verifica se algum campo corresponde ao termo de pesquisa
+                      const hasMatchingNameFields = (fields: DefaultValueField[]): boolean => {
+                        return fields.some((field) => {
+                          const searchTerm = filterState.fieldName.toLowerCase();
+                          const keyMatch = field.key.toLowerCase().includes(searchTerm);
+                          const displayNameMatch = field.displayName
+                            ? field.displayName.toLowerCase().includes(searchTerm)
+                            : false;
+                          const pathMatch = field.path.join('.').toLowerCase().includes(searchTerm);
+
+                          if (keyMatch || displayNameMatch || pathMatch) {
+                            return true;
+                          }
+
+                          if (field.children && field.children.length > 0) {
+                            return hasMatchingNameFields(field.children);
+                          }
+
+                          return false;
+                        });
+                      };
+
+                      // Atualiza filtros conforme necessário
+                      let needsFilterUpdate = false;
+                      const updatedFilterState = { ...filterState };
+
+                      // Verifica campos customizados
+                      if (filterState.customized && !hasCustomizedFields(updatedValues.fields)) {
+                        console.warn(
+                          '[TemplateValueEditor] Removendo filtro customized porque não há mais campos customizados'
+                        );
+                        updatedFilterState.customized = false;
+                        needsFilterUpdate = true;
+                      }
+
+                      // Verifica termo de pesquisa
+                      if (filterState.fieldName && !hasMatchingNameFields(updatedValues.fields)) {
+                        console.warn(
+                          '[TemplateValueEditor] Removendo filtro de busca porque não há mais campos que correspondam'
+                        );
+                        updatedFilterState.fieldName = '';
+                        needsFilterUpdate = true;
+                      }
+
+                      // Atualiza o estado de filtro se necessário
+                      if (needsFilterUpdate) {
+                        console.warn(
+                          '[TemplateValueEditor] Atualizando filtros após mudanças:',
+                          updatedFilterState
+                        );
+                        setFilterState(updatedFilterState);
+                      }
+                    }
+                  }}
                   blueprintVariables={blueprintVariables}
                   expandedPaths={expandedPaths}
                   toggleFieldExpansion={toggleFieldExpansion}
