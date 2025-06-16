@@ -82,12 +82,18 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
         ? valueConfigurationToLegacyFields(valueConfig)
         : fields || [];
 
-    // Toggle field expansion - usa o callback externo se disponível
+    // Toggle field expansion - sempre delegando para o externo quando disponível
     const toggleFieldExpansion = useCallback(
       (fieldPath: string) => {
+        // Log para debug
+        console.warn(`[EnhancedTableRows] Toggling field: ${fieldPath}`);
+
+        // Usando handler externo se disponível
         if (externalToggleFieldExpansion) {
+          // Delega totalmente ao handler externo que tem a lógica robusta
           externalToggleFieldExpansion(fieldPath);
         } else {
+          // Caso contrário, use o estado interno mais simples
           setExpandedFields((prev) => ({
             ...prev,
             [fieldPath]: !prev[fieldPath],

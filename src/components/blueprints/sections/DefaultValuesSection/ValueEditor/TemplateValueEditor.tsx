@@ -166,96 +166,138 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
                 expandedPaths={expandedPaths}
                 setExpandedPaths={setExpandedPaths}
                 onChange={(updatedValues) => {
-                  // BUG FIX: Quando customizamos um campo filtrado, precisamos mesclar
-                  // a customização com a lista completa original, não apenas com os campos filtrados
+                  // Solução elegante para o bug: Quando alteramos campos em uma lista filtrada,
+                  // sempre aplicamos essas alterações à lista completa original
 
-                  // Verificar se houve customização
-                  const wasCustomized = detectCustomization(
-                    templateValues.fields || [],
-                    updatedValues.fields || []
-                  );
+                  // Se temos filtros ativos, precisamos aplicar as alterações à lista completa
+                  if (hasActiveFilters) {
+                    console.warn('[TemplateValueEditor] Alteração em lista filtrada detectada');
 
-                  if (wasCustomized && hasActiveFilters) {
-                    console.warn('[TemplateValueEditor] Customização detectada em lista filtrada!');
+                    // Verificar se houve alguma alteração de source comparando os valores
+                    const isSourceChanged = (() => {
+                      const compareSourceChanges = (
+                        orig: DefaultValueField[],
+                        upd: DefaultValueField[]
+                      ): boolean => {
+                        const updMap = new Map(upd.map((f) => [f.path.join('.'), f]));
 
-                    // Função para mesclar a customização com a lista completa
-                    const mergeCustomization = (
-                      origFields: DefaultValueField[],
-                      updatedFields: DefaultValueField[]
+                        for (const field of orig) {
+                          const path = field.path.join('.');
+                          const updField = updMap.get(path);
+
+                          if (updField && field.source !== updField.source) {
+                            return true;
+                          }
+
+                          if (field.children?.length && updField?.children?.length) {
+                            if (compareSourceChanges(field.children, updField.children)) {
+                              return true;
+                            }
+                          }
+                        }
+
+                        return false;
+                      };
+
+                      return compareSourceChanges(
+                        templateValues.fields || [],
+                        updatedValues.fields || []
+                      );
+                    })();
+
+                    // Função simples para mesclar as alterações com a lista completa
+                    const mergeWithFullList = (
+                      fullList: DefaultValueField[],
+                      updatedFilteredList: DefaultValueField[]
                     ): DefaultValueField[] => {
-                      // Criar um mapa dos campos atualizados para fácil acesso
-                      const updatedFieldsMap = new Map<string, DefaultValueField>();
+                      // Criar um mapa dos campos atualizados para acesso rápido
+                      const updMap = new Map(
+                        updatedFilteredList.map((field) => [field.path.join('.'), field])
+                      );
 
-                      updatedFields.forEach((field) => {
-                        updatedFieldsMap.set(field.path.join('.'), field);
-                      });
-
-                      // Função recursiva para aplicar as customizações
-                      const applyCustomizations = (
-                        fields: DefaultValueField[]
-                      ): DefaultValueField[] => {
+                      // Função recursiva que aplica as alterações
+                      const applyChanges = (fields: DefaultValueField[]): DefaultValueField[] => {
                         return fields.map((field) => {
                           const path = field.path.join('.');
-                          const updatedField = updatedFieldsMap.get(path);
+                          const updField = updMap.get(path);
 
-                          // Se o campo foi atualizado, usamos a versão atualizada
-                          if (updatedField) {
-                            // Aplicar recursivamente para os filhos, se existirem
-                            if (field.children && updatedField.children) {
+                          // Se o campo foi alterado na lista filtrada, usamos a versão atualizada
+                          if (updField) {
+                            // Processamento recursivo para os filhos
+                            if (field.children?.length && updField.children?.length) {
                               return {
-                                ...updatedField,
-                                children: applyCustomizations(field.children),
+                                ...updField,
+                                children: applyChanges(field.children),
                               };
                             }
 
-                            return updatedField;
+                            return updField;
                           }
 
-                          // Se tem filhos, processamos recursivamente
-                          if (field.children && field.children.length > 0) {
+                          // Processamento recursivo para os filhos não alterados
+                          if (field.children?.length) {
                             return {
                               ...field,
-                              children: applyCustomizations(field.children),
+                              children: applyChanges(field.children),
                             };
                           }
 
-                          // Caso contrário, mantemos o campo original
                           return field;
                         });
                       };
 
-                      return applyCustomizations(origFields);
+                      return applyChanges(fullList);
                     };
 
-                    // Criar uma nova versão dos valores mesclando as customizações
-                    const origFields = templateValues.fields || [];
-                    const updFields = updatedValues.fields || [];
+                    // Criar valores mesclados
                     const mergedValues = {
                       ...templateValues,
-                      fields: mergeCustomization(origFields, updFields),
+                      fields: mergeWithFullList(
+                        templateValues.fields || [],
+                        updatedValues.fields || []
+                      ),
                     };
 
                     // Chamar o handler original com os valores mesclados
                     onChange(mergedValues);
 
-                    console.warn('[TemplateValueEditor] Customização mesclada com lista completa');
+                    // Mesmo que tenha ocorrido alteração de source, mantemos os filtros ativos
+                    // respeitando a decisão do usuário de quando limpar os filtros
+                    if (isSourceChanged) {
+                      console.warn(
+                        '[TemplateValueEditor] Alteração de source detectada, mantendo filtros'
+                      );
 
-                    // Limpar os filtros
-                    setFilterState({
-                      fieldName: '',
-                      exposed: false,
-                      overridable: false,
-                      customized: false,
-                    });
+                      // SOLUÇÃO CRÍTICA: Após customização, é importante criar completamente
+                      // um NOVO objeto Set para evitar problemas de referência e garantir que
+                      // o React detecte a mudança e atualize corretamente o estado de expansão
+                      setExpandedPaths((prev) => {
+                        // Garantimos uma nova referência do Set
+                        return new Set(Array.from(prev));
+                      });
 
-                    // Força re-render
-                    setRefreshCounter((prev) => prev + 1);
+                      // Force refresh dos campos filtrados
+                      setRefreshCounter((prev) => prev + 1);
+                    }
                   } else {
-                    // Sem customização ou sem filtros ativos, apenas propaga a mudança normalmente
+                    // Sem filtros ativos, apenas passamos a mudança normalmente
                     onChange(updatedValues);
 
-                    // Se houve customização mas sem filtros ativos, ainda atualizamos o contador
-                    if (wasCustomized) {
+                    // Detectar se houve alteração de source para incrementar o contador
+                    const wasSourceChanged = detectCustomization(
+                      templateValues.fields || [],
+                      updatedValues.fields || []
+                    );
+
+                    if (wasSourceChanged) {
+                      // SOLUÇÃO CRÍTICA: Mesmo para quando não temos filtros ativos
+                      // Forçar novo Set para garantir referência atualizada
+                      setExpandedPaths((prev) => {
+                        // Sempre garantimos uma nova referência do Set após customização
+                        return new Set(Array.from(prev));
+                      });
+
+                      // Refresh para atualização da interface
                       setRefreshCounter((prev) => prev + 1);
                     }
                   }

@@ -7,38 +7,90 @@ import { useCallback, useEffect } from 'react';
 import type { DefaultValueField } from '../types';
 import { ValueSourceType } from '../types';
 
+/**
+ * Hook para gerenciar a expansão de nós na tabela de valores
+ *
+ * Este hook mantém o estado de quais nós estão expandidos na tabela de visualização,
+ * e fornece utilidades para expandir e colapsar nós. Foi refatorado para solucionar
+ * o bug onde nós customizados não podiam ser colapsados até um reset.
+ */
 export function useFieldExpansion(
   fields: DefaultValueField[],
   expandedPaths: Set<string>,
   setExpandedPaths: React.Dispatch<React.SetStateAction<Set<string>>>,
   searchTerm?: string
 ) {
-  // Toggle function for field expansion
+  // Toggle function for field expansion - SOLUÇÃO DEFINITIVA!
   const toggleFieldExpansion = useCallback(
     (path: string) => {
-      setExpandedPaths((prev) => {
-        const newPaths = new Set(prev);
+      if (!path) {
+        return;
+      }
 
-        if (newPaths.has(path)) {
-          newPaths.delete(path);
+      // Verifica-se se o caminho existe nos campos atuais (crucial para filtros)
+      const pathExists = (searchFields: DefaultValueField[], searchPath: string): boolean => {
+        for (const field of searchFields) {
+          if (field.path.join('.') === searchPath) {
+            return true;
+          }
 
-          // If a parent path is collapsed, also collapse all child paths
-          // This prevents orphaned expanded child paths when parent is collapsed
-          const pathWithDot = `${path}.`;
-
-          [...newPaths].forEach((existingPath) => {
-            if (existingPath.startsWith(pathWithDot)) {
-              newPaths.delete(existingPath);
+          if (field.children?.length) {
+            if (pathExists(field.children, searchPath)) {
+              return true;
             }
-          });
-        } else {
-          newPaths.add(path);
+          }
         }
 
-        return newPaths;
+        return false;
+      };
+
+      // Só prossegue se o caminho existir nos campos atuais ou se estiver expandindo
+      const exists = pathExists(fields, path);
+
+      if (!exists) {
+        console.warn(`[useFieldExpansion] Caminho não existe nos campos atuais: ${path}`);
+        // Não faz nada se tentar colapsar um caminho que não existe mais
+
+        return;
+      }
+
+      console.warn(`[useFieldExpansion] Toggling path: ${path} (existe nos campos atuais)`);
+
+      setExpandedPaths((prev) => {
+        // IMPORTANTE: sempre criar novo Set para garantir nova referência
+        const isExpanded = prev.has(path);
+
+        if (isExpanded) {
+          // Se já está expandido, vamos remover (colapsar)
+          console.warn(`[useFieldExpansion] Colapsando: ${path}`);
+
+          // Criar novo Set sem o caminho e seus filhos
+          const newPaths = new Set<string>();
+
+          // Copia apenas os caminhos que não são o atual e nem filhos dele
+          const pathPrefix = `${path}.`;
+
+          prev.forEach((p) => {
+            if (p !== path && !p.startsWith(pathPrefix)) {
+              newPaths.add(p);
+            }
+          });
+
+          return newPaths;
+        } else {
+          // Se não está expandido, vamos adicionar (expandir)
+          console.warn(`[useFieldExpansion] Expandindo: ${path}`);
+
+          // Criar novo Set com o caminho adicionado
+          const newPaths = new Set(prev);
+
+          newPaths.add(path);
+
+          return newPaths;
+        }
       });
     },
-    [setExpandedPaths]
+    [fields, setExpandedPaths]
   );
 
   // Function to expand all object fields at all levels
