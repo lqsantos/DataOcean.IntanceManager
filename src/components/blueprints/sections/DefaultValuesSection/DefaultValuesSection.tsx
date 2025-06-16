@@ -18,9 +18,9 @@ import { logError } from '@/utils/errorLogger';
 import { ContractFloatingButton } from './ContractFloatingButton';
 import { ErrorBoundary } from './ErrorBoundary';
 import { TemplateTabsNavigation } from './TemplateTabsNavigation';
-import { TemplateValueEditor } from './TemplateValueEditor';
 import type { DefaultValueField, DefaultValuesContract, TemplateDefaultValues } from './types';
 import { legacyFieldsToValueConfiguration } from './ValueConfigurationConverter';
+import { TemplateValueEditor } from './ValueEditor'; // Importando da nova implementação refatorada
 
 // Flag para controlar a migração gradual para a nova estrutura tipada
 // No futuro, quando toda a aplicação estiver migrada, pode ser removido e definido como true permanentemente
