@@ -122,7 +122,7 @@ export function getChildPaths(fields: DefaultValueField[], parentPath: FieldPath
 }
 
 /**
- * Obtém todos os caminhos expandíveis (objetos com filhos)
+ * Obtém todos os caminhos expansíveis (objetos com filhos)
  */
 export function getAllExpandablePaths(fields: DefaultValueField[]): FieldPath[] {
   const paths: FieldPath[] = [];
@@ -130,7 +130,7 @@ export function getAllExpandablePaths(fields: DefaultValueField[]): FieldPath[] 
   const collectPaths = (fieldsToProcess: DefaultValueField[]) => {
     fieldsToProcess.forEach((field) => {
       if (field.type === 'object' && field.children && field.children.length > 0) {
-        // Adiciona este objeto ao caminho expandível
+        // Adiciona este objeto ao caminho expansível
         paths.push(field.path.join('.'));
 
         // Processa os filhos recursivamente
@@ -138,7 +138,7 @@ export function getAllExpandablePaths(fields: DefaultValueField[]): FieldPath[] 
 
         // Log para debugging removido para evitar loops
         // console.warn(
-        //   `[getAllExpandablePaths] Adicionando caminho expandível: ${field.path.join('.')}`
+        //   `[getAllExpandablePaths] Adicionando caminho expansível: ${field.path.join('.')}`
         // );
       }
     });
@@ -146,7 +146,7 @@ export function getAllExpandablePaths(fields: DefaultValueField[]): FieldPath[] 
 
   collectPaths(fields);
   // console.warn(
-  //   `[getAllExpandablePaths] Total de caminhos expandíveis encontrados: ${paths.length}`
+  //   `[getAllExpandablePaths] Total de caminhos expansíveis encontrados: ${paths.length}`
   // );
 
   return paths;

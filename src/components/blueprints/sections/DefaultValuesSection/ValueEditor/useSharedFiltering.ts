@@ -3,7 +3,7 @@
  * Similar to useFieldFiltering but allows external state to be passed in
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type { DefaultValueField } from '../types';
 import { ValueSourceType } from '../types';
@@ -16,25 +16,13 @@ import type { FilterState } from './types';
  * @param externalFilterState - Estado de filtro externo (opcional)
  * @returns Objeto contendo os campos filtrados e utilitários
  */
-export function useSharedFiltering(
-  fields: DefaultValueField[],
-  externalFilterState?: FilterState,
-  externalRefreshCounter?: number
-) {
-  // Refresh counter to force re-renders when needed
-  const [internalRefreshCounter, setInternalRefreshCounter] = useState<number>(0);
-
-  // Use the external refresh counter if provided
-  const refreshCounter = externalRefreshCounter ?? internalRefreshCounter;
-
+export function useSharedFiltering(fields: DefaultValueField[], externalFilterState?: FilterState) {
   // Log para debug inicial - desativado para evitar loops
   // console.warn(
   //   '[useSharedFiltering] Inicializando com campos:',
   //   fields?.length,
   //   'Filtros:',
-  //   JSON.stringify(externalFilterState),
-  //   'RefreshCounter:',
-  //   refreshCounter
+  //   JSON.stringify(externalFilterState)
   // );
 
   // Calculate filtered fields based on active filters
@@ -120,8 +108,6 @@ export function useSharedFiltering(
     externalFilterState?.exposed,
     externalFilterState?.overridable,
     externalFilterState?.customized,
-    // Add refreshCounter to force recalculation when needed
-    refreshCounter,
   ]);
 
   // Helper to detect if customization happened (for onChange handler)
@@ -185,8 +171,6 @@ export function useSharedFiltering(
   return {
     filteredFields,
     hasActiveFilters,
-    refreshCounter,
-    setRefreshCounter: setInternalRefreshCounter,
     detectCustomization,
   };
 }

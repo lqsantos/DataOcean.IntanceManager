@@ -5,7 +5,7 @@
  */
 
 import { ChevronDown, ChevronUp, Code, Eye, Pencil, Search, X } from 'lucide-react';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -41,24 +41,11 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
 }: EnhancedFilterControlsProps) {
   const { t } = useTranslation('blueprints');
 
-  // Log de alterações nos filtros sem causar loops
-  // Usar uma ref para reduzir o número de logs e evitar efeitos colaterais
-  // Comentado para evitar loops de renderização
-  // const prevFiltersRef = React.useRef(currentFilters);
-
   // Ref para rastrear o timer de debounce
   const searchTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  /* useEffect(() => {
-    // Só logar se realmente mudou (comparação mais profunda)
-    if (JSON.stringify(prevFiltersRef.current) !== JSON.stringify(currentFilters)) {
-      console.warn('[EnhancedFilterControls] currentFilters atualizados:', currentFilters);
-      prevFiltersRef.current = currentFilters;
-    }
-  }, [currentFilters]); */
-
   // Limpar timers quando o componente é desmontado
-  useEffect(() => {
+  React.useEffect(() => {
     return () => {
       if (searchTimerRef.current) {
         clearTimeout(searchTimerRef.current);
@@ -70,8 +57,6 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
     (key: keyof FilterState, value: string | boolean) => {
       // Não atualizar se o valor não mudou
       if (currentFilters[key] === value) {
-        // console.warn(`[EnhancedFilterControls] Filtro ${key} não mudou, ignorando`);
-
         return;
       }
 
@@ -80,8 +65,6 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
         [key]: value,
       };
 
-      // console.warn(`[EnhancedFilterControls] Alterando filtro ${key} para:`, value);
-
       // Aplicar o filtro via callback
       onFilterChange(newFilters);
     },
@@ -89,7 +72,6 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   );
 
   const handleClearFilters = useCallback(() => {
-    // console.warn('[EnhancedFilterControls] Limpando todos os filtros manualmente');
     // Limpar os filtros
     onFilterChange(initialFilters);
   }, [onFilterChange]);
@@ -97,8 +79,6 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const searchValue = e.target.value;
-
-      // console.warn('[EnhancedFilterControls] Alterando texto de busca para:', searchValue);
 
       // Limpa o timer anterior se existir
       if (searchTimerRef.current) {
@@ -116,33 +96,21 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   // Event handlers for toggle buttons
   const handleExposedToggle = useCallback(
     (value: boolean) => {
-      // console.warn(`[EnhancedFilterControls] Toggle 'exposed' to: ${value}`);
-      // Usa setTimeout para evitar loops de renderização
-      setTimeout(() => {
-        handleFilterChange('exposed', value);
-      }, 0);
+      handleFilterChange('exposed', value);
     },
     [handleFilterChange]
   );
 
   const handleOverridableToggle = useCallback(
     (value: boolean) => {
-      // console.warn(`[EnhancedFilterControls] Toggle 'overridable' to: ${value}`);
-      // Usa setTimeout para evitar loops de renderização
-      setTimeout(() => {
-        handleFilterChange('overridable', value);
-      }, 0);
+      handleFilterChange('overridable', value);
     },
     [handleFilterChange]
   );
 
   const handleCustomizedToggle = useCallback(
     (value: boolean) => {
-      // console.warn(`[EnhancedFilterControls] Toggle 'customized' to: ${value}`);
-      // Usa setTimeout para evitar loops de renderização
-      setTimeout(() => {
-        handleFilterChange('customized', value);
-      }, 0);
+      handleFilterChange('customized', value);
     },
     [handleFilterChange]
   );
@@ -151,11 +119,7 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   const handleClearButtonClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      // console.warn('[EnhancedFilterControls] Botão Limpar Filtros clicado');
-      // Usa setTimeout para evitar loops de renderização
-      setTimeout(() => {
-        handleClearFilters();
-      }, 0);
+      handleClearFilters();
     },
     [handleClearFilters]
   );
@@ -163,13 +127,10 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   const handleExpandAllClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      // console.warn('[EnhancedFilterControls] Expandindo todos os campos');
-      // Usa setTimeout para evitar loops de renderização
-      setTimeout(() => {
-        if (onExpandAllFields) {
-          onExpandAllFields();
-        }
-      }, 0);
+
+      if (onExpandAllFields) {
+        onExpandAllFields();
+      }
     },
     [onExpandAllFields]
   );
@@ -177,13 +138,10 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   const handleCollapseAllClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      // console.warn('[EnhancedFilterControls] Colapsando todos os campos');
-      // Usa setTimeout para evitar loops de renderização
-      setTimeout(() => {
-        if (onCollapseAllFields) {
-          onCollapseAllFields();
-        }
-      }, 0);
+
+      if (onCollapseAllFields) {
+        onCollapseAllFields();
+      }
     },
     [onCollapseAllFields]
   );

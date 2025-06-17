@@ -5,7 +5,7 @@
  */
 
 import { Maximize, Minimize } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Badge } from '@/components/ui/badge';
@@ -39,9 +39,6 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
   // State for expanded paths
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
-  // Estado de refresh para forçar re-renders
-  const [refreshCounter, setRefreshCounter] = useState(0);
-
   // Estado de filtros centralizado aqui
   const [filterState, setFilterState] = useState<FilterState>({
     fieldName: '',
@@ -53,8 +50,7 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
   // Use o hook de filtragem compartilhada para calcular os campos filtrados
   const { filteredFields, hasActiveFilters, detectCustomization } = useSharedFiltering(
     templateValues.fields || [],
-    filterState,
-    refreshCounter
+    filterState
   );
 
   // Registra alterações no estado de filtros para debugging
@@ -83,43 +79,21 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
     setIsExpandedMode((prev) => !prev);
   }, []);
 
-  // Function to expand all fields (passed to filter controls)
+  // Simplified expand/collapse functions - delegate to context
+  const expandAllFieldsRef = useRef<(() => void) | null>(null);
+  const collapseAllFieldsRef = useRef<(() => void) | null>(null);
+
+  // Simple callbacks that will be connected to the context
   const expandAllFields = useCallback(() => {
-    // Helper function to recursively collect all expandable paths
-    const collectExpandablePaths = (fields: DefaultValueField[]) => {
-      const paths = new Set<string>();
+    if (expandAllFieldsRef.current) {
+      expandAllFieldsRef.current();
+    }
+  }, []);
 
-      fields.forEach((field) => {
-        if (field.type === 'object' && field.children && field.children.length > 0) {
-          // Add this object field's path
-          paths.add(field.path.join('.'));
-          // Recursively process its children
-          field.children.forEach((child: DefaultValueField) => {
-            const childPaths = collectExpandablePaths([child]);
-
-            childPaths.forEach((p) => paths.add(p));
-          });
-        }
-      });
-
-      return paths;
-    };
-
-    // Start collecting from root fields - use filteredFields when filters are active
-    const fieldsToExpand = hasActiveFilters ? filteredFields : templateValues.fields || [];
-    const allExpandablePaths = collectExpandablePaths(fieldsToExpand);
-
-    // É essencial criar um NOVO Set para garantir que o React detecte a mudança de referência
-    // e renderize corretamente os componentes filhos
-    setExpandedPaths(new Set(allExpandablePaths));
-  }, [templateValues.fields, filteredFields, hasActiveFilters]);
-
-  // Function to collapse all fields
   const collapseAllFields = useCallback(() => {
-    console.warn('[TemplateValueEditor] Colapsando todos os campos');
-    setExpandedPaths(new Set());
-    // Force refresh of the view to ensure collapsed state is applied correctly
-    setRefreshCounter((prev) => prev + 1);
+    if (collapseAllFieldsRef.current) {
+      collapseAllFieldsRef.current();
+    }
   }, []);
 
   return (
@@ -169,24 +143,8 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
             <EnhancedFilterControls
               currentFilters={filterState}
               onFilterChange={handleFilterChange}
-              onExpandAllFields={() => {
-                // Primeiro expandimos os campos
-                expandAllFields();
-                // Forçar atualização do estado via timeout para evitar loops
-                setTimeout(() => {
-                  // Atualiza o refreshCounter depois que o estado de expandedPaths foi processado
-                  setRefreshCounter((prev) => prev + 1);
-                }, 10);
-              }}
-              onCollapseAllFields={() => {
-                // Primeiro colapsamos os campos
-                collapseAllFields();
-                // Forçar atualização do estado via timeout para evitar loops
-                setTimeout(() => {
-                  // Atualiza o refreshCounter depois que o estado de expandedPaths foi processado
-                  setRefreshCounter((prev) => prev + 1);
-                }, 10);
-              }}
+              onExpandAllFields={expandAllFields}
+              onCollapseAllFields={collapseAllFields}
             />
 
             {/* Table view container */}
@@ -199,6 +157,9 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
                 hasActiveFilters={hasActiveFilters}
                 expandedPaths={expandedPaths}
                 setExpandedPaths={setExpandedPaths}
+                // Pass refs for expand/collapse functionality
+                expandAllFieldsRef={expandAllFieldsRef}
+                collapseAllFieldsRef={collapseAllFieldsRef}
                 onChange={(updatedValues) => {
                   // Solução elegante para o bug: Quando alteramos campos em uma lista filtrada,
                   // sempre aplicamos essas alterações à lista completa original
@@ -309,9 +270,6 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
                         // Garantimos uma nova referência do Set
                         return new Set(Array.from(prev));
                       });
-
-                      // Force refresh dos campos filtrados
-                      setRefreshCounter((prev) => prev + 1);
                     }
                   } else {
                     // Sem filtros ativos, apenas passamos a mudança normalmente
@@ -330,9 +288,6 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
                         // Sempre garantimos uma nova referência do Set após customização
                         return new Set(Array.from(prev));
                       });
-
-                      // Refresh para atualização da interface
-                      setRefreshCounter((prev) => prev + 1);
                     }
                   }
                 }}

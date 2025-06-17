@@ -1,13 +1,118 @@
-# DefaultValuesSection
+# DefaultValuesSection - Documentação Consolidada
 
-## Description
+## Descrição
 
-The DefaultValuesSection component is part of the BlueprintForm workflow and allows users to:
+O DefaultValuesSection é um componente sofisticado para gerenciamento de valores padrão em templates/blueprints, oferecendo:
 
-1. View and edit default values for each template in the blueprint
-2. Define which fields are exposed to instances and which can be overridden
-3. Set whether values come from template defaults or blueprint overrides
-4. Use YAML or table-based interface with validation and schema constraints
+1. **Edição de valores hierárquicos** com interface tabular
+2. **Sistema de filtros avançado** para busca e filtragem
+3. **Controles de exposição e override** com propagação hierárquica
+4. **Expansão/colapso inteligente** de campos aninhados
+
+## Principais Funcionalidades Implementadas
+
+### 1. Sistema de Filtros
+
+- **Busca por nome**: Filtragem dinâmica com debounce de 150ms
+- **Filtro por campos expostos**: Toggle para mostrar apenas campos com `exposed: true`
+- **Filtro por campos que podem ser sobrescritos**: Toggle para mostrar apenas campos com `overridable: true`
+- **Filtro por campos customizados**: Toggle para mostrar apenas campos modificados pelo blueprint
+
+### 2. Expansão/Colapso
+
+- **Expandir Todos**: Expande todos os campos hierárquicos de uma vez
+- **Colapsar Todos**: Colapsa todos os campos para vista compacta
+- **Funcionamento com filtros**: Os botões funcionam corretamente mesmo com filtros ativos
+
+### 3. Propagação de Toggles
+
+- **Propagação hierárquica**: Mudanças em campos pai se propagam para filhos
+- **Propagação simétrica**: Funciona tanto para ativar quanto para desativar
+- **UX inteligente**: Pais são desabilitados automaticamente se todos os filhos estão desabilitados
+
+## Arquitetura Técnica
+
+### Componentes Principais
+
+1. **EnhancedFilterControls**: Interface de filtros
+2. **TemplateValueEditor**: Componente principal que coordena filtros e dados
+3. **TableViewContainer**: Container que integra contexto e tabela
+4. **FieldsContext**: Contexto React para gerenciamento de estado hierárquico
+
+### Hooks Utilizados
+
+- **useSharedFiltering**: Filtragem compartilhada entre componentes
+- **useFields**: Acesso ao contexto de campos
+- **useFieldManagement**: Gerenciamento de operações em campos
+
+### Fluxo de Dados Simplificado
+
+```
+Filtros → useSharedFiltering → campos filtrados → TableViewContainer → FieldsContext → TableView
+```
+
+## Problemas Resolvidos
+
+### 1. Loop Infinito de Logs
+
+- **Causa**: Logs excessivos em useEffect e hooks de renderização
+- **Solução**: Remoção/comentário de logs desnecessários
+
+### 2. Ordem de Hooks Inconsistente
+
+- **Causa**: Hooks condicionais e callbacks inline
+- **Solução**: Hooks sempre no topo, callbacks memorizados
+
+### 3. Botões Expand/Collapse Não Funcionavam
+
+- **Causa**: Estado distribuído e sincronização complexa
+- **Solução**: Centralização no FieldsContext com comunicação via refs
+
+### 4. Referências de Objeto Inconsistentes
+
+- **Causa**: Mutação de Sets sem criar novas referências
+- **Solução**: Sempre criar novos Sets para garantir re-renderização
+
+## Melhorias de Performance
+
+1. **Debounce na busca**: Reduz chamadas durante digitação
+2. **Memorização de callbacks**: Evita re-criações desnecessárias
+3. **Centralização de estado**: Reduz sincronizações complexas
+4. **Remoção de timeouts**: Elimina delays artificiais
+
+## Estrutura de Arquivos
+
+### Componentes Core
+
+- `EnhancedFilterControls.tsx` - Interface de filtros
+- `TemplateValueEditor.tsx` - Coordenador principal
+- `TableViewContainer.tsx` - Container integrador
+
+### Contexto e Estado
+
+- `fields/FieldsContext.tsx` - Contexto React
+- `fields/fieldsReducer.ts` - Reducer para ações
+- `fields/fieldsUtils.ts` - Utilitários de campos
+
+### Hooks Especializados
+
+- `useSharedFiltering.ts` - Filtragem compartilhada
+- `hooks/useFieldManagement.ts` - Gerenciamento de campos
+
+## Status Atual
+
+✅ **Funcionalidades Principais**: Todas implementadas e funcionando
+✅ **Filtros**: Funcionando com debounce e UX suave
+✅ **Expandir/Colapsar**: Funcionando via refs e contexto
+✅ **Propagação**: Simétrica e hierárquica
+✅ **Performance**: Otimizada sem loops ou delays
+
+## Próximos Passos (Opcional)
+
+1. **Testes Unitários**: Adicionar cobertura de testes
+2. **Testes E2E**: Validar fluxos completos de usuário
+3. **Acessibilidade**: Melhorar suporte a screen readers
+4. **Internacionalização**: Verificar todas as strings traduzíveis
 5. Get immediate feedback on validation errors and variable interpolation issues
 6. Switch between multiple templates in the blueprint
 7. Preview the final configuration contract between blueprint and instances
