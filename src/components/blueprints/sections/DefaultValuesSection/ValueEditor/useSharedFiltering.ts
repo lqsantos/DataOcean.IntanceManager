@@ -27,23 +27,33 @@ export function useSharedFiltering(
   // Use the external refresh counter if provided
   const refreshCounter = externalRefreshCounter ?? internalRefreshCounter;
 
+  // Log para debug inicial - desativado para evitar loops
+  // console.warn(
+  //   '[useSharedFiltering] Inicializando com campos:',
+  //   fields?.length,
+  //   'Filtros:',
+  //   JSON.stringify(externalFilterState),
+  //   'RefreshCounter:',
+  //   refreshCounter
+  // );
+
   // Calculate filtered fields based on active filters
   const filteredFields = useMemo(() => {
-    if (!fields) {
+    if (!fields || fields.length === 0) {
       return [];
     }
 
+    // Determine if any filters are active
+    const hasFilters = !!(
+      externalFilterState?.fieldName ||
+      externalFilterState?.exposed ||
+      externalFilterState?.overridable ||
+      externalFilterState?.customized
+    );
+
     // If no filters are active or no filter state provided, return all fields
-    if (
-      !externalFilterState ||
-      !(
-        externalFilterState.fieldName ||
-        externalFilterState.exposed ||
-        externalFilterState.overridable ||
-        externalFilterState.customized
-      )
-    ) {
-      console.warn('[useSharedFiltering] No active filters, returning all fields:', fields.length);
+    if (!externalFilterState || !hasFilters) {
+      // console.warn('[useSharedFiltering] No active filters, returning all fields:', fields.length);
 
       return fields;
     }
@@ -54,7 +64,11 @@ export function useSharedFiltering(
 
     // Helper function that checks if a field or its children match the search criteria
     const fieldMatchesFilters = (field: DefaultValueField): boolean => {
-      // Check for current field
+      // Track if this field or any child matches (for parent fields to be included)
+      let thisNodeMatches = true;
+      let anyChildMatches = false;
+
+      // Check search term filter
       if (searchTerm) {
         const keyMatch = field.key.toLowerCase().includes(searchTerm);
         const displayNameMatch = field.displayName
@@ -62,48 +76,40 @@ export function useSharedFiltering(
           : false;
         const pathMatch = field.path.join('.').toLowerCase().includes(searchTerm);
 
-        // If this field doesn't directly match but has children, we should check them too
-        if (!keyMatch && !displayNameMatch && !pathMatch) {
-          // If we have children, check if any of them match
-          if (field.children && field.children.length > 0) {
-            // If any child matches, this field should be included
-            const hasMatchingChild = field.children.some((childField) =>
-              fieldMatchesFilters(childField)
-            );
+        thisNodeMatches = keyMatch || displayNameMatch || pathMatch;
+      }
 
-            if (!hasMatchingChild) {
-              return false;
-            }
-          } else {
-            // No children and no direct match
-            return false;
-          }
+      // Check toggle filters for this node
+      if (thisNodeMatches) {
+        // Filter by exposed fields
+        if (exposed && !field.exposed) {
+          thisNodeMatches = false;
+        }
+
+        // Filter by overridable fields
+        if (thisNodeMatches && overridable && !field.overridable) {
+          thisNodeMatches = false;
+        }
+
+        // Filter by customized fields (that were changed by the blueprint)
+        if (thisNodeMatches && customized && field.source === ValueSourceType.TEMPLATE) {
+          thisNodeMatches = false;
         }
       }
 
-      // Filter by exposed fields
-      if (exposed && !field.exposed) {
-        return false;
+      // If this node has children, check if any of them match
+      if (field.children && field.children.length > 0) {
+        anyChildMatches = field.children.some((childField) => fieldMatchesFilters(childField));
       }
 
-      // Filter by overridable fields
-      if (overridable && !field.overridable) {
-        return false;
-      }
-
-      // Filter by customized fields (that were changed by the blueprint)
-      if (customized && field.source === ValueSourceType.TEMPLATE) {
-        // If the filter is active, return false for any field that was NOT customized
-        return false;
-      }
-
-      return true;
+      // A field should be included if it matches itself OR has any matching children
+      return thisNodeMatches || anyChildMatches;
     };
 
     // Apply the filter to all root fields
     const result = fields.filter(fieldMatchesFilters);
 
-    console.warn('[useSharedFiltering] Filter applied, results:', result.length);
+    // console.warn('[useSharedFiltering] Filter applied, results:', result.length);
 
     return result;
   }, [

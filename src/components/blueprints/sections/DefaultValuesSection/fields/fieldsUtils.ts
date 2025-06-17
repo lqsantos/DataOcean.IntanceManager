@@ -130,13 +130,24 @@ export function getAllExpandablePaths(fields: DefaultValueField[]): FieldPath[] 
   const collectPaths = (fieldsToProcess: DefaultValueField[]) => {
     fieldsToProcess.forEach((field) => {
       if (field.type === 'object' && field.children && field.children.length > 0) {
+        // Adiciona este objeto ao caminho expandível
         paths.push(field.path.join('.'));
+
+        // Processa os filhos recursivamente
         collectPaths(field.children);
+
+        // Log para debugging removido para evitar loops
+        // console.warn(
+        //   `[getAllExpandablePaths] Adicionando caminho expandível: ${field.path.join('.')}`
+        // );
       }
     });
   };
 
   collectPaths(fields);
+  // console.warn(
+  //   `[getAllExpandablePaths] Total de caminhos expandíveis encontrados: ${paths.length}`
+  // );
 
   return paths;
 }
@@ -187,8 +198,10 @@ export function findMatchingFields(fields: DefaultValueField[], term: string): F
 
       if (keyMatch || displayNameMatch || pathMatch) {
         matchingPaths.push(fieldPath);
+        // console.warn(`[findMatchingFields] Campo correspondente encontrado: ${fieldPath}`);
       }
 
+      // Sempre pesquisa em campos filhos para garantir que todos os campos correspondentes sejam encontrados
       if (field.children && field.children.length > 0) {
         searchInFields(field.children);
       }
@@ -196,6 +209,10 @@ export function findMatchingFields(fields: DefaultValueField[], term: string): F
   };
 
   searchInFields(fields);
+
+  // console.warn(
+  //   `[findMatchingFields] Total de campos correspondentes encontrados: ${matchingPaths.length}`
+  // );
 
   return matchingPaths;
 }

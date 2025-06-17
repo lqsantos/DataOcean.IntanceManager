@@ -61,15 +61,23 @@ export function fieldsReducer(state: FieldsState, action: FieldsAction): FieldsS
     case 'EXPAND_ALL': {
       const allPaths = getAllExpandablePaths(state.currentFields);
 
+      // É importante criar uma nova referência do Set para que o React detecte a mudança
+      const newExpandedPaths = new Set(allPaths);
+
+      // console.warn(`[fieldsReducer] EXPAND_ALL: Expandindo ${allPaths.length} caminhos`);
+
       return {
         ...state,
-        expandedPaths: new Set(allPaths),
+        expandedPaths: newExpandedPaths,
       };
     }
 
     case 'COLLAPSE_ALL': {
+      // console.warn('[fieldsReducer] COLLAPSE_ALL: Recolhendo todos os caminhos');
+
       return {
         ...state,
+        // É importante criar uma nova referência do Set para que o React detecte a mudança
         expandedPaths: new Set(),
       };
     }

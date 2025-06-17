@@ -42,7 +42,9 @@ export function useFieldManagement({
   onChange,
   onTogglePropagation,
 }: UseFieldManagementProps) {
-  // Função auxiliar para encontrar um campo pelo caminho
+  /**
+   * Função auxiliar para encontrar um campo pelo caminho
+   */
   const findFieldByPath = useCallback(
     (fieldsToSearch: DefaultValueField[], pathSegments: string[]): DefaultValueField | null => {
       for (const field of fieldsToSearch) {
@@ -67,125 +69,113 @@ export function useFieldManagement({
     []
   );
 
-  // Handle value source change (template vs blueprint)
+  /**
+   * Função utilitária para aplicar mudanças de forma unificada
+   */
+  const applyChanges = useCallback(
+    (config: ValueConfiguration | DefaultValueField[], isTyped: boolean) => {
+      if (isTyped && onValueConfigurationChange && valueConfiguration) {
+        // Notifica sobre mudanças na estrutura tipada
+        onValueConfigurationChange(config as ValueConfiguration);
+
+        // Converte para formato antigo para compatibilidade
+        const updatedFields = valueConfigurationToLegacyFields(config as ValueConfiguration);
+
+        onChange({
+          ...templateValues,
+          fields: updatedFields,
+        });
+      } else {
+        // Usa a lógica tradicional
+        onChange({
+          ...templateValues,
+          fields: config as DefaultValueField[],
+        });
+      }
+    },
+    [templateValues, onChange, onValueConfigurationChange, valueConfiguration]
+  );
+
+  /**
+   * Manipula a alteração de origem do valor (template vs blueprint)
+   */
   const handleSourceChange = useCallback(
     (field: DefaultValueField, source: ValueSourceType) => {
       if (useTypedValueConfiguration && valueConfiguration) {
-        // Atualiza o campo na estrutura tipada
         const isCustomized = source === ValueSourceType.BLUEPRINT;
         const path = field.path.join('.');
 
-        const updatedValueConfig = ValueConfigFieldService.updateFieldCustomized(
+        // Atualiza o campo na estrutura tipada
+        let updatedConfig = ValueConfigFieldService.updateFieldCustomized(
           valueConfiguration,
           path,
           isCustomized
         );
 
         // Se o campo não está customizado, restaura para o valor padrão
-        const updatedConfig = isCustomized
-          ? updatedValueConfig
-          : ValueConfigFieldService.resetFieldToDefault(updatedValueConfig, path);
-
-        // Notifica sobre a mudança na estrutura tipada
-        if (onValueConfigurationChange) {
-          onValueConfigurationChange(updatedConfig);
+        if (!isCustomized) {
+          updatedConfig = ValueConfigFieldService.resetFieldToDefault(updatedConfig, path);
         }
 
-        // Converte para o formato antigo para compatibilidade
-        const updatedFields = valueConfigurationToLegacyFields(updatedConfig);
-
-        onChange({
-          ...templateValues,
-          fields: updatedFields,
-        });
+        applyChanges(updatedConfig, true);
       } else {
         // Usa a lógica tradicional
         const updatedFields = FieldService.updateFieldSource(templateValues.fields, field, source);
 
-        onChange({
-          ...templateValues,
-          fields: updatedFields,
-        });
+        applyChanges(updatedFields, false);
       }
     },
-    [
-      templateValues,
-      onChange,
-      useTypedValueConfiguration,
-      valueConfiguration,
-      onValueConfigurationChange,
-    ]
+    [templateValues, applyChanges, useTypedValueConfiguration, valueConfiguration]
   );
 
-  // Handle value change
+  /**
+   * Manipula a alteração de valor
+   */
   const handleValueChange = useCallback(
     (field: DefaultValueField, newValue: unknown) => {
       if (useTypedValueConfiguration && valueConfiguration) {
-        // Atualiza o campo na estrutura tipada
         const path = field.path.join('.');
-
         const updatedValueConfig = ValueConfigFieldService.updateFieldValue(
           valueConfiguration,
           path,
           newValue
         );
 
-        // Notifica sobre a mudança na estrutura tipada
-        if (onValueConfigurationChange) {
-          onValueConfigurationChange(updatedValueConfig);
-        }
-
-        // Converte para o formato antigo para compatibilidade
-        const updatedFields = valueConfigurationToLegacyFields(updatedValueConfig);
-
-        onChange({
-          ...templateValues,
-          fields: updatedFields,
-        });
+        applyChanges(updatedValueConfig, true);
       } else {
-        // Usa a lógica tradicional
         const updatedFields = FieldService.updateFieldValue(templateValues.fields, field, newValue);
 
-        onChange({
-          ...templateValues,
-          fields: updatedFields,
-        });
+        applyChanges(updatedFields, false);
       }
     },
-    [
-      templateValues,
-      onChange,
-      useTypedValueConfiguration,
-      valueConfiguration,
-      onValueConfigurationChange,
-    ]
+    [templateValues, applyChanges, useTypedValueConfiguration, valueConfiguration]
   );
 
-  // Handle expose toggle with propagation to children
+  /**
+   * Manipula a alteração do estado exposed com propagação para filhos e ancestrais
+   */
   const handleExposeChange = useCallback(
     (field: DefaultValueField, exposed: boolean) => {
       const path = field.path.join('.');
 
-      // Get child paths for propagation (both when enabling and disabling exposure)
-      // Propaga tanto ao habilitar quanto ao desabilitar a exposição
+      // Obtém caminhos dos filhos para propagação
       const propagationData =
-        field.children && field.children.length > 0 && onTogglePropagation
+        field.children?.length && onTogglePropagation
           ? onTogglePropagation(field, 'expose', exposed)
           : undefined;
 
-      // Process with ValueConfiguration if available
+      // Processa com a configuração tipada se disponível
       if (useTypedValueConfiguration && valueConfiguration) {
-        // Update the main field
+        // Atualiza o campo principal
         let updatedValueConfig = ValueConfigFieldService.updateFieldExposed(
           valueConfiguration,
           path,
           exposed
         );
 
-        // Propagate to children if needed
-        if (propagationData && propagationData.childPaths.length > 0) {
-          // Update each child
-          propagationData.childPaths.forEach((childPath: string) => {
+        // Propaga para filhos se necessário
+        if (propagationData?.childPaths.length) {
+          propagationData.childPaths.forEach((childPath) => {
             // Propaga o mesmo estado de exposed para os filhos
             updatedValueConfig = ValueConfigFieldService.updateFieldExposed(
               updatedValueConfig,
@@ -193,7 +183,7 @@ export function useFieldManagement({
               exposed
             );
 
-            // Se exposed = false, precisamos desabilitar overridable também
+            // Se exposed = false, desabilita overridable também
             if (!exposed) {
               updatedValueConfig = ValueConfigFieldService.updateFieldOverridable(
                 updatedValueConfig,
@@ -204,38 +194,23 @@ export function useFieldManagement({
           });
         }
 
-        // Bottom-up propagation: If enabling a field, ensure ALL ancestors (including root) are also enabled
+        // Propagação bottom-up conforme o cenário
         if (exposed) {
+          // Se habilitando: garante que ancestrais estão habilitados
           updatedValueConfig = propagateExposedToAncestors(updatedValueConfig, path);
-        } 
-        // NOVA IMPLEMENTAÇÃO: Propagação bottom-up para desabilitar
-        // Se estamos desabilitando um campo, verificar se isso afeta os ancestrais
-        else {
-          // Propagar os estados dos filhos para os pais (incluindo verificar se todos os filhos estão desabilitados)
+        } else {
+          // Se desabilitando: verifica se isso afeta os ancestrais
           updatedValueConfig = propagateChildrenStatesToParents(updatedValueConfig);
         }
 
-        // Notify about the changes
-        if (onValueConfigurationChange) {
-          onValueConfigurationChange(updatedValueConfig);
-        }
-
-        // Convert to old format for compatibility
-        const updatedFields = valueConfigurationToLegacyFields(updatedValueConfig);
-
-        onChange({
-          ...templateValues,
-          fields: updatedFields,
-        });
+        applyChanges(updatedValueConfig, true);
       } else {
-        // Use traditional logic
+        // Usa a lógica tradicional
         let updatedFields = FieldService.updateFieldExposed(templateValues.fields, field, exposed);
 
-        // Propagate to children if needed
-        if (propagationData && propagationData.childPaths.length > 0) {
-          // Update each child field
-          propagationData.childPaths.forEach((childPath: string) => {
-            // Find the field by its path
+        // Propaga para filhos se necessário
+        if (propagationData?.childPaths.length) {
+          propagationData.childPaths.forEach((childPath) => {
             const fieldToUpdate = findFieldByPath(updatedFields, childPath.split('.'));
 
             if (fieldToUpdate) {
@@ -246,7 +221,7 @@ export function useFieldManagement({
                 exposed
               );
 
-              // Se exposed = false, precisamos desabilitar overridable também
+              // Se exposed = false, desabilita overridable também
               if (!exposed && fieldToUpdate.overridable) {
                 updatedFields = FieldService.updateFieldOverridable(
                   updatedFields,
@@ -258,62 +233,58 @@ export function useFieldManagement({
           });
         }
 
-        // Bottom-up propagation: If enabling a field, ensure ALL ancestors (including root) are also enabled
+        // Propagação bottom-up conforme o cenário
         if (exposed) {
+          // Se habilitando: garante que ancestrais estão habilitados
           updatedFields = propagateExposedToAncestorsTraditional(
             updatedFields,
             path,
             findFieldByPath
           );
-        } 
-        // NOVA IMPLEMENTAÇÃO: Propagação bottom-up para desabilitar
-        // Se estamos desabilitando um campo, verificar se isso afeta os ancestrais
-        else {
-          // Propagar os estados dos filhos para os pais (incluindo verificar se todos os filhos estão desabilitados)
+        } else {
+          // Se desabilitando: verifica se isso afeta os ancestrais
           updatedFields = propagateChildrenStatesToParentsTraditional(
             updatedFields,
             findFieldByPath
           );
         }
 
-        onChange({
-          ...templateValues,
-          fields: updatedFields,
-        });
+        applyChanges(updatedFields, false);
       }
     },
     [
       templateValues,
-      onChange,
+      applyChanges,
       useTypedValueConfiguration,
       valueConfiguration,
-      onValueConfigurationChange,
       onTogglePropagation,
       findFieldByPath,
     ]
   );
 
-  // Handle override toggle with propagation to children
+  /**
+   * Manipula a alteração do estado overridable com propagação para filhos e ancestrais
+   */
   const handleOverrideChange = useCallback(
     (field: DefaultValueField, overridable: boolean) => {
       const path = field.path.join('.');
 
-      // Get child paths for propagation (both when enabling and disabling override)
-      // Propaga tanto ao habilitar quanto ao desabilitar o override
+      // Obtém caminhos dos filhos para propagação
       const propagationData =
-        field.children && field.children.length > 0 && onTogglePropagation
+        field.children?.length && onTogglePropagation
           ? onTogglePropagation(field, 'override', overridable)
           : undefined;
 
+      // Processa com a configuração tipada se disponível
       if (useTypedValueConfiguration && valueConfiguration) {
-        // Update the main field first
+        // Atualiza o campo principal
         let updatedValueConfig = ValueConfigFieldService.updateFieldOverridable(
           valueConfiguration,
           path,
           overridable
         );
 
-        // If we're making a field overridable, it must also be exposed
+        // Se tornando um campo overridable, também deve ser exposed
         if (overridable && !field.exposed) {
           updatedValueConfig = ValueConfigFieldService.updateFieldExposed(
             updatedValueConfig,
@@ -322,9 +293,9 @@ export function useFieldManagement({
           );
         }
 
-        // Propagate to children if needed (only when making fields overridable)
-        if (propagationData && propagationData.childPaths.length > 0) {
-          propagationData.childPaths.forEach((childPath: string) => {
+        // Propaga para filhos se necessário
+        if (propagationData?.childPaths.length) {
+          propagationData.childPaths.forEach((childPath) => {
             // Propaga o mesmo estado de overridable para os filhos
             updatedValueConfig = ValueConfigFieldService.updateFieldOverridable(
               updatedValueConfig,
@@ -332,7 +303,7 @@ export function useFieldManagement({
               overridable
             );
 
-            // Se overridable é true, o campo deve estar exposto
+            // Se overridable = true, o campo deve ser exposed
             if (overridable) {
               updatedValueConfig = ValueConfigFieldService.updateFieldExposed(
                 updatedValueConfig,
@@ -343,56 +314,43 @@ export function useFieldManagement({
           });
         }
 
-        // Bottom-up propagation: If enabling override, ensure ALL ancestors (including root) are also enabled
+        // Propagação bottom-up conforme o cenário
         if (overridable) {
+          // Se habilitando: garante que ancestrais estão habilitados
           updatedValueConfig = propagateOverrideToAncestors(updatedValueConfig, path);
-        } 
-        // NOVA IMPLEMENTAÇÃO: Propagação bottom-up para desabilitar
-        // Se estamos desabilitando o override, verificar se isso afeta os ancestrais
-        else {
-          // Propagar os estados dos filhos para os pais (incluindo verificar se todos os filhos estão com override desabilitado)
+        } else {
+          // Se desabilitando: verifica se isso afeta os ancestrais
           updatedValueConfig = propagateChildrenStatesToParents(updatedValueConfig);
         }
 
-        // Notify about the changes
-        if (onValueConfigurationChange) {
-          onValueConfigurationChange(updatedValueConfig);
-        }
-
-        // Convert to old format for compatibility
-        const updatedFields = valueConfigurationToLegacyFields(updatedValueConfig);
-
-        onChange({
-          ...templateValues,
-          fields: updatedFields,
-        });
+        applyChanges(updatedValueConfig, true);
       } else {
-        // Use traditional logic
+        // Usa a lógica tradicional
         let updatedFields = FieldService.updateFieldOverridable(
           templateValues.fields,
           field,
           overridable
         );
 
-        // If we're making a field overridable, it must also be exposed
+        // Se tornando um campo overridable, também deve ser exposed
         if (overridable && !field.exposed) {
           updatedFields = FieldService.updateFieldExposed(updatedFields, field, true);
         }
 
-        // Propagate to children if needed
-        if (propagationData && propagationData.childPaths.length > 0) {
-          propagationData.childPaths.forEach((childPath: string) => {
+        // Propaga para filhos se necessário
+        if (propagationData?.childPaths.length) {
+          propagationData.childPaths.forEach((childPath) => {
             const fieldToUpdate = findFieldByPath(updatedFields, childPath.split('.'));
 
             if (fieldToUpdate) {
-              // Update override state
+              // Atualiza o estado de override
               updatedFields = FieldService.updateFieldOverridable(
                 updatedFields,
                 fieldToUpdate,
                 overridable
               );
 
-              // If overridable, the field must be exposed
+              // Se overridable = true, o campo deve ser exposed
               if (overridable && !fieldToUpdate.exposed) {
                 updatedFields = FieldService.updateFieldExposed(updatedFields, fieldToUpdate, true);
               }
@@ -400,36 +358,30 @@ export function useFieldManagement({
           });
         }
 
-        // Bottom-up propagation: If enabling override, ensure ALL ancestors (including root) are also enabled
+        // Propagação bottom-up conforme o cenário
         if (overridable) {
+          // Se habilitando: garante que ancestrais estão habilitados
           updatedFields = propagateOverrideToAncestorsTraditional(
             updatedFields,
             path,
             findFieldByPath
           );
-        } 
-        // NOVA IMPLEMENTAÇÃO: Propagação bottom-up para desabilitar
-        // Se estamos desabilitando override, verificar se isso afeta os ancestrais
-        else {
-          // Propagar os estados dos filhos para os pais (incluindo verificar se todos os filhos estão com override desabilitado)
+        } else {
+          // Se desabilitando: verifica se isso afeta os ancestrais
           updatedFields = propagateChildrenStatesToParentsTraditional(
             updatedFields,
             findFieldByPath
           );
         }
 
-        onChange({
-          ...templateValues,
-          fields: updatedFields,
-        });
+        applyChanges(updatedFields, false);
       }
     },
     [
       templateValues,
-      onChange,
+      applyChanges,
       useTypedValueConfiguration,
       valueConfiguration,
-      onValueConfigurationChange,
       onTogglePropagation,
       findFieldByPath,
     ]

@@ -57,6 +57,19 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
     refreshCounter
   );
 
+  // Registra alterações no estado de filtros para debugging
+  // Comentado para evitar loops infinitos de logs
+  /* useEffect(() => {
+    console.warn(
+      '[TemplateValueEditor] Estado de filtros atualizado:',
+      JSON.stringify(filterState),
+      'Filtros ativos:',
+      hasActiveFilters,
+      'Campos filtrados:',
+      filteredFields.length
+    );
+  }, [filterState, hasActiveFilters, filteredFields.length]); */
+
   // Create a filter change handler
   const handleFilterChange = useCallback((newFilters: FilterState) => {
     console.warn('[TemplateValueEditor] Atualizando filtros:', newFilters);
@@ -92,16 +105,21 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
       return paths;
     };
 
-    // Start collecting from root fields
-    const allExpandablePaths = collectExpandablePaths(templateValues.fields || []);
+    // Start collecting from root fields - use filteredFields when filters are active
+    const fieldsToExpand = hasActiveFilters ? filteredFields : templateValues.fields || [];
+    const allExpandablePaths = collectExpandablePaths(fieldsToExpand);
 
-    // Update the expanded paths state with all expandable paths
-    setExpandedPaths(allExpandablePaths);
-  }, [templateValues.fields]);
+    // É essencial criar um NOVO Set para garantir que o React detecte a mudança de referência
+    // e renderize corretamente os componentes filhos
+    setExpandedPaths(new Set(allExpandablePaths));
+  }, [templateValues.fields, filteredFields, hasActiveFilters]);
 
   // Function to collapse all fields
   const collapseAllFields = useCallback(() => {
+    console.warn('[TemplateValueEditor] Colapsando todos os campos');
     setExpandedPaths(new Set());
+    // Force refresh of the view to ensure collapsed state is applied correctly
+    setRefreshCounter((prev) => prev + 1);
   }, []);
 
   return (
@@ -151,8 +169,24 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
             <EnhancedFilterControls
               currentFilters={filterState}
               onFilterChange={handleFilterChange}
-              onExpandAllFields={expandAllFields}
-              onCollapseAllFields={collapseAllFields}
+              onExpandAllFields={() => {
+                // Primeiro expandimos os campos
+                expandAllFields();
+                // Forçar atualização do estado via timeout para evitar loops
+                setTimeout(() => {
+                  // Atualiza o refreshCounter depois que o estado de expandedPaths foi processado
+                  setRefreshCounter((prev) => prev + 1);
+                }, 10);
+              }}
+              onCollapseAllFields={() => {
+                // Primeiro colapsamos os campos
+                collapseAllFields();
+                // Forçar atualização do estado via timeout para evitar loops
+                setTimeout(() => {
+                  // Atualiza o refreshCounter depois que o estado de expandedPaths foi processado
+                  setRefreshCounter((prev) => prev + 1);
+                }, 10);
+              }}
             />
 
             {/* Table view container */}
