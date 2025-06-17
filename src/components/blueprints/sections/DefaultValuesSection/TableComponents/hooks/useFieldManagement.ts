@@ -12,6 +12,8 @@ import { ValueSourceType } from '../../types';
 import { valueConfigurationToLegacyFields } from '../../ValueConfigurationConverter';
 import * as FieldService from '../fieldUpdateService';
 import {
+  propagateChildrenStatesToParents,
+  propagateChildrenStatesToParentsTraditional,
   propagateExposedToAncestors,
   propagateExposedToAncestorsTraditional,
   propagateOverrideToAncestors,
@@ -205,6 +207,12 @@ export function useFieldManagement({
         // Bottom-up propagation: If enabling a field, ensure ALL ancestors (including root) are also enabled
         if (exposed) {
           updatedValueConfig = propagateExposedToAncestors(updatedValueConfig, path);
+        } 
+        // NOVA IMPLEMENTAÇÃO: Propagação bottom-up para desabilitar
+        // Se estamos desabilitando um campo, verificar se isso afeta os ancestrais
+        else {
+          // Propagar os estados dos filhos para os pais (incluindo verificar se todos os filhos estão desabilitados)
+          updatedValueConfig = propagateChildrenStatesToParents(updatedValueConfig);
         }
 
         // Notify about the changes
@@ -255,6 +263,15 @@ export function useFieldManagement({
           updatedFields = propagateExposedToAncestorsTraditional(
             updatedFields,
             path,
+            findFieldByPath
+          );
+        } 
+        // NOVA IMPLEMENTAÇÃO: Propagação bottom-up para desabilitar
+        // Se estamos desabilitando um campo, verificar se isso afeta os ancestrais
+        else {
+          // Propagar os estados dos filhos para os pais (incluindo verificar se todos os filhos estão desabilitados)
+          updatedFields = propagateChildrenStatesToParentsTraditional(
+            updatedFields,
             findFieldByPath
           );
         }
@@ -329,6 +346,12 @@ export function useFieldManagement({
         // Bottom-up propagation: If enabling override, ensure ALL ancestors (including root) are also enabled
         if (overridable) {
           updatedValueConfig = propagateOverrideToAncestors(updatedValueConfig, path);
+        } 
+        // NOVA IMPLEMENTAÇÃO: Propagação bottom-up para desabilitar
+        // Se estamos desabilitando o override, verificar se isso afeta os ancestrais
+        else {
+          // Propagar os estados dos filhos para os pais (incluindo verificar se todos os filhos estão com override desabilitado)
+          updatedValueConfig = propagateChildrenStatesToParents(updatedValueConfig);
         }
 
         // Notify about the changes
@@ -382,6 +405,15 @@ export function useFieldManagement({
           updatedFields = propagateOverrideToAncestorsTraditional(
             updatedFields,
             path,
+            findFieldByPath
+          );
+        } 
+        // NOVA IMPLEMENTAÇÃO: Propagação bottom-up para desabilitar
+        // Se estamos desabilitando override, verificar se isso afeta os ancestrais
+        else {
+          // Propagar os estados dos filhos para os pais (incluindo verificar se todos os filhos estão com override desabilitado)
+          updatedFields = propagateChildrenStatesToParentsTraditional(
+            updatedFields,
             findFieldByPath
           );
         }
