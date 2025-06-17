@@ -6,14 +6,22 @@
 import type { DefaultValueField } from '@/components/blueprints/sections/DefaultValuesSection/types';
 import { ValueSourceType } from '@/components/blueprints/sections/DefaultValuesSection/types';
 
+// Função de wrapper que adiciona nó raiz a qualquer gerador de campos
+function withRootNode(
+  generator: () => DefaultValueField[],
+  displayName: string
+): () => DefaultValueField[] {
+  return () => addRootNode(generator(), displayName);
+}
+
 // Template IDs mapeados a funções específicas de geração de campos
 // Exportado para ser usado em template-schemas.ts
 export const templateSpecificGenerators: Record<string, () => DefaultValueField[]> = {
-  '1': generateBasicWebAppFields,
-  '2': generateReactFrontendFields,
-  '4': generatePostgreSQLFields,
-  '5': generateMongoDBFields,
-  '7': generateNginxIngressFields,
+  '1': withRootNode(generateBasicWebAppFields, 'Basic Web App Fields'),
+  '2': withRootNode(generateReactFrontendFields, 'React Frontend Fields'),
+  '4': withRootNode(generatePostgreSQLFields, 'PostgreSQL Fields'),
+  '5': withRootNode(generateMongoDBFields, 'MongoDB Fields'),
+  '7': withRootNode(generateNginxIngressFields, 'Nginx Ingress Fields'),
 };
 
 // Função para gerar campos específicos para o template "Basic Web Application"
@@ -1144,20 +1152,49 @@ export function generateGenericFields(): DefaultValueField[] {
 }
 
 /**
+ * Função para adicionar um nó raiz aos campos de template
+ * Isso facilita ações como "Expose All" ou "Hide All" através de um único toggle
+ */
+function addRootNode(fields: DefaultValueField[], displayName = 'All Fields'): DefaultValueField[] {
+  return [
+    {
+      key: 'root',
+      displayName,
+      description: 'Root node to control all fields',
+      value: null,
+      originalValue: null,
+      source: ValueSourceType.TEMPLATE,
+      exposed: true, // Por padrão, tudo estará exposto
+      overridable: true, // Por padrão, tudo poderá ser sobrescrito
+      type: 'object',
+      required: false,
+      path: ['root'],
+      children: fields,
+    },
+  ];
+}
+
+/**
  * Get mock fields based on template type
  */
+// Funções genéricas com wrapper de nó raiz
+const databaseFieldsWithRoot = withRootNode(generateDatabaseFields, 'Database Fields');
+const applicationFieldsWithRoot = withRootNode(generateApplicationFields, 'Application Fields');
+const networkFieldsWithRoot = withRootNode(generateNetworkFields, 'Network Fields');
+const genericFieldsWithRoot = withRootNode(generateGenericFields, 'Generic Fields');
+
 export function getMockFieldsByType(
   templateType: 'database' | 'application' | 'network' | 'generic'
 ): DefaultValueField[] {
   switch (templateType) {
     case 'database':
-      return generateDatabaseFields();
+      return databaseFieldsWithRoot();
     case 'application':
-      return generateApplicationFields();
+      return applicationFieldsWithRoot();
     case 'network':
-      return generateNetworkFields();
+      return networkFieldsWithRoot();
     case 'generic':
     default:
-      return generateGenericFields();
+      return genericFieldsWithRoot();
   }
 }

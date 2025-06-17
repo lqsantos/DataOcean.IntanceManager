@@ -1,14 +1,14 @@
 /**
- * TableViewContainer component - Simplified version
+ * TableViewContainer component - Refatorado para usar o novo FieldsContext
  */
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
+import { FieldsProvider, useFields } from '../fields';
 import { TableView } from '../TableComponents/TableView';
 import type { DefaultValueField } from '../types';
 
 import type { ValueEditorBaseProps } from './types';
-import { useFieldExpansion } from './useFieldExpansion';
 
 interface TableViewContainerProps extends ValueEditorBaseProps {
   onFieldsChange?: (fields: DefaultValueField[]) => void;
@@ -19,84 +19,50 @@ interface TableViewContainerProps extends ValueEditorBaseProps {
   hasActiveFilters?: boolean;
 }
 
-export const TableViewContainer: React.FC<TableViewContainerProps> = ({
+// Componente interno que usa o contexto
+const TableViewWithContext: React.FC<TableViewContainerProps> = ({
   templateValues,
   blueprintVariables,
   onChange,
-  expandedPaths: externalExpandedPaths,
-  setExpandedPaths: externalSetExpandedPaths,
   filteredFields,
   hasActiveFilters,
 }) => {
-  // Create our own expand state if not provided
-  const [internalExpandedPaths, internalSetExpandedPaths] = React.useState<Set<string>>(new Set());
-
-  // Use external or internal state
-  const expandedPaths = externalExpandedPaths || internalExpandedPaths;
-  const setExpandedPaths = externalSetExpandedPaths || internalSetExpandedPaths;
+  // Acessa o contexto de campos
+  const {
+    state: { expandedPaths },
+    toggleFieldExpansion,
+    updateFields,
+    propagateExpose,
+    propagateOverride,
+  } = useFields();
 
   // Use filtered fields if active filters and fields are provided
   const fieldsToRender =
     hasActiveFilters && filteredFields ? filteredFields : templateValues.fields;
 
-  // SOLUÇÃO CRÍTICA: hook useFieldExpansion precisa receber EXATAMENTE os mesmos campos
-  // que serão passados para o TableView, caso contrário, a lógica de colapso não funciona
-  // quando os campos são filtrados
-
-  // Setup field expansion logic - USANDO OS MESMOS CAMPOS QUE SERÃO RENDERIZADOS
-  const { toggleFieldExpansion } = useFieldExpansion(
-    fieldsToRender || [],
-    expandedPaths,
-    setExpandedPaths,
-    ''
-  );
-
-  // Efeito simplificado - apenas valida caminhos expandidos
+  // Atualiza os campos no contexto quando eles mudam
   useEffect(() => {
-    // Somente executar se temos caminhos expandidos e campos para validar
-    if (expandedPaths?.size && fieldsToRender?.length) {
-      // Coletamos todos os caminhos expandíveis válidos
-      const validPaths = new Set<string>();
+    updateFields(fieldsToRender);
+  }, [fieldsToRender, updateFields]);
 
-      // Função auxiliar para coletar caminhos válidos
-      const collectValidPaths = (fields: DefaultValueField[]) => {
-        fields.forEach((field) => {
-          // Somente objetos com filhos são expandíveis
-          if (field.type === 'object' && field.children?.length) {
-            validPaths.add(field.path.join('.'));
-            collectValidPaths(field.children);
-          }
-        });
+  // Funções de helper para propagar toggles para campos filhos
+  const handleTogglePropagation = useCallback(
+    (field: DefaultValueField, action: 'expose' | 'override', value: boolean) => {
+      // Obtém o caminho do campo
+      const fieldPath = field.path.join('.');
+
+      // Propaga as alterações adequadamente com base na ação
+      const childPaths =
+        action === 'expose' ? propagateExpose(field, value) : propagateOverride(field, value);
+
+      // Retorna os dados para permitir a propagação
+      return {
+        fieldPath,
+        childPaths,
       };
-
-      // Inicie a coleta dos caminhos válidos
-      collectValidPaths(fieldsToRender);
-
-      // Verificar se algum caminho expandido atual não é mais válido
-      let needsUpdate = false;
-
-      expandedPaths.forEach((path) => {
-        if (!validPaths.has(path)) {
-          needsUpdate = true;
-        }
-      });
-
-      // Se precisamos atualizar, remova caminhos inválidos
-      if (needsUpdate) {
-        setExpandedPaths((prev) => {
-          const newPaths = new Set<string>();
-
-          prev.forEach((path) => {
-            if (validPaths.has(path)) {
-              newPaths.add(path);
-            }
-          });
-
-          return newPaths;
-        });
-      }
-    }
-  }, [fieldsToRender, expandedPaths, setExpandedPaths]);
+    },
+    [propagateExpose, propagateOverride]
+  );
 
   return (
     <TableView
@@ -108,6 +74,46 @@ export const TableViewContainer: React.FC<TableViewContainerProps> = ({
       blueprintVariables={blueprintVariables || []}
       expandedPaths={expandedPaths}
       toggleFieldExpansion={toggleFieldExpansion}
+      // Helper para propagação de toggles
+      onTogglePropagation={handleTogglePropagation}
+      // Indica que estamos usando o novo contexto
+      useFieldsContext={true}
     />
+  );
+};
+
+// Componente principal que envolve o componente interno com o provider
+export const TableViewContainer: React.FC<TableViewContainerProps> = (props) => {
+  const {
+    setExpandedPaths: externalSetExpandedPaths,
+    filteredFields,
+    hasActiveFilters,
+    templateValues,
+  } = props;
+
+  // Determina os campos a serem usados para inicializar o contexto
+  const fieldsToUse = hasActiveFilters && filteredFields ? filteredFields : templateValues.fields;
+
+  // Handler para sincronizar estados expandidos com estado externo se necessário
+  const handleExpandedPathsChange = useCallback(
+    (paths: Set<string>) => {
+      if (externalSetExpandedPaths) {
+        externalSetExpandedPaths(paths);
+      }
+    },
+    [externalSetExpandedPaths]
+  );
+
+  // Não precisamos mais dessa lógica já que passamos props.expandedPaths diretamente
+
+  // Provider com inicialização adequada
+  return (
+    <FieldsProvider
+      initialFields={fieldsToUse}
+      onExpandedPathsChange={handleExpandedPathsChange}
+      initialExpandedPaths={props.expandedPaths}
+    >
+      <TableViewWithContext {...props} />
+    </FieldsProvider>
   );
 };

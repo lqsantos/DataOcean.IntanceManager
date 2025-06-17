@@ -93,6 +93,17 @@ export function generateMockSchemaForTemplate(templateIdOrType: string) {
 function createRawObjectFromFields(fields: DefaultValueField[]): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
+  // Verifica se temos um nó raiz (estrutura nova) ou não (estrutura antiga)
+  if (fields && fields.length === 1 && fields[0].key === 'root' && fields[0].children) {
+    // Se temos um nó raiz, usamos seus filhos para criar o objeto
+    return createRawObjectFromFields(fields[0].children);
+  }
+
+  // Se não temos um array de campos ou é um array vazio, retorna um objeto vazio
+  if (!fields || fields.length === 0) {
+    return {};
+  }
+
   // Process each top-level field
   fields.forEach((field) => {
     let current = result;
