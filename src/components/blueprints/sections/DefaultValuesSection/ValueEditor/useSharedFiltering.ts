@@ -1,8 +1,3 @@
-/**
- * Custom hook for sharing filtering logic between components
- * Similar to useFieldFiltering but allows external state to be passed in
- */
-
 import { useCallback, useMemo } from 'react';
 
 import type { DefaultValueField } from '../types';
@@ -10,20 +5,12 @@ import { ValueSourceType } from '../types';
 
 import type { FilterState } from './types';
 
-/**
- * useSharedFiltering hook - aplicar filtragem com estado compartilhado
- * @param fields - Campos a serem filtrados
- * @param externalFilterState - Estado de filtro externo (opcional)
- * @returns Objeto contendo os campos filtrados e utilitários
- */
 export function useSharedFiltering(fields: DefaultValueField[], externalFilterState?: FilterState) {
-  // Calculate filtered fields based on active filters
   const filteredFields = useMemo(() => {
     if (!fields || fields.length === 0) {
       return [];
     }
 
-    // Determine if any filters are active
     const hasFilters = !!(
       externalFilterState?.fieldName ||
       externalFilterState?.exposed ||
@@ -31,21 +18,16 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
       externalFilterState?.customized
     );
 
-    // If no filters are active or no filter state provided, return all fields
     if (!externalFilterState || !hasFilters) {
       return fields;
     }
 
-    // Store filter values in constants to avoid repeated object access
     const { fieldName, exposed, overridable, customized } = externalFilterState;
     const searchTerm = fieldName ? fieldName.toLowerCase() : '';
 
-    // Helper function that filters a field and recursively filters its children
     const filterFieldRecursively = (field: DefaultValueField): DefaultValueField | null => {
-      // Track if this field matches
       let thisNodeMatches = false;
 
-      // Check search term filter
       if (searchTerm) {
         const keyMatch = field.key.toLowerCase().includes(searchTerm);
         const displayNameMatch = field.displayName
@@ -66,18 +48,15 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
           thisNodeMatches = false;
         }
 
-        // Filter by overridable fields
         if (thisNodeMatches && overridable && !field.overridable) {
           thisNodeMatches = false;
         }
 
-        // Filter by customized fields (that were changed by the blueprint)
         if (thisNodeMatches && customized && field.source === ValueSourceType.TEMPLATE) {
           thisNodeMatches = false;
         }
       }
 
-      // Recursively filter children
       let filteredChildren: DefaultValueField[] = [];
 
       if (field.children && field.children.length > 0) {
@@ -86,13 +65,9 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
           .filter((child): child is DefaultValueField => child !== null);
       }
 
-      // Include this field if:
-      // 1. This node matches the filters, OR
-      // 2. It has children that match (to show parent paths)
       const shouldInclude = thisNodeMatches || filteredChildren.length > 0;
 
       if (shouldInclude) {
-        // Return a copy of the field with filtered children
         return {
           ...field,
           children: filteredChildren,
@@ -102,7 +77,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
       return null;
     };
 
-    // Apply the filter to all root fields
     const result = fields
       .map(filterFieldRecursively)
       .filter((field): field is DefaultValueField => field !== null);
@@ -111,7 +85,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
   }, [
     fields,
     externalFilterState,
-    // Track specific filter properties to ensure updates
     externalFilterState?.fieldName,
     externalFilterState?.exposed,
     externalFilterState?.overridable,
@@ -175,7 +148,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
     externalFilterState?.customized
   );
 
-  // Function to find matching field paths for auto-expansion
   const getMatchingFieldPaths = useCallback(
     (fields: DefaultValueField[], searchTerm: string): string[] => {
       const matchingPaths: string[] = [];
@@ -190,7 +162,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
             const pathMatch = field.path.join('.').toLowerCase().includes(searchTerm);
 
             if (keyMatch || displayNameMatch || pathMatch) {
-              // Add this field and all parent paths for expansion
               let currentPath = '';
 
               field.path.forEach((segment, index) => {
@@ -207,7 +178,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
             }
           }
 
-          // Recursively check children
           if (field.children && field.children.length > 0) {
             findMatches(field.children);
           }
@@ -221,7 +191,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
     []
   );
 
-  // Get matching paths for auto-expansion when search is active
   const matchingFieldPaths = useMemo(() => {
     if (externalFilterState?.fieldName && fields) {
       return getMatchingFieldPaths(fields, externalFilterState.fieldName.toLowerCase());
@@ -234,6 +203,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
     filteredFields,
     hasActiveFilters,
     detectCustomization,
-    matchingFieldPaths, // New property for auto-expansion
+    matchingFieldPaths,
   };
 }

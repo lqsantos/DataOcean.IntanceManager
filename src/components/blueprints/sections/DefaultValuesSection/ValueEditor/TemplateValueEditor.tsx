@@ -1,9 +1,3 @@
-/**
- * Refactored TemplateValueEditor Component
- * Editor for YAML values with syntax highlighting and validation
- * Includes both table view and YAML editor view with toggle
- */
-
 import { Maximize, Minimize } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +14,6 @@ import { TableViewContainer } from './TableViewContainer';
 import type { FilterState, TemplateValueEditorProps } from './types';
 import { useSharedFiltering } from './useSharedFiltering';
 
-// Componente base do editor de valores do template
 const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
   templateValues,
   blueprintVariables = [],
@@ -33,13 +26,9 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
 }) => {
   const { t: _t } = useTranslation('blueprints');
 
-  // State to control expanded mode
   const [isExpandedMode, setIsExpandedMode] = useState<boolean>(false);
-
-  // State for expanded paths
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
-  // Estado de filtros centralizado aqui
   const [filterState, setFilterState] = useState<FilterState>({
     fieldName: '',
     exposed: false,
@@ -47,30 +36,17 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
     customized: false,
   });
 
-  // Use o hook de filtragem compartilhada para calcular os campos filtrados
   const { filteredFields, hasActiveFilters, detectCustomization, matchingFieldPaths } =
     useSharedFiltering(templateValues.fields || [], filterState);
 
-  // Auto-expand paths when search finds matching fields
-  React.useEffect(() => {
-    if (matchingFieldPaths.length > 0) {
-      setExpandedPaths(new Set(matchingFieldPaths));
-    }
-  }, [matchingFieldPaths]);
-
-  // Create a filter change handler
   const handleFilterChange = useCallback((newFilters: FilterState) => {
     setFilterState(newFilters);
   }, []);
 
-  // We'll handle typed value configuration through the TableViewContainer
-
-  // Toggle function for expanded mode
   const toggleExpandedMode = useCallback(() => {
     setIsExpandedMode((prev) => !prev);
   }, []);
 
-  // Simplified expand/collapse functions - delegate to context
   const expandAllFieldsRef = useRef<(() => void) | null>(null);
   const collapseAllFieldsRef = useRef<(() => void) | null>(null);
 
@@ -96,7 +72,6 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
         )}
         data-testid="template-value-editor"
       >
-        {/* Header bar with template name and actions */}
         <div
           className={cn(
             'flex items-center justify-between bg-muted/40 px-3 py-1',
@@ -130,7 +105,6 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
           )}
         >
           <div className="flex flex-1 flex-col overflow-hidden">
-            {/* Filter controls */}
             <EnhancedFilterControls
               currentFilters={filterState}
               onFilterChange={handleFilterChange}
@@ -138,28 +112,19 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
               onCollapseAllFields={collapseAllFields}
             />
 
-            {/* Table view container */}
             <div className="h-full min-h-0 flex-1 overflow-hidden pb-1">
               <TableViewContainer
                 templateValues={templateValues}
                 blueprintVariables={blueprintVariables}
-                // Passando os campos filtrados como props separadas
                 filteredFields={filteredFields}
                 hasActiveFilters={hasActiveFilters}
                 expandedPaths={expandedPaths}
                 setExpandedPaths={setExpandedPaths}
-                // Pass refs for expand/collapse functionality
+                matchingFieldPaths={matchingFieldPaths}
                 expandAllFieldsRef={expandAllFieldsRef}
                 collapseAllFieldsRef={collapseAllFieldsRef}
                 onChange={(updatedValues) => {
-                  // Solução elegante para o bug: Quando alteramos campos em uma lista filtrada,
-                  // sempre aplicamos essas alterações à lista completa original
-
-                  // Se temos filtros ativos, precisamos aplicar as alterações à lista completa
                   if (hasActiveFilters) {
-                    console.warn('[TemplateValueEditor] Alteração em lista filtrada detectada');
-
-                    // Verificar se houve alguma alteração de source comparando os valores
                     const isSourceChanged = (() => {
                       const compareSourceChanges = (
                         orig: DefaultValueField[],
@@ -191,25 +156,20 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
                       );
                     })();
 
-                    // Função simples para mesclar as alterações com a lista completa
                     const mergeWithFullList = (
                       fullList: DefaultValueField[],
                       updatedFilteredList: DefaultValueField[]
                     ): DefaultValueField[] => {
-                      // Criar um mapa dos campos atualizados para acesso rápido
                       const updMap = new Map(
                         updatedFilteredList.map((field) => [field.path.join('.'), field])
                       );
 
-                      // Função recursiva que aplica as alterações
                       const applyChanges = (fields: DefaultValueField[]): DefaultValueField[] => {
                         return fields.map((field) => {
                           const path = field.path.join('.');
                           const updField = updMap.get(path);
 
-                          // Se o campo foi alterado na lista filtrada, usamos a versão atualizada
                           if (updField) {
-                            // Processamento recursivo para os filhos
                             if (field.children?.length && updField.children?.length) {
                               return {
                                 ...updField,
@@ -247,16 +207,7 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
                     // Chamar o handler original com os valores mesclados
                     onChange(mergedValues);
 
-                    // Mesmo que tenha ocorrido alteração de source, mantemos os filtros ativos
-                    // respeitando a decisão do usuário de quando limpar os filtros
                     if (isSourceChanged) {
-                      console.warn(
-                        '[TemplateValueEditor] Alteração de source detectada, mantendo filtros'
-                      );
-
-                      // SOLUÇÃO CRÍTICA: Após customização, é importante criar completamente
-                      // um NOVO objeto Set para evitar problemas de referência e garantir que
-                      // o React detecte a mudança e atualize corretamente o estado de expansão
                       setExpandedPaths((prev) => {
                         // Garantimos uma nova referência do Set
                         return new Set(Array.from(prev));
@@ -288,7 +239,6 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
         </div>
       </div>
 
-      {/* Batch actions component */}
       {showBatchActions && onFieldsChange && (
         <BatchActions fields={templateValues.fields || []} onFieldsChange={onFieldsChange} />
       )}
@@ -296,8 +246,6 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
   );
 };
 
-// Adiciona o nome de exibição para o componente base
 TemplateValueEditorBase.displayName = 'TemplateValueEditorBase';
 
-// Exporta o componente memorizado
 export const TemplateValueEditor = React.memo(TemplateValueEditorBase);

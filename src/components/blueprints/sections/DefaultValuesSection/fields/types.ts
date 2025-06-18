@@ -46,6 +46,7 @@ export interface FieldsContextType {
   expandAllFields: () => void;
   collapseAllFields: () => void;
   expandParentPaths: (childPath: FieldPath) => void;
+  expandPaths: (paths: FieldPath[]) => void;
 
   // Pesquisa e atualização de estado
   setSearchTerm: (term: string) => void;

@@ -55,6 +55,10 @@ export function FieldsProvider({
     dispatch({ type: 'EXPAND_PARENT_PATHS', childPath });
   }, []);
 
+  const expandPaths = useCallback((paths: FieldPath[]) => {
+    dispatch({ type: 'EXPAND_PATHS', paths });
+  }, []);
+
   const setSearchTerm = useCallback((term: string) => {
     dispatch({ type: 'SET_SEARCH_TERM', term });
   }, []);
@@ -120,6 +124,7 @@ export function FieldsProvider({
     expandAllFields,
     collapseAllFields,
     expandParentPaths,
+    expandPaths,
     setSearchTerm,
     updateFields,
     isExpanded,

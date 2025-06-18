@@ -1,7 +1,3 @@
-/**
- * TableViewContainer component - Refatorado para usar o novo FieldsContext
- */
-
 import React, { useCallback, useEffect } from 'react';
 
 import { FieldsProvider, useFields } from '../fields';
@@ -14,15 +10,13 @@ interface TableViewContainerProps extends ValueEditorBaseProps {
   onFieldsChange?: (fields: DefaultValueField[]) => void;
   expandedPaths?: Set<string>;
   setExpandedPaths?: React.Dispatch<React.SetStateAction<Set<string>>>;
-  // Campos filtrados já fornecidos pelo componente pai
   filteredFields?: DefaultValueField[];
   hasActiveFilters?: boolean;
-  // Refs for expand/collapse functionality
+  matchingFieldPaths?: string[];
   expandAllFieldsRef?: React.MutableRefObject<(() => void) | null>;
   collapseAllFieldsRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-// Componente interno que usa o contexto
 const TableViewWithContext: React.FC<TableViewContainerProps> = ({
   templateValues,
   blueprintVariables,
@@ -31,8 +25,9 @@ const TableViewWithContext: React.FC<TableViewContainerProps> = ({
   hasActiveFilters,
   expandAllFieldsRef,
   collapseAllFieldsRef,
+  expandedPaths: externalExpandedPaths,
+  matchingFieldPaths,
 }) => {
-  // Acessa o contexto de campos
   const {
     state: { expandedPaths },
     toggleFieldExpansion,
@@ -41,9 +36,9 @@ const TableViewWithContext: React.FC<TableViewContainerProps> = ({
     propagateOverride,
     expandAllFields: contextExpandAll,
     collapseAllFields: contextCollapseAll,
+    expandPaths,
   } = useFields();
 
-  // Connect the refs to context functions
   React.useEffect(() => {
     if (expandAllFieldsRef) {
       expandAllFieldsRef.current = contextExpandAll;
@@ -54,14 +49,27 @@ const TableViewWithContext: React.FC<TableViewContainerProps> = ({
     }
   }, [expandAllFieldsRef, collapseAllFieldsRef, contextExpandAll, contextCollapseAll]);
 
-  // Use filtered fields if active filters and fields are provided
   const fieldsToRender =
     hasActiveFilters && filteredFields ? filteredFields : templateValues.fields;
 
-  // Atualiza os campos no contexto quando eles mudam
   useEffect(() => {
     updateFields(fieldsToRender);
   }, [fieldsToRender, updateFields]);
+
+  useEffect(() => {
+    if (externalExpandedPaths && externalExpandedPaths.size > 0) {
+      const pathsArray = Array.from(externalExpandedPaths);
+
+      expandPaths(pathsArray);
+    }
+  }, [externalExpandedPaths, expandPaths]);
+
+  // Auto-expand matching field paths from search
+  useEffect(() => {
+    if (matchingFieldPaths && matchingFieldPaths.length > 0) {
+      expandPaths(matchingFieldPaths);
+    }
+  }, [matchingFieldPaths, expandPaths]);
 
   // Funções de helper para propagar toggles para campos filhos
   const handleTogglePropagation = useCallback(
@@ -108,11 +116,13 @@ export const TableViewContainer: React.FC<TableViewContainerProps> = (props) => 
   const fieldsToUse = hasActiveFilters && filteredFields ? filteredFields : templateValues.fields;
 
   // Handler para sincronizar estados expandidos com estado externo se necessário
+  // DESABILITADO para evitar loops infinitos - vamos usar apenas o contexto interno
   const handleExpandedPathsChange = useCallback(
-    (paths: Set<string>) => {
-      if (props.setExpandedPaths) {
-        props.setExpandedPaths(paths);
-      }
+    (_paths: Set<string>) => {
+      // Comentado temporariamente para evitar loops
+      // if (props.setExpandedPaths) {
+      //   props.setExpandedPaths(paths);
+      // }
     },
     [props.setExpandedPaths]
   );
