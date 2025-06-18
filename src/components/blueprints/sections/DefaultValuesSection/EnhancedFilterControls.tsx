@@ -41,8 +41,16 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
 }: EnhancedFilterControlsProps) {
   const { t } = useTranslation('blueprints');
 
+  // Local search input state for immediate feedback
+  const [searchInputValue, setSearchInputValue] = React.useState(currentFilters.fieldName);
+
   // Ref para rastrear o timer de debounce
   const searchTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Sync local search state with external filter state
+  React.useEffect(() => {
+    setSearchInputValue(currentFilters.fieldName);
+  }, [currentFilters.fieldName]);
 
   // Limpar timers quando o componente é desmontado
   React.useEffect(() => {
@@ -72,6 +80,9 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   );
 
   const handleClearFilters = useCallback(() => {
+    // Clear local search state
+    setSearchInputValue('');
+
     // Limpar os filtros
     onFilterChange(initialFilters);
   }, [onFilterChange]);
@@ -79,6 +90,9 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const searchValue = e.target.value;
+
+      // Update local state immediately for UI feedback
+      setSearchInputValue(searchValue);
 
       // Limpa o timer anterior se existir
       if (searchTimerRef.current) {
@@ -154,7 +168,7 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
           <Input
             className="pl-8"
             placeholder={t('filters.search.nestedFieldsPlaceholder')}
-            value={currentFilters.fieldName}
+            value={searchInputValue}
             onChange={handleSearchChange}
             data-testid="field-name-search-input"
           />

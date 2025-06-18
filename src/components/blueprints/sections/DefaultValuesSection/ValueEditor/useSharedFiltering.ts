@@ -17,14 +17,6 @@ import type { FilterState } from './types';
  * @returns Objeto contendo os campos filtrados e utilitários
  */
 export function useSharedFiltering(fields: DefaultValueField[], externalFilterState?: FilterState) {
-  // Log para debug inicial - desativado para evitar loops
-  // console.warn(
-  //   '[useSharedFiltering] Inicializando com campos:',
-  //   fields?.length,
-  //   'Filtros:',
-  //   JSON.stringify(externalFilterState)
-  // );
-
   // Calculate filtered fields based on active filters
   const filteredFields = useMemo(() => {
     if (!fields || fields.length === 0) {
@@ -41,8 +33,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
 
     // If no filters are active or no filter state provided, return all fields
     if (!externalFilterState || !hasFilters) {
-      // console.warn('[useSharedFiltering] No active filters, returning all fields:', fields.length);
-
       return fields;
     }
 
@@ -50,11 +40,10 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
     const { fieldName, exposed, overridable, customized } = externalFilterState;
     const searchTerm = fieldName ? fieldName.toLowerCase() : '';
 
-    // Helper function that checks if a field or its children match the search criteria
-    const fieldMatchesFilters = (field: DefaultValueField): boolean => {
-      // Track if this field or any child matches (for parent fields to be included)
-      let thisNodeMatches = true;
-      let anyChildMatches = false;
+    // Helper function that filters a field and recursively filters its children
+    const filterFieldRecursively = (field: DefaultValueField): DefaultValueField | null => {
+      // Track if this field matches
+      let thisNodeMatches = false;
 
       // Check search term filter
       if (searchTerm) {
@@ -65,6 +54,9 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
         const pathMatch = field.path.join('.').toLowerCase().includes(searchTerm);
 
         thisNodeMatches = keyMatch || displayNameMatch || pathMatch;
+      } else {
+        // If no search term, assume this node matches (for toggle filters only)
+        thisNodeMatches = true;
       }
 
       // Check toggle filters for this node
@@ -85,19 +77,35 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
         }
       }
 
-      // If this node has children, check if any of them match
+      // Recursively filter children
+      let filteredChildren: DefaultValueField[] = [];
+
       if (field.children && field.children.length > 0) {
-        anyChildMatches = field.children.some((childField) => fieldMatchesFilters(childField));
+        filteredChildren = field.children
+          .map(filterFieldRecursively)
+          .filter((child): child is DefaultValueField => child !== null);
       }
 
-      // A field should be included if it matches itself OR has any matching children
-      return thisNodeMatches || anyChildMatches;
+      // Include this field if:
+      // 1. This node matches the filters, OR
+      // 2. It has children that match (to show parent paths)
+      const shouldInclude = thisNodeMatches || filteredChildren.length > 0;
+
+      if (shouldInclude) {
+        // Return a copy of the field with filtered children
+        return {
+          ...field,
+          children: filteredChildren,
+        };
+      }
+
+      return null;
     };
 
     // Apply the filter to all root fields
-    const result = fields.filter(fieldMatchesFilters);
-
-    // console.warn('[useSharedFiltering] Filter applied, results:', result.length);
+    const result = fields
+      .map(filterFieldRecursively)
+      .filter((field): field is DefaultValueField => field !== null);
 
     return result;
   }, [
@@ -134,7 +142,6 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
             originalField.source === ValueSourceType.TEMPLATE &&
             updatedField.source === ValueSourceType.BLUEPRINT
           ) {
-            console.warn(`[useSharedFiltering] Customized field detected: ${path}`);
             foundCustomization = true;
           }
 
@@ -168,9 +175,65 @@ export function useSharedFiltering(fields: DefaultValueField[], externalFilterSt
     externalFilterState?.customized
   );
 
+  // Function to find matching field paths for auto-expansion
+  const getMatchingFieldPaths = useCallback(
+    (fields: DefaultValueField[], searchTerm: string): string[] => {
+      const matchingPaths: string[] = [];
+
+      const findMatches = (fieldList: DefaultValueField[]) => {
+        fieldList.forEach((field) => {
+          if (searchTerm) {
+            const keyMatch = field.key.toLowerCase().includes(searchTerm);
+            const displayNameMatch = field.displayName
+              ? field.displayName.toLowerCase().includes(searchTerm)
+              : false;
+            const pathMatch = field.path.join('.').toLowerCase().includes(searchTerm);
+
+            if (keyMatch || displayNameMatch || pathMatch) {
+              // Add this field and all parent paths for expansion
+              let currentPath = '';
+
+              field.path.forEach((segment, index) => {
+                if (index === 0) {
+                  currentPath = segment;
+                } else {
+                  currentPath = `${currentPath}.${segment}`;
+                }
+
+                if (!matchingPaths.includes(currentPath)) {
+                  matchingPaths.push(currentPath);
+                }
+              });
+            }
+          }
+
+          // Recursively check children
+          if (field.children && field.children.length > 0) {
+            findMatches(field.children);
+          }
+        });
+      };
+
+      findMatches(fields);
+
+      return matchingPaths;
+    },
+    []
+  );
+
+  // Get matching paths for auto-expansion when search is active
+  const matchingFieldPaths = useMemo(() => {
+    if (externalFilterState?.fieldName && fields) {
+      return getMatchingFieldPaths(fields, externalFilterState.fieldName.toLowerCase());
+    }
+
+    return [];
+  }, [fields, externalFilterState?.fieldName, getMatchingFieldPaths]);
+
   return {
     filteredFields,
     hasActiveFilters,
     detectCustomization,
+    matchingFieldPaths, // New property for auto-expansion
   };
 }

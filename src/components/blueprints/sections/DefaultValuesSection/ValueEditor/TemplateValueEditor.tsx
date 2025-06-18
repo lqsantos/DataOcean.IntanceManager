@@ -48,27 +48,18 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
   });
 
   // Use o hook de filtragem compartilhada para calcular os campos filtrados
-  const { filteredFields, hasActiveFilters, detectCustomization } = useSharedFiltering(
-    templateValues.fields || [],
-    filterState
-  );
+  const { filteredFields, hasActiveFilters, detectCustomization, matchingFieldPaths } =
+    useSharedFiltering(templateValues.fields || [], filterState);
 
-  // Registra alterações no estado de filtros para debugging
-  // Comentado para evitar loops infinitos de logs
-  /* useEffect(() => {
-    console.warn(
-      '[TemplateValueEditor] Estado de filtros atualizado:',
-      JSON.stringify(filterState),
-      'Filtros ativos:',
-      hasActiveFilters,
-      'Campos filtrados:',
-      filteredFields.length
-    );
-  }, [filterState, hasActiveFilters, filteredFields.length]); */
+  // Auto-expand paths when search finds matching fields
+  React.useEffect(() => {
+    if (matchingFieldPaths.length > 0) {
+      setExpandedPaths(new Set(matchingFieldPaths));
+    }
+  }, [matchingFieldPaths]);
 
   // Create a filter change handler
   const handleFilterChange = useCallback((newFilters: FilterState) => {
-    console.warn('[TemplateValueEditor] Atualizando filtros:', newFilters);
     setFilterState(newFilters);
   }, []);
 
