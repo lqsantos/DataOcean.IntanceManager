@@ -161,12 +161,14 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
   );
 
   return (
-    <div className="mb-4 flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <div className="relative w-[300px]">
-          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="mb-4 space-y-3">
+      {/* Linha principal de filtros */}
+      <div className="flex items-center gap-3">
+        {/* Campo de busca */}
+        <div className="relative min-w-[280px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-8"
+            className="pl-9 pr-4"
             placeholder={t('filters.search.nestedFieldsPlaceholder')}
             value={searchInputValue}
             onChange={handleSearchChange}
@@ -174,39 +176,53 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
           />
         </div>
 
-        <Toggle
-          pressed={currentFilters.exposed}
-          onPressedChange={handleExposedToggle}
-          aria-label={t('values.table.exposed')}
-          title={t('filters.onlyExposed')}
-          data-testid="exposed-filter-toggle"
-        >
-          <Eye className="mr-2 h-4 w-4" />
-          {t('values.table.exposed')}
-        </Toggle>
+        {/* Separador visual */}
+        <div className="h-6 w-px bg-border" />
 
-        <Toggle
-          pressed={currentFilters.overridable}
-          onPressedChange={handleOverridableToggle}
-          aria-label={t('values.table.overridable')}
-          title={t('values.table.overridable')}
-          data-testid="overridable-filter-toggle"
-        >
-          <Pencil className="mr-2 h-4 w-4" />
-          {t('values.table.overridable')}
-        </Toggle>
+        {/* Filtros de toggle */}
+        <div className="flex items-center gap-2 rounded-md border bg-background p-1">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t('filters.filterBy')}:
+          </span>
 
-        <Toggle
-          pressed={currentFilters.customized}
-          onPressedChange={handleCustomizedToggle}
-          aria-label={t('filters.onlyCustomized')}
-          title={t('filters.onlyCustomized')}
-          data-testid="customized-filter-toggle"
-        >
-          <Code className="mr-2 h-4 w-4" />
-          {t('filters.onlyCustomized')}
-        </Toggle>
+          <Toggle
+            pressed={currentFilters.exposed}
+            onPressedChange={handleExposedToggle}
+            aria-label={t('filters.labels.exposed')}
+            title={t('filters.tooltips.exposed')}
+            data-testid="exposed-filter-toggle"
+            className="h-8 px-2 text-xs"
+          >
+            <Eye className="mr-1 h-3.5 w-3.5" />
+            {t('filters.labels.exposed')}
+          </Toggle>
 
+          <Toggle
+            pressed={currentFilters.overridable}
+            onPressedChange={handleOverridableToggle}
+            aria-label={t('filters.labels.overridable')}
+            title={t('filters.tooltips.overridable')}
+            data-testid="overridable-filter-toggle"
+            className="h-8 px-2 text-xs"
+          >
+            <Pencil className="mr-1 h-3.5 w-3.5" />
+            {t('filters.labels.overridable')}
+          </Toggle>
+
+          <Toggle
+            pressed={currentFilters.customized}
+            onPressedChange={handleCustomizedToggle}
+            aria-label={t('filters.labels.customized')}
+            title={t('filters.tooltips.customized')}
+            data-testid="customized-filter-toggle"
+            className="h-8 px-2 text-xs"
+          >
+            <Code className="mr-1 h-3.5 w-3.5" />
+            {t('filters.labels.customized')}
+          </Toggle>
+        </div>
+
+        {/* Botão de limpar filtros */}
         {(currentFilters.fieldName ||
           currentFilters.exposed ||
           currentFilters.overridable ||
@@ -217,41 +233,70 @@ export const EnhancedFilterControls = React.memo(function EnhancedFilterControls
             onClick={handleClearButtonClick}
             title={t('filters.clear')}
             data-testid="clear-filters-button"
+            className="gap-1 text-xs"
           >
-            <X className="mr-2 h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
             {t('filters.clear')}
           </Button>
         )}
 
-        {/* Botões de Expandir/Colapsar todos os campos */}
-        <div className="ml-auto flex gap-2">
+        {/* Controles da árvore */}
+        <div className="ml-auto flex items-center gap-1 rounded-md border bg-background p-1">
+          <span className="px-2 text-xs font-medium text-muted-foreground">
+            {t('filters.treeActions.label')}
+          </span>
+
           {onExpandAllFields && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={handleExpandAllClick}
-              title={t('filters.expandAll')}
+              title={t('filters.treeActions.expandAllTooltip')}
               data-testid="expand-all-button"
+              className="h-8 gap-1 px-2 text-xs hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950"
             >
-              <ChevronDown className="mr-2 h-4 w-4" />
-              {t('filters.expandAll')}
+              <ChevronDown className="h-3.5 w-3.5" />
+              {t('filters.treeActions.expandAll')}
             </Button>
           )}
 
           {onCollapseAllFields && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={handleCollapseAllClick}
-              title={t('filters.collapseAll')}
+              title={t('filters.treeActions.collapseAllTooltip')}
               data-testid="collapse-all-button"
+              className="h-8 gap-1 px-2 text-xs hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950"
             >
-              <ChevronUp className="mr-2 h-4 w-4" />
-              {t('filters.collapseAll')}
+              <ChevronUp className="h-3.5 w-3.5" />
+              {t('filters.treeActions.collapseAll')}
             </Button>
           )}
         </div>
       </div>
+
+      {/* Indicador de filtros ativos */}
+      {(currentFilters.exposed || currentFilters.overridable || currentFilters.customized) && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{t('filters.activeFilters')}:</span>
+          {currentFilters.exposed && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-foreground">
+              {t('filters.labels.exposed')}
+            </span>
+          )}
+          {currentFilters.overridable && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-foreground">
+              {t('filters.labels.overridable')}
+            </span>
+          )}
+          {currentFilters.customized && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-foreground">
+              {t('filters.labels.customized')}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 });

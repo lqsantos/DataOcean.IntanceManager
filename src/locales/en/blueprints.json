@@ -506,10 +506,29 @@
   "filters": {
     "search": {
       "placeholder": "Search fields by name or path...",
-      "nestedFieldsPlaceholder": "Search fields by name or path (expands nested matches)..."
+      "nestedFieldsPlaceholder": "Search fields..."
     },
     "expandAll": "Expand All",
     "collapseAll": "Collapse All",
+    "filterBy": "Filter by",
+    "activeFilters": "Active filters",
+    "labels": {
+      "exposed": "Show Exposed",
+      "overridable": "Show Overridable",
+      "customized": "Show Modified"
+    },
+    "tooltips": {
+      "exposed": "Filter to show only fields marked as exposed",
+      "overridable": "Filter to show only fields that can be overridden",
+      "customized": "Filter to show only fields with custom values"
+    },
+    "treeActions": {
+      "label": "Tree:",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All",
+      "expandAllTooltip": "Expand all field groups and nested objects",
+      "collapseAllTooltip": "Collapse all field groups to top level"
+    },
     "type": {
       "all": "All Types",
       "string": "String",

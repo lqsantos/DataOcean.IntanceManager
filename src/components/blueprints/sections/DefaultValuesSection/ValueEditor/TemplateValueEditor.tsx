@@ -2,7 +2,6 @@ import { Maximize, Minimize } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -79,12 +78,7 @@ const TemplateValueEditorBase: React.FC<TemplateValueEditorProps> = ({
           )}
         >
           <div className="flex items-center gap-2">
-            <h3 className="font-medium">
-              Template Values
-              <Badge variant="outline" className="ml-2">
-                {templateValues.fields?.length || 0} fields
-              </Badge>
-            </h3>
+            <h3 className="font-medium">Template Values</h3>
           </div>
 
           <Button

@@ -506,10 +506,29 @@
   "filters": {
     "search": {
       "placeholder": "Buscar campos por nome ou caminho...",
-      "nestedFieldsPlaceholder": "Buscar campos por nome ou caminho (expande campos aninhados)..."
+      "nestedFieldsPlaceholder": "Buscar campos..."
     },
     "expandAll": "Expandir Todos",
     "collapseAll": "Colapsar Todos",
+    "filterBy": "Filtrar por",
+    "activeFilters": "Filtros ativos",
+    "labels": {
+      "exposed": "Mostrar Expostos",
+      "overridable": "Mostrar Editáveis",
+      "customized": "Mostrar Modificados"
+    },
+    "tooltips": {
+      "exposed": "Filtrar para mostrar apenas campos marcados como expostos",
+      "overridable": "Filtrar para mostrar apenas campos que podem ser sobrescritos",
+      "customized": "Filtrar para mostrar apenas campos com valores personalizados"
+    },
+    "treeActions": {
+      "label": "Árvore:",
+      "expandAll": "Expandir Tudo",
+      "collapseAll": "Colapsar Tudo",
+      "expandAllTooltip": "Expandir todos os grupos de campos e objetos aninhados",
+      "collapseAllTooltip": "Colapsar todos os grupos de campos para o nível superior"
+    },
     "type": {
       "all": "Todos os Tipos",
       "string": "String",
