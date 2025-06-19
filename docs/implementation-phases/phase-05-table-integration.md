@@ -1,5 +1,57 @@
 # Fase 5: Integração na Tabela
 
+## 🆕 NOVO CHAT AQUI!
+
+Esta fase deve ser executada em um **novo chat** (Chat 4 da abordagem híbrida). Mudança estrutural que pode gerar conflitos - merece foco isolado.
+
+## Contexto Completo do Projeto
+
+### **Momento Crucial:**
+
+Esta é a fase onde **tudo se conecta**! Vamos finalmente remover as duas colunas confusas e colocar nossa nova `UnifiedValueColumn` no lugar.
+
+### **Situação Atual:**
+
+**✅ Fase 1**: Criou tipos e constantes  
+**✅ Fase 2**: Sistema de validação  
+**✅ Fase 3**: Editores Apply/Cancel  
+**✅ Fase 4**: `UnifiedValueColumn` componente principal  
+**🎯 Agora**: Integrar tudo na tabela existente
+
+### **Mudança Estrutural:**
+
+**ANTES** (problema):
+
+```typescript
+<TableCell>{field.defaultValue}</TableCell>     // Template Default
+<TableCell>{field.blueprintValue}</TableCell>   // Blueprint Value
+```
+
+**DEPOIS** (solução):
+
+```typescript
+<TableCell>
+  <UnifiedValueColumn field={field} />  // Uma única coluna inteligente
+</TableCell>
+```
+
+### **Arquivos a Modificar:**
+
+- `TableContainer.tsx` - Remover header "Template Default", ajustar larguras
+- `EnhancedTableRows.tsx` - Substituir renderização das duas colunas
+- `src/locales/` - Atualizar traduções (EN/PT)
+
+### **Cuidados Especiais:**
+
+- **Manter funcionalidade existente** - expand/collapse, filtros, etc.
+- **Redistribuir larguras** - espaço da coluna removida
+- **Testar hierarquia** - campos aninhados devem continuar funcionando
+- **Tradução consistente** - EN/PT para novos labels
+
+### **Resultado Esperado:**
+
+Uma tabela com uma coluna "Value" unificada que mostra estados visuais claros, mantendo toda funcionalidade existente.
+
 ## Objetivo
 
 Substituir colunas antigas pela nova UnifiedValueColumn na tabela existente.
@@ -82,6 +134,8 @@ Seguir padrão existente em `src/locales/`:
 
 ## Próxima Fase
 
-Após concluir esta fase, prossiga para: **[Fase 6: Melhorias para Objetos](./phase-06-object-enhancements.md)**
+⚠️ **PRÓXIMOS PASSOS PARA O USUÁRIO**: Após concluir esta fase, **você deve iniciar um NOVO CHAT** para: **[Fase 6: Melhorias para Objetos](./phase-06-object-enhancements.md)**
+
+**Por quê novo chat?** Iniciamos o Chat 5 (finalização) que inclui Fases 6+7. Continue no mesmo chat para a Fase 7.
 
 ## Estimativa: 30 minutos

@@ -1,5 +1,55 @@
 # Fase 6: Melhorias para Objetos
 
+## 🆕 NOVO CHAT AQUI!
+
+Esta fase deve ser executada em um **novo chat** (Chat 5 da abordagem híbrida). Continue no mesmo chat para a Fase 7.
+
+## Contexto Completo do Projeto
+
+### **Quase Lá! 🎯**
+
+Iniciamos o **Chat 5 (Finalização)**. A coluna unificada já está funcionando, agora vamos implementar funcionalidades específicas para campos de objeto.
+
+### **Progresso Completo:**
+
+**✅ Fase 1**: Tipos e análise de padrões  
+**✅ Fase 2**: Sistema de validação  
+**✅ Fase 3**: Editores Apply/Cancel  
+**✅ Fase 4**: UnifiedValueColumn principal  
+**✅ Fase 5**: Integração na tabela (duas colunas → uma)  
+**🎯 Agora**: Melhorias específicas para objetos  
+**🔜 Próximo**: Fase 7 (traduções e polimento)
+
+### **Problema dos Objetos:**
+
+Campos de objeto são diferentes - não são editados diretamente. Precisam:
+
+- **Informação estrutural**: `{5 properties}` ou `{empty object}`
+- **Detecção recursiva**: Verificar se filhos foram customizados
+- **Reset condicional**: Botão "Reset All Children" só quando necessário
+- **Estados visuais**: Indicador visual se há customizações nos filhos
+
+### **Estados Visuais para Objetos:**
+
+```
+Sem customizações:     ⚪ {5 properties}
+Com customizações:     🟡 {5 properties} [Reset All Children]
+Objeto vazio:          ⚪ {empty object}
+```
+
+### **Lógica Recursiva Necessária:**
+
+- Analisar todos os filhos (children) do objeto
+- Verificar recursivamente se algum está customizado (`source === BLUEPRINT`)
+- Aplicar reset recursivamente em objetos aninhados
+- Mostrar confirmação para ações destrutivas
+
+### **Integração com Existente:**
+
+- `ObjectDisplayComponent` criado na Fase 3 precisa ser aprimorado
+- Usar callbacks do `EnhancedTableRows` para reset
+- Manter compatibilidade com sistema de change tracking
+
 ## Objetivo
 
 Implementar funcionalidades específicas para campos de objeto com detecção de filhos customizados.
@@ -85,6 +135,8 @@ Se o projeto usa tooltips, implementar preview:
 
 ## Próxima Fase
 
-Após concluir esta fase, prossiga para: **[Fase 7: Traduções e Polimento](./phase-07-final-polish.md)**
+✅ **CONTINUE NO MESMO CHAT**: Prossiga para **[Fase 7: Traduções e Polimento](./phase-07-final-polish.md)**
+
+**Por quê mesmo chat?** As Fases 6+7 são relacionadas e se beneficiam de contexto compartilhado para finalização.
 
 ## Estimativa: 30 minutos

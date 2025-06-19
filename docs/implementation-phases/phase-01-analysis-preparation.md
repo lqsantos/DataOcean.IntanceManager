@@ -1,5 +1,11 @@
 # Fase 1: Análise e Preparação
 
+## Contexto Rápido
+
+Este é um projeto Next.js + TypeScript que possui uma tabela hierárquica de campos de template. Atualmente temos duas colunas confusas ("Template Default" e "Blueprint Value") que precisam ser unificadas em uma única coluna "Value" com estados visuais claros e fluxo Apply/Cancel.
+
+**Se você não leu:** Recomendo começar pela [Fase 0: Setup de Contexto](./phase-00-context-setup.md) para compreensão completa.
+
 ## Objetivo
 
 Entender os padrões atuais do projeto e preparar a infraestrutura base para a coluna unificada.
