@@ -2,84 +2,122 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import type { SWRConfiguration } from 'swr';
+import useSWR from 'swr';
 
 import { ApplicationService } from '@/services/application-service';
 import type { Application, CreateApplicationDto, UpdateApplicationDto } from '@/types/application';
 import { logError } from '@/utils/errorLogger';
 
-export function useApplications() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface UseApplicationsOptions extends SWRConfiguration {
+  initialData?: Application[];
+}
+
+/**
+ * Hook para gerenciamento de aplicações
+ */
+export function useApplications(options: UseApplicationsOptions = {}) {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, mutate } = useSWR<Application[], Error>('/api/applications', fetcher, {
+    ...options,
+    fallbackData: options.initialData,
+    onError: (err) => {
+      logError(err, 'Erro ao buscar aplicações');
+    },
+  });
 
-  const fetchApplications = useCallback(async () => {
+  /**
+   * Função para buscar aplicações
+   */
+  async function fetcher(): Promise<Application[]> {
     try {
-      const data = await ApplicationService.getAll();
-
-      setApplications(data);
-      setError(null);
+      return await ApplicationService.getAll();
     } catch (err) {
-      logError(err, 'Failed to fetch applications');
-      setError(err instanceof Error ? err.message : 'Falha ao carregar aplicações');
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      throw err;
     }
-  }, []);
+  }
 
+  /**
+   * Função para atualizar a lista de aplicações
+   */
   const refreshApplications = useCallback(async () => {
     setIsRefreshing(true);
-    await fetchApplications();
-  }, [fetchApplications]);
 
-  const createApplication = useCallback(async (data: CreateApplicationDto) => {
     try {
-      const newApplication = await ApplicationService.create(data);
-
-      setApplications((prev) => [...prev, newApplication]);
-
-      return newApplication;
+      await mutate();
     } catch (err) {
-      logError(err, 'Failed to create application');
-      throw err;
+      // Erro já será capturado pelo SWR
+    } finally {
+      setIsRefreshing(false);
     }
-  }, []);
+  }, [mutate]);
 
-  const updateApplication = useCallback(async (id: string, data: UpdateApplicationDto) => {
-    try {
-      const updatedApplication = await ApplicationService.update(id, data);
+  /**
+   * Função para criar uma nova aplicação
+   */
+  const createApplication = useCallback(
+    async (data: CreateApplicationDto): Promise<Application> => {
+      try {
+        const created = await ApplicationService.create(data);
 
-      setApplications((prev) =>
-        prev.map((application) => (application.id === id ? updatedApplication : application))
-      );
+        await mutate();
 
-      return updatedApplication;
-    } catch (err) {
-      logError(err, 'Failed to update application');
-      throw err;
-    }
-  }, []);
+        return created;
+      } catch (err) {
+        logError(err, 'Erro ao criar aplicação');
+        throw err;
+      }
+    },
+    [mutate]
+  );
 
-  const deleteApplication = useCallback(async (id: string) => {
-    try {
-      await ApplicationService.delete(id);
-      setApplications((prev) => prev.filter((application) => application.id !== id));
-    } catch (err) {
-      logError(err, 'Failed to delete application');
-      throw err;
-    }
-  }, []);
+  /**
+   * Função para atualizar uma aplicação existente
+   */
+  const updateApplication = useCallback(
+    async (id: string, data: UpdateApplicationDto): Promise<Application> => {
+      try {
+        const updated = await ApplicationService.update(id, data);
 
+        await mutate();
+
+        return updated;
+      } catch (err) {
+        logError(err, 'Erro ao atualizar aplicação');
+        throw err;
+      }
+    },
+    [mutate]
+  );
+
+  /**
+   * Função para excluir uma aplicação
+   */
+  const deleteApplication = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        await ApplicationService.delete(id);
+        await mutate();
+      } catch (err) {
+        logError(err, 'Erro ao excluir aplicação');
+        throw err;
+      }
+    },
+    [mutate]
+  );
+
+  // Carregar dados iniciais
   useEffect(() => {
-    fetchApplications();
-  }, [fetchApplications]);
+    if (!options.initialData && !data && !error) {
+      void refreshApplications();
+    }
+  }, [data, error, options.initialData, refreshApplications]);
 
   return {
-    applications,
-    isLoading,
+    applications: data || [],
+    isLoading: !error && !data,
     isRefreshing,
-    error,
+    error: error?.message,
     refreshApplications,
     createApplication,
     updateApplication,

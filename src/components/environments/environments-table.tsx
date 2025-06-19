@@ -1,6 +1,8 @@
 // components/environments/environments-table.tsx
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 import type { Column } from '@/components/entities/entity-table';
 import { EntityTable } from '@/components/entities/entity-table';
 import type { Environment } from '@/types/environment';
@@ -24,6 +26,8 @@ export function EnvironmentsTable({
   onEdit,
   onDelete,
 }: EnvironmentsTableProps) {
+  const { t } = useTranslation(['settings', 'entityTable']);
+
   // Usar entities se environments não for fornecido
   const items = environments || entities || [];
 
@@ -31,7 +35,7 @@ export function EnvironmentsTable({
   const columns: Column<Environment>[] = [
     {
       key: 'name',
-      title: 'Nome',
+      title: t('environments.table.columns.name'),
       sortable: true,
     },
     {
@@ -40,15 +44,8 @@ export function EnvironmentsTable({
       sortable: true,
     },
     {
-      key: 'description',
-      title: 'Descrição',
-      render: (environment) => (
-        <div className="max-w-[300px] truncate">{environment.description}</div>
-      ),
-    },
-    {
       key: 'createdAt',
-      title: 'Criado em',
+      title: t('entityTable:columns.createdAt'),
       sortable: true,
     },
   ];
@@ -62,9 +59,9 @@ export function EnvironmentsTable({
       onDelete={onDelete}
       columns={columns}
       DeleteDialog={DeleteEnvironmentDialog}
-      searchPlaceholder="Buscar ambientes..."
-      emptySearchMessage="Nenhum ambiente encontrado para a pesquisa atual."
-      emptyMessage="Nenhum ambiente cadastrado."
+      searchPlaceholder={t('environments.table.searchPlaceholder')}
+      emptySearchMessage={t('environments.table.emptySearchMessage')}
+      emptyMessage={t('environments.table.emptyMessage')}
       testIdPrefix="environment"
     />
   );

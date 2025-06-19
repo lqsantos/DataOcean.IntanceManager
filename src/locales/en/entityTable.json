@@ -1,0 +1,20 @@
+{
+  "searchPlaceholder": "Search...",
+  "emptyMessage": "No records found",
+  "emptySearchMessage": "No records match your search",
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "showing": "Showing",
+    "of": "of",
+    "entries": "entries"
+  },
+  "columns": {
+    "createdAt": "Created at"
+  }
+}

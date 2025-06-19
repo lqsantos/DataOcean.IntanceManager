@@ -1,41 +1,16 @@
 // components/applications/application-form.tsx
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { InputAdapter, TextareaAdapter } from '@/components/form/form-adapters';
+import { FormBuilder } from '@/components/form/form-builder';
+import type { FormErrors } from '@/hooks/use-form-state';
 import type { Application, CreateApplicationDto, UpdateApplicationDto } from '@/types/application';
-
-// Schema for form validation
-const applicationFormSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Nome deve ter no máximo 100 caracteres'),
-  slug: z
-    .string()
-    .min(2, 'Slug deve ter pelo menos 2 caracteres')
-    .max(100, 'Slug deve ter no máximo 100 caracteres')
-    .regex(/^[a-z0-9-]+$/, 'Slug deve conter apenas letras minúsculas, números e hífens'),
-  description: z.string().max(500, 'Descrição deve ter no máximo 500 caracteres').optional(),
-});
 
 interface ApplicationFormProps {
   application?: Application;
+  entity?: Application; // Adicionar suporte para a prop genérica
   onSubmit: (data: CreateApplicationDto | UpdateApplicationDto) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -43,113 +18,97 @@ interface ApplicationFormProps {
 
 export function ApplicationForm({
   application,
+  entity,
   onSubmit,
   onCancel,
   isSubmitting,
 }: ApplicationFormProps) {
-  // Set up form with default values
-  const form = useForm<z.infer<typeof applicationFormSchema>>({
-    resolver: zodResolver(applicationFormSchema),
-    defaultValues: {
-      name: application?.name || '',
-      slug: application?.slug || '',
-      description: application?.description || '',
-    },
-  });
+  const { t } = useTranslation(['settings', 'common']);
 
-  const handleSubmit = async (data: z.infer<typeof applicationFormSchema>) => {
-    await onSubmit(data);
+  // Usar entity se fornecido, senão usar application (compatibilidade com código existente)
+  const currentApplication = entity || application;
+
+  // Validação de formulário
+  const validateForm = (values: Partial<Application>): FormErrors<Partial<Application>> => {
+    const errors: FormErrors<Partial<Application>> = {};
+
+    if (!values.name?.trim()) {
+      errors.name = t('common:messages.requiredField');
+    } else if (values.name.length < 2) {
+      errors.name = t('common:messages.minLength', { count: 2 });
+    }
+
+    if (!values.slug?.trim()) {
+      errors.slug = t('common:messages.requiredField');
+    } else if (!/^[a-z0-9-]+$/.test(values.slug)) {
+      errors.slug = t('common:form.errors.invalidSlug');
+    }
+
+    if (values.description && values.description.length > 500) {
+      errors.description = t('common:messages.maxLength', { count: 500 });
+    }
+
+    return errors;
   };
 
+  // Valor inicial do formulário
+  const initialValues = {
+    name: currentApplication?.name || '',
+    slug: currentApplication?.slug || '',
+    description: currentApplication?.description || '',
+  };
+
+  // Campos do formulário
+  const fields = [
+    {
+      name: 'name' as const,
+      label: t('applications.modal.form.name.label'),
+      required: true,
+      component: InputAdapter,
+      placeholder: t('applications.modal.form.name.placeholder'),
+    },
+    {
+      name: 'slug' as const,
+      label: t('common:form.fields.slug.label'),
+      required: true,
+      component: InputAdapter,
+      placeholder: t('common:form.fields.slug.placeholder'),
+      helpText: t('common:form.fields.slug.helpText'),
+    },
+    {
+      name: 'description' as const,
+      label: t('applications.modal.form.description.label'),
+      component: TextareaAdapter,
+      placeholder: t('applications.modal.form.description.placeholder'),
+    },
+  ];
+
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-4"
-        data-testid="application-form"
-      >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Minha Aplicação"
-                  {...field}
-                  data-testid="application-form-name"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="slug"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Slug</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="minha-aplicacao"
-                  {...field}
-                  data-testid="application-form-slug"
-                />
-              </FormControl>
-              <FormDescription>
-                Identificador único para a aplicação, usado em URLs e integrações
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Descrição da aplicação"
-                  className="resize-none"
-                  {...field}
-                  data-testid="application-form-description"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            data-testid="application-form-cancel"
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting} data-testid="application-form-submit">
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {application ? 'Salvando...' : 'Criando...'}
-              </>
-            ) : application ? (
-              'Salvar'
-            ) : (
-              'Criar'
-            )}
-          </Button>
-        </div>
-      </form>
-    </Form>
+    <FormBuilder
+      initialValues={initialValues}
+      fields={fields}
+      validator={validateForm}
+      onSubmit={onSubmit}
+      onCancel={onCancel}
+      isLoading={isSubmitting}
+      submitLabel={currentApplication ? t('common:buttons.save') : t('common:buttons.create')}
+      cancelLabel={t('common:buttons.cancel')}
+      testId="application-form"
+      transform={{
+        slug: (value) => value?.toLowerCase() || '',
+      }}
+      derivedFields={{
+        slug: {
+          dependsOn: ['name'],
+          compute: (values) => {
+            return (values.name || '')
+              .toLowerCase()
+              .replace(/\s+/g, '-')
+              .replace(/[^a-z0-9-]/g, '');
+          },
+          skipIfTouched: true,
+        },
+      }}
+    />
   );
 }

@@ -1,0 +1,209 @@
+{
+  "pageTitle": "Templates",
+  "description": "Gerencie seus templates Helm para padronização de implantações",
+
+  "createTemplate": {
+    "title": "Criar Novo Template",
+    "description": "Crie um novo template Helm para padronização de implantações",
+    "fields": {
+      "name": {
+        "label": "Nome",
+        "placeholder": "Nome do template",
+        "description": "Nome único para identificar este template.",
+        "validation": {
+          "tooShort": "Nome deve ter pelo menos {{min}} caracteres"
+        }
+      },
+      "category": {
+        "label": "Categoria",
+        "placeholder": "Selecione uma categoria",
+        "description": "Categoria para organização dos templates.",
+        "validation": {
+          "required": "Categoria é obrigatória"
+        },
+        "options": {
+          "application": "Application",
+          "infrastructure": "Infrastructure",
+          "database": "Database",
+          "monitoring": "Monitoring",
+          "security": "Security",
+          "storage": "Storage",
+          "other": "Other"
+        }
+      },
+      "description": {
+        "label": "Descrição",
+        "placeholder": "Descrição detalhada do template",
+        "description": "Informações adicionais sobre este template."
+      },
+      "repositoryUrl": {
+        "label": "URL do Repositório",
+        "placeholder": "https://github.com/organization/repo.git",
+        "description": "URL do repositório Git contendo o chart Helm.",
+        "validation": {
+          "invalidUrl": "URL do repositório deve ser uma URL válida"
+        }
+      },
+      "chartPath": {
+        "label": "Caminho do Chart",
+        "placeholder": "charts/my-chart",
+        "description": "Caminho relativo ao chart dentro do repositório.",
+        "validation": {
+          "required": "Caminho do chart é obrigatório"
+        }
+      },
+      "version": {
+        "label": "Versão",
+        "placeholder": "1.0.0",
+        "description": "Versão do template."
+      },
+      "isActive": {
+        "label": "Status",
+        "description": "Ativar ou desativar este template."
+      },
+      "valuesYaml": {
+        "label": "Values YAML (Padrão)",
+        "placeholder": "# Valores YAML padrão para o chart\nreplicas: 1\nimage:\n  repository: nginx\n  tag: latest",
+        "description": "Valores padrão do chart em formato YAML."
+      }
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "create": "Criar Template",
+      "creating": "Criando..."
+    }
+  },
+
+  "editTemplate": {
+    "title": "Editar Template",
+    "description": "Edite as informações do template",
+    "buttons": {
+      "save": "Salvar Alterações",
+      "saving": "Salvando..."
+    }
+  },
+
+  "deleteTemplate": {
+    "title": "Excluir Template",
+    "description": "Você tem certeza que deseja excluir o template <strong>{{name}}</strong>?",
+    "warning": "Esta ação não pode ser desfeita. Se houver blueprints dependentes deste template, eles também serão afetados.",
+    "buttons": {
+      "cancel": "Cancelar",
+      "delete": "Excluir"
+    }
+  },
+
+  "validateTemplate": {
+    "title": "Validação de Template",
+    "description": "Resultado da validação do template {{name}}",
+    "loading": "Validando template...",
+    "noResults": {
+      "title": "Sem resultados",
+      "description": "Não há resultados de validação disponíveis para este template."
+    },
+    "valid": {
+      "title": "Template válido",
+      "description": "O template foi validado com sucesso e pode ser utilizado."
+    },
+    "invalid": {
+      "title": "Template inválido",
+      "description": "O template contém erros que precisam ser corrigidos."
+    },
+    "errors": "Erros",
+    "warnings": "Avisos",
+    "buttons": {
+      "close": "Fechar",
+      "understand": "Entendi",
+      "validateAgain": "Validar Novamente"
+    },
+    "chartInfo": {
+      "title": "Informações do Chart",
+      "name": "Nome",
+      "version": "Versão",
+      "apiVersion": "Versão da API",
+      "description": "Descrição"
+    },
+    "files": {
+      "title": "Arquivos do Template",
+      "chartYaml": "Chart.yaml",
+      "valuesYaml": "values.yaml",
+      "valuesSchemaJson": "values.schema.json",
+      "ok": "OK",
+      "notFound": "Não encontrado",
+      "optional": "Opcional"
+    },
+    "branch": {
+      "validated": "Branch validado",
+      "used": "Branch em uso"
+    }
+  },
+
+  "branchSelection": {
+    "title": "Selecionar Branch",
+    "description": "Selecione a branch que será utilizada para validar o template {{name}}",
+    "branchName": "Nome da branch",
+    "commonBranch": "Branch comum",
+    "customBranch": "Branch personalizada",
+    "selectPlaceholder": "Selecione uma branch",
+    "customPlaceholder": "Digite o nome da branch",
+    "validation": {
+      "required": "Nome da branch é obrigatório"
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "validate": "Validar"
+    }
+  },
+
+  "table": {
+    "columns": {
+      "name": "Nome",
+      "category": "Categoria",
+      "repository": "Repositório",
+      "chartPath": "Caminho do Chart",
+      "status": "Status",
+      "actions": "Ações"
+    },
+    "status": {
+      "active": "Ativo",
+      "inactive": "Inativo"
+    },
+    "emptyMessage": "Nenhum template encontrado.",
+    "actions": {
+      "edit": "Editar",
+      "delete": "Excluir",
+      "validate": "Validar",
+      "validating": "Validando...",
+      "copyUrl": "Copiar URL do repositório",
+      "openRepository": "Abrir repositório em nova aba"
+    },
+    "toast": {
+      "urlCopied": {
+        "title": "URL copiada",
+        "description": "URL do repositório copiada para a área de transferência"
+      }
+    }
+  },
+
+  "toast": {
+    "created": {
+      "title": "Template criado",
+      "description": "{{name}} foi criado com sucesso."
+    },
+    "updated": {
+      "title": "Template atualizado",
+      "description": "{{name}} foi atualizado com sucesso."
+    },
+    "deleted": {
+      "title": "Template excluído",
+      "description": "O template foi excluído com sucesso."
+    },
+    "error": {
+      "title": "Erro",
+      "description": "Ocorreu um erro ao processar a solicitação.",
+      "refreshFailed": "Falha ao atualizar templates"
+    }
+  },
+
+  "newButton": "Novo Template"
+}

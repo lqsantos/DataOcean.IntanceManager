@@ -1,210 +1,162 @@
 // components/environments/environment-form.tsx
 'use client';
 
-import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { InputAdapter } from '@/components/form/form-adapters';
+import { FormBuilder } from '@/components/form/form-builder';
+import type { FormErrors } from '@/hooks/use-form-state';
 import type { CreateEnvironmentDto, Environment, UpdateEnvironmentDto } from '@/types/environment';
 
 interface EnvironmentFormProps {
   environment?: Environment;
+  entity?: Environment; // Adicionar suporte para a prop genérica
   onSubmit: (data: CreateEnvironmentDto | UpdateEnvironmentDto) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
 }
 
-interface FormErrors {
-  name?: string;
-  slug?: string;
-  order?: string;
+// Tipo para os valores do formulário (compatível com FormBuilder)
+interface EnvironmentFormValues {
+  name: string;
+  slug: string;
+  order: string;
 }
 
 export function EnvironmentForm({
   environment,
+  entity,
   onSubmit,
   onCancel,
   isSubmitting,
 }: EnvironmentFormProps) {
-  const [name, setName] = useState(environment?.name || '');
-  const [slug, setSlug] = useState(environment?.slug || '');
-  const [order, setOrder] = useState(environment?.order?.toString() || '');
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const { t } = useTranslation(['settings', 'common']);
 
-  // Gerar slug automaticamente a partir do nome
-  useEffect(() => {
-    if (name && !touched.slug && !environment?.slug) {
-      setSlug(
-        name
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '')
-      );
-    }
-  }, [name, touched.slug, environment?.slug]);
+  // Usar entity se fornecido, senão usar environment (compatibilidade com código existente)
+  const currentEnvironment = entity || environment;
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+  // Log para debug - vamos ver o que está sendo passado
+  console.warn('[EnvironmentForm] Renderizando com:', {
+    environment,
+    entity,
+    currentEnvironment,
+    isSubmitting,
+  });
 
-    if (!name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
-    } else if (name.length < 3) {
-      newErrors.name = 'Nome deve ter pelo menos 3 caracteres';
-    } else if (name.length > 50) {
-      newErrors.name = 'Nome deve ter no máximo 50 caracteres';
+  // Validação de formulário
+  const validateForm = (values: EnvironmentFormValues): FormErrors<EnvironmentFormValues> => {
+    const errors: FormErrors<EnvironmentFormValues> = {};
+
+    if (!values.name?.trim()) {
+      errors.name = t('common:messages.requiredField');
+    } else if (values.name.length < 3) {
+      errors.name = t('common:messages.minLength', { count: 3 });
+    } else if (values.name.length > 50) {
+      errors.name = t('common:messages.maxLength', { count: 50 });
     }
 
-    if (!slug.trim()) {
-      newErrors.slug = 'Slug é obrigatório';
-    } else if (!/^[a-z0-9-]+$/.test(slug)) {
-      newErrors.slug = 'Slug deve conter apenas letras minúsculas, números e hífens';
-    } else if (slug.length < 2) {
-      newErrors.slug = 'Slug deve ter pelo menos 2 caracteres';
-    } else if (slug.length > 30) {
-      newErrors.slug = 'Slug deve ter no máximo 30 caracteres';
+    if (!values.slug?.trim()) {
+      errors.slug = t('common:messages.requiredField');
+    } else if (!/^[a-z0-9-]+$/.test(values.slug)) {
+      errors.slug = t('common:form.errors.invalidSlug');
+    } else if (values.slug.length < 2) {
+      errors.slug = t('common:messages.minLength', { count: 2 });
+    } else if (values.slug.length > 30) {
+      errors.slug = t('common:messages.maxLength', { count: 30 });
     }
 
-    if (order && isNaN(Number(order))) {
-      newErrors.order = 'Ordem deve ser um número';
-    } else if (order && Number(order) < 0) {
-      newErrors.order = 'Ordem deve ser um número positivo';
+    if (values.order) {
+      const orderValue = Number(values.order);
+
+      if (isNaN(orderValue)) {
+        errors.order = t('common:form.errors.invalidNumber');
+      } else if (orderValue < 0) {
+        errors.order = t('common:form.errors.positiveNumberRequired');
+      }
     }
 
-    setErrors(newErrors);
+    console.warn('[EnvironmentForm] Erros de validação:', errors);
 
-    return Object.keys(newErrors).length === 0;
+    return errors;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Valor inicial do formulário
+  const initialValues: EnvironmentFormValues = {
+    name: currentEnvironment?.name || '',
+    slug: currentEnvironment?.slug || '',
+    order: currentEnvironment?.order?.toString() || '',
+  };
 
-    // Marcar todos os campos como tocados para mostrar todos os erros
-    const allTouched = Object.keys({ name, slug, order }).reduce(
-      (acc, key) => ({ ...acc, [key]: true }),
-      {}
-    );
+  // Log para debug dos valores iniciais
+  console.warn('[EnvironmentForm] Valores iniciais calculados:', initialValues);
 
-    setTouched(allTouched);
+  // Campos do formulário
+  const fields = [
+    {
+      name: 'name' as keyof EnvironmentFormValues,
+      label: t('environments.modal.form.name.label'),
+      required: true,
+      component: InputAdapter,
+      placeholder: t('environments.modal.form.name.placeholder'),
+    },
+    {
+      name: 'slug' as keyof EnvironmentFormValues,
+      label: t('common:form.fields.slug.label'),
+      required: true,
+      component: InputAdapter,
+      placeholder: t('common:form.fields.slug.placeholder'),
+      helpText: t('common:form.fields.slug.helpText'),
+    },
+    {
+      name: 'order' as keyof EnvironmentFormValues,
+      label: t('environments.modal.form.order.label'),
+      component: (props: React.ComponentProps<typeof InputAdapter>) =>
+        InputAdapter({ ...props, type: 'number' }),
+      placeholder: t('environments.modal.form.order.placeholder'),
+      helpText: t('environments.modal.form.order.helpText'),
+    },
+  ];
 
-    if (!validateForm()) {
-      return;
-    }
+  console.warn('[EnvironmentForm] Campos do formulário:', fields);
 
-    const formData: CreateEnvironmentDto | UpdateEnvironmentDto = {
-      name,
-      slug,
-      ...(order ? { order: Number(order) } : {}),
+  // Função wrapper para converter os valores do formulário
+  const handleSubmit = async (values: EnvironmentFormValues) => {
+    const convertedData = {
+      name: values.name,
+      slug: values.slug,
+      order: values.order ? Number(values.order) : undefined,
     };
 
-    await onSubmit(formData);
-  };
-
-  const handleBlur = (field: keyof FormErrors) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    validateForm();
+    await onSubmit(convertedData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" data-testid="environment-form">
-      <div className="space-y-2">
-        <Label htmlFor="env-name">
-          Nome <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="env-name"
-          data-testid="env-name-input"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            setTouched((prev) => ({ ...prev, name: true }));
-          }}
-          onBlur={() => handleBlur('name')}
-          placeholder="ex: Desenvolvimento"
-          disabled={isSubmitting}
-          className={errors.name && touched.name ? 'border-destructive' : ''}
-        />
-        {errors.name && touched.name && (
-          <p className="text-sm text-destructive" data-testid="name-error">
-            {errors.name}
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="env-slug">
-          Slug <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="env-slug"
-          data-testid="env-slug-input"
-          value={slug}
-          onChange={(e) => {
-            setSlug(e.target.value.toLowerCase());
-            setTouched((prev) => ({ ...prev, slug: true }));
-          }}
-          onBlur={() => handleBlur('slug')}
-          placeholder="ex: dev"
-          disabled={isSubmitting}
-          className={errors.slug && touched.slug ? 'border-destructive' : ''}
-        />
-        {errors.slug && touched.slug ? (
-          <p className="text-sm text-destructive" data-testid="slug-error">
-            {errors.slug}
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground" data-testid="slug-help">
-            Usado em URLs e requisições de API. Use apenas letras minúsculas, números e hífens.
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="env-order">Ordem</Label>
-        <Input
-          id="env-order"
-          data-testid="env-order-input"
-          type="number"
-          value={order}
-          onChange={(e) => {
-            setOrder(e.target.value);
-            setTouched((prev) => ({ ...prev, order: true }));
-          }}
-          onBlur={() => handleBlur('order')}
-          placeholder="ex: 1"
-          disabled={isSubmitting}
-          className={errors.order && touched.order ? 'border-destructive' : ''}
-        />
-        {errors.order && touched.order ? (
-          <p className="text-sm text-destructive" data-testid="order-error">
-            {errors.order}
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground" data-testid="order-help">
-            Determina a ordem de exibição dos ambientes.
-          </p>
-        )}
-      </div>
-
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          data-testid="cancel-button"
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={isSubmitting} data-testid="submit-button">
-          {isSubmitting && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" data-testid="loading-spinner" />
-          )}
-          {environment ? 'Atualizar' : 'Criar'}
-        </Button>
-      </div>
-    </form>
+    <FormBuilder
+      initialValues={initialValues}
+      fields={fields}
+      validator={validateForm}
+      onSubmit={handleSubmit}
+      onCancel={onCancel}
+      isLoading={isSubmitting}
+      submitLabel={currentEnvironment ? t('common:buttons.save') : t('common:buttons.create')}
+      cancelLabel={t('common:buttons.cancel')}
+      testId="environment-form"
+      debug={true}
+      transform={{
+        slug: (value?: string) => value?.toLowerCase() || '',
+      }}
+      derivedFields={{
+        slug: {
+          dependsOn: ['name'],
+          compute: (values) => {
+            return (values.name || '')
+              .toLowerCase()
+              .replace(/\s+/g, '-')
+              .replace(/[^a-z0-9-]/g, '');
+          },
+          skipIfTouched: true,
+        },
+      }}
+    />
   );
 }

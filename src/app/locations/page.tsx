@@ -1,5 +1,5 @@
-import { LocationsPage } from '@/components/locations/locations-page';
+import { redirect } from 'next/navigation';
 
-export default function Page() {
-  return <LocationsPage />;
+export default function LocationsRoute() {
+  redirect('/settings/locations');
 }

@@ -1,10 +1,13 @@
+'use client';
+
 import { Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { StyledDeleteDialog } from '@/components/ui/styled-delete-dialog';
 import type { Location } from '@/types/location';
 
 interface DeleteLocationDialogProps {
-  location: Location | null;
+  entity: Location | null;
   isOpen: boolean;
   isDeleting: boolean;
   onDelete: () => Promise<void>;
@@ -12,13 +15,15 @@ interface DeleteLocationDialogProps {
 }
 
 export function DeleteLocationDialog({
-  location,
+  entity,
   isOpen,
   isDeleting,
   onDelete,
   onCancel,
 }: DeleteLocationDialogProps) {
-  if (!location) {
+  const { t } = useTranslation('settings');
+
+  if (!entity) {
     return null;
   }
 
@@ -26,21 +31,22 @@ export function DeleteLocationDialog({
     <StyledDeleteDialog
       open={isOpen}
       onOpenChange={(open) => !open && onCancel()}
-      title="Excluir Localidade"
-      itemName={location.name}
+      title={t('locations.modal.delete.title')}
+      itemName={entity.name}
       description={
         <>
-          Tem certeza que deseja excluir a localidade{' '}
+          {t('locations.modal.delete.confirmation')}{' '}
           <span className="font-semibold" data-testid="delete-location-dialog-name">
-            {location.name}
+            {entity.name}
           </span>
-          ? Esta ação não pode ser desfeita.
+          ?
         </>
       }
       onConfirm={onDelete}
       onCancel={onCancel}
       isDeleting={isDeleting}
       icon={Trash2}
+      confirmText={t('locations.modal.delete.button')}
       testId="delete-location-dialog"
     />
   );

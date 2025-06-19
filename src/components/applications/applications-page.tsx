@@ -1,17 +1,28 @@
 // components/applications/applications-page.tsx
 'use client';
 
-import { PlusCircle, RefreshCw } from 'lucide-react';
+import { AppWindow } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
+import { GenericEntityModal } from '@/components/entities/generic-entity-modal';
+import { GenericEntityPage } from '@/components/entities/generic-entity-page';
 import { useApplicationModal } from '@/contexts/modal-manager-context';
 import { useApplications } from '@/hooks/use-applications';
-import type { Application } from '@/types/application';
 
+import { ApplicationForm } from './application-form';
 import { ApplicationsTable } from './applications-table';
-import { CreateApplicationModal } from './create-application-modal';
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  entityToEdit: unknown;
+  onCreate: (data: unknown) => Promise<unknown>;
+  onUpdate?: (id: string, data: unknown) => Promise<unknown>;
+  onCreateSuccess?: (entity: unknown) => void;
+}
 
 export function ApplicationsPage() {
+  const { t } = useTranslation(['settings']);
   const {
     applications,
     isLoading,
@@ -23,64 +34,60 @@ export function ApplicationsPage() {
     deleteApplication,
   } = useApplications();
 
-  const { isOpen, applicationToEdit, openModal, openEditModal, closeModal } = useApplicationModal();
+  const modalState = useApplicationModal();
 
-  const handleEdit = (application: Application) => {
-    openEditModal(application);
-  };
+  // Componente de modal simplificado
+  const ApplicationModal = ({
+    isOpen,
+    onClose,
+    entityToEdit,
+    onCreate,
+    onUpdate,
+    onCreateSuccess,
+  }: ModalProps) => (
+    <GenericEntityModal
+      isOpen={isOpen}
+      onClose={onClose}
+      entityToEdit={entityToEdit}
+      onCreate={onCreate}
+      onUpdate={onUpdate}
+      onCreateSuccess={onCreateSuccess}
+      EntityForm={ApplicationForm}
+      entityName={{
+        singular: t('applications.title'),
+        createTitle: t('applications.modal.create.title'),
+        editTitle: t('applications.modal.edit.title'),
+        createDescription: t('applications.modal.create.description'),
+        editDescription: t('applications.modal.edit.description'),
+      }}
+      createIcon={AppWindow}
+      editIcon={AppWindow}
+      testId="create-application-modal"
+    />
+  );
 
   return (
-    <div className="space-y-4" data-testid="applications-container">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Aplicações</h2>
-          <p className="text-muted-foreground">Gerencie suas aplicações</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={refreshApplications}
-            disabled={isLoading || isRefreshing}
-            data-testid="applications-page-refresh-button"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Atualizar</span>
-          </Button>
-          <Button onClick={openModal} className="gap-2" data-testid="applications-page-add-button">
-            <PlusCircle className="h-4 w-4" />
-            Adicionar Aplicação
-          </Button>
-        </div>
-      </div>
-
-      {error && (
-        <div
-          className="rounded-md bg-destructive/10 p-4 text-destructive"
-          data-testid="applications-page-error-alert"
-        >
-          {error}
-        </div>
-      )}
-
-      <ApplicationsTable
-        applications={applications}
-        entities={applications}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onEdit={handleEdit}
-        onDelete={deleteApplication}
-        data-testid="applications-table"
-      />
-
-      <CreateApplicationModal
-        isOpen={isOpen}
-        onClose={closeModal}
-        createApplication={createApplication}
-        updateApplication={updateApplication}
-        applicationToEdit={applicationToEdit}
-        onCreateSuccess={refreshApplications}
-      />
-    </div>
+    <GenericEntityPage
+      entities={applications}
+      isLoading={isLoading}
+      isRefreshing={isRefreshing}
+      error={error || null}
+      refreshEntities={refreshApplications}
+      createEntity={createApplication}
+      updateEntity={updateApplication}
+      deleteEntity={deleteApplication}
+      EntityTable={ApplicationsTable}
+      EntityModal={ApplicationModal}
+      entityName={{
+        singular: t('applications.title'),
+        plural: t('applications.table.title'),
+        description: t('applications.description'),
+      }}
+      modalState={modalState}
+      testIdPrefix="applications"
+      tableProps={{
+        applications: applications,
+      }}
+    />
   );
 }

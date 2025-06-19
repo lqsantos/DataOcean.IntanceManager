@@ -1,187 +1,304 @@
 import { delay, http, HttpResponse } from 'msw';
-import { v4 as uuidv4 } from 'uuid';
 
-import { gitRepos } from '../data/git-repos';
-import { helmChartFiles } from '../data/helm-chart-files';
-import { templates } from '../data/templates';
+import { createRandomId } from '@/lib/id-utils';
+import type { Template } from '@/types/template';
+
+import { generateMockSchemaForTemplate } from '../data/template-schemas';
+import { generateValidationResponse, USE_PREDICTABLE_MOCK } from '../data/template-validation';
+import { templates as devTemplates } from '../data/templates';
+import { testTemplates } from '../data/test-templates';
+import { createValidationResponse } from '../data/test-validation';
+
+// Use different template data based on environment
+const templates = USE_PREDICTABLE_MOCK ? testTemplates : devTemplates;
+
+// =============================================================================
+// HANDLERS UNIFICADOS
+// =============================================================================
 
 export const templateHandlers = [
-  // GET /templates - List all templates
-  http.get('/api/templates', () => {
+  // =========================================================================
+  // CRUD OPERATIONS
+  // =========================================================================
+
+  // Get all templates
+  http.get('/api/templates', async () => {
+    await delay(USE_PREDICTABLE_MOCK ? 100 : 500);
+
     return HttpResponse.json(templates);
   }),
 
-  // GET /templates/:id - Get template by id
-  http.get('/api/templates/:id', ({ params }) => {
-    const template = templates.find((t) => t.id === params.id);
+  // Get template by id
+  http.get('/api/templates/:id', async ({ params }) => {
+    const { id } = params;
+    const template = templates.find((t) => t.id === id);
 
     if (!template) {
-      return new HttpResponse(null, { status: 404 });
+      return HttpResponse.json({ message: 'Template not found' }, { status: 404 });
     }
+
+    await delay(USE_PREDICTABLE_MOCK ? 100 : 500);
 
     return HttpResponse.json(template);
   }),
 
-  // POST /templates - Create a new template
+  // Create template
   http.post('/api/templates', async ({ request }) => {
-    const data = await request.json();
+    const newTemplateData = (await request.json()) as Record<string, unknown>;
 
-    // Validate required fields
-    if (!data.name || !data.gitRepositoryId || !data.branch || !data.path) {
-      return new HttpResponse({ message: 'Campos obrigatórios ausentes' }, { status: 400 });
-    }
-
-    // Create a new template with the data provided
-    const newTemplate = {
-      id: uuidv4(),
-      name: data.name,
-      description: data.description || '',
-      gitRepositoryId: data.gitRepositoryId,
-      gitRepositoryUrl: gitRepos.find((repo) => repo.id === data.gitRepositoryId)?.url || '',
-      branch: data.branch,
-      path: data.path,
-      version: '1.0.0', // Default or from validation
+    // Criar um objeto Template com todos os campos necessários
+    const createdTemplate: Template = {
+      id: createRandomId(),
+      name: (newTemplateData.name as string) || 'Unnamed Template',
+      description: (newTemplateData.description as string) || '',
+      category: (newTemplateData.category as string) || 'default',
+      repositoryUrl: (newTemplateData.repositoryUrl as string) || '',
+      chartPath: (newTemplateData.chartPath as string) || '',
+      isActive: newTemplateData.isActive === undefined ? true : Boolean(newTemplateData.isActive),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      hasBlueprints: false,
     };
 
-    templates.push(newTemplate);
+    templates.push(createdTemplate);
 
-    return HttpResponse.json(newTemplate, { status: 201 });
+    await delay(USE_PREDICTABLE_MOCK ? 200 : 1000);
+
+    return HttpResponse.json(createdTemplate, { status: 201 });
   }),
 
-  // PUT /templates/:id - Update a template
-  http.put('/api/templates/:id', async ({ request, params }) => {
-    const data = await request.json();
-    const templateIndex = templates.findIndex((t) => t.id === params.id);
+  // Update template
+  http.put('/api/templates/:id', async ({ params, request }) => {
+    const { id } = params;
+    const updatedTemplateData = (await request.json()) as Record<string, unknown>;
+    const templateIndex = templates.findIndex((t) => t.id === id);
 
     if (templateIndex === -1) {
-      return new HttpResponse({ message: 'Template não encontrado' }, { status: 404 });
+      return HttpResponse.json({ message: 'Template not found' }, { status: 404 });
     }
 
-    // Update template with new data
-    const updatedTemplate = {
+    const updated = {
       ...templates[templateIndex],
-      ...data,
+      ...(updatedTemplateData as Partial<Template>),
       updatedAt: new Date().toISOString(),
     };
 
-    // If repository changed, update the URL
-    if (data.gitRepositoryId && data.gitRepositoryId !== templates[templateIndex].gitRepositoryId) {
-      updatedTemplate.gitRepositoryUrl =
-        gitRepos.find((repo) => repo.id === data.gitRepositoryId)?.url || '';
-    }
+    templates[templateIndex] = updated;
 
-    templates[templateIndex] = updatedTemplate;
+    await delay(USE_PREDICTABLE_MOCK ? 200 : 1000);
 
-    return HttpResponse.json(updatedTemplate);
+    return HttpResponse.json(updated);
   }),
 
-  // DELETE /templates/:id - Delete a template
-  http.delete('/api/templates/:id', ({ params }) => {
-    const templateIndex = templates.findIndex((t) => t.id === params.id);
+  // Delete template
+  http.delete('/api/templates/:id', async ({ params }) => {
+    const { id } = params;
+    const templateIndex = templates.findIndex((t) => t.id === id);
 
     if (templateIndex === -1) {
-      return new HttpResponse({ message: 'Template não encontrado' }, { status: 404 });
-    }
-
-    // Check if the template has blueprints
-    if (templates[templateIndex].hasBlueprints) {
-      return new HttpResponse(
-        { message: 'Não é possível excluir um template vinculado a blueprints' },
-        { status: 400 }
-      );
+      return HttpResponse.json({ message: 'Template not found' }, { status: 404 });
     }
 
     templates.splice(templateIndex, 1);
 
+    await delay(USE_PREDICTABLE_MOCK ? 200 : 1000);
+
     return new HttpResponse(null, { status: 204 });
   }),
 
-  // POST /templates/validate - Validate a template path
+  // =========================================================================
+  // TEMPLATE VALIDATION OPERATIONS
+  // =========================================================================
+
+  // Validate template data
   http.post('/api/templates/validate', async ({ request }) => {
-    // Adiciona um delay de 3 segundos para simular uma validação mais demorada
-    await delay(3000);
+    const data = (await request.json()) as {
+      repositoryUrl: string;
+      chartPath: string;
+      branch?: string;
+    };
+    const { branch = 'main' } = data;
 
-    const { gitRepositoryId, branch, path } = await request.json();
+    let validationResult;
 
-    // Simulate validation logic checking for Chart.yaml and values.schema.json
-    const hasChartYaml = helmChartFiles.some(
-      (file) =>
-        file.gitRepositoryId === gitRepositoryId &&
-        file.branch === branch &&
-        file.path === `${path}/Chart.yaml`
-    );
+    if (USE_PREDICTABLE_MOCK) {
+      // Use simplified validation response in tests
+      validationResult = createValidationResponse(
+        !branch.includes('error'), // isValid is true unless branch contains "error"
+        branch
+      );
+    } else {
+      // Use detailed validation response in development
+      validationResult = generateValidationResponse(branch);
+    }
 
-    const hasValuesSchema = helmChartFiles.some(
-      (file) =>
-        file.gitRepositoryId === gitRepositoryId &&
-        file.branch === branch &&
-        file.path === `${path}/values.schema.json`
-    );
+    await delay(USE_PREDICTABLE_MOCK ? 100 : Math.random() * 1500 + 500);
 
-    // Get chart info if valid
-    const chartYamlFile = helmChartFiles.find(
-      (file) =>
-        file.gitRepositoryId === gitRepositoryId &&
-        file.branch === branch &&
-        file.path === `${path}/Chart.yaml`
-    );
+    if (!validationResult.isValid) {
+      return HttpResponse.json(validationResult, { status: 400 });
+    }
 
-    const isValid = hasChartYaml && hasValuesSchema;
+    return HttpResponse.json(validationResult);
+  }),
 
-    if (isValid && chartYamlFile) {
-      // Parse Chart.yaml content to extract info (simplified mock)
-      return HttpResponse.json({
-        name: 'my-chart', // In a real implementation, we would parse this from the YAML
-        version: '1.0.0',
-        description: 'A Helm chart for Kubernetes application deployment',
-        isValid: true,
+  // Validate existing template
+  http.post('/api/templates/:id/validate', async ({ params, request }) => {
+    const { id } = params;
+    const data = (await request.json()) as { branch?: string };
+    const { branch = 'main' } = data;
+
+    const template = templates.find((t) => t.id === id);
+
+    if (!template) {
+      await delay(USE_PREDICTABLE_MOCK ? 50 : 500);
+
+      return HttpResponse.json({ message: 'Template not found' }, { status: 404 });
+    }
+
+    let validationResult;
+
+    if (USE_PREDICTABLE_MOCK) {
+      // Use simplified validation response in tests
+      validationResult = createValidationResponse(
+        !branch.includes('error'), // isValid is true unless branch contains "error"
+        branch
+      );
+    } else {
+      // Use detailed validation response in development
+      validationResult = generateValidationResponse(branch);
+    }
+
+    await delay(USE_PREDICTABLE_MOCK ? 100 : Math.random() * 1500 + 500);
+
+    if (!validationResult.isValid) {
+      return HttpResponse.json(validationResult, { status: 400 });
+    }
+
+    return HttpResponse.json(validationResult);
+  }),
+
+  // =========================================================================
+  // TEMPLATE SCHEMA OPERATIONS
+  // =========================================================================
+
+  // Get template schema (migrado de template-schema-handlers.ts)
+  http.get('/api/templates/:id/schema', async ({ params }) => {
+    const { id } = params;
+
+    if (!id) {
+      return new HttpResponse(null, {
+        status: 400,
+        statusText: 'Bad Request: Missing template ID',
       });
     }
 
-    return HttpResponse.json({
-      isValid: false,
-      validationMessage: !hasChartYaml
-        ? 'Chart.yaml não encontrado'
-        : 'values.schema.json não encontrado',
-    });
+    // 'non-existent-template' is a special ID to test 404 error
+    if (id === 'non-existent-template') {
+      return new HttpResponse(null, {
+        status: 404,
+        statusText: 'Template not found',
+      });
+    }
+
+    await delay(USE_PREDICTABLE_MOCK ? 100 : 500);
+
+    try {
+      console.log(`Generating schema for template ID: ${id}`);
+      // Generate mock schema response based on template ID
+      const schemaData = generateMockSchemaForTemplate(id.toString());
+
+      console.log('Schema generated successfully with fields:', schemaData.fields.length);
+
+      return HttpResponse.json(schemaData);
+    } catch (error) {
+      console.error('MSW error generating template schema:', error);
+
+      return new HttpResponse(null, {
+        status: 500,
+        statusText: 'Error generating template schema',
+      });
+    }
   }),
 
-  // POST /templates/preview - Get preview of template files
-  http.post('/api/templates/preview', async ({ request }) => {
-    // Adiciona um delay de 2 segundos para a pré-visualização
-    await delay(2000);
+  // Get template JSON Schema
+  http.get('/api/templates/:id/json-schema', async ({ params }) => {
+    try {
+      const { id } = params;
 
-    const { gitRepositoryId, branch, path } = await request.json();
+      if (!id) {
+        return new HttpResponse(JSON.stringify({ error: 'ID do template é obrigatório' }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
 
-    // Find the content for each file if it exists
-    const chartYamlFile = helmChartFiles.find(
-      (file) =>
-        file.gitRepositoryId === gitRepositoryId &&
-        file.branch === branch &&
-        file.path === `${path}/Chart.yaml`
-    );
+      // Short delay to simulate network
+      await delay(USE_PREDICTABLE_MOCK ? 100 : Math.min(500, Math.random() * 1000));
 
-    const valuesSchemaFile = helmChartFiles.find(
-      (file) =>
-        file.gitRepositoryId === gitRepositoryId &&
-        file.branch === branch &&
-        file.path === `${path}/values.schema.json`
-    );
+      // Find the template
+      const template = templates.find((t) => t.id === id);
 
-    const valuesYamlFile = helmChartFiles.find(
-      (file) =>
-        file.gitRepositoryId === gitRepositoryId &&
-        file.branch === branch &&
-        file.path === `${path}/values.yaml`
-    );
+      if (!template) {
+        console.error('Template não encontrado:', id);
 
-    return HttpResponse.json({
-      chartYaml: chartYamlFile?.content,
-      valuesSchemaJson: valuesSchemaFile?.content,
-      valuesYaml: valuesYamlFile?.content,
-    });
+        return new HttpResponse(
+          JSON.stringify({
+            error: 'Template não encontrado',
+            message: `Não foi possível encontrar o template com ID ${id}`,
+          }),
+          {
+            status: 404,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+
+      try {
+        // Log para debug
+        console.log('Gerando schema para template:', {
+          id: template.id,
+          name: template.name,
+          category: template.category,
+        });
+
+        // Generate the schema
+        const schema = generateMockSchemaForTemplate(template.id);
+
+        return HttpResponse.json(schema);
+      } catch (error) {
+        console.error('Erro ao gerar schema:', error);
+
+        return new HttpResponse(
+          JSON.stringify({
+            error: 'Erro interno',
+            message: 'Falha ao gerar schema do template',
+          }),
+          {
+            status: 500,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Erro no handler:', error);
+
+      return new HttpResponse(
+        JSON.stringify({
+          error: 'Erro interno',
+          message: 'Erro inesperado ao processar a requisição',
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
   }),
 ];

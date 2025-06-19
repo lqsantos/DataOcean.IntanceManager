@@ -1,17 +1,28 @@
 // components/environments/environments-page.tsx
 'use client';
 
-import { PlusCircle } from 'lucide-react';
+import { Layers } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
+import { GenericEntityModal } from '@/components/entities/generic-entity-modal';
+import { GenericEntityPage } from '@/components/entities/generic-entity-page';
 import { useEnvironmentModal } from '@/contexts/modal-manager-context';
 import { useEnvironments } from '@/hooks/use-environments';
-import type { Environment } from '@/types/environment';
 
-import { CreateEnvironmentModal } from './create-environment-modal';
+import { EnvironmentForm } from './environment-form';
 import { EnvironmentsTable } from './environments-table';
 
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  entityToEdit: unknown;
+  onCreate: (data: unknown) => Promise<unknown>;
+  onUpdate?: (id: string, data: unknown) => Promise<unknown>;
+  onCreateSuccess?: (entity: unknown) => void;
+}
+
 export function EnvironmentsPage() {
+  const { t } = useTranslation(['settings']);
   const {
     environments,
     isLoading,
@@ -23,52 +34,60 @@ export function EnvironmentsPage() {
     deleteEnvironment,
   } = useEnvironments();
 
-  const { isOpen, environmentToEdit, openModal, openEditModal, closeModal } = useEnvironmentModal();
+  const modalState = useEnvironmentModal();
 
-  const handleEdit = (environment: Environment) => {
-    openEditModal(environment);
-  };
+  // Componente de modal simplificado
+  const EnvironmentModal = ({
+    isOpen,
+    onClose,
+    entityToEdit,
+    onCreate,
+    onUpdate,
+    onCreateSuccess,
+  }: ModalProps) => (
+    <GenericEntityModal
+      isOpen={isOpen}
+      onClose={onClose}
+      entityToEdit={entityToEdit}
+      onCreate={onCreate}
+      onUpdate={onUpdate}
+      onCreateSuccess={onCreateSuccess}
+      EntityForm={EnvironmentForm}
+      entityName={{
+        singular: t('environments.title'),
+        createTitle: t('environments.modal.create.title'),
+        editTitle: t('environments.modal.edit.title'),
+        createDescription: t('environments.modal.create.description'),
+        editDescription: t('environments.modal.edit.description'),
+      }}
+      createIcon={Layers}
+      editIcon={Layers}
+      testId="create-environment-modal"
+    />
+  );
 
   return (
-    <div className="space-y-4" data-testid="environments-page">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Ambientes</h2>
-          <p className="text-muted-foreground">Gerencie seus ambientes de implantação</p>
-        </div>
-        <Button onClick={openModal} className="gap-2" data-testid="environments-page-add-button">
-          <PlusCircle className="h-4 w-4" />
-          Adicionar Ambiente
-        </Button>
-      </div>
-
-      {error && (
-        <div
-          className="rounded-md bg-destructive/10 p-4 text-destructive"
-          data-testid="environments-page-error-alert"
-        >
-          {error}
-        </div>
-      )}
-
-      <EnvironmentsTable
-        environments={environments}
-        entities={environments}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onEdit={handleEdit}
-        onDelete={deleteEnvironment}
-        data-testid="environments-table"
-      />
-
-      <CreateEnvironmentModal
-        isOpen={isOpen}
-        onClose={closeModal}
-        createEnvironment={createEnvironment}
-        updateEnvironment={updateEnvironment}
-        environmentToEdit={environmentToEdit}
-        onCreateSuccess={refreshEnvironments}
-      />
-    </div>
+    <GenericEntityPage
+      entities={environments}
+      isLoading={isLoading}
+      isRefreshing={isRefreshing}
+      error={error || null}
+      refreshEntities={refreshEnvironments}
+      createEntity={createEnvironment}
+      updateEntity={updateEnvironment}
+      deleteEntity={deleteEnvironment}
+      EntityTable={EnvironmentsTable}
+      EntityModal={EnvironmentModal}
+      entityName={{
+        singular: t('environments.title'),
+        plural: t('environments.table.title'),
+        description: t('environments.description'),
+      }}
+      modalState={modalState}
+      testIdPrefix="environments"
+      tableProps={{
+        environments: environments,
+      }}
+    />
   );
 }

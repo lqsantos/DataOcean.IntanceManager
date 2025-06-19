@@ -1,0 +1,32 @@
+{
+  "modal": {
+    "titleCreate": "Configurar Token de Acesso",
+    "titleUpdate": "Atualizar Token de Acesso"
+  },
+  "description": {
+    "create": "Insira seu token de acesso pessoal para interagir com as APIs.",
+    "update": "Insira um novo token para substituir o atual.",
+    "lastUpdated": "Última atualização: {{date}}"
+  },
+  "form": {
+    "tokenLabel": "Token de Acesso",
+    "tokenPlaceholder": "Digite seu token",
+    "showToken": "Mostrar token",
+    "hideToken": "Esconder token",
+    "configuring": "Configurando...",
+    "updating": "Atualizando...",
+    "configure": "Configurar",
+    "update": "Atualizar"
+  },
+  "validation": {
+    "minLength": "O token deve ter pelo menos {{count}} caracteres",
+    "maxLength": "O token deve ter no máximo {{count}} caracteres"
+  },
+  "toast": {
+    "createSuccess": "Token configurado com sucesso!",
+    "updateSuccess": "Token atualizado com sucesso!"
+  },
+  "errors": {
+    "generic": "Erro ao processar a solicitação"
+  }
+}

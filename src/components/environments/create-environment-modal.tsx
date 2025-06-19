@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, Layers } from 'lucide-react';
+import { FileCode, Layers } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -81,13 +81,14 @@ export function CreateEnvironmentModal({
       description={
         isEditMode
           ? 'Modifique as configurações do ambiente'
-          : 'Configure um novo ambiente para aplicações'
+          : 'Configure um novo ambiente para implantação'
       }
-      icon={isEditMode ? Layers : Globe}
-      backgroundIcon={Globe}
+      icon={isEditMode ? FileCode : Layers}
+      backgroundIcon={Layers}
       testId="create-environment-modal"
       maxWidth="xl"
       isEditMode={isEditMode}
+      preventClose={isSubmitting}
     >
       <EnvironmentForm
         environment={environmentToEdit || undefined}

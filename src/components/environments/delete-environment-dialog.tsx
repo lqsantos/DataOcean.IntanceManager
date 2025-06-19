@@ -1,11 +1,14 @@
 // components/environments/delete-environment-dialog.tsx
+'use client';
+
 import { Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { StyledDeleteDialog } from '@/components/ui/styled-delete-dialog';
 import type { Environment } from '@/types/environment';
 
 interface DeleteEnvironmentDialogProps {
-  environment: Environment | null;
+  entity: Environment | null;
   isOpen: boolean;
   isDeleting: boolean;
   onDelete: () => Promise<void>;
@@ -13,13 +16,15 @@ interface DeleteEnvironmentDialogProps {
 }
 
 export function DeleteEnvironmentDialog({
-  environment,
+  entity,
   isOpen,
   isDeleting,
   onDelete,
   onCancel,
 }: DeleteEnvironmentDialogProps) {
-  if (!environment) {
+  const { t } = useTranslation('settings');
+
+  if (!entity) {
     return null;
   }
 
@@ -27,20 +32,19 @@ export function DeleteEnvironmentDialog({
     <StyledDeleteDialog
       open={isOpen}
       onOpenChange={(open) => !open && onCancel()}
-      title="Excluir Ambiente"
-      itemName={environment.name}
+      title={t('environments.modal.delete.title')}
+      itemName={entity.name}
       description={
         <>
-          Tem certeza que deseja excluir o ambiente{' '}
-          <span className="font-semibold">{environment.name}</span>? Esta ação não pode ser desfeita
-          e pode afetar instâncias implantadas neste ambiente.
+          {t('environments.modal.delete.confirmation')}{' '}
+          <span className="font-semibold">{entity.name}</span>?
         </>
       }
       onConfirm={onDelete}
       onCancel={onCancel}
       isDeleting={isDeleting}
       icon={Trash2}
-      confirmText="Excluir"
+      confirmText={t('environments.modal.delete.button')}
       testId="delete-environment-dialog"
     />
   );

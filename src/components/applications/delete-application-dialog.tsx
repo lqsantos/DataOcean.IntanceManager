@@ -2,12 +2,13 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { StyledDeleteDialog } from '@/components/ui/styled-delete-dialog';
 import type { Application } from '@/types/application';
 
 interface DeleteApplicationDialogProps {
-  application: Application | null;
+  entity: Application | null;
   isOpen: boolean;
   isDeleting: boolean;
   onDelete: () => Promise<void>;
@@ -15,13 +16,15 @@ interface DeleteApplicationDialogProps {
 }
 
 export function DeleteApplicationDialog({
-  application,
+  entity,
   isOpen,
   isDeleting,
   onDelete,
   onCancel,
 }: DeleteApplicationDialogProps) {
-  if (!application) {
+  const { t } = useTranslation('settings');
+
+  if (!entity) {
     return null;
   }
 
@@ -29,20 +32,19 @@ export function DeleteApplicationDialog({
     <StyledDeleteDialog
       open={isOpen}
       onOpenChange={(open) => !open && onCancel()}
-      title="Excluir Aplicação"
-      itemName={application.name}
+      title={t('applications.modal.delete.title')}
+      itemName={entity.name}
       description={
         <>
-          Tem certeza que deseja excluir a aplicação{' '}
-          <span className="font-semibold">{application.name}</span>? Esta ação não pode ser
-          desfeita.
+          {t('applications.modal.delete.confirmation')}{' '}
+          <span className="font-semibold">{entity.name}</span>?
         </>
       }
       onConfirm={onDelete}
       onCancel={onCancel}
       isDeleting={isDeleting}
       icon={Trash2}
-      confirmText="Excluir"
+      confirmText={t('applications.modal.delete.button')}
       testId="delete-application-dialog"
     />
   );

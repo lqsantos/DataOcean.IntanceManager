@@ -22,30 +22,57 @@ DataOcean Instance Manager é um aplicativo frontend desenvolvido com NextJS par
 ```
 /
 ├── docs/                  # Documentação do projeto
-├── public/                # Arquivos estáticos
+├── public/                # Arquivos estáticos (imagens, favicon, etc.)
 ├── src/
-│   ├── app/               # Rotas e componentes da aplicação (Next.js App Router)
-│   ├── components/        # Componentes reutilizáveis
-│   │   ├── ui/            # Componentes de UI básicos
-│   │   └── [feature]/     # Componentes específicos de features
-│   ├── contexts/          # Contextos React
-│   ├── hooks/             # Custom hooks
-│   ├── lib/               # Bibliotecas e utilitários
+│   ├── app/               # Rotas e arquivos globais do Next.js (ex: globals.css, layout.tsx, page.tsx)
+│   ├── components/        # Componentes reutilizáveis e específicos de features
+│   │   ├── applications/      # Componentes para aplicações
+│   │   ├── clusters/          # Componentes para clusters
+│   │   ├── entities/          # Componentes de entidades genéricas
+│   │   ├── environments/      # Componentes para ambientes
+│   │   ├── form/              # Componentes de formulário
+│   │   ├── git-source/        # Componentes para fontes Git
+│   │   ├── layout/            # Componentes de layout (header, sidebar, etc.)
+│   │   ├── locations/         # Componentes para localizações
+│   │   ├── pat/               # Componentes para Personal Access Token
+│   │   ├── resources/         # Componentes para recursos (blueprints, templates, etc.)
+│   │   │   ├── blueprints/        # Componentes de formulário e lógica de blueprints
+│   │   │   └── templates/         # Componentes de templates Helm
+│   │   ├── templates/         # Componentes para templates Helm
+│   │   └── ui/                # Componentes de UI genéricos (botão, modal, etc.)
+│   ├── contexts/          # Contextos React (ex: modal, blueprint, template)
+│   ├── hooks/             # Custom hooks (ex: useTemplates, useGitNavigation)
+│   ├── lib/               # Funções utilitárias e helpers
+│   ├── locales/           # Arquivos de tradução (i18n)
 │   ├── mocks/             # Mocks de API com MSW
+│   │   ├── data/              # Fixtures simuladas
+│   │   └── handlers/          # Manipuladores de endpoints
 │   ├── services/          # Serviços de API e integrações externas
-│   ├── styles/            # Estilos globais e configurações de tema
-│   ├── types/             # Definições de tipos TypeScript
+│   ├── tests/             # Testes unitários e de integração
+│   │   ├── integration/       # Testes de integração
+│   │   ├── mocks/             # Mocks para testes
+│   │   ├── msw/               # Handlers do MSW para testes
+│   │   └── utils/             # Utilitários para testes
+│   ├── types/             # Tipos e interfaces TypeScript
 │   └── utils/             # Funções utilitárias
-├── tests/
-│   ├── unit/              # Testes unitários
-│   ├── integration/       # Testes de integração
-│   └── e2e/               # Testes end-to-end
-├── eslint.config.mjs      # Configuração do ESLint (Flat Config)
-├── .prettierrc            # Configuração do Prettier
-├── next.config.js         # Configuração do Next.js
+├── .vscode/               # Configurações do VS Code (INSTRUCTIONS.md, settings.json, etc.)
+├── package.json           # Dependências e scripts
 ├── tsconfig.json          # Configuração do TypeScript
-└── package.json           # Dependências e scripts
+├── next.config.ts         # Configuração do Next.js
+├── eslint.config.mjs      # Configuração do ESLint
+├── tailwind.config.js     # Configuração do Tailwind CSS
+├── vite.config.ts         # Configuração do Vite
+├── vitest.config.ts       # Configuração do Vitest
+└── README.md              # Documentação principal
 ```
+
+> **Observação:**
+>
+> - Os diretórios e subdiretórios refletem a organização atual do projeto.
+> - Componentes de UI genéricos ficam em `src/components/ui/`.
+> - Cada feature possui sua própria pasta dentro de `src/components/`.
+> - Os hooks, serviços, tipos e utilitários são organizados por domínio.
+> - Os testes ficam em `src/tests/` e utilizam mocks e MSW para simulação de APIs.
 
 ## Stack Tecnológica
 
@@ -71,6 +98,7 @@ DataOcean Instance Manager é um aplicativo frontend desenvolvido com NextJS par
 ### Importações
 
 Organizar importações na seguinte ordem:
+
 1. Bibliotecas externas
 2. Componentes
 3. Hooks
@@ -105,7 +133,7 @@ interface ButtonProps {
 
 export const Button = ({ label, onClick, variant = 'primary' }: ButtonProps) => {
   // Implementação
-}
+};
 ```
 
 ## Ferramentas de Qualidade
@@ -131,9 +159,9 @@ export default [
     rules: {
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }]
-    }
-  }
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
 ];
 ```
 
@@ -167,10 +195,7 @@ Configurar Husky para executar verificações antes de commits:
 
 ```json
 {
-  "*.{js,jsx,ts,tsx}": [
-    "eslint --fix",
-    "prettier --write"
-  ]
+  "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"]
 }
 ```
 
@@ -295,16 +320,16 @@ export const userHandlers = [
   http.get('/api/users', () => {
     return HttpResponse.json(users);
   }),
-  
+
   http.get('/api/users/:id', ({ params }) => {
-    const user = users.find(user => user.id === params.id);
-    
+    const user = users.find((user) => user.id === params.id);
+
     if (!user) {
       return new HttpResponse(null, { status: 404 });
     }
-    
+
     return HttpResponse.json(user);
-  })
+  }),
 ];
 ```
 
@@ -330,6 +355,7 @@ Seguir o padrão Conventional Commits:
 ```
 
 Tipos comuns:
+
 - `feat`: Nova funcionalidade
 - `fix`: Correção de bug
 - `docs`: Alterações na documentação
@@ -447,12 +473,7 @@ Configure o ambiente de desenvolvimento com configurações padronizadas:
   },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
-  ],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "prettier.requireConfig": true,
   "tailwindCSS.includeLanguages": {
     "typescript": "javascript",
@@ -571,10 +592,7 @@ Para projetos maiores, considere utilizar arquivos de workspace VS Code (`*.code
     "window.title": "${activeEditorShort}${separator}${rootName}"
   },
   "extensions": {
-    "recommendations": [
-      "dbaeumer.vscode-eslint",
-      "esbenp.prettier-vscode"
-    ]
+    "recommendations": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
   }
 }
 ```

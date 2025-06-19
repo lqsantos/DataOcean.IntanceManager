@@ -1,0 +1,106 @@
+{
+  "title": "Resources",
+  "description": "Manage cloud resources created from blueprints",
+  "tabs": {
+    "all": "All Resources",
+    "running": "Running",
+    "stopped": "Stopped",
+    "failed": "Failed"
+  },
+  "table": {
+    "columns": {
+      "name": "Name",
+      "status": "Status",
+      "blueprint": "Blueprint",
+      "location": "Location",
+      "environment": "Environment",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "emptyState": {
+      "title": "No resources found",
+      "description": "Get started by creating a new resource"
+    },
+    "search": {
+      "placeholder": "Search resources..."
+    }
+  },
+  "status": {
+    "running": "Running",
+    "stopped": "Stopped",
+    "failed": "Failed",
+    "creating": "Creating",
+    "updating": "Updating",
+    "deleting": "Deleting"
+  },
+  "actions": {
+    "create": "Create Resource",
+    "view": "View Details",
+    "edit": "Edit",
+    "delete": "Delete",
+    "start": "Start",
+    "stop": "Stop",
+    "restart": "Restart",
+    "refresh": "Refresh",
+    "add": "Add"
+  },
+  "deleteDialog": {
+    "title": "Delete Resource",
+    "description": "Are you sure you want to delete this resource? This action cannot be undone.",
+    "confirm": "Delete",
+    "cancel": "Cancel"
+  },
+  "createResource": {
+    "title": "Create Resource",
+    "steps": {
+      "selectBlueprint": {
+        "title": "Select Blueprint",
+        "description": "Choose a blueprint to create your resource from"
+      },
+      "configureBlueprintTemplates": {
+        "title": "Configure Blueprint Templates",
+        "description": "Configure the templates associated with this blueprint"
+      },
+      "configureParameters": {
+        "title": "Configure Parameters",
+        "description": "Configure the parameters for your resource"
+      },
+      "deploymentSettings": {
+        "title": "Deployment Settings",
+        "description": "Configure where your resource will be deployed"
+      },
+      "review": {
+        "title": "Review and Create",
+        "description": "Review your resource configuration and create"
+      }
+    },
+    "form": {
+      "name": {
+        "label": "Resource Name",
+        "placeholder": "Enter a name for your resource",
+        "description": "A unique identifier for your resource"
+      },
+      "location": {
+        "label": "Location",
+        "placeholder": "Select a location",
+        "description": "Where your resource will be deployed"
+      },
+      "environment": {
+        "label": "Environment",
+        "placeholder": "Select an environment",
+        "description": "The environment for your resource"
+      },
+      "identifier": {
+        "label": "Identifier",
+        "placeholder": "unique-identifier",
+        "description": "A unique identifier for this template"
+      }
+    },
+    "buttons": {
+      "next": "Next",
+      "previous": "Previous",
+      "create": "Create Resource",
+      "cancel": "Cancel"
+    }
+  }
+}

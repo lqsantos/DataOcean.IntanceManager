@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { EyeIcon, EyeOffIcon, Key, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -24,22 +25,23 @@ import { StyledModal } from '@/components/ui/styled-modal';
 import { usePATModal } from '@/contexts/modal-manager-context';
 import { PATService } from '@/services/pat-service';
 
-// Schema para validação do token
-const patFormSchema = z.object({
-  token: z
-    .string()
-    .min(8, 'O token deve ter pelo menos 8 caracteres')
-    .max(100, 'O token deve ter no máximo 100 caracteres'),
-});
-
-type PatFormValues = z.infer<typeof patFormSchema>;
-
 export function PATModal() {
   // Usando o hook do sistema centralizado com métodos padronizados
   const { isOpen, closeModal, onConfigured, status } = usePATModal();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showToken, setShowToken] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation(['common', 'pat']);
+
+  // Schema para validação do token com mensagens traduzidas
+  const patFormSchema = z.object({
+    token: z
+      .string()
+      .min(8, t('pat:validation.minLength', { count: 8 }))
+      .max(100, t('pat:validation.maxLength', { count: 100 })),
+  });
+
+  type PatFormValues = z.infer<typeof patFormSchema>;
 
   // Configuração do formulário com valores padrão
   const form = useForm<PatFormValues>({
@@ -70,19 +72,20 @@ export function PATModal() {
         const tokenId = status.id || '1';
 
         await PATService.updateToken(tokenId, data);
-        toast.success('Token atualizado com sucesso!');
+        toast.success(t('pat:toast.updateSuccess'));
       } else {
         await PATService.createToken(data);
-        toast.success('Token configurado com sucesso!');
+        toast.success(t('pat:toast.createSuccess'));
       }
 
       // Callback para informar que o token foi configurado
       if (onConfigured) {
         onConfigured();
       }
+
       closeModal();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao processar a solicitação');
+      setError(err instanceof Error ? err.message : t('pat:errors.generic'));
     } finally {
       setIsSubmitting(false);
     }
@@ -104,15 +107,17 @@ export function PATModal() {
   // Preparar descrição com data da última atualização, se aplicável
   const getDescription = () => {
     const baseDescription = status.configured
-      ? 'Insira um novo token para substituir o atual.'
-      : 'Insira seu token de acesso pessoal para interagir com as APIs.';
+      ? t('pat:description.update')
+      : t('pat:description.create');
 
     if (status.configured && status.lastUpdated) {
       return (
         <>
           {baseDescription}
           <p className="mt-1 text-xs text-muted-foreground" data-testid="pat-modal-last-updated">
-            Última atualização: {new Date(status.lastUpdated).toLocaleString()}
+            {t('pat:description.lastUpdated', {
+              date: new Date(status.lastUpdated).toLocaleString(),
+            })}
           </p>
         </>
       );
@@ -125,7 +130,7 @@ export function PATModal() {
     <StyledModal
       open={isOpen}
       onOpenChange={handleOpenChange}
-      title={status.configured ? 'Atualizar Token de Acesso' : 'Configurar Token de Acesso'}
+      title={status.configured ? t('pat:modal.titleUpdate') : t('pat:modal.titleCreate')}
       description={getDescription()}
       icon={Key}
       backgroundIcon={Key}
@@ -137,7 +142,6 @@ export function PATModal() {
           <AlertDescription data-testid="pat-modal-error-message">{error}</AlertDescription>
         </Alert>
       )}
-
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
@@ -149,14 +153,14 @@ export function PATModal() {
             name="token"
             render={({ field }) => (
               <FormItem data-testid="pat-form-item">
-                <FormLabel data-testid="pat-form-label">Token de Acesso</FormLabel>
+                <FormLabel data-testid="pat-form-label">{t('pat:form.tokenLabel')}</FormLabel>
                 <FormControl>
                   <div className="flex" data-testid="pat-form-field-container">
                     <div className="relative flex-grow">
                       <Input
                         autoFocus
                         type={showToken ? 'text' : 'password'}
-                        placeholder="Digite seu token"
+                        placeholder={t('pat:form.tokenPlaceholder')}
                         {...field}
                         data-testid="pat-form-token"
                         className="pr-10"
@@ -169,7 +173,7 @@ export function PATModal() {
                         className="absolute right-0 top-0 h-full"
                         onClick={() => setShowToken(!showToken)}
                         data-testid="pat-form-toggle-visibility"
-                        aria-label={showToken ? 'Esconder token' : 'Mostrar token'}
+                        aria-label={showToken ? t('pat:form.hideToken') : t('pat:form.showToken')}
                         disabled={isSubmitting}
                       >
                         {showToken ? (
@@ -178,7 +182,7 @@ export function PATModal() {
                           <EyeIcon className="h-4 w-4" data-testid="pat-eye-icon" />
                         )}
                         <span className="sr-only">
-                          {showToken ? 'Esconder token' : 'Mostrar token'}
+                          {showToken ? t('pat:form.hideToken') : t('pat:form.showToken')}
                         </span>
                       </Button>
                     </div>
@@ -196,7 +200,7 @@ export function PATModal() {
               disabled={isSubmitting}
               data-testid="pat-form-cancel"
             >
-              Cancelar
+              {t('common:buttons.cancel')}
             </Button>
             <Button
               type="submit"
@@ -211,12 +215,12 @@ export function PATModal() {
                     data-testid="pat-form-loading-spinner"
                   />
                   <span data-testid="pat-form-submit-text">
-                    {status.configured ? 'Atualizando...' : 'Configurando...'}
+                    {status.configured ? t('pat:form.updating') : t('pat:form.configuring')}
                   </span>
                 </>
               ) : (
                 <span data-testid="pat-form-submit-text">
-                  {status.configured ? 'Atualizar' : 'Configurar'}
+                  {status.configured ? t('pat:form.update') : t('pat:form.configure')}
                 </span>
               )}
             </Button>

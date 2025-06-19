@@ -52,6 +52,10 @@ interface StyledModalProps {
    * Propriedades adicionais que serão passadas para o DialogContent
    */
   dialogProps?: React.ComponentPropsWithoutRef<typeof DialogContent>;
+  /**
+   * Se true, impede o fechamento do modal quando clicado fora
+   */
+  preventClose?: boolean;
 }
 
 /**
@@ -70,6 +74,7 @@ export function StyledModal({
   maxWidth = '2xl',
   isEditMode = false,
   dialogProps,
+  preventClose = false,
 }: StyledModalProps) {
   // Use o ícone fornecido ou um ícone padrão se não for fornecido
   const IconComponent = icon || AlertCircle;
@@ -101,17 +106,41 @@ export function StyledModal({
   }, [maxWidth]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        // Se estiver tentando fechar (value = false) mas preventClose for true, não fazer nada
+        if (!value && preventClose) {
+          return;
+        }
+
+        // Caso contrário, propagar o evento
+        onOpenChange(value);
+      }}
+    >
       <DialogContent
         className={dialogContentClasses}
         data-testid={testId}
         data-modal-title={title}
         data-modal-type={isEditMode ? 'edit' : 'create'}
+        onPointerDownOutside={(e) => {
+          if (preventClose) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          e.preventDefault();
+        }}
+        // Remover qualquer tratamento especial para eventos de teclado para prevenir interferência
+        onEscapeKeyDown={(e) => {
+          if (preventClose) {
+            e.preventDefault();
+          }
+        }}
         {...dialogProps}
       >
         {/* Cabeçalho com gradiente e decoração */}
         <div className="relative overflow-hidden border-b border-border">
-          {/* Decoração de fundo */}
           <div
             className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent"
             aria-hidden="true"
@@ -123,23 +152,20 @@ export function StyledModal({
           <div className="relative p-5">
             <DialogHeader className="flex flex-row items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 shadow-sm">
-                {/* Usar sempre o componente ícone, que já está garantido não ser undefined */}
-                <IconComponent 
+                <IconComponent
                   className={`h-4 w-4 ${isEditMode ? 'text-indigo-500' : 'text-primary'}`}
                   data-testid={`${testId}-icon`}
                 />
               </div>
               <div>
-                <DialogTitle 
-                  className="text-xl font-medium" 
-                  data-testid={`${testId}-title`}
-                >
+                <DialogTitle className="text-xl font-medium" data-testid={`${testId}-title`}>
                   {title}
                 </DialogTitle>
                 {description && (
-                  <p 
+                  <p
                     className="mt-0.5 text-sm text-muted-foreground"
                     data-testid={`${testId}-description`}
+                    id={`${testId}-description`}
                   >
                     {description}
                   </p>
@@ -150,10 +176,17 @@ export function StyledModal({
         </div>
 
         {/* Conteúdo do formulário com elementos decorativos */}
-        <div className="relative px-6 py-3" data-testid={`${testId}-content`}>
+        <div
+          className="relative px-6 py-3"
+          data-testid={`${testId}-content`}
+          onClick={(e) => {
+            // Evitar propagação de eventos para os elementos pai que podem estar interferindo
+            e.stopPropagation();
+          }}
+        >
           {/* Ícone decorativo no canto */}
           {BackgroundIconComponent && (
-            <div className="absolute -bottom-2 -right-2 opacity-5">
+            <div className="pointer-events-none absolute -bottom-2 -right-2 opacity-5">
               <BackgroundIconComponent className="h-24 w-24 text-primary" />
             </div>
           )}

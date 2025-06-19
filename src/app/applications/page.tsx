@@ -1,6 +1,6 @@
 // app/applications/page.tsx
-import { ApplicationsPage } from '@/components/applications/applications-page';
+import { redirect } from 'next/navigation';
 
 export default function ApplicationsRoute() {
-  return <ApplicationsPage />;
+  redirect('/settings/applications');
 }

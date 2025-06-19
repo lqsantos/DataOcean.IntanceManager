@@ -1,0 +1,567 @@
+{
+  "pageTitle": "Blueprints",
+  "pageDescription": "Gerencie seus blueprints para criação padronizada de instâncias",
+
+  "title": "Blueprints",
+  "description": "Gerencie e organize seus blueprints",
+
+  "create": {
+    "title": "Criar Blueprint",
+    "description": "Crie um novo blueprint para criação padronizada de instâncias"
+  },
+
+  "editPage": {
+    "title": "Editar Blueprint",
+    "description": "Modifique um blueprint existente"
+  },
+
+  "createBlueprint": {
+    "title": "Criar Novo Blueprint",
+    "description": "Crie um novo blueprint para padronização de instâncias",
+    "fields": {
+      "name": {
+        "label": "Nome",
+        "placeholder": "Nome do blueprint",
+        "description": "Nome único para identificar este blueprint."
+      },
+      "applicationId": {
+        "label": "Aplicação",
+        "placeholder": "Selecione uma aplicação",
+        "description": "Aplicação à qual este blueprint pertence.",
+        "all": "Todas as Aplicações"
+      },
+      "category": {
+        "label": "Categoria",
+        "placeholder": "Selecione uma categoria",
+        "description": "Categoria para organizar blueprints.",
+        "all": "Todas as Categorias"
+      },
+      "description": {
+        "label": "Descrição",
+        "placeholder": "Descrição detalhada do blueprint",
+        "description": "Informações adicionais sobre este blueprint."
+      },
+      "tags": {
+        "label": "Tags",
+        "placeholder": "Adicione tags separadas por vírgula",
+        "description": "Tags ajudam a categorizar seu blueprint"
+      },
+      "version": {
+        "label": "Versão",
+        "placeholder": "1.0.0",
+        "description": "Versão deste blueprint (ex: 1.0.0)."
+      },
+      "templateId": {
+        "label": "Template",
+        "placeholder": "Selecione um template",
+        "description": "Template Helm que será usado como base para este blueprint."
+      },
+      "variables": {
+        "label": "Variáveis",
+        "description": "Variáveis que podem ser configuradas para instâncias deste blueprint.",
+        "add": "Adicionar variável",
+        "item": {
+          "name": "Nome da variável",
+          "description": "Descrição da variável",
+          "type": "Tipo",
+          "defaultValue": "Valor padrão",
+          "required": "Obrigatório",
+          "options": "Opções (separadas por vírgula)"
+        }
+      }
+    },
+    "steps": {
+      "info": "Informações",
+      "template": "Template",
+      "variables": "Variáveis",
+      "review": "Revisão"
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "create": "Criar Blueprint",
+      "next": "Próximo",
+      "previous": "Anterior",
+      "finish": "Finalizar"
+    },
+    "validation": {
+      "nameRequired": "Nome deve ter pelo menos 3 caracteres",
+      "descriptionRequired": "Descrição é obrigatória",
+      "versionRequired": "Versão é obrigatória",
+      "templatesRequired": "É necessário associar pelo menos um template"
+    }
+  },
+
+  "editBlueprint": {
+    "title": "Editar Blueprint",
+    "description": "Edite as informações do blueprint",
+    "buttons": {
+      "save": "Salvar Alterações",
+      "saving": "Salvando...",
+      "noChanges": "Nenhuma alteração para salvar"
+    },
+    "confirmClose": {
+      "title": "Descartar alterações",
+      "description": "Tem certeza que deseja descartar as alterações não salvas?",
+      "confirm": "Descartar",
+      "cancel": "Continuar editando"
+    }
+  },
+
+  "deleteBlueprint": {
+    "title": "Excluir Blueprint",
+    "description": "Você tem certeza que deseja excluir o blueprint <strong>{{name}}</strong>?",
+    "warning": "Esta ação não pode ser desfeita. Todas as instâncias criadas a partir deste blueprint continuarão existindo, mas não será possível criar novas instâncias baseadas neste blueprint.",
+    "buttons": {
+      "cancel": "Cancelar",
+      "delete": "Excluir"
+    }
+  },
+  "blueprintCard": {
+    "template": "Template:",
+    "variables": "Variáveis:",
+    "childTemplates": "Templates:",
+    "version": "Versão:",
+    "createInstance": "Criar Instância",
+    "unknownApplication": "Aplicação Desconhecida",
+    "templateNotFound": "Template não encontrado",
+    "actions": {
+      "edit": "Editar",
+      "duplicate": "Duplicar",
+      "delete": "Excluir"
+    },
+    "noDescription": "Sem descrição",
+    "tooltip": {
+      "clickToView": "Clique para visualizar as variáveis",
+      "noVariables": "Sem variáveis definidas"
+    },
+    "helperDialog": {
+      "title": "Variáveis",
+      "description": "Variáveis reutilizáveis disponíveis para instâncias criadas a partir deste blueprint.",
+      "noVariables": "# Nenhuma variável definida."
+    },
+    "descriptionDialog": {
+      "title": "Descrição completa do blueprint",
+      "noDescription": "*Sem descrição disponível*"
+    }
+  },
+
+  "basicInfoStep": {
+    "title": "Informações Básicas",
+    "description": "Preencha as informações básicas do blueprint",
+    "markdownButtons": {
+      "edit": "Editar",
+      "preview": "Visualizar"
+    },
+    "noDescription": "Nenhuma descrição fornecida",
+    "markdownHelp": "Suporta formatação Markdown"
+  },
+
+  "templatesStep": {
+    "title": "Templates Associados",
+    "description": "Selecione e organize os templates que compõem este blueprint.",
+    "requiredMessage": "É necessário selecionar pelo menos um template.",
+    "catalog": {
+      "title": "Catálogo de Templates",
+      "searchPlaceholder": "Buscar templates...",
+      "loading": "Carregando templates...",
+      "noResults": "Nenhum template encontrado",
+      "noDescription": "Sem descrição",
+      "noCategory": "Sem categoria",
+      "addButton": "Adicionar"
+    },
+    "selection": {
+      "title": "Templates Selecionados",
+      "count": "{{count}} template(s)",
+      "required": "Obrigatório",
+      "requiredMessage": "É necessário selecionar pelo menos um template",
+      "emptyHint": "Arraste templates do catálogo ou utilize o botão de adicionar",
+      "identifierLabel": "Identificador",
+      "identifierPlaceholder": "identificador-do-template",
+      "removeButton": "Remover"
+    }
+  },
+
+  "variablesStep": {
+    "title": "Configuração de Variáveis",
+    "description": "Defina as variáveis que podem ser utilizadas nos templates do blueprint.",
+    "addVariable": "Adicionar Variável",
+    "deleteVariable": {
+      "title": "Excluir Variável",
+      "description": "Tem certeza que deseja excluir esta variável? Esta ação não pode ser desfeita.",
+      "cancel": "Cancelar",
+      "confirm": "Excluir"
+    }
+  },
+
+  "variablesTable": {
+    "search": "Buscar variável por nome...",
+    "columns": {
+      "name": "Nome",
+      "type": "Tipo",
+      "description": "Descrição",
+      "value": "Valor/Expressão",
+      "actions": "Ações"
+    },
+    "types": {
+      "fixed": "Valor Fixo",
+      "expression": "Expressão Go Template"
+    },
+    "noVariables": "Nenhuma variável definida",
+    "noResults": "Nenhuma variável encontrada",
+    "noDescription": "Sem descrição",
+    "tooltips": {
+      "edit": "Editar variável",
+      "delete": "Excluir variável"
+    }
+  },
+
+  "variableValidation": {
+    "nameRequired": "Nome é obrigatório",
+    "nameMaxLength": "Nome deve ter no máximo 60 caracteres",
+    "namePattern": "Nome deve começar com \"vars_\" (opcional) seguido por uma letra e pode conter letras, números, ., _ ou - após",
+    "descriptionMaxLength": "Descrição deve ter no máximo 60 caracteres",
+    "valueRequired": "Valor é obrigatório",
+    "expressionRequired": "Expressão é obrigatória"
+  },
+
+  "variableModal": {
+    "fixed": {
+      "title": {
+        "new": "Nova Variável",
+        "edit": "Editar Variável"
+      },
+      "description": "Adicione uma variável com valor fixo ao seu blueprint.",
+      "nameLabel": "Nome",
+      "nameDescription": "Nome pode começar com \"vars_\" seguido por letras, números, _ ou -.",
+      "namePlaceholder": "vars_nome_variavel",
+      "descriptionLabel": "Descrição",
+      "descriptionDescription": "Uma breve descrição da variável.",
+      "valueLabel": "Valor",
+      "valueDescription": "O valor fixo da variável.",
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    },
+    "expression": {
+      "title": {
+        "new": "Nova Expressão",
+        "edit": "Editar Expressão"
+      },
+      "description": "Adicione uma variável com expressão Go Template ao seu blueprint.",
+      "nameLabel": "Nome",
+      "nameDescription": "Nome pode começar com \"vars_\" seguido por letras, números, _ ou -.",
+      "namePlaceholder": "vars_nome_expressao",
+      "descriptionLabel": "Descrição",
+      "descriptionDescription": "Uma breve descrição da variável.",
+      "expressionLabel": "Expressão",
+      "expressionDescription": "Expressão Go Template para avaliação.",
+      "cancel": "Cancelar",
+      "save": "Salvar"
+    }
+  },
+
+  "previewStep": {
+    "title": "Revisar e Confirmar",
+    "description": "Revise todas as informações antes de finalizar a criação do blueprint.",
+    "templates": "Templates Associados",
+    "templatesCount": "{{count}} template(s) associado(s)",
+    "variablesCount": "{{count}} variável(is) definida(s)"
+  },
+
+  "search": {
+    "placeholder": "Buscar blueprints...",
+    "filterByCategory": "Filtrar por categoria",
+    "allCategories": "Todas categorias",
+    "noResults": {
+      "title": "Nenhum blueprint encontrado",
+      "description": {
+        "withFilters": "Tente ajustar seus filtros de busca",
+        "noFilters": "Crie um novo blueprint para começar"
+      }
+    },
+    "loading": "Carregando blueprints..."
+  },
+
+  "viewMode": {
+    "grid": "Visualização em Grade",
+    "list": "Visualização em Lista"
+  },
+
+  "newButton": "Novo Blueprint",
+  "refreshButton": "Atualizar",
+
+  "actions": {
+    "refresh": "Atualizar",
+    "edit": "Editar Blueprint",
+    "delete": "Excluir Blueprint",
+    "duplicate": "Duplicar Blueprint",
+    "create": "Criar Instância"
+  },
+
+  "toast": {
+    "created": {
+      "title": "Sucesso",
+      "description": "Blueprint {{name}} criado com sucesso"
+    },
+    "updated": {
+      "title": "Sucesso",
+      "description": "Blueprint atualizado com sucesso"
+    },
+    "deleted": {
+      "title": "Sucesso",
+      "description": "Blueprint excluído com sucesso"
+    },
+    "duplicated": {
+      "title": "Sucesso",
+      "description": "Blueprint \"{{name}}\" duplicado com sucesso"
+    },
+    "error": {
+      "title": "Erro",
+      "description": "Ocorreu um erro ao processar a solicitação"
+    }
+  },
+
+  "edit": {
+    "title": "Editando Blueprint: {{name}}",
+    "description": "Edite as configurações do blueprint",
+    "saveSuccess": "Blueprint atualizado com sucesso"
+  },
+
+  "sections": {
+    "basicInfo": "Informações Básicas",
+    "templates": "Templates",
+    "variables": "Variáveis",
+    "values": "Valores",
+    "preview": "Visualização",
+    "basicInfo_description": "Configure as informações gerais do blueprint",
+    "templates_description": "Selecione e gerencie os templates associados ao blueprint",
+    "variables_description": "Defina as variáveis utilizadas pelo blueprint",
+    "values_description": "Configure valores e visibilidade para campos do template",
+    "preview_description": "Visualize a configuração do blueprint",
+    "placeholders": {
+      "metadata": "Nenhum formulário de metadados fornecido",
+      "templates": "Nenhum formulário de templates fornecido",
+      "variables": "Nenhum formulário de variáveis fornecido",
+      "values": "Nenhuma configuração de valores fornecida",
+      "preview": "Nenhuma visualização disponível"
+    }
+  },
+
+  "basicInfo": {
+    "sectionDescription": "Configure as informações gerais do blueprint"
+  },
+
+  "templates": {
+    "sectionDescription": "Selecione e gerencie os templates associados ao blueprint"
+  },
+
+  "variables": {
+    "sectionDescription": "Defina as variáveis utilizadas pelo blueprint",
+    "title": "Variáveis",
+    "addVariable": "Adicionar Variável",
+    "searchPlaceholder": "Pesquisar variáveis...",
+    "noVariablesFound": "Nenhuma variável encontrada.",
+    "variableEditor": {
+      "addTitle": "Adicionar Variável",
+      "editTitle": "Editar Variável",
+      "name": "Nome",
+      "namePlaceholder": "nome_variavel",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Descreva para que esta variável é utilizada",
+      "expression": "Expressão",
+      "showSyntaxHelp": "Mostrar ajuda de sintaxe",
+      "saveVariable": "Salvar Variável",
+      "cancel": "Cancelar",
+      "deleteVariable": "Excluir Variável",
+      "validation": {
+        "nameRequired": "Nome é obrigatório",
+        "nameFormat": "Nome deve começar com uma letra e conter apenas letras, números e sublinhados",
+        "nameDuplicate": "Este nome já está em uso",
+        "valueRequired": "Valor é obrigatório",
+        "unbalancedDelimiters": "Delimitadores de template não balanceados"
+      }
+    },
+    "deleteDialog": {
+      "title": "Excluir Variável",
+      "description": "Tem certeza que deseja excluir a variável \"{{name}}\"? Esta ação não pode ser desfeita.",
+      "cancel": "Cancelar",
+      "confirm": "Excluir"
+    },
+    "notifications": {
+      "added": "Variável adicionada",
+      "addedDescription": "{{name}} foi adicionada",
+      "updated": "Variável atualizada",
+      "updatedDescription": "{{name}} foi atualizada",
+      "deleted": "Variável excluída",
+      "deletedDescription": "{{name}} foi removida"
+    }
+  },
+
+  "values": {
+    "sectionDescription": "Configure valores para os campos do template e controle sua visibilidade",
+    "editor": {
+      "title": "Editor de Valores",
+      "availableVariables": "Variáveis Disponíveis",
+      "resetButton": "Reiniciar",
+      "formatYaml": "Formatar YAML",
+      "applyButton": "Aplicar Mudanças"
+    },
+    "contractPreview": {
+      "title": "Contrato de Configuração",
+      "description": "Visualize o contrato de configuração entre este blueprint e suas instâncias",
+      "viewContract": "Ver Contrato",
+      "downloadJson": "Baixar JSON",
+      "dialogTitle": "Contrato de Configuração"
+    },
+    "batchActions": {
+      "exposeAll": "Expor todos os campos",
+      "exposeAllDescription": "Tornar todos os campos editáveis no formulário de criação de instância",
+      "hideAll": "Ocultar todos os campos",
+      "hideAllDescription": "Ocultar todos os campos do formulário de criação de instância",
+      "resetAll": "Redefinir todos os campos",
+      "resetAllDescription": "Redefinir todos os campos para os padrões do template"
+    },
+    "validation": {
+      "errorTitle": "Erro de Validação",
+      "warningTitle": "Aviso de Validação",
+      "variableWarningTitle": "Aviso de Validação de Variável",
+      "atPath": "em {{path}}"
+    },
+    "title": "Valores",
+    "description": "Configure valores para templates",
+    "noTemplatesTitle": "Nenhum Template Selecionado",
+    "noTemplatesDescription": "Por favor, selecione templates na seção anterior antes de configurar valores.",
+    "noTemplates": "Nenhum template disponível",
+    "errors": {
+      "title": "Erro",
+      "failedToLoad": "Falha ao carregar esquemas de template"
+    },
+    "table": {
+      "field": "Campo",
+      "type": "Tipo",
+      "defaultValue": "Padrão do Template",
+      "value": "Valor do Blueprint",
+      "exposed": "Expor",
+      "overridable": "Permitir Sobrescrever",
+      "noFields": "Nenhum campo disponível",
+      "customize": "Personalizar",
+      "reset": "Redefinir",
+      "fromTemplate": "do template"
+    },
+    "validationMessages": {
+      "validationFailed": "Falha na validação: 1 erro encontrado",
+      "validationFailedPlural": "Falha na validação: {{count}} erros encontrados",
+      "attention": "Atenção: 1 aviso encontrado",
+      "attentionPlural": "Atenção: {{count}} avisos encontrados",
+      "successMessage": "Validação concluída com sucesso",
+      "viewDetails": "Ver detalhes",
+      "errorDialogTitle": "Erros de validação",
+      "warningDialogTitle": "Avisos de validação",
+      "dialogDescription": "Confira os detalhes dos problemas encontrados na validação",
+      "closeButton": "Fechar",
+      "errorCount": "1 erro encontrado",
+      "errorCountPlural": "{{count}} erros encontrados",
+      "warningCount": "1 aviso encontrado",
+      "warningCountPlural": "{{count}} avisos encontrados",
+      "variableWarningCount": "1 problema com variáveis",
+      "variableWarningCountPlural": "{{count}} problemas com variáveis",
+      "inPath": "em: {{path}}",
+      "required": "Campo obrigatório",
+      "templateHasErrors": "Template com erros de validação",
+      "templateHasWarnings": "Template com avisos de validação"
+    },
+    "toast": {
+      "successApplied": "Alterações aplicadas com sucesso",
+      "errorApplied": "Não foi possível aplicar as alterações devido a erros de validação"
+    }
+  },
+
+  "preview": {
+    "sectionDescription": "Visualize a configuração do blueprint"
+  },
+
+  "validation": {
+    "nameRequired": "O nome é obrigatório",
+    "nameMinLength": "O nome deve ter pelo menos 3 caracteres",
+    "versionRequired": "A versão é obrigatória",
+    "applicationRequired": "A aplicação é obrigatória",
+    "descriptionNotEmpty": "A descrição não pode estar vazia",
+    "sectionValid": "Informações básicas validadas com sucesso",
+    "formHasErrors": "O formulário contém os seguintes erros:"
+  },
+
+  "errors": {
+    "loadFailed": "Não foi possível carregar o blueprint. Verifique sua conexão e tente novamente.",
+    "updateFailed": "Não foi possível atualizar o blueprint. Verifique sua conexão e tente novamente.",
+    "missingId": "ID do Blueprint está faltando",
+    "notFound": "Blueprint não encontrado",
+    "notFoundWithId": "Não foi possível encontrar blueprint com o ID {{id}}",
+    "loadError": "Erro ao carregar blueprint"
+  },
+
+  "viewToggle": {
+    "table": "Visualização em Tabela",
+    "yaml": "Visualização em YAML"
+  },
+
+  "filters": {
+    "search": {
+      "placeholder": "Buscar campos por nome ou caminho...",
+      "nestedFieldsPlaceholder": "Buscar campos..."
+    },
+    "expandAll": "Expandir Todos",
+    "collapseAll": "Colapsar Todos",
+    "filterBy": "Filtrar por",
+    "activeFilters": "Filtros ativos",
+    "labels": {
+      "exposed": "Mostrar Expostos",
+      "overridable": "Mostrar Editáveis",
+      "customized": "Mostrar Modificados"
+    },
+    "tooltips": {
+      "exposed": "Filtrar para mostrar apenas campos marcados como expostos",
+      "overridable": "Filtrar para mostrar apenas campos que podem ser sobrescritos",
+      "customized": "Filtrar para mostrar apenas campos com valores personalizados"
+    },
+    "treeActions": {
+      "label": "Árvore:",
+      "expandAll": "Expandir Tudo",
+      "collapseAll": "Colapsar Tudo",
+      "expandAllTooltip": "Expandir todos os grupos de campos e objetos aninhados",
+      "collapseAllTooltip": "Colapsar todos os grupos de campos para o nível superior"
+    },
+    "type": {
+      "all": "Todos os Tipos",
+      "string": "String",
+      "number": "Número",
+      "boolean": "Booleano",
+      "object": "Objeto",
+      "array": "Array"
+    },
+    "onlyCustomized": "Customizados",
+    "onlyExposed": "Expostos",
+    "clear": "Limpar",
+    "quickFilters": {
+      "customized": "Customizados",
+      "complex": "Complexos"
+    }
+  },
+
+  "stringEditor": {
+    "insertVariable": "Inserir Variável"
+  },
+
+  "booleanEditor": {
+    "true": "Verdadeiro",
+    "false": "Falso"
+  },
+
+  "arrayEditor": {
+    "fromTemplate": "Array (do template)",
+    "editInYaml": "Array (editar na visualização YAML)"
+  },
+
+  "objectEditor": {
+    "fromTemplate": "Objeto (do template)",
+    "configureFields": "Objeto (configurar campos individuais)"
+  }
+}

@@ -48,10 +48,7 @@ interface ModalManagerContextType {
 
   // Métodos genéricos para abrir/fechar modais
   openModal: <T extends keyof ModalStates>(modalType: T) => void;
-  openEditModal: <T extends keyof ModalStates>(
-    modalType: T,
-    item: NonNullable<ModalStates[T]['editItem']>
-  ) => void;
+  openEditModal: <T extends keyof ModalStates>(modalType: T, item: unknown) => void;
   closeModal: <T extends keyof ModalStates>(modalType: T) => void;
 
   // Método específico para o token PAT
@@ -97,10 +94,7 @@ export function ModalManagerProvider({ children }: { children: React.ReactNode }
   };
 
   // Função para abrir um modal de edição
-  const openEditModal = <T extends keyof ModalStates>(
-    modalType: T,
-    item: NonNullable<ModalStates[T]['editItem']>
-  ) => {
+  const openEditModal = <T extends keyof ModalStates>(modalType: T, item: unknown) => {
     setModals((prev) => ({
       ...prev,
       [modalType]: {
@@ -166,9 +160,16 @@ export function useModalManager() {
 export function useEnvironmentModal() {
   const { modals, openModal, openEditModal, closeModal } = useModalManager();
 
+  // Log para debug
+  console.warn('[useEnvironmentModal] Estado atual:', {
+    isOpen: modals.environment.isOpen,
+    editItem: modals.environment.editItem,
+  });
+
   return {
     isOpen: modals.environment.isOpen,
-    environmentToEdit: modals.environment.editItem,
+    entityToEdit: modals.environment.editItem, // Padronizar o nome da propriedade
+    environmentToEdit: modals.environment.editItem, // Manter compatibilidade
     openModal: () => openModal('environment'),
     openEditModal: (environment: Environment) => openEditModal('environment', environment),
     closeModal: () => closeModal('environment'),
@@ -190,7 +191,8 @@ export function useApplicationModal() {
 
   return {
     isOpen: modals.application.isOpen,
-    applicationToEdit: modals.application.editItem,
+    entityToEdit: modals.application.editItem, // Padronizar o nome da propriedade
+    applicationToEdit: modals.application.editItem, // Manter compatibilidade
     openModal: () => openModal('application'),
     openEditModal: (application: Application) => openEditModal('application', application),
     closeModal: () => closeModal('application'),
@@ -214,7 +216,8 @@ export function useLocationModal() {
 
   return {
     isOpen: modals.location.isOpen,
-    locationToEdit: modals.location.editItem,
+    entityToEdit: modals.location.editItem, // Padronizar o nome da propriedade
+    locationToEdit: modals.location.editItem, // Manter compatibilidade
     openModal: () => openModal('location'),
     openEditModal: (location: Location) => openEditModal('location', location),
     closeModal: () => closeModal('location'),

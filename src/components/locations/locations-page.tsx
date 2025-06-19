@@ -1,16 +1,27 @@
 'use client';
 
-import { PlusCircle } from 'lucide-react';
+import { MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
+import { GenericEntityModal } from '@/components/entities/generic-entity-modal';
+import { GenericEntityPage } from '@/components/entities/generic-entity-page';
 import { useLocationModal } from '@/contexts/modal-manager-context';
 import { useLocations } from '@/hooks/use-locations';
-import type { Location } from '@/types/location';
 
-import { CreateLocationModal } from './create-location-modal';
+import { LocationForm } from './location-form';
 import { LocationsTable } from './locations-table';
 
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  entityToEdit: unknown;
+  onCreate: (data: unknown) => Promise<unknown>;
+  onUpdate?: (id: string, data: unknown) => Promise<unknown>;
+  onCreateSuccess?: (entity: unknown) => void;
+}
+
 export function LocationsPage() {
+  const { t } = useTranslation(['settings']);
   const {
     locations,
     isLoading,
@@ -21,57 +32,61 @@ export function LocationsPage() {
     updateLocation,
     deleteLocation,
   } = useLocations();
-  
-  const { isOpen, locationToEdit, openModal, openEditModal, closeModal } = useLocationModal();
 
-  const handleEdit = (location: Location) => {
-    openEditModal(location);
-  };
+  const modalState = useLocationModal();
+
+  // Componente de modal simplificado
+  const LocationModal = ({
+    isOpen,
+    onClose,
+    entityToEdit,
+    onCreate,
+    onUpdate,
+    onCreateSuccess,
+  }: ModalProps) => (
+    <GenericEntityModal
+      isOpen={isOpen}
+      onClose={onClose}
+      entityToEdit={entityToEdit}
+      onCreate={onCreate}
+      onUpdate={onUpdate}
+      onCreateSuccess={onCreateSuccess}
+      EntityForm={LocationForm}
+      entityName={{
+        singular: t('locations.title'),
+        createTitle: t('locations.modal.create.title'),
+        editTitle: t('locations.modal.edit.title'),
+        createDescription: t('locations.modal.create.description'),
+        editDescription: t('locations.modal.edit.description'),
+      }}
+      createIcon={MapPin}
+      editIcon={MapPin}
+      testId="create-location-modal"
+    />
+  );
 
   return (
-    <div className="space-y-4" data-testid="locations-page-container">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">Localidades</h2>
-          <p className="text-muted-foreground">Gerencie suas localidades de implantação</p>
-        </div>
-        <Button 
-          onClick={openModal} 
-          className="gap-2"
-          data-testid="locations-page-add-button"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Adicionar Localidade
-        </Button>
-      </div>
-      
-      {error && (
-        <div 
-          className="rounded-md bg-destructive/10 p-4 text-destructive" 
-          data-testid="locations-page-error-alert"
-        >
-          {error}
-        </div>
-      )}
-      
-      <LocationsTable
-        locations={locations}
-        entities={locations}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onEdit={handleEdit}
-        onDelete={deleteLocation}
-        data-testid="locations-table"
-      />
-      
-      <CreateLocationModal
-        isOpen={isOpen}
-        onClose={closeModal}
-        createLocation={createLocation}
-        updateLocation={updateLocation}
-        locationToEdit={locationToEdit}
-        onCreateSuccess={refreshLocations}
-      />
-    </div>
+    <GenericEntityPage
+      entities={locations}
+      isLoading={isLoading}
+      isRefreshing={isRefreshing}
+      error={error || null}
+      refreshEntities={refreshLocations}
+      createEntity={createLocation}
+      updateEntity={updateLocation}
+      deleteEntity={deleteLocation}
+      EntityTable={LocationsTable}
+      EntityModal={LocationModal}
+      entityName={{
+        singular: t('locations.title'),
+        plural: t('locations.table.title'),
+        description: t('locations.description'),
+      }}
+      modalState={modalState}
+      testIdPrefix="locations"
+      tableProps={{
+        locations: locations,
+      }}
+    />
   );
 }

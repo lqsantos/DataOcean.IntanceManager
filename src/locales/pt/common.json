@@ -1,0 +1,153 @@
+{
+  "buttons": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Excluir",
+    "create": "Criar",
+    "add": "Adicionar",
+    "edit": "Editar",
+    "close": "Fechar",
+    "refresh": "Atualizar"
+  },
+  "messages": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "success": "Operação realizada com sucesso",
+    "confirmDelete": "Tem certeza que deseja excluir este item?",
+    "requiredField": "Este campo é obrigatório",
+    "invalidInput": "Entrada inválida",
+    "minLength": "Deve ter pelo menos {{count}} caracteres",
+    "maxLength": "Deve ter no máximo {{count}} caracteres"
+  },
+  "form": {
+    "required": "Obrigatório",
+    "optional": "Opcional",
+    "fields": {
+      "slug": {
+        "label": "Slug",
+        "placeholder": "identificador-unico",
+        "helpText": "Use apenas letras minúsculas, números e hífens."
+      }
+    },
+    "errors": {
+      "invalidSlug": "Slug deve conter apenas letras minúsculas, números e hífens",
+      "invalidNumber": "Valor deve ser um número válido",
+      "positiveNumberRequired": "Valor deve ser um número positivo"
+    }
+  },
+  "table": {
+    "actions": "Ações"
+  },
+  "app": {
+    "title": "DataOcean"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Visão geral da plataforma DataOcean"
+  },
+  "instances": {
+    "title": "Instâncias",
+    "description": "Gerencie suas instâncias de aplicação"
+  },
+  "clusters": {
+    "title": "Clusters",
+    "description": "Configure e monitore seus clusters"
+  },
+  "gitSources": {
+    "title": "Fontes Git",
+    "description": "Gerencie as conexões com seus repositórios Git"
+  },
+  "resources": {
+    "title": "Recursos",
+    "description": "Gerencie seus recursos para implantação",
+    "tabs": {
+      "templates": "Templates",
+      "blueprints": "Blueprints"
+    },
+    "templates": {
+      "description": "Gerencie seus templates para padronização de implantações"
+    },
+    "blueprints": {
+      "description": "Crie e gerencie blueprints para criação de instâncias"
+    }
+  },
+  "settings": {
+    "title": "Configurações",
+    "description": "Configure a sua plataforma DataOcean",
+    "applications": {
+      "title": "Aplicações",
+      "plural": "Aplicações",
+      "description": "Gerencie suas aplicações e seus recursos",
+      "modal": {
+        "create": {
+          "title": "Nova Aplicação",
+          "description": "Crie uma nova aplicação"
+        },
+        "edit": {
+          "title": "Editar Aplicação",
+          "description": "Edite os detalhes da aplicação"
+        }
+      }
+    },
+    "environments": {
+      "title": "Ambientes",
+      "plural": "Ambientes",
+      "description": "Configure os ambientes de implantação",
+      "modal": {
+        "create": {
+          "title": "Novo Ambiente",
+          "description": "Crie um novo ambiente"
+        },
+        "edit": {
+          "title": "Editar Ambiente",
+          "description": "Edite os detalhes do ambiente"
+        }
+      }
+    },
+    "locations": {
+      "title": "Localidades",
+      "plural": "Localidades",
+      "description": "Gerencie as localidades disponíveis",
+      "modal": {
+        "create": {
+          "title": "Nova Localidade",
+          "description": "Crie uma nova localidade"
+        },
+        "edit": {
+          "title": "Editar Localidade",
+          "description": "Edite os detalhes da localidade"
+        }
+      }
+    }
+  },
+  "common": {
+    "search": "Buscar...",
+    "user": "Usuário",
+    "notifications": "Notificações",
+    "toggleTheme": "Alternar tema"
+  },
+  "notifications": {
+    "newInstance": "Nova instância implantada",
+    "instanceDeployed": "Instância \"{{name}}\" foi implantada com sucesso em produção"
+  },
+  "user": {
+    "profile": "Perfil",
+    "accessToken": "Token de Acesso",
+    "logout": "Sair"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "instances": "Instâncias",
+    "clusters": "Clusters",
+    "gitSources": "Fontes Git",
+    "resources": "Recursos",
+    "settings": "Configurações",
+    "applications": "Aplicações",
+    "environments": "Ambientes",
+    "locations": "Localidades",
+    "expandMenu": "Expandir menu",
+    "collapseMenu": "Colapsar menu",
+    "closeMenu": "Fechar menu"
+  }
+}

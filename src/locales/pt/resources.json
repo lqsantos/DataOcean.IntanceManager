@@ -1,0 +1,106 @@
+{
+  "title": "Recursos",
+  "description": "Gerencie recursos na nuvem criados a partir de blueprints",
+  "tabs": {
+    "all": "Todos os Recursos",
+    "running": "Em Execução",
+    "stopped": "Parados",
+    "failed": "Falha"
+  },
+  "table": {
+    "columns": {
+      "name": "Nome",
+      "status": "Status",
+      "blueprint": "Blueprint",
+      "location": "Local",
+      "environment": "Ambiente",
+      "created": "Criado em",
+      "actions": "Ações"
+    },
+    "emptyState": {
+      "title": "Nenhum recurso encontrado",
+      "description": "Comece criando um novo recurso"
+    },
+    "search": {
+      "placeholder": "Buscar recursos..."
+    }
+  },
+  "status": {
+    "running": "Em Execução",
+    "stopped": "Parado",
+    "failed": "Falha",
+    "creating": "Criando",
+    "updating": "Atualizando",
+    "deleting": "Excluindo"
+  },
+  "actions": {
+    "create": "Criar Recurso",
+    "view": "Ver Detalhes",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "start": "Iniciar",
+    "stop": "Parar",
+    "restart": "Reiniciar",
+    "refresh": "Atualizar",
+    "add": "Adicionar"
+  },
+  "deleteDialog": {
+    "title": "Excluir Recurso",
+    "description": "Tem certeza de que deseja excluir este recurso? Esta ação não pode ser desfeita.",
+    "confirm": "Excluir",
+    "cancel": "Cancelar"
+  },
+  "createResource": {
+    "title": "Criar Recurso",
+    "steps": {
+      "selectBlueprint": {
+        "title": "Selecionar Blueprint",
+        "description": "Escolha um blueprint para criar seu recurso"
+      },
+      "configureBlueprintTemplates": {
+        "title": "Configurar Templates do Blueprint",
+        "description": "Configure os templates associados a este blueprint"
+      },
+      "configureParameters": {
+        "title": "Configurar Parâmetros",
+        "description": "Configure os parâmetros para seu recurso"
+      },
+      "deploymentSettings": {
+        "title": "Configurações de Implantação",
+        "description": "Configure onde seu recurso será implantado"
+      },
+      "review": {
+        "title": "Revisão e Criação",
+        "description": "Revise a configuração do recurso e crie"
+      }
+    },
+    "form": {
+      "name": {
+        "label": "Nome do Recurso",
+        "placeholder": "Digite um nome para o recurso",
+        "description": "Um identificador único para o seu recurso"
+      },
+      "location": {
+        "label": "Local",
+        "placeholder": "Selecione um local",
+        "description": "Onde seu recurso será implantado"
+      },
+      "environment": {
+        "label": "Ambiente",
+        "placeholder": "Selecione um ambiente",
+        "description": "O ambiente para o seu recurso"
+      },
+      "identifier": {
+        "label": "Identificador",
+        "placeholder": "identificador-unico",
+        "description": "Um identificador único para este template"
+      }
+    },
+    "buttons": {
+      "next": "Próximo",
+      "previous": "Anterior",
+      "create": "Criar Recurso",
+      "cancel": "Cancelar"
+    }
+  }
+}

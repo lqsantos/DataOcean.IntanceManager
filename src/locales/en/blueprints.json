@@ -1,0 +1,567 @@
+{
+  "pageTitle": "Blueprints",
+  "pageDescription": "Manage your blueprints for standardized instance creation",
+
+  "title": "Blueprints",
+  "description": "Manage and organize your blueprints",
+
+  "create": {
+    "title": "Create Blueprint",
+    "description": "Create a new blueprint for standardized instance creation"
+  },
+
+  "editPage": {
+    "title": "Edit Blueprint",
+    "description": "Modify an existing blueprint"
+  },
+
+  "createBlueprint": {
+    "title": "Create New Blueprint",
+    "description": "Create a new blueprint for instance standardization",
+    "fields": {
+      "name": {
+        "label": "Name",
+        "placeholder": "Blueprint name",
+        "description": "Unique name to identify this blueprint."
+      },
+      "applicationId": {
+        "label": "Application",
+        "placeholder": "Select an application",
+        "description": "Application this blueprint belongs to.",
+        "all": "All Applications"
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "Select a category",
+        "description": "Category for organizing blueprints.",
+        "all": "All Categories"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Detailed blueprint description",
+        "description": "Additional information about this blueprint."
+      },
+      "tags": {
+        "label": "Tags",
+        "placeholder": "Add tags separated by commas",
+        "description": "Tags help categorize your blueprint"
+      },
+      "version": {
+        "label": "Version",
+        "placeholder": "1.0.0",
+        "description": "Version of this blueprint (e.g. 1.0.0)."
+      },
+      "templateId": {
+        "label": "Template",
+        "placeholder": "Select a template",
+        "description": "Helm template that will be used as the base for this blueprint."
+      },
+      "variables": {
+        "label": "Variables",
+        "description": "Variables that can be configured for instances of this blueprint.",
+        "add": "Add variable",
+        "item": {
+          "name": "Variable name",
+          "description": "Variable description",
+          "type": "Type",
+          "defaultValue": "Default value",
+          "required": "Required",
+          "options": "Options (comma-separated)"
+        }
+      }
+    },
+    "steps": {
+      "info": "Information",
+      "template": "Template",
+      "variables": "Variables",
+      "review": "Review"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "create": "Create Blueprint",
+      "next": "Next",
+      "previous": "Previous",
+      "finish": "Finish"
+    },
+    "validation": {
+      "nameRequired": "Name must be at least 3 characters",
+      "descriptionRequired": "Description is required",
+      "versionRequired": "Version is required",
+      "templatesRequired": "You must associate at least one template"
+    }
+  },
+
+  "editBlueprint": {
+    "title": "Edit Blueprint",
+    "description": "Edit blueprint information",
+    "buttons": {
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "noChanges": "No changes to save"
+    },
+    "confirmClose": {
+      "title": "Discard changes",
+      "description": "Are you sure you want to discard unsaved changes?",
+      "confirm": "Discard",
+      "cancel": "Continue editing"
+    }
+  },
+
+  "deleteBlueprint": {
+    "title": "Delete Blueprint",
+    "description": "Are you sure you want to delete the blueprint <strong>{{name}}</strong>?",
+    "warning": "This action cannot be undone. All instances created from this blueprint will continue to exist, but it will not be possible to create new instances based on this blueprint.",
+    "buttons": {
+      "cancel": "Cancel",
+      "delete": "Delete"
+    }
+  },
+  "blueprintCard": {
+    "template": "Template:",
+    "variables": "Variables:",
+    "childTemplates": "Templates:",
+    "version": "Version:",
+    "createInstance": "Create Instance",
+    "unknownApplication": "Unknown Application",
+    "templateNotFound": "Template not found",
+    "actions": {
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete"
+    },
+    "noDescription": "No description",
+    "tooltip": {
+      "clickToView": "Click to view variables",
+      "noVariables": "No variables defined"
+    },
+    "helperDialog": {
+      "title": "Variables",
+      "description": "Reusable variables available for instances created from this blueprint.",
+      "noVariables": "# No variables defined."
+    },
+    "descriptionDialog": {
+      "title": "Complete blueprint description",
+      "noDescription": "*No description available*"
+    }
+  },
+
+  "basicInfoStep": {
+    "title": "Basic Information",
+    "description": "Fill in the basic information for the blueprint",
+    "markdownButtons": {
+      "edit": "Edit",
+      "preview": "Preview"
+    },
+    "noDescription": "No description provided",
+    "markdownHelp": "Supports Markdown formatting"
+  },
+
+  "templatesStep": {
+    "title": "Associated Templates",
+    "description": "Select and organize the templates that make up this blueprint.",
+    "requiredMessage": "You must select at least one template.",
+    "catalog": {
+      "title": "Template Catalog",
+      "searchPlaceholder": "Search templates...",
+      "loading": "Loading templates...",
+      "noResults": "No templates found",
+      "noDescription": "No description",
+      "noCategory": "No category",
+      "addButton": "Add"
+    },
+    "selection": {
+      "title": "Selected Templates",
+      "count": "{{count}} template(s)",
+      "required": "Required",
+      "requiredMessage": "You must select at least one template",
+      "emptyHint": "Drag templates from the catalog or use the add button",
+      "identifierLabel": "Identifier",
+      "identifierPlaceholder": "template-identifier",
+      "removeButton": "Remove"
+    }
+  },
+
+  "variablesStep": {
+    "title": "Variables Configuration",
+    "description": "Define the variables that can be used in the blueprint templates.",
+    "addVariable": "Add Variable",
+    "deleteVariable": {
+      "title": "Delete Variable",
+      "description": "Are you sure you want to delete this variable? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+
+  "variablesTable": {
+    "search": "Search variable by name...",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "description": "Description",
+      "value": "Value/Expression",
+      "actions": "Actions"
+    },
+    "types": {
+      "fixed": "Fixed Value",
+      "expression": "Go Template Expression"
+    },
+    "noVariables": "No variables defined",
+    "noResults": "No variables found",
+    "noDescription": "No description",
+    "tooltips": {
+      "edit": "Edit variable",
+      "delete": "Delete variable"
+    }
+  },
+
+  "variableValidation": {
+    "nameRequired": "Name is required",
+    "nameMaxLength": "Name must be at most 60 characters",
+    "namePattern": "Name must start with \"vars_\" (optional) followed by a letter and can contain letters, numbers, ., _ or - after",
+    "descriptionMaxLength": "Description must be at most 60 characters",
+    "valueRequired": "Value is required",
+    "expressionRequired": "Expression is required"
+  },
+
+  "variableModal": {
+    "fixed": {
+      "title": {
+        "new": "New Variable",
+        "edit": "Edit Variable"
+      },
+      "description": "Add a variable with a fixed value to your blueprint.",
+      "nameLabel": "Name",
+      "nameDescription": "Name can start with \"vars_\" followed by letters, numbers, _ or -.",
+      "namePlaceholder": "vars_variable_name",
+      "descriptionLabel": "Description",
+      "descriptionDescription": "A brief description of the variable.",
+      "valueLabel": "Value",
+      "valueDescription": "The fixed value of the variable.",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "expression": {
+      "title": {
+        "new": "New Expression",
+        "edit": "Edit Expression"
+      },
+      "description": "Add a variable with Go Template expression to your blueprint.",
+      "nameLabel": "Name",
+      "nameDescription": "Name can start with \"vars_\" followed by letters, numbers, _ or -.",
+      "namePlaceholder": "vars_expression_name",
+      "descriptionLabel": "Description",
+      "descriptionDescription": "A brief description of the variable.",
+      "expressionLabel": "Expression",
+      "expressionDescription": "Go Template expression to evaluate.",
+      "cancel": "Cancel",
+      "save": "Save"
+    }
+  },
+
+  "previewStep": {
+    "title": "Review and Confirm",
+    "description": "Review all information before finalizing the blueprint creation.",
+    "templates": "Associated Templates",
+    "templatesCount": "{{count}} template(s) associated",
+    "variablesCount": "{{count}} variable(s) defined"
+  },
+
+  "search": {
+    "placeholder": "Search blueprints...",
+    "filterByCategory": "Filter by category",
+    "allCategories": "All categories",
+    "noResults": {
+      "title": "No blueprints found",
+      "description": {
+        "withFilters": "Try adjusting your search filters",
+        "noFilters": "Create a new blueprint to get started"
+      }
+    },
+    "loading": "Loading blueprints..."
+  },
+
+  "viewMode": {
+    "grid": "Grid view",
+    "list": "List view"
+  },
+
+  "newButton": "New Blueprint",
+  "refreshButton": "Refresh",
+
+  "toast": {
+    "created": {
+      "title": "Success",
+      "description": "Blueprint {{name}} created successfully"
+    },
+    "updated": {
+      "title": "Success",
+      "description": "Blueprint updated successfully"
+    },
+    "deleted": {
+      "title": "Success",
+      "description": "Blueprint deleted successfully"
+    },
+    "duplicated": {
+      "title": "Success",
+      "description": "Blueprint \"{{name}}\" duplicated successfully"
+    },
+    "error": {
+      "title": "Error",
+      "description": "An error occurred while processing the request"
+    }
+  },
+
+  "actions": {
+    "refresh": "Refresh",
+    "edit": "Edit Blueprint",
+    "delete": "Delete Blueprint",
+    "duplicate": "Duplicate Blueprint",
+    "create": "Create Instance"
+  },
+
+  "edit": {
+    "title": "Editing Blueprint: {{name}}",
+    "description": "Edit the blueprint configuration",
+    "saveSuccess": "Blueprint updated successfully"
+  },
+
+  "sections": {
+    "basicInfo": "Basic Information",
+    "templates": "Templates",
+    "variables": "Variables",
+    "values": "Values",
+    "preview": "Preview",
+    "basicInfo_description": "Configure the general information for this blueprint",
+    "templates_description": "Select and manage templates associated with this blueprint",
+    "variables_description": "Define variables used by this blueprint",
+    "values_description": "Configure values and visibility for template fields",
+    "preview_description": "Preview the blueprint configuration",
+    "placeholders": {
+      "metadata": "No metadata form provided",
+      "templates": "No templates form provided",
+      "variables": "No variables form provided",
+      "values": "No values configuration provided",
+      "preview": "No preview available"
+    }
+  },
+
+  "basicInfo": {
+    "sectionDescription": "Configure the general information for this blueprint"
+  },
+
+  "templates": {
+    "sectionDescription": "Select and manage templates associated with this blueprint"
+  },
+
+  "variables": {
+    "sectionDescription": "Define variables used by this blueprint",
+    "title": "Variables",
+    "addVariable": "Add Variable",
+    "searchPlaceholder": "Search variables...",
+    "noVariablesFound": "No variables found.",
+    "variableEditor": {
+      "addTitle": "Add Variable",
+      "editTitle": "Edit Variable",
+      "name": "Name",
+      "namePlaceholder": "variable_name",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what this variable is used for",
+      "expression": "Expression",
+      "showSyntaxHelp": "Show syntax help",
+      "saveVariable": "Save Variable",
+      "cancel": "Cancel",
+      "deleteVariable": "Delete Variable",
+      "validation": {
+        "nameRequired": "Name is required",
+        "nameFormat": "Name must start with a letter and contain only letters, numbers, and underscores",
+        "nameDuplicate": "This name is already in use",
+        "valueRequired": "Value is required",
+        "unbalancedDelimiters": "Unbalanced template delimiters"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete Variable",
+      "description": "Are you sure you want to delete the variable \"{{name}}\"? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "notifications": {
+      "added": "Variable added",
+      "addedDescription": "{{name}} has been added",
+      "updated": "Variable updated",
+      "updatedDescription": "{{name}} has been updated",
+      "deleted": "Variable deleted",
+      "deletedDescription": "{{name}} has been removed"
+    }
+  },
+
+  "values": {
+    "sectionDescription": "Configure values for template fields and control their visibility",
+    "editor": {
+      "title": "Values Editor",
+      "availableVariables": "Available Variables",
+      "resetButton": "Reset",
+      "formatYaml": "Format YAML",
+      "applyButton": "Apply Changes"
+    },
+    "contractPreview": {
+      "title": "Configuration Contract",
+      "description": "Preview the configuration contract between this blueprint and its instances",
+      "viewContract": "View Contract",
+      "downloadJson": "Download JSON",
+      "dialogTitle": "Configuration Contract"
+    },
+    "batchActions": {
+      "exposeAll": "Expose all fields",
+      "exposeAllDescription": "Make all fields editable in the instance creation form",
+      "hideAll": "Hide all fields",
+      "hideAllDescription": "Hide all fields from the instance creation form",
+      "resetAll": "Reset all fields",
+      "resetAllDescription": "Reset all fields to template defaults"
+    },
+    "validation": {
+      "errorTitle": "Validation Error",
+      "warningTitle": "Validation Warning",
+      "variableWarningTitle": "Variable Validation Warning",
+      "atPath": "at {{path}}"
+    },
+    "title": "Values",
+    "description": "Configure values for templates",
+    "noTemplatesTitle": "No Templates Selected",
+    "noTemplatesDescription": "Please select templates in the previous section before configuring values.",
+    "noTemplates": "No templates available",
+    "errors": {
+      "title": "Error",
+      "failedToLoad": "Failed to load template schemas"
+    },
+    "table": {
+      "field": "Field",
+      "type": "Type",
+      "defaultValue": "Template Default",
+      "value": "Blueprint Value",
+      "exposed": "Expose",
+      "overridable": "Allow Override",
+      "noFields": "No fields available",
+      "customize": "Customize",
+      "reset": "Reset",
+      "fromTemplate": "from template"
+    },
+    "validationMessages": {
+      "validationFailed": "Validation failed: 1 error found",
+      "validationFailedPlural": "Validation failed: {{count}} errors found",
+      "attention": "Attention: 1 warning found",
+      "attentionPlural": "Attention: {{count}} warnings found",
+      "successMessage": "Validation completed successfully",
+      "viewDetails": "View details",
+      "errorDialogTitle": "Validation errors",
+      "warningDialogTitle": "Validation warnings",
+      "dialogDescription": "Check the details of the problems found in the validation",
+      "closeButton": "Close",
+      "errorCount": "1 error found",
+      "errorCountPlural": "{{count}} errors found",
+      "warningCount": "1 warning found",
+      "warningCountPlural": "{{count}} warnings found",
+      "variableWarningCount": "1 variable issue",
+      "variableWarningCountPlural": "{{count}} variable issues",
+      "inPath": "in: {{path}}",
+      "required": "Required field",
+      "templateHasErrors": "Template has validation errors",
+      "templateHasWarnings": "Template has validation warnings"
+    },
+    "toast": {
+      "successApplied": "Changes applied successfully",
+      "errorApplied": "Could not apply changes due to validation errors"
+    }
+  },
+
+  "preview": {
+    "sectionDescription": "Preview the blueprint configuration"
+  },
+
+  "validation": {
+    "nameRequired": "Name is required",
+    "nameMinLength": "Name must be at least 3 characters",
+    "versionRequired": "Version is required",
+    "applicationRequired": "Application is required",
+    "descriptionNotEmpty": "Description cannot be empty",
+    "sectionValid": "Basic information validated successfully",
+    "formHasErrors": "The form contains the following errors:"
+  },
+
+  "errors": {
+    "loadFailed": "Could not load blueprint. Please check your connection and try again.",
+    "updateFailed": "Could not update blueprint. Please check your connection and try again.",
+    "missingId": "Blueprint ID is missing",
+    "notFound": "Blueprint not found",
+    "notFoundWithId": "Could not find blueprint with ID {{id}}",
+    "loadError": "Error loading blueprint"
+  },
+
+  "viewToggle": {
+    "table": "Table View",
+    "yaml": "YAML View"
+  },
+
+  "filters": {
+    "search": {
+      "placeholder": "Search fields by name or path...",
+      "nestedFieldsPlaceholder": "Search fields..."
+    },
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All",
+    "filterBy": "Filter by",
+    "activeFilters": "Active filters",
+    "labels": {
+      "exposed": "Show Exposed",
+      "overridable": "Show Overridable",
+      "customized": "Show Modified"
+    },
+    "tooltips": {
+      "exposed": "Filter to show only fields marked as exposed",
+      "overridable": "Filter to show only fields that can be overridden",
+      "customized": "Filter to show only fields with custom values"
+    },
+    "treeActions": {
+      "label": "Tree:",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All",
+      "expandAllTooltip": "Expand all field groups and nested objects",
+      "collapseAllTooltip": "Collapse all field groups to top level"
+    },
+    "type": {
+      "all": "All Types",
+      "string": "String",
+      "number": "Number",
+      "boolean": "Boolean",
+      "object": "Object",
+      "array": "Array"
+    },
+    "onlyCustomized": "Customized",
+    "onlyExposed": "Exposed",
+    "clear": "Clear",
+    "quickFilters": {
+      "customized": "Customized",
+      "complex": "Complex"
+    }
+  },
+
+  "stringEditor": {
+    "insertVariable": "Insert Variable"
+  },
+
+  "booleanEditor": {
+    "true": "True",
+    "false": "False"
+  },
+
+  "arrayEditor": {
+    "fromTemplate": "Array (from template)",
+    "editInYaml": "Array (edit in YAML view)"
+  },
+
+  "objectEditor": {
+    "fromTemplate": "Object (from template)",
+    "configureFields": "Object (configure individual fields)"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "searchPlaceholder": "Buscar...",
+  "emptyMessage": "Nenhum registro encontrado",
+  "emptySearchMessage": "Nenhum registro corresponde à sua busca",
+  "actions": {
+    "edit": "Editar",
+    "delete": "Excluir",
+    "view": "Visualizar"
+  },
+  "pagination": {
+    "previous": "Anterior",
+    "next": "Próximo",
+    "showing": "Mostrando",
+    "of": "de",
+    "entries": "registros"
+  },
+  "columns": {
+    "createdAt": "Criado em"
+  }
+}

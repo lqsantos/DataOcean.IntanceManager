@@ -97,7 +97,7 @@ export function StyledDeleteDialog({
   );
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onCancel()}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={dialogContentClasses} data-testid={testId}>
         {/* Cabeçalho com gradiente e decoração */}
         <div className="relative overflow-hidden border-b border-border">

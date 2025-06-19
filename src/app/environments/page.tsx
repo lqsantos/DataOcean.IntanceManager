@@ -1,6 +1,6 @@
 // app/environments/page.tsx
-import { EnvironmentsPage } from '@/components/environments/environments-page';
+import { redirect } from 'next/navigation';
 
 export default function EnvironmentsRoute() {
-  return <EnvironmentsPage />;
+  redirect('/settings/environments');
 }

@@ -1,0 +1,176 @@
+{
+  "title": "Settings",
+  "description": "Manage your DataOcean platform settings",
+  "tabs": {
+    "applications": "Applications",
+    "environments": "Environments",
+    "locations": "Locations"
+  },
+  "actions": {
+    "add": "Add {{entity}}"
+  },
+  "applications": {
+    "title": "Manage Applications",
+    "description": "View and manage applications available in your instance",
+    "table": {
+      "title": "Applications",
+      "searchPlaceholder": "Search by name...",
+      "emptyMessage": "No applications found",
+      "emptySearchMessage": "No applications match your search",
+      "columns": {
+        "name": "Name",
+        "description": "Description",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "create": "New Application",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "modal": {
+      "create": {
+        "title": "Create New Application",
+        "description": "Configure a new application for deployment",
+        "button": "Create"
+      },
+      "edit": {
+        "title": "Edit Application",
+        "description": "Modify the application settings",
+        "button": "Save"
+      },
+      "delete": {
+        "title": "Delete Application",
+        "confirmation": "Are you sure you want to delete this application?",
+        "button": "Confirm"
+      },
+      "form": {
+        "name": {
+          "label": "Name",
+          "placeholder": "Enter application name"
+        },
+        "description": {
+          "label": "Description",
+          "placeholder": "Enter application description"
+        }
+      }
+    },
+    "feedback": {
+      "createSuccess": "Application created successfully!",
+      "updateSuccess": "Application updated successfully!",
+      "deleteSuccess": "Application deleted successfully!",
+      "error": "An error occurred while processing your request."
+    }
+  },
+  "environments": {
+    "title": "Manage Environments",
+    "description": "View and manage environments available in your instance",
+    "table": {
+      "title": "Environments",
+      "searchPlaceholder": "Search by name...",
+      "emptyMessage": "No environments found",
+      "emptySearchMessage": "No environments match your search",
+      "columns": {
+        "name": "Name",
+        "description": "Description",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "create": "New Environment",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "modal": {
+      "create": {
+        "title": "Create New Environment",
+        "description": "Configure a new environment for deployment",
+        "button": "Create"
+      },
+      "edit": {
+        "title": "Edit Environment",
+        "description": "Modify the environment settings",
+        "button": "Save"
+      },
+      "delete": {
+        "title": "Delete Environment",
+        "confirmation": "Are you sure you want to delete this environment?",
+        "button": "Confirm"
+      },
+      "form": {
+        "name": {
+          "label": "Name",
+          "placeholder": "Enter environment name"
+        },
+        "description": {
+          "label": "Description",
+          "placeholder": "Enter environment description"
+        },
+        "order": {
+          "label": "Order",
+          "placeholder": "e.g., 1",
+          "helpText": "Determines the display order of environments."
+        }
+      }
+    },
+    "feedback": {
+      "createSuccess": "Environment created successfully!",
+      "updateSuccess": "Environment updated successfully!",
+      "deleteSuccess": "Environment deleted successfully!",
+      "error": "An error occurred while processing your request."
+    }
+  },
+  "locations": {
+    "title": "Manage Locations",
+    "description": "View and manage locations available in your instance",
+    "table": {
+      "title": "Locations",
+      "searchPlaceholder": "Search by name...",
+      "emptyMessage": "No locations found",
+      "emptySearchMessage": "No locations match your search",
+      "columns": {
+        "name": "Name",
+        "description": "Description",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "create": "New Location",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "modal": {
+      "create": {
+        "title": "Create New Location",
+        "description": "Configure a new location for deployment",
+        "button": "Create"
+      },
+      "edit": {
+        "title": "Edit Location",
+        "description": "Modify the location settings",
+        "button": "Save"
+      },
+      "delete": {
+        "title": "Delete Location",
+        "confirmation": "Are you sure you want to delete this location?",
+        "button": "Confirm"
+      },
+      "form": {
+        "name": {
+          "label": "Name",
+          "placeholder": "Enter location name"
+        },
+        "description": {
+          "label": "Description",
+          "placeholder": "Enter location description"
+        }
+      }
+    },
+    "feedback": {
+      "createSuccess": "Location created successfully!",
+      "updateSuccess": "Location updated successfully!",
+      "deleteSuccess": "Location deleted successfully!",
+      "error": "An error occurred while processing your request."
+    }
+  }
+}
