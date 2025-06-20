@@ -136,12 +136,26 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   /**
    * Handle starting edit mode
    */
-  const handleStartEdit = useCallback(() => {
-    setIsEditing(true);
-    setTempValue(field.value);
-    setUserHasInteracted(false); // Reset interaction flag
-    onStartEdit?.();
-  }, [field.value, onStartEdit]);
+  const handleStartEdit = useCallback(
+    (preserveInteraction = false) => {
+      setIsEditing(true);
+      setTempValue(field.value);
+
+      if (!preserveInteraction) {
+        setUserHasInteracted(false); // Reset interaction flag only if not preserving
+      }
+
+      onStartEdit?.();
+    },
+    [field.value, onStartEdit]
+  );
+
+  /**
+   * Handle starting edit mode from button click
+   */
+  const handleStartEditClick = useCallback(() => {
+    handleStartEdit(false);
+  }, [handleStartEdit]);
 
   /**
    * Handle applying changes
@@ -215,7 +229,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
     setTempValue(templateValue);
     setUserHasInteracted(true); // Mark as interacted since user wants to customize
     onCustomize?.();
-    handleStartEdit();
+    handleStartEdit(true); // Preserve the interaction flag
   }, [field.originalValue, field.value, onCustomize, handleStartEdit]);
 
   /**
@@ -286,6 +300,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
           onValueChange={_handleTempValueChange}
           blueprintVariables={blueprintVariables}
           autoFocus={true}
+          initialUserInteraction={userHasInteracted}
           data-testid="unified-value-editor"
         />
       );
@@ -419,7 +434,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
                 variant="ghost"
                 size="sm"
                 className={cn(BUTTON_STYLES.edit, SIZE_CONFIG.buttonHeight)}
-                onClick={handleStartEdit}
+                onClick={handleStartEditClick}
                 data-testid="unified-value-edit"
               >
                 {t('values.table.edit')}
@@ -455,7 +470,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
     isEditing,
     field.type,
     handleCustomize,
-    handleStartEdit,
+    handleStartEditClick,
     handleReset,
     t,
   ]);

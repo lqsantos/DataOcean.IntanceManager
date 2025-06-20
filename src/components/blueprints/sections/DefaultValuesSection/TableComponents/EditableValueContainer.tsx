@@ -30,6 +30,8 @@ interface EditableValueContainerProps {
   blueprintVariables?: Array<{ name: string; value: string }>;
   /** Whether to auto-focus the editor */
   autoFocus?: boolean;
+  /** Whether the user has already indicated intent to customize (e.g., clicked "Customizar") */
+  initialUserInteraction?: boolean;
   /** Test ID for automated testing */
   'data-testid'?: string;
 }
@@ -45,12 +47,13 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   onValueChange,
   blueprintVariables = [],
   autoFocus = true,
+  initialUserInteraction = false,
   'data-testid': dataTestId,
 }) => {
   const { t } = useTranslation('blueprints');
   const [tempValue, setTempValue] = useState<string | number | boolean>(initialValue);
   const [hasChanges, setHasChanges] = useState(false);
-  const [userHasInteracted, setUserHasInteracted] = useState(false); // Track user interaction
+  const [userHasInteracted, setUserHasInteracted] = useState(initialUserInteraction); // Track user interaction
 
   // Initialize validation hook
   const { validationResult, isValidating, validateValueDebounced, clearValidation, getEditState } =
