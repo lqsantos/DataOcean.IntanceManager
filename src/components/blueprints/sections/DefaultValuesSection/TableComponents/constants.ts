@@ -28,7 +28,6 @@ export const UNIFIED_COLUMN_WIDTHS = {
 export const VALUE_STATE_CONFIG = {
   template: {
     icon: '⚪',
-    iconColor: 'text-gray-400',
     bgColor: 'bg-gray-50',
     borderColor: 'border-gray-200',
     textColor: 'text-gray-700',
@@ -36,7 +35,6 @@ export const VALUE_STATE_CONFIG = {
   },
   customized: {
     icon: '🔵',
-    iconColor: 'text-blue-500',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
     textColor: 'text-blue-900',
@@ -44,7 +42,6 @@ export const VALUE_STATE_CONFIG = {
   },
   editing: {
     icon: '🟡',
-    iconColor: 'text-amber-500',
     bgColor: 'bg-amber-50',
     borderColor: 'border-amber-300',
     textColor: 'text-amber-900',
@@ -52,7 +49,6 @@ export const VALUE_STATE_CONFIG = {
   },
   object: {
     icon: '🔷',
-    iconColor: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
     textColor: 'text-blue-900',

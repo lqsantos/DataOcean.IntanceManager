@@ -12,7 +12,6 @@
  * - Supports all types: string, number, boolean, object, array
  */
 
-import { Edit3 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -99,35 +98,30 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
       case ValueDisplayState.TEMPLATE:
         return {
           ...VALUE_STATE_CONFIG.template,
-          stateIcon: Edit3, // Icon won't be shown for template fields
           availableActions: ['customize'] as const,
         };
 
       case ValueDisplayState.CUSTOMIZED:
         return {
           ...VALUE_STATE_CONFIG.customized,
-          stateIcon: Edit3,
           availableActions: ['edit', 'reset'] as const,
         };
 
       case ValueDisplayState.EDITING:
         return {
           ...VALUE_STATE_CONFIG.editing,
-          stateIcon: Edit3,
           availableActions: ['apply', 'cancel'] as const,
         };
 
       case ValueDisplayState.OBJECT:
         return {
           ...VALUE_STATE_CONFIG.object,
-          stateIcon: Edit3,
           availableActions: [] as const,
         };
 
       default:
         return {
           ...VALUE_STATE_CONFIG.template,
-          stateIcon: Edit3, // Icon won't be shown for template fields
           availableActions: [] as const,
         };
     }
@@ -339,7 +333,6 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
 
       default: {
         const isDefaultFromTemplate = field.source === ValueSourceType.TEMPLATE;
-        const StateIcon = visualConfig.stateIcon;
 
         let displayValue: string;
 
@@ -361,14 +354,6 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
             )}
           >
             <div className="flex items-center gap-2">
-              {/* Only show icon for customized fields to reduce visual clutter */}
-              {!isDefaultFromTemplate && (
-                <StateIcon
-                  size={16}
-                  className={cn(visualConfig.iconColor)}
-                  data-testid="unified-value-icon"
-                />
-              )}
               <span
                 className={cn('truncate text-sm', visualConfig.textColor)}
                 data-testid="unified-value-text"
