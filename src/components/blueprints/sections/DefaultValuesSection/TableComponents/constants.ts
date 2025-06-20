@@ -5,20 +5,20 @@
 
 /**
  * Updated column widths for the unified table layout
- * Redistributes space from the removed "defaultValue" column to "value" column
+ * Prioritizes space for the Value column which tends to have extensive content
  *
  * Previous layout:
- * - field: 33%, type: 8%, defaultValue: 17%, value: 25%, exposed: 8.5%, overridable: 8.5%
+ * - field: 33%, type: 8%, value: 42%, exposed: 8.5%, overridable: 8.5%
  *
- * New layout:
- * - field: 33%, type: 8%, value: 42% (25% + 17%), exposed: 8.5%, overridable: 8.5%
+ * New optimized layout (more space for Value, less gap between columns):
+ * - field: 30%, type: 7%, value: 50%, exposed: 6.5%, overridable: 6.5%
  */
 export const UNIFIED_COLUMN_WIDTHS = {
-  field: '33%',
-  type: '8%',
-  value: '42%', // Expanded to include space from removed defaultValue column
-  exposed: '8.5%',
-  overridable: '8.5%',
+  field: '30%',
+  type: '7%',
+  value: '50%', // Increased for extensive content
+  exposed: '6.5%',
+  overridable: '6.5%',
 } as const;
 
 /**
