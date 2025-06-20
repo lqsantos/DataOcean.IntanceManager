@@ -9,7 +9,7 @@
  * - Clear separation between display and edit modes
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -43,10 +43,19 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   showValidationFeedback = true,
   disabled = false,
 }) => {
-  const { t } = useTranslation('blueprints');
-
-  // SIMPLIFIED STATE: Only track editing mode, tempValue managed by EditableValueContainer
+  const { t } = useTranslation('blueprints'); // SIMPLIFIED STATE: Only track editing mode, tempValue managed by EditableValueContainer
   const [isEditing, setIsEditing] = useState(false);
+
+  // Track effective value during transitions (reset, customize, etc.)
+  const [effectiveValue, setEffectiveValue] = useState<unknown>(field.value);
+
+  // Track if we're in "customize mode" (waiting for user action)
+  const [isCustomizing, setIsCustomizing] = useState(false);
+
+  // Sync effective value when field.value changes from parent
+  useEffect(() => {
+    setEffectiveValue(field.value);
+  }, [field.value]);
 
   // Initialize validation hook for real-time feedback
   const { validationResult, validateValueDebounced, clearValidation, getEditState } =
@@ -120,44 +129,78 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   }, [onStartEdit]);
 
   /**
-   * Handle applying changes - SIMPLIFIED
+   * Handle applying changes - SIMPLIFIED + FIXED
    */
   const handleApplyChanges = useCallback(
     (newValue: unknown) => {
       console.warn('[UnifiedValueColumn] Applying changes:', newValue);
+
+      // If we were customizing (template → blueprint), execute onCustomize now
+      if (isCustomizing) {
+        console.warn('[UnifiedValueColumn] Executing delayed customization for field:', field.key);
+        onCustomize?.();
+        setIsCustomizing(false);
+      }
+
+      setEffectiveValue(newValue); // Update effective value immediately
       setIsEditing(false);
       clearValidation();
       onApplyChanges?.(newValue);
     },
-    [onApplyChanges, clearValidation]
+    [onApplyChanges, clearValidation, isCustomizing, onCustomize, field.key]
   );
 
   /**
-   * Handle canceling edit - SIMPLIFIED
+   * Handle canceling edit - SIMPLIFIED + FIXED
    */
   const handleCancelEdit = useCallback(() => {
+    console.warn(
+      '[UnifiedValueColumn] Canceling edit for field:',
+      field.key,
+      'was customizing:',
+      isCustomizing
+    );
+
+    // If we were customizing and user cancels, don't execute onCustomize
+    if (isCustomizing) {
+      console.warn('[UnifiedValueColumn] Canceling customization - field remains as template');
+      setIsCustomizing(false);
+    }
+
     setIsEditing(false);
     clearValidation();
     onCancelEdit?.();
-  }, [onCancelEdit, clearValidation]);
+  }, [onCancelEdit, clearValidation, field.key, isCustomizing]);
 
   /**
-   * Handle customizing field (template → blueprint) - SIMPLIFIED
+   * Handle customizing field (template → blueprint) - FIXED
+   * Don't execute onCustomize immediately, wait for actual changes
    */
   const handleCustomize = useCallback(() => {
-    onCustomize?.();
+    console.warn('[UnifiedValueColumn] Starting customize mode for field:', field.key);
+    setIsCustomizing(true); // Mark as customizing mode
     handleStartEdit();
-  }, [onCustomize, handleStartEdit]);
+  }, [handleStartEdit, field.key]);
 
   /**
-   * Handle resetting field (blueprint → template) - SIMPLIFIED
+   * Handle resetting field (blueprint → template) - SIMPLIFIED + FIXED
    */
   const handleReset = useCallback(() => {
-    console.warn('[UnifiedValueColumn] Resetting field:', field.key);
+    console.warn(
+      '[UnifiedValueColumn] Resetting field:',
+      field.key,
+      'from',
+      effectiveValue,
+      'to original:',
+      field.originalValue
+    );
+
+    // Immediately update effective value to original value for immediate UI feedback
+    setEffectiveValue(field.originalValue);
     setIsEditing(false);
     clearValidation();
     onReset?.();
-  }, [onReset, clearValidation, field.key]);
+  }, [onReset, clearValidation, field.key, field.originalValue, effectiveValue]);
 
   /**
    * Handle resetting all children recursively for object fields
@@ -205,8 +248,9 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
     if (isEditing && field.type !== 'object' && field.type !== 'array') {
       return (
         <EditableValueContainer
+          key={`edit-${field.key}-${effectiveValue}-${field.source}`} // Use effectiveValue for better remounting
           field={field}
-          initialValue={field.value as string | number | boolean}
+          initialValue={effectiveValue as string | number | boolean} // Use effectiveValue instead of field.value
           onApply={handleApplyChanges}
           onCancel={handleCancelEdit}
           onValueChange={handleTempValueChange}
@@ -255,7 +299,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         if (isDefaultFromTemplate) {
           displayValue = field.originalValue !== undefined ? String(field.originalValue) : '-';
         } else {
-          displayValue = String(field.value || '');
+          displayValue = String(effectiveValue || ''); // Use effectiveValue for consistent display
         }
 
         return (

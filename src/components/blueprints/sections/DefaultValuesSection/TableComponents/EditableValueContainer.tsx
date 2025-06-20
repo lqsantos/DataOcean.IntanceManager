@@ -62,13 +62,15 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
       blueprintVariables,
     });
 
-  // Reset state when initialValue changes (e.g., after field reset)
+  // Reset state when initialValue changes (e.g., after field reset) - FIXED
   useEffect(() => {
     console.warn(
       '[EditableValueContainer] Resetting state for field:',
       field.key,
       'new initial value:',
-      initialValue
+      initialValue,
+      'previous temp value:',
+      tempValue
     );
     setTempValue(initialValue);
     setUserHasInteracted(false);
