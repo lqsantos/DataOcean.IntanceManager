@@ -64,6 +64,21 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
       blueprintVariables,
     });
 
+  // Detect external reset and exit editing mode
+  // Only trigger if we're editing a BLUEPRINT field that suddenly becomes TEMPLATE
+  useEffect(() => {
+    // Only exit editing if we were editing a blueprint field that was reset to template
+    // This prevents false triggers when customizing template fields
+    if (isEditing && !isCustomizing && field.source === ValueSourceType.TEMPLATE) {
+      console.warn(
+        '[UnifiedValueColumn] External reset detected on blueprint field, exiting edit mode for field:',
+        field.key
+      );
+      setIsEditing(false);
+      clearValidation();
+    }
+  }, [field.source, isEditing, isCustomizing, clearValidation, field.key]);
+
   /**
    * Determine the visual display state - SIMPLIFIED
    */
