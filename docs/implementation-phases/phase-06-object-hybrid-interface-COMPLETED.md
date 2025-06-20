@@ -55,6 +55,42 @@ function analyzeObjectChildren(children: DefaultValueField[]): {
 - ✅ Accessibility com `aria-label` nos ícones
 - ✅ Test IDs para automação de testes
 
+## 🔄 **Atualização: Contagem de Propriedades Mais Intuitiva**
+
+### **Problema Identificado:**
+
+- A contagem inicial incluía **todos os filhos recursivamente** (diretos + indiretos)
+- Objeto com 2 filhos diretos + 3 netos = "5 properties" (confuso!)
+
+### **Solução Implementada:**
+
+- [`totalProperties`](src/components/blueprints/sections/DefaultValuesSection/TableComponents/ObjectDisplayComponent.tsx) agora conta **apenas filhos diretos**
+- [`customizedCount`](src/components/blueprints/sections/DefaultValuesSection/TableComponents/ObjectDisplayComponent.tsx) mantém contagem recursiva (necessário para reset)
+
+### **Comportamento Atual:**
+
+```typescript
+// Para um objeto como:
+{
+  name: "string",           // +1 (filho direto)
+  config: {                 // +1 (filho direto)
+    enabled: "boolean",     // (filho indireto - não conta)
+    settings: {             // (filho indireto - não conta)
+      debug: "boolean"      // (filho indireto - não conta)
+    }
+  }
+}
+// Resultado: "2 properties" (muito mais intuitivo!)
+```
+
+### **Exemplos de Tooltips:**
+
+- **Sem customizações**: "2 properties"
+- **Com customizações**: "2 properties, 3 customized"
+- **Vazio**: "Empty object"
+
+**Muito mais claro e intuitivo!** ✅
+
 ## 🎨 **Benefícios da Nova Abordagem**
 
 ### **Interface Mais Limpa:**

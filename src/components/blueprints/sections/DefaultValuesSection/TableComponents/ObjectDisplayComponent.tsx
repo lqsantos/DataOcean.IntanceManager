@@ -37,6 +37,8 @@ interface ObjectDisplayComponentProps {
 
 /**
  * Recursively analyzes object children to determine customization state
+ * NOTE: totalProperties counts only DIRECT children for clarity and intuition
+ * NOTE: customizedCount counts ALL customizations recursively (needed for reset)
  */
 function analyzeObjectChildren(children: DefaultValueField[]): {
   totalProperties: number;
@@ -53,7 +55,8 @@ function analyzeObjectChildren(children: DefaultValueField[]): {
     };
   }
 
-  let totalProperties = children.length;
+  // Count only direct children for totalProperties (more intuitive)
+  const totalProperties = children.length;
   let hasCustomizations = false;
   let customizedCount = 0;
 
@@ -64,12 +67,11 @@ function analyzeObjectChildren(children: DefaultValueField[]): {
       customizedCount++;
     }
 
-    // Recursively check nested children
+    // Recursively check nested children for customizations (but not for count)
     if (child.children && child.children.length > 0) {
       const childAnalysis = analyzeObjectChildren(child.children);
 
-      totalProperties += childAnalysis.totalProperties;
-
+      // Only add customization info, NOT property count
       if (childAnalysis.hasCustomizations) {
         hasCustomizations = true;
         customizedCount += childAnalysis.customizedCount;
