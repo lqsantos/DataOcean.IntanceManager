@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import type { DefaultValueField } from '../types';
 import { ValueSourceType } from '../types';
 
-import { BUTTON_STYLES } from './constants';
+import { BUTTON_CONFIG } from './constants';
 
 interface ObjectDisplayComponentProps {
   /** The object field being displayed */
@@ -216,10 +216,9 @@ export const ObjectDisplayComponent: React.FC<ObjectDisplayComponentProps> = ({
         {/* Reset button */}
         {hasCustomizations && !isEmpty && onResetAllChildren && !disabled && (
           <Button
-            variant="outline"
-            size="sm"
+            variant={BUTTON_CONFIG.variants.resetAll}
+            className={BUTTON_CONFIG.extraSmall}
             onClick={handleResetAllChildren}
-            className={cn(BUTTON_STYLES.resetAll)}
             aria-label={`Reset all children (${analysis.customizedCount} ${analysis.customizedCount === 1 ? 'field' : 'fields'})`}
             data-testid={dataTestId ? `${dataTestId}-reset-all` : undefined}
           >

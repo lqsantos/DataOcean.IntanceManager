@@ -57,16 +57,23 @@ export const VALUE_STATE_CONFIG = {
 } as const;
 
 /**
- * Button styling configurations
- * Consistent styling for action buttons across different states
+ * Button variants and sizes for consistent styling
+ * Uses shadcn/ui standard variants instead of custom styles
  */
-export const BUTTON_STYLES = {
-  customize: 'h-5 px-1.5 text-[10px] text-blue-600 hover:bg-blue-50 hover:text-blue-700',
-  edit: 'h-5 px-1.5 text-[10px] text-green-600 hover:bg-green-50 hover:text-green-700',
-  reset: 'h-5 px-1.5 text-[10px] text-orange-600 hover:bg-orange-50 hover:text-orange-700',
-  apply: 'h-5 px-1.5 text-[10px] text-green-600 hover:bg-green-50 hover:text-green-700',
-  cancel: 'h-5 px-1.5 text-[10px] text-gray-600 hover:bg-gray-50 hover:text-gray-700',
-  resetAll: 'h-5 px-1.5 text-[10px] text-red-600 hover:bg-red-50 hover:text-red-700',
+export const BUTTON_CONFIG = {
+  variants: {
+    customize: 'ghost' as const, // Subtle action for template customization
+    edit: 'ghost' as const, // Subtle action for editing values
+    reset: 'outline' as const, // More prominent for reset action
+    apply: 'default' as const, // Primary action for applying changes
+    cancel: 'outline' as const, // Secondary action for canceling
+    resetAll: 'outline' as const, // Destructive action for reset all
+  },
+  sizes: {
+    default: 'sm' as const, // Small size for table buttons
+  },
+  // Custom classes for extra small buttons when needed
+  extraSmall: 'h-6 px-2 text-xs rounded-md gap-1',
 } as const;
 
 /**

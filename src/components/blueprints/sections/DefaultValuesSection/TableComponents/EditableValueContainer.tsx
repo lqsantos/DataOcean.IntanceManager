@@ -1,6 +1,10 @@
 /**
- * EditableValueContainer component
- * Container that manages Apply/Cancel editing states for value editors
+ * EditableValueContainer component - SIMPLIFIED VERSION
+ *
+ * Simplified state management with clearer separation of concerns:
+ * - Single source of truth for tempValue
+ * - Clear interaction tracking
+ * - Simplified validation logic
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -12,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useFieldValidation } from '../hooks/useFieldValidation';
 import type { DefaultValueField } from '../types';
 
+import { BUTTON_CONFIG } from './constants';
 import { FieldEditState } from './types';
 import { BooleanEditor, NumberEditor, StringEditor, type ValueEditorProps } from './ValueEditors';
 
@@ -30,15 +35,10 @@ interface EditableValueContainerProps {
   blueprintVariables?: Array<{ name: string; value: string }>;
   /** Whether to auto-focus the editor */
   autoFocus?: boolean;
-  /** Whether the user has already indicated intent to customize (e.g., clicked "Customizar") */
-  initialUserInteraction?: boolean;
   /** Test ID for automated testing */
   'data-testid'?: string;
 }
 
-/**
- * Container component that provides Apply/Cancel functionality for field editors
- */
 export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   field,
   initialValue,
@@ -47,13 +47,13 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   onValueChange,
   blueprintVariables = [],
   autoFocus = true,
-  initialUserInteraction = false,
   'data-testid': dataTestId,
 }) => {
   const { t } = useTranslation('blueprints');
+
+  // SIMPLIFIED STATE: Clear single source of truth
   const [tempValue, setTempValue] = useState<string | number | boolean>(initialValue);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [userHasInteracted, setUserHasInteracted] = useState(initialUserInteraction); // Track user interaction
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
 
   // Initialize validation hook
   const { validationResult, isValidating, validateValueDebounced, clearValidation, getEditState } =
@@ -62,52 +62,58 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
       blueprintVariables,
     });
 
-  // Track if value has changed from initial
+  // Reset state when initialValue changes (e.g., after field reset)
   useEffect(() => {
-    setHasChanges(tempValue !== initialValue);
-  }, [tempValue, initialValue]);
+    console.warn(
+      '[EditableValueContainer] Resetting state for field:',
+      field.key,
+      'new initial value:',
+      initialValue
+    );
+    setTempValue(initialValue);
+    setUserHasInteracted(false);
+    clearValidation();
+  }, [initialValue, clearValidation, field.key]);
 
-  // Validate value changes with debounce
-  useEffect(() => {
-    if (hasChanges) {
-      validateValueDebounced(tempValue);
-    } else {
-      clearValidation();
-    }
-  }, [tempValue, hasChanges, validateValueDebounced, clearValidation]);
-
-  // Handle value changes from editor
+  // Handle value changes from editor - SIMPLIFIED
   const handleValueChange = useCallback(
     (newValue: string | number | boolean) => {
       setTempValue(newValue);
-      setUserHasInteracted(true); // Mark that user has interacted
-      setHasChanges(newValue !== initialValue); // Update hasChanges based on actual difference
-      onValueChange?.(newValue); // Notify parent about the change
+      setUserHasInteracted(true);
+      onValueChange?.(newValue);
+
+      // Validate only if value differs from initial
+      if (newValue !== initialValue) {
+        validateValueDebounced(newValue);
+      } else {
+        clearValidation();
+      }
     },
-    [onValueChange, initialValue]
+    [initialValue, onValueChange, validateValueDebounced, clearValidation]
   );
 
-  // Handle apply action
+  // Handle apply action - SIMPLIFIED
   const handleApply = useCallback(() => {
-    // Apply if user has interacted (indicating intention to customize)
-    // OR if there are actual changes and no validation errors
-    const shouldApply =
-      userHasInteracted || (hasChanges && (!validationResult || validationResult.isValid));
+    const hasActualChanges = tempValue !== initialValue;
+    const isValid = !validationResult || validationResult.isValid;
 
-    if (shouldApply) {
+    // Apply if user interacted OR there are changes AND value is valid
+    if ((userHasInteracted || hasActualChanges) && isValid) {
+      console.warn('[EditableValueContainer] Applying value:', tempValue);
       onApply(tempValue);
     }
-  }, [tempValue, onApply, validationResult, hasChanges, userHasInteracted]);
+  }, [tempValue, initialValue, userHasInteracted, validationResult, onApply]);
 
-  // Handle cancel action
+  // Handle cancel action - SIMPLIFIED
   const handleCancel = useCallback(() => {
+    console.warn('[EditableValueContainer] Canceling edit for field:', field.key);
     setTempValue(initialValue);
-    setHasChanges(false);
+    setUserHasInteracted(false);
     clearValidation();
     onCancel();
-  }, [initialValue, onCancel, clearValidation]);
+  }, [initialValue, onCancel, clearValidation, field.key]);
 
-  // Handle keyboard shortcuts
+  // Keyboard shortcuts
   const handleEnter = useCallback(() => {
     handleApply();
   }, [handleApply]);
@@ -116,10 +122,10 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
     handleCancel();
   }, [handleCancel]);
 
-  // Get current edit state for styling
+  // Get current edit state and determine if apply is allowed
   const editState = getEditState(true);
   const isValid = !validationResult || validationResult.isValid;
-  // Allow apply if user has interacted (indicating intention to customize) OR if there are actual changes
+  const hasChanges = tempValue !== initialValue;
   const canApply = (userHasInteracted || hasChanges) && isValid && !isValidating;
 
   // Render appropriate editor based on field type
@@ -135,55 +141,72 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
 
     switch (field.type) {
       case 'string': {
-        const stringValue = typeof tempValue === 'string' ? tempValue : String(tempValue);
+        const stringValue: string = typeof tempValue === 'string' ? tempValue : String(tempValue);
 
         return (
           <StringEditor
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            value={stringValue as any}
+            value={stringValue as string}
             onChange={handleValueChange as (value: string) => void}
             variables={blueprintVariables}
-            {...editorProps}
+            disabled={editorProps.disabled}
+            autoFocus={editorProps.autoFocus}
+            onEnter={editorProps.onEnter}
+            onEscape={editorProps.onEscape}
+            isValidating={editorProps.isValidating}
+            data-testid={editorProps['data-testid']}
           />
         );
       }
 
       case 'number': {
-        const numberValue = typeof tempValue === 'number' ? tempValue : Number(tempValue);
+        const numberValue: number = typeof tempValue === 'number' ? tempValue : Number(tempValue);
 
         return (
           <NumberEditor
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            value={numberValue as any}
+            value={numberValue as number}
             onChange={handleValueChange as (value: number) => void}
-            {...editorProps}
+            disabled={editorProps.disabled}
+            autoFocus={editorProps.autoFocus}
+            onEnter={editorProps.onEnter}
+            onEscape={editorProps.onEscape}
+            isValidating={editorProps.isValidating}
+            data-testid={editorProps['data-testid']}
           />
         );
       }
 
       case 'boolean': {
-        const booleanValue = typeof tempValue === 'boolean' ? tempValue : Boolean(tempValue);
+        const booleanValue: boolean =
+          typeof tempValue === 'boolean' ? tempValue : Boolean(tempValue);
 
         return (
           <BooleanEditor
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            value={booleanValue as any}
+            value={booleanValue as boolean}
             onChange={handleValueChange as (value: boolean) => void}
-            {...editorProps}
+            disabled={editorProps.disabled}
+            autoFocus={editorProps.autoFocus}
+            onEnter={editorProps.onEnter}
+            onEscape={editorProps.onEscape}
+            isValidating={editorProps.isValidating}
+            data-testid={editorProps['data-testid']}
           />
         );
       }
 
       default: {
-        const stringValue = typeof tempValue === 'string' ? tempValue : String(tempValue);
+        const stringValue: string = typeof tempValue === 'string' ? tempValue : String(tempValue);
 
         return (
           <StringEditor
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            value={stringValue as any}
+            value={stringValue as string}
             onChange={(value) => handleValueChange(value)}
             variables={blueprintVariables}
-            {...editorProps}
+            disabled={editorProps.disabled}
+            autoFocus={editorProps.autoFocus}
+            onEnter={editorProps.onEnter}
+            onEscape={editorProps.onEscape}
+            isValidating={editorProps.isValidating}
+            data-testid={editorProps['data-testid']}
           />
         );
       }
@@ -198,14 +221,14 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
           'rounded-md border-2 transition-colors',
           (() => {
             if (editState === FieldEditState.ERROR) {
-              return 'border-red-300 bg-red-50';
+              return 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-950/20';
             }
 
             if (editState === FieldEditState.VALIDATING) {
-              return 'border-amber-300 bg-amber-50';
+              return 'border-amber-300 bg-amber-50 dark:border-amber-600 dark:bg-amber-950/20';
             }
 
-            return 'border-blue-300 bg-blue-50';
+            return 'border-blue-300 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/20';
           })()
         )}
       >
@@ -215,7 +238,7 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
       {/* Validation feedback */}
       {validationResult && !validationResult.isValid && (
         <div
-          className="text-sm text-red-600"
+          className="text-sm text-red-600 dark:text-red-400"
           data-testid={dataTestId ? `${dataTestId}-error` : undefined}
         >
           {validationResult.errorMessage}
@@ -225,18 +248,16 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
       {/* Action buttons */}
       <div className="flex justify-end gap-2">
         <Button
-          variant="outline"
-          className={cn(
-            'h-5 px-1.5 text-[10px] text-gray-600 hover:bg-gray-50 hover:text-gray-700'
-          )}
+          variant={BUTTON_CONFIG.variants.cancel}
+          className={BUTTON_CONFIG.extraSmall}
           onClick={handleCancel}
           data-testid={dataTestId ? `${dataTestId}-cancel` : undefined}
         >
           {t('values.table.cancel')}
         </Button>
         <Button
-          variant="default"
-          className={cn('h-5 px-1.5 text-[10px] text-white hover:text-white')}
+          variant={BUTTON_CONFIG.variants.apply}
+          className={BUTTON_CONFIG.extraSmall}
           onClick={handleApply}
           disabled={!canApply}
           data-testid={dataTestId ? `${dataTestId}-apply` : undefined}

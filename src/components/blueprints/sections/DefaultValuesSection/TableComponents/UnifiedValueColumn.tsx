@@ -1,15 +1,12 @@
 /**
- * UnifiedValueColumn component
+ * UnifiedValueColumn component - SIMPLIFIED VERSION
  *
- * This is the core component of the refactoring! Replaces two confusing columns
- * ("Template Default" vs "Blueprint Value") with one intelligent, intuitive experience.
- *
- * Key Features:
- * - Detects value origin (template vs blueprint)
- * - Manages distinct visual states with appropriate colors/icons
- * - Orchestrates validation + editors from previous phases
- * - Coordinates transitions between states (idle → editing → validated)
- * - Supports all types: string, number, boolean, object, array
+ * Simplified state management removing redundant states and complex synchronization logic.
+ * Key simplifications:
+ * - Single source of truth for tempValue (only when editing)
+ * - Removed justReset flag complexity
+ * - Simplified userHasInteracted logic
+ * - Clear separation between display and edit modes
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -23,9 +20,8 @@ import { ValueSourceType } from '../types';
 
 import {
   ANIMATION_CONFIG,
-  BUTTON_STYLES,
+  BUTTON_CONFIG,
   FIELD_INPUT_CONFIG,
-  SIZE_CONFIG,
   VALIDATION_STYLES,
   VALUE_STATE_CONFIG,
 } from './constants';
@@ -34,12 +30,8 @@ import { ObjectDisplayComponent } from './ObjectDisplayComponent';
 import { FieldEditState, type UnifiedValueColumnProps, ValueDisplayState } from './types';
 import { ArrayEditor } from './ValueEditors';
 
-/**
- * Core unified value column component that orchestrates the entire experience
- */
 export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   field,
-  editingState: _editingState,
   onStartEdit,
   onApplyChanges,
   onCancelEdit,
@@ -53,25 +45,18 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
 }) => {
   const { t } = useTranslation('blueprints');
 
-  // Local state for managing edit mode
+  // SIMPLIFIED STATE: Only track editing mode, tempValue managed by EditableValueContainer
   const [isEditing, setIsEditing] = useState(false);
-  const [tempValue, setTempValue] = useState<unknown>(field.value);
-  const [userHasInteracted, setUserHasInteracted] = useState(false);
 
   // Initialize validation hook for real-time feedback
-  const {
-    validationResult,
-    isValidating: _isValidating,
-    validateValueDebounced,
-    clearValidation,
-    getEditState,
-  } = useFieldValidation({
-    field,
-    blueprintVariables,
-  });
+  const { validationResult, validateValueDebounced, clearValidation, getEditState } =
+    useFieldValidation({
+      field,
+      blueprintVariables,
+    });
 
   /**
-   * Determine the visual display state based on field properties
+   * Determine the visual display state - SIMPLIFIED
    */
   const getDisplayState = useCallback((): ValueDisplayState => {
     if (isEditing) {
@@ -127,145 +112,79 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   }, []);
 
   /**
-   * Handle starting edit mode
+   * Handle starting edit mode - SIMPLIFIED
    */
-  const handleStartEdit = useCallback(
-    (preserveInteraction = false) => {
-      setIsEditing(true);
-      setTempValue(field.value);
+  const handleStartEdit = useCallback(() => {
+    setIsEditing(true);
+    onStartEdit?.();
+  }, [onStartEdit]);
 
-      if (!preserveInteraction) {
-        setUserHasInteracted(false); // Reset interaction flag only if not preserving
-      }
-
-      onStartEdit?.();
+  /**
+   * Handle applying changes - SIMPLIFIED
+   */
+  const handleApplyChanges = useCallback(
+    (newValue: unknown) => {
+      console.warn('[UnifiedValueColumn] Applying changes:', newValue);
+      setIsEditing(false);
+      clearValidation();
+      onApplyChanges?.(newValue);
     },
-    [field.value, onStartEdit]
+    [onApplyChanges, clearValidation]
   );
 
   /**
-   * Handle starting edit mode from button click
-   */
-  const handleStartEditClick = useCallback(() => {
-    handleStartEdit(false);
-  }, [handleStartEdit]);
-
-  /**
-   * Handle applying changes
-   */
-  const handleApplyChanges = useCallback(() => {
-    const editState = getEditState(true);
-    const hasChanges = tempValue !== field.value;
-
-    console.warn('[UnifiedValueColumn] Apply attempt:', {
-      editState,
-      hasChanges,
-      tempValue,
-      fieldValue: field.value,
-      validationResult: validationResult?.isValid,
-      onApplyChanges: !!onApplyChanges,
-      userHasInteracted,
-    });
-
-    // Apply if user has interacted (indicating intention to customize)
-    // OR if there are changes and no validation errors
-    const shouldApply =
-      (userHasInteracted || hasChanges) &&
-      (!validationResult ||
-        validationResult.isValid ||
-        editState === FieldEditState.VALID ||
-        editState === FieldEditState.EDITING);
-
-    if (shouldApply && onApplyChanges) {
-      console.warn('[UnifiedValueColumn] Applying changes:', tempValue);
-      onApplyChanges(tempValue);
-      setIsEditing(false);
-      setUserHasInteracted(false); // Reset interaction flag
-      clearValidation();
-    } else {
-      console.warn('[UnifiedValueColumn] Apply blocked:', {
-        hasChanges,
-        validationIsValid: validationResult?.isValid,
-        editState,
-        hasCallback: !!onApplyChanges,
-        userHasInteracted,
-      });
-    }
-  }, [
-    tempValue,
-    field.value,
-    onApplyChanges,
-    validationResult,
-    getEditState,
-    clearValidation,
-    userHasInteracted,
-  ]);
-
-  /**
-   * Handle canceling edit
+   * Handle canceling edit - SIMPLIFIED
    */
   const handleCancelEdit = useCallback(() => {
     setIsEditing(false);
-    setTempValue(field.value);
-    setUserHasInteracted(false); // Reset interaction flag
     clearValidation();
     onCancelEdit?.();
-  }, [field.value, onCancelEdit, clearValidation]);
+  }, [onCancelEdit, clearValidation]);
 
   /**
-   * Handle customizing field (template → blueprint)
+   * Handle customizing field (template → blueprint) - SIMPLIFIED
    */
   const handleCustomize = useCallback(() => {
-    // Copy template value to blueprint and start editing
-    const templateValue = field.originalValue !== undefined ? field.originalValue : field.value;
-
-    setTempValue(templateValue);
-    setUserHasInteracted(true); // Mark as interacted since user wants to customize
     onCustomize?.();
-    handleStartEdit(true); // Preserve the interaction flag
-  }, [field.originalValue, field.value, onCustomize, handleStartEdit]);
+    handleStartEdit();
+  }, [onCustomize, handleStartEdit]);
 
   /**
-   * Handle resetting field (blueprint → template)
+   * Handle resetting field (blueprint → template) - SIMPLIFIED
    */
   const handleReset = useCallback(() => {
-    onReset?.();
+    console.warn('[UnifiedValueColumn] Resetting field:', field.key);
     setIsEditing(false);
     clearValidation();
-  }, [onReset, clearValidation]);
+    onReset?.();
+  }, [onReset, clearValidation, field.key]);
 
   /**
    * Handle resetting all children recursively for object fields
    */
   const handleResetAllChildren = useCallback(
     (customizedPaths: string[]) => {
-      // For object fields, we need to reset all children that are customized
       console.warn('[UnifiedValueColumn] Resetting children paths:', customizedPaths);
-
-      if (onResetRecursive) {
-        // Use the specialized recursive reset callback
-        onResetRecursive(customizedPaths);
-      } else {
-        // Fallback to regular reset
-        onReset?.();
-      }
-
       setIsEditing(false);
       clearValidation();
+
+      if (onResetRecursive) {
+        onResetRecursive(customizedPaths);
+      } else {
+        onReset?.();
+      }
     },
     [onResetRecursive, onReset, clearValidation]
   );
 
   /**
-   * Handle temporary value changes during editing
+   * Handle temporary value changes during editing - SIMPLIFIED
    */
-  const _handleTempValueChange = useCallback(
+  const handleTempValueChange = useCallback(
     (newValue: unknown) => {
-      setTempValue(newValue);
-      setUserHasInteracted(true); // Mark that user has interacted
       onTempValueChange?.(newValue);
 
-      // Validate with debounce
+      // Validate with debounce only if value changed from original
       if (newValue !== field.value) {
         validateValueDebounced(newValue);
       } else {
@@ -276,7 +195,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   );
 
   /**
-   * Render value display based on type and state
+   * Render value display based on type and state - SIMPLIFIED
    */
   const renderValueDisplay = useCallback(() => {
     const displayState = getDisplayState();
@@ -287,13 +206,12 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
       return (
         <EditableValueContainer
           field={field}
-          initialValue={tempValue as string | number | boolean}
+          initialValue={field.value as string | number | boolean}
           onApply={handleApplyChanges}
           onCancel={handleCancelEdit}
-          onValueChange={_handleTempValueChange}
+          onValueChange={handleTempValueChange}
           blueprintVariables={blueprintVariables}
           autoFocus={true}
-          initialUserInteraction={userHasInteracted}
           data-testid="unified-value-editor"
         />
       );
@@ -318,11 +236,11 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              'w-full min-w-0', // Use available space
+              'w-full min-w-0',
               'rounded-md border transition-colors',
               isArrayFromTemplate ? visualConfig.bgColor : 'bg-white',
               isArrayFromTemplate ? visualConfig.borderColor : 'border-gray-300',
-              `${FIELD_INPUT_CONFIG.height} px-3 py-1` // Consistent height and padding
+              `${FIELD_INPUT_CONFIG.height} px-3 py-1`
             )}
           >
             <ArrayEditor disabled={isArrayFromTemplate} />
@@ -332,7 +250,6 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
 
       default: {
         const isDefaultFromTemplate = field.source === ValueSourceType.TEMPLATE;
-
         let displayValue: string;
 
         if (isDefaultFromTemplate) {
@@ -344,18 +261,18 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              'w-full min-w-0', // Use available space
+              'w-full min-w-0',
               'flex items-center rounded-md border transition-colors',
               visualConfig.bgColor,
               visualConfig.borderColor,
               ANIMATION_CONFIG.transition,
-              `${FIELD_INPUT_CONFIG.height} px-3 py-1` // Consistent height with more horizontal padding
+              `${FIELD_INPUT_CONFIG.height} px-3 py-1`
             )}
           >
             <span
               className={cn('w-full truncate text-sm', visualConfig.textColor)}
               data-testid="unified-value-text"
-              title={displayValue} // Add tooltip for truncated values
+              title={displayValue}
             >
               {displayValue}
             </span>
@@ -368,11 +285,10 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
     getVisualConfig,
     isEditing,
     field,
-    tempValue,
     handleApplyChanges,
     handleCancelEdit,
+    handleTempValueChange,
     blueprintVariables,
-    handleReset,
     handleResetAllChildren,
     disabled,
   ]);
@@ -397,9 +313,8 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
             buttons.push(
               <Button
                 key="customize"
-                variant="ghost"
-                size="sm"
-                className={cn(BUTTON_STYLES.customize, SIZE_CONFIG.buttonHeight)}
+                variant={BUTTON_CONFIG.variants.customize}
+                className={BUTTON_CONFIG.extraSmall}
                 onClick={handleCustomize}
                 data-testid="unified-value-customize"
               >
@@ -414,10 +329,9 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
             buttons.push(
               <Button
                 key="edit"
-                variant="ghost"
-                size="sm"
-                className={cn(BUTTON_STYLES.edit, SIZE_CONFIG.buttonHeight)}
-                onClick={handleStartEditClick}
+                variant={BUTTON_CONFIG.variants.edit}
+                className={BUTTON_CONFIG.extraSmall}
+                onClick={handleStartEdit}
                 data-testid="unified-value-edit"
               >
                 {t('values.table.edit')}
@@ -430,9 +344,8 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
           buttons.push(
             <Button
               key="reset"
-              variant="outline"
-              size="sm"
-              className={cn(BUTTON_STYLES.reset, SIZE_CONFIG.buttonHeight)}
+              variant={BUTTON_CONFIG.variants.reset}
+              className={BUTTON_CONFIG.extraSmall}
               onClick={handleReset}
               data-testid="unified-value-reset"
             >
@@ -443,9 +356,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
       }
     });
 
-    return buttons.length > 0 ? (
-      <div className={cn('flex', SIZE_CONFIG.spacing.xs)}>{buttons}</div>
-    ) : null;
+    return buttons.length > 0 ? <div className="flex gap-1">{buttons}</div> : null;
   }, [
     getDisplayState,
     getVisualConfig,
@@ -453,7 +364,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
     isEditing,
     field.type,
     handleCustomize,
-    handleStartEditClick,
+    handleStartEdit,
     handleReset,
     t,
   ]);
@@ -482,11 +393,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   }, [getEditState, isEditing]);
 
   return (
-    <div
-      className="w-full min-w-0" // Remove fixed width to use available table cell space
-      data-testid="unified-value-column"
-    >
-      {/* Main value display/editor container */}
+    <div className="w-full min-w-0" data-testid="unified-value-column">
       <div
         className={cn(
           'space-y-1',
