@@ -17,7 +17,7 @@ import type { DefaultValueField } from '../types';
 import { ValueSourceType } from '../types';
 import { valueConfigurationToLegacyFields } from '../ValueConfigurationConverter';
 
-import { UNIFIED_COLUMN_WIDTHS } from './constants';
+import { useColumnSizingContext } from './ColumnSizingContext';
 import { UnifiedValueColumn } from './UnifiedValueColumn';
 import * as ValueConfigFieldService from './valueConfigFieldUpdateService';
 import {
@@ -29,7 +29,13 @@ import {
 } from './ValueEditors';
 
 // Updated column widths for unified table layout
-export const COLUMN_WIDTHS = UNIFIED_COLUMN_WIDTHS;
+export const COLUMN_WIDTHS = {
+  field: '25%',
+  type: '6%',
+  value: '57%',
+  exposed: '6%',
+  overridable: '6%',
+} as const;
 
 interface EnhancedTableRowsProps {
   // Accept both legacy fields and the new ValueConfiguration
@@ -72,6 +78,24 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
     expandedPaths,
     toggleFieldExpansion: externalToggleFieldExpansion,
   }) => {
+    // Try to use column sizing context, but fallback to default widths if not available
+    let dynamicColumnStyles;
+
+    try {
+      const { columnStyles: contextStyles } = useColumnSizingContext();
+
+      dynamicColumnStyles = contextStyles;
+    } catch {
+      // Fallback to default widths if context is not available
+      dynamicColumnStyles = {
+        field: { width: COLUMN_WIDTHS.field },
+        type: { width: COLUMN_WIDTHS.type },
+        value: { width: COLUMN_WIDTHS.value },
+        exposed: { width: COLUMN_WIDTHS.exposed },
+        overridable: { width: COLUMN_WIDTHS.overridable },
+      };
+    }
+
     // State for expanded fields - usado quando não recebemos props externos
     const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
 
@@ -395,7 +419,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
             <React.Fragment key={field.path.join('.')}>
               <TableRow className={cn(depth > 0 && 'bg-muted/50', 'table-row-adjustable')}>
                 <TableCell
-                  style={{ paddingLeft: `${depth * 2 + 1}rem`, width: COLUMN_WIDTHS.field }}
+                  style={{ paddingLeft: `${depth * 2 + 1}rem`, ...dynamicColumnStyles.field }}
                 >
                   {hasChildren ? (
                     <Button
@@ -424,12 +448,12 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
 
                 <TableCell
                   className="text-xs text-muted-foreground"
-                  style={{ width: COLUMN_WIDTHS.type }}
+                  style={dynamicColumnStyles.type}
                 >
                   {field.type}
                 </TableCell>
 
-                <TableCell style={{ width: COLUMN_WIDTHS.value }} className="overflow-hidden p-2">
+                <TableCell style={dynamicColumnStyles.value} className="overflow-hidden p-2">
                   <UnifiedValueColumn
                     field={field}
                     onApplyChanges={(newValue) => onValueChange(field, newValue)}
@@ -451,7 +475,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="p-2 text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
+                <TableCell className="p-2 text-center" style={dynamicColumnStyles.exposed}>
                   <Switch
                     checked={field.exposed}
                     onCheckedChange={handleExposeChangeWrapper}
@@ -459,7 +483,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="p-2 text-center" style={{ width: COLUMN_WIDTHS.overridable }}>
+                <TableCell className="p-2 text-center" style={dynamicColumnStyles.overridable}>
                   <Switch
                     checked={field.overridable}
                     onCheckedChange={handleOverrideChangeWrapper}

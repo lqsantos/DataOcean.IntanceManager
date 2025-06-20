@@ -9,6 +9,7 @@ import type { ValueConfiguration } from '@/types/blueprint';
 
 import type { DefaultValueField, TemplateDefaultValues } from '../types';
 
+import { ColumnSizingProvider } from './ColumnSizingContext';
 import { EnhancedTableRows } from './EnhancedTableRows';
 import { useFieldManagement } from './hooks/useFieldManagement';
 import { TableContainer } from './TableContainer';
@@ -105,38 +106,42 @@ export const TableView: React.FC<CombinedTableViewProps> = React.memo((props) =>
   });
 
   return (
-    <div className="mt-4 flex h-full min-h-0 flex-col" data-testid="table-view">
-      {/* Validation Display Component */}
-      <ValidationDisplay
-        validationState={validationState}
-        showValidationFeedback={showValidationFeedback}
-      />
+    <ColumnSizingProvider enableAutoSizing={true} enableResizing={true}>
+      <div className="mt-4 flex h-full min-h-0 flex-col" data-testid="table-view">
+        {/* Validation Display Component */}
+        <ValidationDisplay
+          validationState={validationState}
+          showValidationFeedback={showValidationFeedback}
+        />
 
-      {/* Table Container */}
-      <TableContainer
-        fields={fields}
-        tableContent={
-          <EnhancedTableRows
-            fields={fields}
-            valueConfig={valueConfiguration || undefined}
-            useTypedValueConfiguration={useTypedValueConfiguration}
-            onSourceChange={handleSourceChange}
-            onValueChange={handleValueChange}
-            onExposeChange={handleExposeChange}
-            onOverrideChange={handleOverrideChange}
-            onValueConfigChange={onValueConfigurationChange}
-            onResetRecursive={handleResetRecursive}
-            blueprintVariables={blueprintVariables}
-            showValidationFeedback={showValidationFeedback}
-            expandedPaths={expandedPaths}
-            toggleFieldExpansion={toggleFieldExpansion}
-          />
-        }
-      />
+        {/* Table Container */}
+        <TableContainer
+          fields={fields}
+          enableColumnResizing={true}
+          enableAutoSizing={true}
+          tableContent={
+            <EnhancedTableRows
+              fields={fields}
+              valueConfig={valueConfiguration || undefined}
+              useTypedValueConfiguration={useTypedValueConfiguration}
+              onSourceChange={handleSourceChange}
+              onValueChange={handleValueChange}
+              onExposeChange={handleExposeChange}
+              onOverrideChange={handleOverrideChange}
+              onValueConfigChange={onValueConfigurationChange}
+              onResetRecursive={handleResetRecursive}
+              blueprintVariables={blueprintVariables}
+              showValidationFeedback={showValidationFeedback}
+              expandedPaths={expandedPaths}
+              toggleFieldExpansion={toggleFieldExpansion}
+            />
+          }
+        />
 
-      {/* Footer with Required Fields Legend */}
-      <TableFooter showRequiredLegend={true} />
-    </div>
+        {/* Footer with Required Fields Legend */}
+        <TableFooter showRequiredLegend={true} />
+      </div>
+    </ColumnSizingProvider>
   );
 });
 
