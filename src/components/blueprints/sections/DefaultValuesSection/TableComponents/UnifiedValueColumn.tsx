@@ -12,7 +12,7 @@
  * - Supports all types: string, number, boolean, object, array
  */
 
-import { Circle, Edit3 } from 'lucide-react';
+import { Edit3 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -97,7 +97,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
       case ValueDisplayState.TEMPLATE:
         return {
           ...VALUE_STATE_CONFIG.template,
-          stateIcon: Circle,
+          stateIcon: Edit3, // Icon won't be shown for template fields
           availableActions: ['customize'] as const,
         };
 
@@ -125,7 +125,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
       default:
         return {
           ...VALUE_STATE_CONFIG.template,
-          stateIcon: Circle,
+          stateIcon: Edit3, // Icon won't be shown for template fields
           availableActions: [] as const,
         };
     }
@@ -266,9 +266,10 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              'rounded-md border p-2 transition-colors',
+              'rounded-md border transition-colors',
               isArrayFromTemplate ? visualConfig.bgColor : 'bg-white',
-              isArrayFromTemplate ? visualConfig.borderColor : 'border-gray-300'
+              isArrayFromTemplate ? visualConfig.borderColor : 'border-gray-300',
+              'h-8 px-2 py-1' // Consistent height and padding
             )}
           >
             <ArrayEditor disabled={isArrayFromTemplate} />
@@ -291,18 +292,22 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              'flex items-center justify-between rounded-md border p-2 transition-colors',
+              'flex items-center justify-between rounded-md border transition-colors',
               visualConfig.bgColor,
               visualConfig.borderColor,
-              ANIMATION_CONFIG.transition
+              ANIMATION_CONFIG.transition,
+              'h-8 px-2 py-1' // Consistent height and padding
             )}
           >
             <div className="flex items-center gap-2">
-              <StateIcon
-                size={16}
-                className={cn(visualConfig.iconColor)}
-                data-testid="unified-value-icon"
-              />
+              {/* Only show icon for customized fields to reduce visual clutter */}
+              {!isDefaultFromTemplate && (
+                <StateIcon
+                  size={16}
+                  className={cn(visualConfig.iconColor)}
+                  data-testid="unified-value-icon"
+                />
+              )}
               <span
                 className={cn('text-sm', visualConfig.textColor)}
                 data-testid="unified-value-text"
