@@ -133,6 +133,14 @@ export function useFieldManagement({
    */
   const handleValueChange = useCallback(
     (field: DefaultValueField, newValue: unknown) => {
+      console.warn('[useFieldManagement] Value change:', {
+        fieldPath: field.path.join('.'),
+        oldValue: field.value,
+        newValue,
+        useTypedValueConfiguration,
+        hasValueConfiguration: !!valueConfiguration,
+      });
+
       if (useTypedValueConfiguration && valueConfiguration) {
         const path = field.path.join('.');
         const updatedValueConfig = ValueConfigFieldService.updateFieldValue(
@@ -141,10 +149,12 @@ export function useFieldManagement({
           newValue
         );
 
+        console.warn('[useFieldManagement] Applying typed changes');
         applyChanges(updatedValueConfig, true);
       } else {
         const updatedFields = FieldService.updateFieldValue(templateValues.fields, field, newValue);
 
+        console.warn('[useFieldManagement] Applying legacy changes');
         applyChanges(updatedFields, false);
       }
     },

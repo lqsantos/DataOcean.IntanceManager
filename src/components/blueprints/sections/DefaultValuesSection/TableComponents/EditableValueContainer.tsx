@@ -24,6 +24,8 @@ interface EditableValueContainerProps {
   onApply: (value: string | number | boolean) => void;
   /** Callback when cancel is clicked or Escape is pressed */
   onCancel: () => void;
+  /** Callback when value changes during editing */
+  onValueChange?: (value: string | number | boolean) => void;
   /** Available blueprint variables for interpolation */
   blueprintVariables?: Array<{ name: string; value: string }>;
   /** Whether to auto-focus the editor */
@@ -40,6 +42,7 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   initialValue,
   onApply,
   onCancel,
+  onValueChange,
   blueprintVariables = [],
   autoFocus = true,
   'data-testid': dataTestId,
@@ -47,6 +50,7 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   const { t } = useTranslation('blueprints');
   const [tempValue, setTempValue] = useState<string | number | boolean>(initialValue);
   const [hasChanges, setHasChanges] = useState(false);
+  const [userHasInteracted, setUserHasInteracted] = useState(false); // Track user interaction
 
   // Initialize validation hook
   const { validationResult, isValidating, validateValueDebounced, clearValidation, getEditState } =
@@ -70,19 +74,27 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   }, [tempValue, hasChanges, validateValueDebounced, clearValidation]);
 
   // Handle value changes from editor
-  const handleValueChange = useCallback((newValue: string | number | boolean) => {
-    setTempValue(newValue);
-  }, []);
+  const handleValueChange = useCallback(
+    (newValue: string | number | boolean) => {
+      setTempValue(newValue);
+      setUserHasInteracted(true); // Mark that user has interacted
+      setHasChanges(newValue !== initialValue); // Update hasChanges based on actual difference
+      onValueChange?.(newValue); // Notify parent about the change
+    },
+    [onValueChange, initialValue]
+  );
 
   // Handle apply action
   const handleApply = useCallback(() => {
-    const editState = getEditState(true);
+    // Apply if user has interacted (indicating intention to customize)
+    // OR if there are actual changes and no validation errors
+    const shouldApply =
+      userHasInteracted || (hasChanges && (!validationResult || validationResult.isValid));
 
-    // Only apply if value is valid or no validation was performed
-    if (editState === FieldEditState.VALID || (!validationResult && hasChanges)) {
+    if (shouldApply) {
       onApply(tempValue);
     }
-  }, [tempValue, onApply, validationResult, hasChanges, getEditState]);
+  }, [tempValue, onApply, validationResult, hasChanges, userHasInteracted]);
 
   // Handle cancel action
   const handleCancel = useCallback(() => {
@@ -104,7 +116,8 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   // Get current edit state for styling
   const editState = getEditState(true);
   const isValid = !validationResult || validationResult.isValid;
-  const canApply = hasChanges && isValid && !isValidating;
+  // Allow apply if user has interacted (indicating intention to customize) OR if there are actual changes
+  const canApply = (userHasInteracted || hasChanges) && isValid && !isValidating;
 
   // Render appropriate editor based on field type
   const renderEditor = () => {

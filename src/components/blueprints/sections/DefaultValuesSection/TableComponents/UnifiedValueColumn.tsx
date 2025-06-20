@@ -58,6 +58,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   // Local state for managing edit mode
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState<unknown>(field.value);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
 
   // Initialize validation hook for real-time feedback
   const {
@@ -138,6 +139,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   const handleStartEdit = useCallback(() => {
     setIsEditing(true);
     setTempValue(field.value);
+    setUserHasInteracted(false); // Reset interaction flag
     onStartEdit?.();
   }, [field.value, onStartEdit]);
 
@@ -146,14 +148,51 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
    */
   const handleApplyChanges = useCallback(() => {
     const editState = getEditState(true);
+    const hasChanges = tempValue !== field.value;
 
-    // Only apply if value is valid or no validation was performed
-    if (editState === FieldEditState.VALID || (!validationResult && tempValue !== field.value)) {
-      onApplyChanges?.(tempValue);
+    console.warn('[UnifiedValueColumn] Apply attempt:', {
+      editState,
+      hasChanges,
+      tempValue,
+      fieldValue: field.value,
+      validationResult: validationResult?.isValid,
+      onApplyChanges: !!onApplyChanges,
+      userHasInteracted,
+    });
+
+    // Apply if user has interacted (indicating intention to customize)
+    // OR if there are changes and no validation errors
+    const shouldApply =
+      (userHasInteracted || hasChanges) &&
+      (!validationResult ||
+        validationResult.isValid ||
+        editState === FieldEditState.VALID ||
+        editState === FieldEditState.EDITING);
+
+    if (shouldApply && onApplyChanges) {
+      console.warn('[UnifiedValueColumn] Applying changes:', tempValue);
+      onApplyChanges(tempValue);
       setIsEditing(false);
+      setUserHasInteracted(false); // Reset interaction flag
       clearValidation();
+    } else {
+      console.warn('[UnifiedValueColumn] Apply blocked:', {
+        hasChanges,
+        validationIsValid: validationResult?.isValid,
+        editState,
+        hasCallback: !!onApplyChanges,
+        userHasInteracted,
+      });
     }
-  }, [tempValue, field.value, onApplyChanges, validationResult, getEditState, clearValidation]);
+  }, [
+    tempValue,
+    field.value,
+    onApplyChanges,
+    validationResult,
+    getEditState,
+    clearValidation,
+    userHasInteracted,
+  ]);
 
   /**
    * Handle canceling edit
@@ -161,6 +200,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   const handleCancelEdit = useCallback(() => {
     setIsEditing(false);
     setTempValue(field.value);
+    setUserHasInteracted(false); // Reset interaction flag
     clearValidation();
     onCancelEdit?.();
   }, [field.value, onCancelEdit, clearValidation]);
@@ -173,6 +213,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
     const templateValue = field.originalValue !== undefined ? field.originalValue : field.value;
 
     setTempValue(templateValue);
+    setUserHasInteracted(true); // Mark as interacted since user wants to customize
     onCustomize?.();
     handleStartEdit();
   }, [field.originalValue, field.value, onCustomize, handleStartEdit]);
@@ -214,6 +255,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   const _handleTempValueChange = useCallback(
     (newValue: unknown) => {
       setTempValue(newValue);
+      setUserHasInteracted(true); // Mark that user has interacted
       onTempValueChange?.(newValue);
 
       // Validate with debounce
@@ -241,6 +283,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
           initialValue={tempValue as string | number | boolean}
           onApply={handleApplyChanges}
           onCancel={handleCancelEdit}
+          onValueChange={_handleTempValueChange}
           blueprintVariables={blueprintVariables}
           autoFocus={true}
           data-testid="unified-value-editor"
