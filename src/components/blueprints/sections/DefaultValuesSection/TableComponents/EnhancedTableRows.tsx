@@ -451,7 +451,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="text-center p-2" style={{ width: COLUMN_WIDTHS.exposed }}>
+                <TableCell className="p-2 text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
                   <Switch
                     checked={field.exposed}
                     onCheckedChange={handleExposeChangeWrapper}
@@ -459,7 +459,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="text-center p-2" style={{ width: COLUMN_WIDTHS.overridable }}>
+                <TableCell className="p-2 text-center" style={{ width: COLUMN_WIDTHS.overridable }}>
                   <Switch
                     checked={field.overridable}
                     onCheckedChange={handleOverrideChangeWrapper}

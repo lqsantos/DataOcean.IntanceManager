@@ -353,7 +353,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
             )}
           >
             <span
-              className={cn('truncate text-sm w-full', visualConfig.textColor)}
+              className={cn('w-full truncate text-sm', visualConfig.textColor)}
               data-testid="unified-value-text"
               title={displayValue} // Add tooltip for truncated values
             >
@@ -495,7 +495,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
           ANIMATION_CONFIG.transition
         )}
       >
-        <div className="flex w-full items-center min-w-0">
+        <div className="flex w-full min-w-0 items-center">
           <div className="mr-2 min-w-0 flex-1 overflow-hidden">{renderValueDisplay()}</div>
           <div className="flex flex-shrink-0 items-center gap-1">{renderActionButtons()}</div>
         </div>
