@@ -11,7 +11,7 @@ import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/compon
 
 import type { DefaultValueField } from '../types';
 
-import { COLUMN_WIDTHS } from './TableRows';
+import { UNIFIED_COLUMN_WIDTHS } from './constants';
 
 interface TableContainerProps {
   fields: DefaultValueField[];
@@ -33,22 +33,22 @@ export const TableContainer: React.FC<TableContainerProps> = ({
           <table className="w-full min-w-full table-fixed caption-bottom text-sm">
             <TableHeader className="sticky-table-header">
               <TableRow>
-                <TableHead style={{ width: COLUMN_WIDTHS.field }}>
+                <TableHead style={{ width: UNIFIED_COLUMN_WIDTHS.field }}>
                   {t('values.table.field')}
                 </TableHead>
-                <TableHead style={{ width: COLUMN_WIDTHS.type }}>
+                <TableHead style={{ width: UNIFIED_COLUMN_WIDTHS.type }}>
                   {t('values.table.type')}
                 </TableHead>
-                <TableHead style={{ width: COLUMN_WIDTHS.defaultValue }}>
-                  {t('values.table.defaultValue')}
-                </TableHead>
-                <TableHead style={{ width: COLUMN_WIDTHS.value }}>
+                <TableHead style={{ width: UNIFIED_COLUMN_WIDTHS.value }}>
                   {t('values.table.value')}
                 </TableHead>
-                <TableHead className="text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
+                <TableHead className="text-center" style={{ width: UNIFIED_COLUMN_WIDTHS.exposed }}>
                   {t('values.table.exposed')}
                 </TableHead>
-                <TableHead className="text-center" style={{ width: COLUMN_WIDTHS.overridable }}>
+                <TableHead
+                  className="text-center"
+                  style={{ width: UNIFIED_COLUMN_WIDTHS.overridable }}
+                >
                   {t('values.table.overridable')}
                 </TableHead>
               </TableRow>
@@ -58,7 +58,7 @@ export const TableContainer: React.FC<TableContainerProps> = ({
                 tableContent
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center">
+                  <TableCell colSpan={5} className="text-center">
                     <Alert>
                       <AlertDescription>
                         {noDataMessage || t('values.table.noFields')}

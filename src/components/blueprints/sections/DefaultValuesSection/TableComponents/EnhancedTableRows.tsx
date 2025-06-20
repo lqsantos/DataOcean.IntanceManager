@@ -17,6 +17,8 @@ import type { DefaultValueField } from '../types';
 import { ValueSourceType } from '../types';
 import { valueConfigurationToLegacyFields } from '../ValueConfigurationConverter';
 
+import { UNIFIED_COLUMN_WIDTHS } from './constants';
+import { UnifiedValueColumn } from './UnifiedValueColumn';
 import * as ValueConfigFieldService from './valueConfigFieldUpdateService';
 import {
   ArrayEditor,
@@ -26,15 +28,8 @@ import {
   StringEditor,
 } from './ValueEditors';
 
-// From TableRows component
-export const COLUMN_WIDTHS = {
-  field: '33%',
-  type: '8%',
-  defaultValue: '17%',
-  value: '25%',
-  exposed: '8.5%',
-  overridable: '8.5%',
-};
+// Updated column widths for unified table layout
+export const COLUMN_WIDTHS = UNIFIED_COLUMN_WIDTHS;
 
 interface EnhancedTableRowsProps {
   // Accept both legacy fields and the new ValueConfiguration
@@ -48,6 +43,9 @@ interface EnhancedTableRowsProps {
   onExposeChange: (field: DefaultValueField, exposed: boolean) => void;
   onOverrideChange: (field: DefaultValueField, overridable: boolean) => void;
   onValueConfigChange?: (valueConfig: ValueConfiguration) => void;
+
+  // Reset functionality
+  onResetRecursive?: (customizedPaths: string[]) => void;
 
   // Other props
   blueprintVariables: Array<{ name: string; value: string }>;
@@ -68,6 +66,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
     onExposeChange,
     onOverrideChange,
     onValueConfigChange,
+    onResetRecursive,
     blueprintVariables,
     showValidationFeedback,
     expandedPaths,
@@ -430,18 +429,26 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
                   {field.type}
                 </TableCell>
 
-                <TableCell
-                  className="text-xs text-muted-foreground"
-                  style={{ width: COLUMN_WIDTHS.defaultValue }}
-                >
-                  {field.originalValue !== undefined ? String(field.originalValue) : '-'}
-                </TableCell>
-
                 <TableCell style={{ width: COLUMN_WIDTHS.value }}>
-                  <div className="flex items-center justify-between">
-                    <div className="w-full">{renderValueEditor(field)}</div>
-                    <div className="ml-2 flex">{renderActionButton(field)}</div>
-                  </div>
+                  <UnifiedValueColumn
+                    field={field}
+                    onApplyChanges={(newValue) => onValueChange(field, newValue)}
+                    onCustomize={() => onSourceChange(field, ValueSourceType.BLUEPRINT)}
+                    onReset={() => {
+                      // For object fields with children, handle recursive reset if callback is provided
+                      if (field.type === 'object' && field.children && onResetRecursive) {
+                        // This will be handled by the ObjectDisplayComponent internally
+                        // The component will determine which children need to be reset
+                        onSourceChange(field, ValueSourceType.TEMPLATE);
+                      } else {
+                        // For non-object fields, use normal reset
+                        onSourceChange(field, ValueSourceType.TEMPLATE);
+                      }
+                    }}
+                    onResetRecursive={
+                      field.type === 'object' && onResetRecursive ? onResetRecursive : undefined
+                    }
+                  />
                 </TableCell>
 
                 <TableCell className="text-center" style={{ width: COLUMN_WIDTHS.exposed }}>

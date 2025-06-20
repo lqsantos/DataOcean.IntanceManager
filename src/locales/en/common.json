@@ -7,6 +7,7 @@
     "create": "Create",
     "add": "Add",
     "edit": "Edit",
+    "reset": "Reset",
     "close": "Close",
     "refresh": "Refresh"
   },

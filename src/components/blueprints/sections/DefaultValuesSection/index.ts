@@ -19,6 +19,11 @@ export type {
   ValueSourceType,
   YamlValidationResult,
 } from './types';
+
+// Export new unified value column components and hooks
+export * from './hooks';
+export * from './validators';
+
 export { ValidationFeedback } from './ValidationFeedback';
 export { TemplateValueEditor } from './ValueEditor/TemplateValueEditor';
 export { ViewMode, ViewToggle } from './ViewToggle';

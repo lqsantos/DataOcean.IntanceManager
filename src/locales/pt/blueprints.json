@@ -438,14 +438,37 @@
     "table": {
       "field": "Campo",
       "type": "Tipo",
-      "defaultValue": "Padrão do Template",
-      "value": "Valor do Blueprint",
+      "value": "Valor",
       "exposed": "Expor",
       "overridable": "Permitir Sobrescrever",
       "noFields": "Nenhum campo disponível",
       "customize": "Personalizar",
       "reset": "Redefinir",
-      "fromTemplate": "do template"
+      "edit": "Editar",
+      "apply": "Aplicar",
+      "cancel": "Cancelar",
+      "validating": "Validando...",
+      "resetAllChildren": "Redefinir Todos os Filhos",
+      "resetConfirmation": {
+        "title": "Confirmar Redefinição",
+        "description": "Esta ação irá redefinir os campos selecionados de volta aos valores do template. Esta ação não pode ser desfeita."
+      },
+      "fromTemplate": "do template",
+      "validation": {
+        "required": "Este campo é obrigatório",
+        "invalid": "Valor inválido",
+        "tooLong": "Valor muito longo (máximo {{max}} caracteres)",
+        "invalidNumber": "O valor deve ser um número válido",
+        "invalidBoolean": "O valor deve ser um booleano (true/false)",
+        "undefinedVariables": "Variáveis indefinidas: {{variables}}",
+        "numberOutOfRange": "Número fora do intervalo seguro",
+        "incompleteVariableSyntax": "Sintaxe de interpolação de variável incompleta",
+        "tabsInYaml": "Usar tabs ao invés de espaços pode causar problemas no YAML",
+        "nonStandardBoolean": "Considere usar \"true\" ou \"false\" para valores booleanos",
+        "numberAsBoolean": "Considere usar {{suggestion}} ao invés de número para booleano",
+        "highPrecisionDecimal": "Decimais de alta precisão podem ter problemas de arredondamento",
+        "verySmallDecimal": "Valores decimais muito pequenos podem ser imprecisos"
+      }
     },
     "validationMessages": {
       "validationFailed": "Falha na validação: 1 erro encontrado",

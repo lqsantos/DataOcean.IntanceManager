@@ -438,14 +438,37 @@
     "table": {
       "field": "Field",
       "type": "Type",
-      "defaultValue": "Template Default",
-      "value": "Blueprint Value",
+      "value": "Value",
       "exposed": "Expose",
       "overridable": "Allow Override",
       "noFields": "No fields available",
       "customize": "Customize",
       "reset": "Reset",
-      "fromTemplate": "from template"
+      "edit": "Edit",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "validating": "Validating...",
+      "resetAllChildren": "Reset All Children",
+      "resetConfirmation": {
+        "title": "Confirm Reset",
+        "description": "This action will reset the selected fields back to their template values. This cannot be undone."
+      },
+      "fromTemplate": "from template",
+      "validation": {
+        "required": "This field is required",
+        "invalid": "Invalid value",
+        "tooLong": "Value is too long (maximum {{max}} characters)",
+        "invalidNumber": "Value must be a valid number",
+        "invalidBoolean": "Value must be a boolean (true/false)",
+        "undefinedVariables": "Undefined variables: {{variables}}",
+        "numberOutOfRange": "Number is outside safe range",
+        "incompleteVariableSyntax": "Incomplete variable interpolation syntax",
+        "tabsInYaml": "Using tabs instead of spaces may cause YAML issues",
+        "nonStandardBoolean": "Consider using \"true\" or \"false\" for boolean values",
+        "numberAsBoolean": "Consider using {{suggestion}} instead of number for boolean",
+        "highPrecisionDecimal": "High precision decimals may have rounding issues",
+        "verySmallDecimal": "Very small decimal values may be imprecise"
+      }
     },
     "validationMessages": {
       "validationFailed": "Validation failed: 1 error found",

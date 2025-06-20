@@ -1,6 +1,7 @@
 /**
  * ValueEditors component
  * Collection of editor components for different data types in the table view
+ * Enhanced with Apply/Cancel functionality and keyboard shortcuts
  */
 
 import React from 'react';
@@ -11,6 +12,12 @@ export interface ValueEditorProps<T> {
   onChange: (value: T) => void;
   disabled?: boolean;
   variables?: Array<{ name: string; value: string }>;
+  // New props for Apply/Cancel functionality
+  autoFocus?: boolean;
+  onEnter?: () => void;
+  onEscape?: () => void;
+  isValidating?: boolean;
+  'data-testid'?: string;
 }
 
 export const StringEditor: React.FC<ValueEditorProps<string>> = ({
@@ -18,41 +25,107 @@ export const StringEditor: React.FC<ValueEditorProps<string>> = ({
   onChange,
   disabled,
   variables: _, // Não usado atualmente
-}) => (
-  <input
-    type="text"
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    disabled={disabled}
-    className="w-full rounded border p-1"
-  />
-);
+  autoFocus = false,
+  onEnter,
+  onEscape,
+  isValidating = false,
+  'data-testid': dataTestId,
+}) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onEnter?.();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onEscape?.();
+    }
+  };
 
-export const NumberEditor: React.FC<ValueEditorProps<number>> = ({ value, onChange, disabled }) => (
-  <input
-    type="number"
-    value={value}
-    onChange={(e) => onChange(Number(e.target.value))}
-    disabled={disabled}
-    className="w-full rounded border p-1"
-  />
-);
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={handleKeyDown}
+      disabled={disabled || isValidating}
+      autoFocus={autoFocus}
+      data-testid={dataTestId}
+      className="w-full rounded border p-1 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      placeholder={isValidating ? 'Validating...' : undefined}
+    />
+  );
+};
+
+export const NumberEditor: React.FC<ValueEditorProps<number>> = ({
+  value,
+  onChange,
+  disabled,
+  autoFocus = false,
+  onEnter,
+  onEscape,
+  isValidating = false,
+  'data-testid': dataTestId,
+}) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onEnter?.();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onEscape?.();
+    }
+  };
+
+  return (
+    <input
+      type="number"
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      onKeyDown={handleKeyDown}
+      disabled={disabled || isValidating}
+      autoFocus={autoFocus}
+      data-testid={dataTestId}
+      className="w-full rounded border p-1 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      placeholder={isValidating ? 'Validating...' : undefined}
+    />
+  );
+};
 
 export const BooleanEditor: React.FC<ValueEditorProps<boolean>> = ({
   value,
   onChange,
   disabled,
-}) => (
-  <select
-    value={value ? 'true' : 'false'}
-    onChange={(e) => onChange(e.target.value === 'true')}
-    disabled={disabled}
-    className="w-full rounded border p-1"
-  >
-    <option value="true">true</option>
-    <option value="false">false</option>
-  </select>
-);
+  autoFocus = false,
+  onEnter,
+  onEscape,
+  isValidating = false,
+  'data-testid': dataTestId,
+}) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onEnter?.();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onEscape?.();
+    }
+  };
+
+  return (
+    <select
+      value={value ? 'true' : 'false'}
+      onChange={(e) => onChange(e.target.value === 'true')}
+      onKeyDown={handleKeyDown}
+      disabled={disabled || isValidating}
+      autoFocus={autoFocus}
+      data-testid={dataTestId}
+      className="w-full rounded border p-1 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+    >
+      <option value="true">true</option>
+      <option value="false">false</option>
+    </select>
+  );
+};
 
 export const ObjectEditor: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
   <div className="flex w-full items-center justify-between">

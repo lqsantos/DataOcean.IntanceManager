@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import type { DefaultValueField } from '../types';
 import { ValueSourceType } from '../types';
 
+import { UNIFIED_COLUMN_WIDTHS } from './constants';
+import { UnifiedValueColumn } from './UnifiedValueColumn';
 import {
   ArrayEditor,
   BooleanEditor,
@@ -36,14 +38,8 @@ interface TableRowsProps {
 }
 
 // Constantes para larguras de coluna - garante consistência com o cabeçalho
-export const COLUMN_WIDTHS = {
-  field: '33%',
-  type: '8%',
-  defaultValue: '17%',
-  value: '25%',
-  exposed: '8.5%',
-  overridable: '8.5%',
-};
+// Updated column widths for unified table layout
+export const COLUMN_WIDTHS = UNIFIED_COLUMN_WIDTHS;
 
 export const TableRows: React.FC<TableRowsProps> = React.memo(
   ({
@@ -275,18 +271,13 @@ export const TableRows: React.FC<TableRowsProps> = React.memo(
                   {field.type}
                 </TableCell>
 
-                <TableCell
-                  className="text-xs text-muted-foreground"
-                  style={{ width: COLUMN_WIDTHS.defaultValue }}
-                >
-                  {field.originalValue !== undefined ? String(field.originalValue) : '-'}
-                </TableCell>
-
                 <TableCell style={{ width: COLUMN_WIDTHS.value }}>
-                  <div className="flex items-center justify-between">
-                    <div className="w-full">{renderValueEditor(field)}</div>
-                    <div className="ml-2 flex">{renderActionButton(field)}</div>
-                  </div>
+                  <UnifiedValueColumn
+                    field={field}
+                    onApplyChanges={(newValue) => onValueChange(field, newValue)}
+                    onCustomize={() => onSourceChange(field, ValueSourceType.BLUEPRINT)}
+                    onReset={() => onSourceChange(field, ValueSourceType.TEMPLATE)}
+                  />
                 </TableCell>
 
                 <TableCell className="text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
