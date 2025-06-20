@@ -3,7 +3,6 @@
  * Specialized component for displaying object fields with clean display + informative tooltip
  */
 
-import { AlertTriangle } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +20,8 @@ import { cn } from '@/lib/utils';
 
 import type { DefaultValueField } from '../types';
 import { ValueSourceType } from '../types';
+
+import { BUTTON_STYLES } from './constants';
 
 interface ObjectDisplayComponentProps {
   /** The object field being displayed */
@@ -205,14 +206,6 @@ export const ObjectDisplayComponent: React.FC<ObjectDisplayComponentProps> = ({
               >
                 {getDisplayText()}
               </span>
-              {hasCustomizations && !isEmpty && (
-                <AlertTriangle
-                  size={14}
-                  className="text-amber-600"
-                  aria-label="Has customizations"
-                  data-testid={dataTestId ? `${dataTestId}-warning` : undefined}
-                />
-              )}
             </div>
           </TooltipTrigger>
           <TooltipContent>
@@ -226,7 +219,7 @@ export const ObjectDisplayComponent: React.FC<ObjectDisplayComponentProps> = ({
             variant="outline"
             size="sm"
             onClick={handleResetAllChildren}
-            className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+            className={cn(BUTTON_STYLES.resetAll)}
             aria-label={`Reset all children (${analysis.customizedCount} ${analysis.customizedCount === 1 ? 'field' : 'fields'})`}
             data-testid={dataTestId ? `${dataTestId}-reset-all` : undefined}
           >
