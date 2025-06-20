@@ -25,6 +25,7 @@ import { ValueSourceType } from '../types';
 import {
   ANIMATION_CONFIG,
   BUTTON_STYLES,
+  FIELD_INPUT_CONFIG,
   SIZE_CONFIG,
   UNIFIED_COLUMN_WIDTHS,
   VALIDATION_STYLES,
@@ -266,10 +267,11 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              'min-w-64 w-auto max-w-sm rounded-md border transition-colors',
+              FIELD_INPUT_CONFIG.width,
+              'rounded-md border transition-colors',
               isArrayFromTemplate ? visualConfig.bgColor : 'bg-white',
               isArrayFromTemplate ? visualConfig.borderColor : 'border-gray-300',
-              'h-8 px-2 py-1' // Consistent height and padding
+              `${FIELD_INPUT_CONFIG.height} px-2 py-1` // Consistent height and padding
             )}
           >
             <ArrayEditor disabled={isArrayFromTemplate} />
@@ -292,11 +294,12 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              'min-w-64 flex w-auto max-w-sm items-center justify-between rounded-md border transition-colors',
+              FIELD_INPUT_CONFIG.width,
+              'flex items-center justify-between rounded-md border transition-colors',
               visualConfig.bgColor,
               visualConfig.borderColor,
               ANIMATION_CONFIG.transition,
-              'h-8 px-2 py-1' // Consistent height and padding
+              `${FIELD_INPUT_CONFIG.height} px-2 py-1` // Consistent height and padding
             )}
           >
             <div className="flex items-center gap-2">

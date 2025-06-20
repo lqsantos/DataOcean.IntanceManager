@@ -155,3 +155,13 @@ export const SIZE_CONFIG = {
     lg: 'gap-4',
   },
 } as const;
+
+/**
+ * Field input dimensions
+ * Consistent sizing for all field editors
+ */
+export const FIELD_INPUT_CONFIG = {
+  width: 'w-32', // Centralized width for all non-object field inputs
+  height: 'h-6',
+  fontSize: 'text-xs',
+} as const;

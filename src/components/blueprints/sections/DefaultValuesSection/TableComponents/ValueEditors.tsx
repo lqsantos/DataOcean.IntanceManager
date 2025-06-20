@@ -3,18 +3,13 @@
  * Collection of editor components for different data types in the table view
  * Enhanced with Apply/Cancel functionality and keyboard shortcuts
  *
- * Input Width Strategy:
- * - w-auto: Adapts to content size automatically
- * - min-w-64: Ensures minimum 256px width for elegant appearance
- * - max-w-sm: Limits to 384px maximum to preserve layout
- *
- * This approach provides optimal space utilization:
- * - Short values (e.g., "2"): Use minimum width (256px) for professional look
- * - Medium values (e.g., "organization/web-app"): Auto-expand to fit content (~300px)
- * - Long values: Limited to 384px max, with horizontal scroll for overflow
+ * Now uses BaseFieldInput for centralized common characteristics
  */
 
 import React from 'react';
+
+import { BaseInput, BaseSelect } from './BaseFieldInput';
+import { FIELD_INPUT_CONFIG } from './constants';
 
 // Props interface for all editors
 export interface ValueEditorProps<T> {
@@ -41,26 +36,18 @@ export const StringEditor: React.FC<ValueEditorProps<string>> = ({
   isValidating = false,
   'data-testid': dataTestId,
 }) => {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      onEnter?.();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onEscape?.();
-    }
-  };
-
   return (
-    <input
+    <BaseInput
       type="text"
+      fieldType="string"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      onKeyDown={handleKeyDown}
-      disabled={disabled || isValidating}
+      disabled={disabled}
       autoFocus={autoFocus}
+      onEnter={onEnter}
+      onEscape={onEscape}
+      isValidating={isValidating}
       data-testid={dataTestId}
-      className="!min-w-64 !w-auto !max-w-sm rounded border p-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       placeholder={isValidating ? 'Validating...' : undefined}
     />
   );
@@ -76,26 +63,18 @@ export const NumberEditor: React.FC<ValueEditorProps<number>> = ({
   isValidating = false,
   'data-testid': dataTestId,
 }) => {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      onEnter?.();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onEscape?.();
-    }
-  };
-
   return (
-    <input
+    <BaseInput
       type="number"
+      fieldType="number"
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
-      onKeyDown={handleKeyDown}
-      disabled={disabled || isValidating}
+      disabled={disabled}
       autoFocus={autoFocus}
+      onEnter={onEnter}
+      onEscape={onEscape}
+      isValidating={isValidating}
       data-testid={dataTestId}
-      className="min-w-64 w-auto max-w-sm rounded border p-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       placeholder={isValidating ? 'Validating...' : undefined}
     />
   );
@@ -111,35 +90,29 @@ export const BooleanEditor: React.FC<ValueEditorProps<boolean>> = ({
   isValidating = false,
   'data-testid': dataTestId,
 }) => {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      onEnter?.();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      onEscape?.();
-    }
-  };
-
   return (
-    <select
+    <BaseSelect
+      fieldType="boolean"
       value={value ? 'true' : 'false'}
       onChange={(e) => onChange(e.target.value === 'true')}
-      onKeyDown={handleKeyDown}
-      disabled={disabled || isValidating}
+      disabled={disabled}
       autoFocus={autoFocus}
+      onEnter={onEnter}
+      onEscape={onEscape}
+      isValidating={isValidating}
       data-testid={dataTestId}
-      className="min-w-64 w-auto max-w-sm rounded border p-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
     >
       <option value="true">true</option>
       <option value="false">false</option>
-    </select>
+    </BaseSelect>
   );
 };
 
 export const ObjectEditor: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
-  <div className="min-w-64 flex w-auto max-w-sm items-center justify-between">
-    <span className={`text-sm ${disabled ? 'text-muted-foreground' : 'font-medium text-blue-600'}`}>
+  <div className={`${FIELD_INPUT_CONFIG.width} flex items-center justify-between`}>
+    <span
+      className={`${FIELD_INPUT_CONFIG.fontSize} ${disabled ? 'text-muted-foreground' : 'font-medium text-blue-600'}`}
+    >
       Complex Object
     </span>
     {!disabled && <span className="text-xs italic text-blue-600">(click ▶ to expand)</span>}
@@ -147,9 +120,9 @@ export const ObjectEditor: React.FC<{ disabled?: boolean }> = ({ disabled }) => 
 );
 
 export const ArrayEditor: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
-  <div className="flex items-center">
+  <div className={`${FIELD_INPUT_CONFIG.width} flex items-center`}>
     <span
-      className={`text-sm ${disabled ? 'text-muted-foreground' : 'font-medium text-amber-600'}`}
+      className={`${FIELD_INPUT_CONFIG.fontSize} ${disabled ? 'text-muted-foreground' : 'font-medium text-amber-600'}`}
     >
       Array
     </span>
