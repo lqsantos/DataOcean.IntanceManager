@@ -1,10 +1,9 @@
 /**
  * ObjectDisplayComponent
- * Specialized component for displaying object fields with structural information
- * and conditional "Reset All Children" functionality
+ * Specialized component for displaying object fields with clean display + informative tooltip
  */
 
-import { AlertTriangle, Circle, Edit3 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 import type { DefaultValueField } from '../types';
@@ -37,32 +37,25 @@ interface ObjectDisplayComponentProps {
 
 /**
  * Recursively analyzes object children to determine customization state
- * Enhanced version that provides detailed analysis for better UX
  */
 function analyzeObjectChildren(children: DefaultValueField[]): {
   totalProperties: number;
-  directProperties: number;
   hasCustomizations: boolean;
   customizedCount: number;
   isEmpty: boolean;
-  maxDepth: number;
 } {
   if (!children || children.length === 0) {
     return {
       totalProperties: 0,
-      directProperties: 0,
       hasCustomizations: false,
       customizedCount: 0,
       isEmpty: true,
-      maxDepth: 0,
     };
   }
 
   let totalProperties = children.length;
-  const directProperties = children.length;
   let hasCustomizations = false;
   let customizedCount = 0;
-  let maxDepth = 1;
 
   for (const child of children) {
     // Check if this child is customized
@@ -76,7 +69,6 @@ function analyzeObjectChildren(children: DefaultValueField[]): {
       const childAnalysis = analyzeObjectChildren(child.children);
 
       totalProperties += childAnalysis.totalProperties;
-      maxDepth = Math.max(maxDepth, childAnalysis.maxDepth + 1);
 
       if (childAnalysis.hasCustomizations) {
         hasCustomizations = true;
@@ -87,11 +79,9 @@ function analyzeObjectChildren(children: DefaultValueField[]): {
 
   return {
     totalProperties,
-    directProperties,
     hasCustomizations,
     customizedCount,
     isEmpty: false,
-    maxDepth,
   };
 }
 
@@ -121,7 +111,7 @@ function collectCustomizedChildren(children: DefaultValueField[]): string[] {
 }
 
 /**
- * Component for displaying object fields with structural information
+ * Component for displaying object fields with clean interface + informative tooltip
  */
 export const ObjectDisplayComponent: React.FC<ObjectDisplayComponentProps> = ({
   field,
@@ -143,7 +133,7 @@ export const ObjectDisplayComponent: React.FC<ObjectDisplayComponentProps> = ({
     return collectCustomizedChildren(field.children || []);
   }, [field.children]);
 
-  // Determine visual state based on customizations
+  // Determine states
   const hasCustomizations = analysis.hasCustomizations;
   const isEmpty = analysis.isEmpty;
 
@@ -167,98 +157,80 @@ export const ObjectDisplayComponent: React.FC<ObjectDisplayComponentProps> = ({
     setShowConfirmDialog(false);
   }, []);
 
-  // Get appropriate icon and styling based on project patterns
-  const getVisualState = () => {
-    if (hasCustomizations) {
-      return {
-        icon: Edit3,
-        iconColor: 'text-blue-600',
-        textColor: 'text-blue-900',
-        bgColor: 'bg-blue-50',
-        borderColor: 'border-blue-200',
-        warningIcon: true,
-      };
-    }
-
-    return {
-      icon: Circle,
-      iconColor: 'text-gray-400',
-      textColor: 'text-gray-700',
-      bgColor: 'bg-gray-50',
-      borderColor: 'border-gray-200',
-      warningIcon: false,
-    };
-  };
-
-  const visualState = getVisualState();
-  const IconComponent = visualState.icon;
-
-  // Format display text with enhanced information
+  // Clean display text
   const getDisplayText = () => {
     if (isEmpty) {
-      return '{empty object}';
+      return 'Empty';
+    }
+
+    return 'Object';
+  };
+
+  // Detailed tooltip text
+  const getTooltipText = () => {
+    if (isEmpty) {
+      return 'Empty object';
     }
 
     const propertyText = analysis.totalProperties === 1 ? 'property' : 'properties';
 
-    // Show different information based on customization state
     if (hasCustomizations) {
-      return `{${analysis.totalProperties} ${propertyText}, ${analysis.customizedCount} customized}`;
+      return `${analysis.totalProperties} ${propertyText}, ${analysis.customizedCount} customized`;
     }
 
-    return `{${analysis.totalProperties} ${propertyText}}`;
+    return `${analysis.totalProperties} ${propertyText}`;
+  };
+
+  // Visual styling based on state
+  const getTextColor = () => {
+    if (hasCustomizations) {
+      return 'text-blue-700';
+    }
+
+    return 'text-gray-700';
   };
 
   return (
-    <>
-      <div
-        className={cn(
-          'flex items-center justify-between rounded-md border p-2 transition-colors',
-          visualState.bgColor,
-          visualState.borderColor,
-          disabled && 'opacity-50'
-        )}
-        data-testid={dataTestId}
-      >
-        {/* Object information */}
-        <div className="flex items-center gap-2">
-          <IconComponent
-            size={16}
-            className={cn(visualState.iconColor)}
-            aria-hidden="true"
-            data-testid={dataTestId ? `${dataTestId}-icon` : undefined}
-          />
-          <span
-            className={cn('text-sm font-medium', visualState.textColor)}
-            data-testid={dataTestId ? `${dataTestId}-text` : undefined}
-          >
-            {getDisplayText()}
-          </span>
-          {hasCustomizations && !isEmpty && visualState.warningIcon && (
-            <AlertTriangle
-              size={14}
-              className="text-amber-600"
-              aria-label={t('values.table.validation.attention', 'Has customizations')}
-              data-testid={dataTestId ? `${dataTestId}-warning` : undefined}
-            />
-          )}
-        </div>
+    <TooltipProvider>
+      <div className="flex items-center justify-between gap-2" data-testid={dataTestId}>
+        {/* Object display with tooltip */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={cn('text-sm font-medium', getTextColor())}
+                data-testid={dataTestId ? `${dataTestId}-text` : undefined}
+              >
+                {getDisplayText()}
+              </span>
+              {hasCustomizations && !isEmpty && (
+                <AlertTriangle
+                  size={14}
+                  className="text-amber-600"
+                  aria-label="Has customizations"
+                  data-testid={dataTestId ? `${dataTestId}-warning` : undefined}
+                />
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{getTooltipText()}</p>
+          </TooltipContent>
+        </Tooltip>
 
-        {/* Actions */}
-        <div className="flex gap-2">
-          {hasCustomizations && !isEmpty && onResetAllChildren && !disabled && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetAllChildren}
-              className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
-              aria-label={`${t('values.table.resetAllChildren')} (${analysis.customizedCount} ${analysis.customizedCount === 1 ? 'field' : 'fields'})`}
-              data-testid={dataTestId ? `${dataTestId}-reset-all` : undefined}
-            >
-              {t('values.table.resetAllChildren')}
-            </Button>
-          )}
-        </div>
+        {/* Reset button */}
+        {hasCustomizations && !isEmpty && onResetAllChildren && !disabled && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetAllChildren}
+            className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+            aria-label={`Reset all children (${analysis.customizedCount} ${analysis.customizedCount === 1 ? 'field' : 'fields'})`}
+            data-testid={dataTestId ? `${dataTestId}-reset-all` : undefined}
+          >
+            {t('values.table.resetAllChildren', 'Reset All Children')}
+          </Button>
+        )}
       </div>
 
       {/* Confirmation Dialog */}
@@ -266,10 +238,12 @@ export const ObjectDisplayComponent: React.FC<ObjectDisplayComponentProps> = ({
         <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t('values.resetConfirmation.title', 'Confirm Reset')}</DialogTitle>
+              <DialogTitle>
+                {t('values.table.resetConfirmation.title', 'Confirm Reset')}
+              </DialogTitle>
               <DialogDescription>
                 {t(
-                  'values.resetConfirmation.description',
+                  'values.table.resetConfirmation.description',
                   `This will reset ${analysis.customizedCount} customized field${
                     analysis.customizedCount === 1 ? '' : 's'
                   } back to template values. This action cannot be undone.`
@@ -287,6 +261,6 @@ export const ObjectDisplayComponent: React.FC<ObjectDisplayComponentProps> = ({
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </TooltipProvider>
   );
 };
