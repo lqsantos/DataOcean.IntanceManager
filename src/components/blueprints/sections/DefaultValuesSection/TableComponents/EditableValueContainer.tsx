@@ -210,7 +210,9 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
       <div className="flex justify-end gap-2">
         <Button
           variant="outline"
-          size="sm"
+          className={cn(
+            'h-5 px-1.5 text-[10px] text-gray-600 hover:bg-gray-50 hover:text-gray-700'
+          )}
           onClick={handleCancel}
           data-testid={dataTestId ? `${dataTestId}-cancel` : undefined}
         >
@@ -218,7 +220,7 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
         </Button>
         <Button
           variant="default"
-          size="sm"
+          className={cn('h-5 px-1.5 text-[10px] text-white hover:text-white')}
           onClick={handleApply}
           disabled={!canApply}
           data-testid={dataTestId ? `${dataTestId}-apply` : undefined}
