@@ -59,7 +59,7 @@ export const NumberEditor: React.FC<NumberEditorProps> = ({
       onChange={handleChange}
       onBlur={handleBlur}
       disabled={disabled}
-      className="h-8 w-24"
+      className="min-w-32 max-w-48 h-8 w-auto"
       data-testid="number-editor-input"
     />
   );

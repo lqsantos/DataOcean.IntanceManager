@@ -32,13 +32,13 @@ export const StringEditor: React.FC<StringEditorProps> = ({
   };
 
   return (
-    <div className="flex w-full max-w-sm items-center space-x-2">
+    <div className="min-w-64 flex w-auto max-w-sm items-center space-x-2">
       <Input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="h-8"
+        className="min-w-60 h-8 w-auto max-w-md"
         data-testid="string-editor-input"
       />
       {variables.length > 0 && !disabled && (

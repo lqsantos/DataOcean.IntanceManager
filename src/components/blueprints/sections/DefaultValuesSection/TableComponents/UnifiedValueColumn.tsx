@@ -266,7 +266,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              'rounded-md border transition-colors',
+              'min-w-64 w-auto max-w-sm rounded-md border transition-colors',
               isArrayFromTemplate ? visualConfig.bgColor : 'bg-white',
               isArrayFromTemplate ? visualConfig.borderColor : 'border-gray-300',
               'h-8 px-2 py-1' // Consistent height and padding
@@ -292,7 +292,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              'flex items-center justify-between rounded-md border transition-colors',
+              'min-w-64 flex w-auto max-w-sm items-center justify-between rounded-md border transition-colors',
               visualConfig.bgColor,
               visualConfig.borderColor,
               ANIMATION_CONFIG.transition,
@@ -309,7 +309,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
                 />
               )}
               <span
-                className={cn('text-sm', visualConfig.textColor)}
+                className={cn('truncate text-sm', visualConfig.textColor)}
                 data-testid="unified-value-text"
               >
                 {displayValue}
@@ -453,7 +453,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         )}
       >
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0 flex-1">{renderValueDisplay()}</div>
+          <div className="flex-1">{renderValueDisplay()}</div>
           {renderActionButtons()}
         </div>
 

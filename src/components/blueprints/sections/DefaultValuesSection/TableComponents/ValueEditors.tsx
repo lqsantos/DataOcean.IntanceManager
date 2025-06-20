@@ -2,6 +2,16 @@
  * ValueEditors component
  * Collection of editor components for different data types in the table view
  * Enhanced with Apply/Cancel functionality and keyboard shortcuts
+ *
+ * Input Width Strategy:
+ * - w-auto: Adapts to content size automatically
+ * - min-w-64: Ensures minimum 256px width for elegant appearance
+ * - max-w-sm: Limits to 384px maximum to preserve layout
+ *
+ * This approach provides optimal space utilization:
+ * - Short values (e.g., "2"): Use minimum width (256px) for professional look
+ * - Medium values (e.g., "organization/web-app"): Auto-expand to fit content (~300px)
+ * - Long values: Limited to 384px max, with horizontal scroll for overflow
  */
 
 import React from 'react';
@@ -50,7 +60,7 @@ export const StringEditor: React.FC<ValueEditorProps<string>> = ({
       disabled={disabled || isValidating}
       autoFocus={autoFocus}
       data-testid={dataTestId}
-      className="w-full rounded border p-1 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className="!min-w-64 !w-auto !max-w-sm rounded border p-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       placeholder={isValidating ? 'Validating...' : undefined}
     />
   );
@@ -85,7 +95,7 @@ export const NumberEditor: React.FC<ValueEditorProps<number>> = ({
       disabled={disabled || isValidating}
       autoFocus={autoFocus}
       data-testid={dataTestId}
-      className="w-full rounded border p-1 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className="min-w-64 w-auto max-w-sm rounded border p-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       placeholder={isValidating ? 'Validating...' : undefined}
     />
   );
@@ -119,7 +129,7 @@ export const BooleanEditor: React.FC<ValueEditorProps<boolean>> = ({
       disabled={disabled || isValidating}
       autoFocus={autoFocus}
       data-testid={dataTestId}
-      className="w-full rounded border p-1 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className="min-w-64 w-auto max-w-sm rounded border p-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
     >
       <option value="true">true</option>
       <option value="false">false</option>
@@ -128,7 +138,7 @@ export const BooleanEditor: React.FC<ValueEditorProps<boolean>> = ({
 };
 
 export const ObjectEditor: React.FC<{ disabled?: boolean }> = ({ disabled }) => (
-  <div className="flex w-full items-center justify-between">
+  <div className="min-w-64 flex w-auto max-w-sm items-center justify-between">
     <span className={`text-sm ${disabled ? 'text-muted-foreground' : 'font-medium text-blue-600'}`}>
       Complex Object
     </span>
