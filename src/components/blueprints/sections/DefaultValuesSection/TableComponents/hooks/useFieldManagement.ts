@@ -387,11 +387,55 @@ export function useFieldManagement({
     ]
   );
 
+  /**
+   * Manipula o reset recursivo de múltiplos campos personalizados
+   */
+  const handleResetRecursive = useCallback(
+    (customizedPaths: string[]) => {
+      console.warn('[useFieldManagement] Resetting recursive paths:', customizedPaths);
+
+      if (useTypedValueConfiguration && valueConfiguration) {
+        // Usa a lógica tipada para resetar múltiplos campos
+        let updatedConfig = { ...valueConfiguration };
+
+        customizedPaths.forEach((path) => {
+          // Reset cada campo para o valor padrão
+          updatedConfig = ValueConfigFieldService.resetFieldToDefault(updatedConfig, path);
+          // Remove a customização
+          updatedConfig = ValueConfigFieldService.updateFieldCustomized(updatedConfig, path, false);
+        });
+
+        applyChanges(updatedConfig, true);
+      } else {
+        // Usa a lógica tradicional
+        let updatedFields = [...templateValues.fields];
+
+        customizedPaths.forEach((pathString) => {
+          const pathSegments = pathString.split('.');
+          const field = findFieldByPath(updatedFields, pathSegments);
+
+          if (field) {
+            // Reset cada campo para template source
+            updatedFields = FieldService.updateFieldSource(
+              updatedFields,
+              field,
+              ValueSourceType.TEMPLATE
+            );
+          }
+        });
+
+        applyChanges(updatedFields, false);
+      }
+    },
+    [templateValues, applyChanges, useTypedValueConfiguration, valueConfiguration, findFieldByPath]
+  );
+
   return {
     handleSourceChange,
     handleValueChange,
     handleExposeChange,
     handleOverrideChange,
+    handleResetRecursive,
     findFieldByPath,
   };
 }

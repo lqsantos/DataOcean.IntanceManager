@@ -94,6 +94,7 @@ export const TableView: React.FC<CombinedTableViewProps> = React.memo((props) =>
     handleValueChange,
     handleExposeChange,
     handleOverrideChange,
+    handleResetRecursive,
   } = useFieldManagement({
     templateValues,
     valueConfiguration,
@@ -124,6 +125,7 @@ export const TableView: React.FC<CombinedTableViewProps> = React.memo((props) =>
             onExposeChange={handleExposeChange}
             onOverrideChange={handleOverrideChange}
             onValueConfigChange={onValueConfigurationChange}
+            onResetRecursive={handleResetRecursive}
             blueprintVariables={blueprintVariables}
             showValidationFeedback={showValidationFeedback}
             expandedPaths={expandedPaths}
