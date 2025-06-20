@@ -58,7 +58,7 @@ const INPUT_WIDTH_CLASSES = {
 /**
  * Base styling that applies to all field inputs
  */
-const BASE_INPUT_CLASSES = `rounded border p-1 ${FIELD_INPUT_CONFIG.fontSize} ${FIELD_INPUT_CONFIG.height} focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`;
+const BASE_INPUT_CLASSES = `rounded border p-1 ${FIELD_INPUT_CONFIG.fontSize} ${FIELD_INPUT_CONFIG.height} focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 overflow-hidden text-ellipsis`;
 
 /**
  * Get complete styling for a specific field type

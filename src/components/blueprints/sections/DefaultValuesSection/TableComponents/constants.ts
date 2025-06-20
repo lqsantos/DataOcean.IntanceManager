@@ -161,7 +161,7 @@ export const SIZE_CONFIG = {
  * Consistent sizing for all field editors
  */
 export const FIELD_INPUT_CONFIG = {
-  width: 'w-32', // Centralized width for all non-object field inputs
+  width: 'w-full max-w-[280px] min-w-[120px]', // Flexible width with limits to prevent layout distortion
   height: 'h-6',
   fontSize: 'text-xs',
 } as const;
