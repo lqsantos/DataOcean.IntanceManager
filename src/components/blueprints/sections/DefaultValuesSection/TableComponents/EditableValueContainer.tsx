@@ -35,6 +35,8 @@ interface EditableValueContainerProps {
   blueprintVariables?: Array<{ name: string; value: string }>;
   /** Whether to auto-focus the editor */
   autoFocus?: boolean;
+  /** Whether this is a customization operation (allows Apply even without changes) */
+  isCustomizing?: boolean;
   /** Test ID for automated testing */
   'data-testid'?: string;
 }
@@ -47,6 +49,7 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   onValueChange,
   blueprintVariables = [],
   autoFocus = true,
+  isCustomizing = false,
   'data-testid': dataTestId,
 }) => {
   const { t } = useTranslation('blueprints');
@@ -99,12 +102,27 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
     const hasActualChanges = tempValue !== initialValue;
     const isValid = !validationResult || validationResult.isValid;
 
-    // Apply if user interacted OR there are changes AND value is valid
-    if ((userHasInteracted || hasActualChanges) && isValid) {
+    console.warn('[EditableValueContainer] Apply clicked:', {
+      tempValue,
+      initialValue,
+      hasActualChanges,
+      isValid,
+      isCustomizing,
+      userHasInteracted,
+    });
+
+    // BUSINESS RULE: Apply if:
+    // - In customization mode (isCustomizing) OR user interacted OR there are changes
+    // - AND value is valid
+    const shouldApply = (isCustomizing || userHasInteracted || hasActualChanges) && isValid;
+
+    if (shouldApply) {
       console.warn('[EditableValueContainer] Applying value:', tempValue);
       onApply(tempValue);
+    } else {
+      console.warn('[EditableValueContainer] Apply blocked - conditions not met');
     }
-  }, [tempValue, initialValue, userHasInteracted, validationResult, onApply]);
+  }, [tempValue, initialValue, userHasInteracted, validationResult, onApply, isCustomizing]);
 
   // Handle cancel action - SIMPLIFIED
   const handleCancel = useCallback(() => {
@@ -128,7 +146,11 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
   const editState = getEditState(true);
   const isValid = !validationResult || validationResult.isValid;
   const hasChanges = tempValue !== initialValue;
-  const canApply = (userHasInteracted || hasChanges) && isValid && !isValidating;
+
+  // BUSINESS RULE: During customization, allow Apply even without changes to preserve user intent
+  const canApply = isCustomizing
+    ? isValid && !isValidating // In customization mode: only need valid value
+    : (userHasInteracted || hasChanges) && isValid && !isValidating; // Normal mode: need interaction/changes
 
   // Render appropriate editor based on field type
   const renderEditor = () => {

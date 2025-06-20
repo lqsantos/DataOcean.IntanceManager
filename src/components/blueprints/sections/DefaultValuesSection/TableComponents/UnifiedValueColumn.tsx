@@ -129,16 +129,22 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   }, [onStartEdit]);
 
   /**
-   * Handle applying changes - SIMPLIFIED + FIXED
+   * Handle applying changes - BUSINESS LOGIC:
+   * - When user clicks Apply during customization, ALWAYS mark as customized
+   * - Even if value equals template value, this represents user's conscious decision
+   * - Purpose: preserve user intent if template changes in future
    */
   const handleApplyChanges = useCallback(
     (newValue: unknown) => {
       console.warn('[UnifiedValueColumn] Applying changes:', newValue);
 
-      // If we were customizing (template → blueprint), execute onCustomize now
+      // BUSINESS RULE: Apply during customization = always customize
+      // This preserves user intent even if value equals template
       if (isCustomizing) {
-        console.warn('[UnifiedValueColumn] Executing delayed customization for field:', field.key);
-        onCustomize?.();
+        console.warn(
+          '[UnifiedValueColumn] User applied during customization - marking as customized regardless of value equality'
+        );
+        onCustomize?.(); // Mark field as customized (template → blueprint)
         setIsCustomizing(false);
       }
 
@@ -151,7 +157,10 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   );
 
   /**
-   * Handle canceling edit - SIMPLIFIED + FIXED
+   * Handle canceling edit - BUSINESS LOGIC:
+   * - Cancel preserves the exact previous state (template or customized)
+   * - If user was customizing and cancels, field remains as template
+   * - No state changes occur - true cancellation
    */
   const handleCancelEdit = useCallback(() => {
     console.warn(
@@ -161,10 +170,12 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
       isCustomizing
     );
 
-    // If we were customizing and user cancels, don't execute onCustomize
+    // BUSINESS RULE: Cancel during customization = preserve template state
+    // Field remains exactly as it was before customization attempt
     if (isCustomizing) {
-      console.warn('[UnifiedValueColumn] Canceling customization - field remains as template');
-      setIsCustomizing(false);
+      console.warn('[UnifiedValueColumn] User canceled customization - field remains as template');
+      setIsCustomizing(false); // Clear customization intent
+      // onCustomize is NOT called - field stays as template
     }
 
     setIsEditing(false);
@@ -173,13 +184,16 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   }, [onCancelEdit, clearValidation, field.key, isCustomizing]);
 
   /**
-   * Handle customizing field (template → blueprint) - FIXED
-   * Don't execute onCustomize immediately, wait for actual changes
+   * Handle customizing field (template → blueprint) - BUSINESS LOGIC:
+   * - Enter "customization mode" without immediate state change
+   * - Wait for user decision: Apply = customize, Cancel = stay template
+   * - This prevents accidental customization from just clicking the button
    */
   const handleCustomize = useCallback(() => {
     console.warn('[UnifiedValueColumn] Starting customize mode for field:', field.key);
-    setIsCustomizing(true); // Mark as customizing mode
-    handleStartEdit();
+    setIsCustomizing(true); // Mark as "wanting to customize" - not customized yet
+    handleStartEdit(); // Enter edit mode to allow user to make decision
+    // onCustomize is NOT called yet - wait for Apply or Cancel
   }, [handleStartEdit, field.key]);
 
   /**
@@ -256,6 +270,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
           onValueChange={handleTempValueChange}
           blueprintVariables={blueprintVariables}
           autoFocus={true}
+          isCustomizing={isCustomizing}
           data-testid="unified-value-editor"
         />
       );
