@@ -1,12 +1,5 @@
 /**
- * UnifiedValueColumn component - SIMPLIFIED VERSION
- *
- * Simplified state management removing redundant states and complex synchronization logic.
- * Key simplifications:
- * - Single source of truth for tempValue (only when editing)
- * - Removed justReset flag complexity
- * - Simplified userHasInteracted logic
- * - Clear separation between display and edit modes
+ * UnifiedValueColumn component
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -43,19 +36,19 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   showValidationFeedback = true,
   disabled = false,
 }) => {
-  const { t } = useTranslation('blueprints'); // SIMPLIFIED STATE: Only track editing mode, tempValue managed by EditableValueContainer
+  const { t } = useTranslation('blueprints');
   const [isEditing, setIsEditing] = useState(false);
 
-  // Track effective value during transitions (reset, customize, etc.)
+  // Track effective value during transitions
   const [effectiveValue, setEffectiveValue] = useState<unknown>(field.value);
 
-  // Track if we're in "customize mode" (waiting for user action)
+  // Track if we're in "customize mode"
   const [isCustomizing, setIsCustomizing] = useState(false);
 
   // Sync effective value when field.value changes from parent
   useEffect(() => {
     setEffectiveValue(field.value);
-  }, [field.value]);
+  }, [field.value, field.key]);
 
   // Initialize validation hook for real-time feedback
   const { validationResult, validateValueDebounced, clearValidation, getEditState } =
@@ -64,16 +57,24 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
       blueprintVariables,
     });
 
-  // Detect external reset and exit editing mode
-  // Only trigger if we're editing a BLUEPRINT field that suddenly becomes TEMPLATE
+  // Detect when field source changes and sync effectiveValue appropriately
   useEffect(() => {
-    // Only exit editing if we were editing a blueprint field that was reset to template
-    // This prevents false triggers when customizing template fields
+    if (field.source === ValueSourceType.TEMPLATE) {
+      const correctTemplateValue = field.originalValue;
+
+      if (effectiveValue !== correctTemplateValue) {
+        setEffectiveValue(correctTemplateValue);
+      }
+    } else {
+      if (effectiveValue !== field.value) {
+        setEffectiveValue(field.value);
+      }
+    }
+  }, [field.source, field.value, field.originalValue, field.key, effectiveValue]);
+
+  // Detect external reset and exit editing mode
+  useEffect(() => {
     if (isEditing && !isCustomizing && field.source === ValueSourceType.TEMPLATE) {
-      console.warn(
-        '[UnifiedValueColumn] External reset detected on blueprint field, exiting edit mode for field:',
-        field.key
-      );
       setIsEditing(false);
       clearValidation();
     }
@@ -144,26 +145,16 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   }, [onStartEdit]);
 
   /**
-   * Handle applying changes - BUSINESS LOGIC:
-   * - When user clicks Apply during customization, ALWAYS mark as customized
-   * - Even if value equals template value, this represents user's conscious decision
-   * - Purpose: preserve user intent if template changes in future
+   * Handle applying changes
    */
   const handleApplyChanges = useCallback(
     (newValue: unknown) => {
-      console.warn('[UnifiedValueColumn] Applying changes:', newValue);
-
-      // BUSINESS RULE: Apply during customization = always customize
-      // This preserves user intent even if value equals template
       if (isCustomizing) {
-        console.warn(
-          '[UnifiedValueColumn] User applied during customization - marking as customized regardless of value equality'
-        );
-        onCustomize?.(); // Mark field as customized (template → blueprint)
+        onCustomize?.();
         setIsCustomizing(false);
       }
 
-      setEffectiveValue(newValue); // Update effective value immediately
+      setEffectiveValue(newValue);
       setIsEditing(false);
       clearValidation();
       onApplyChanges?.(newValue);
@@ -172,25 +163,11 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   );
 
   /**
-   * Handle canceling edit - BUSINESS LOGIC:
-   * - Cancel preserves the exact previous state (template or customized)
-   * - If user was customizing and cancels, field remains as template
-   * - No state changes occur - true cancellation
+   * Handle canceling edit
    */
   const handleCancelEdit = useCallback(() => {
-    console.warn(
-      '[UnifiedValueColumn] Canceling edit for field:',
-      field.key,
-      'was customizing:',
-      isCustomizing
-    );
-
-    // BUSINESS RULE: Cancel during customization = preserve template state
-    // Field remains exactly as it was before customization attempt
     if (isCustomizing) {
-      console.warn('[UnifiedValueColumn] User canceled customization - field remains as template');
-      setIsCustomizing(false); // Clear customization intent
-      // onCustomize is NOT called - field stays as template
+      setIsCustomizing(false);
     }
 
     setIsEditing(false);
@@ -199,32 +176,17 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
   }, [onCancelEdit, clearValidation, field.key, isCustomizing]);
 
   /**
-   * Handle customizing field (template → blueprint) - BUSINESS LOGIC:
-   * - Enter "customization mode" without immediate state change
-   * - Wait for user decision: Apply = customize, Cancel = stay template
-   * - This prevents accidental customization from just clicking the button
+   * Handle customizing field
    */
   const handleCustomize = useCallback(() => {
-    console.warn('[UnifiedValueColumn] Starting customize mode for field:', field.key);
-    setIsCustomizing(true); // Mark as "wanting to customize" - not customized yet
-    handleStartEdit(); // Enter edit mode to allow user to make decision
-    // onCustomize is NOT called yet - wait for Apply or Cancel
+    setIsCustomizing(true);
+    handleStartEdit();
   }, [handleStartEdit, field.key]);
 
   /**
-   * Handle resetting field (blueprint → template) - SIMPLIFIED + FIXED
+   * Handle resetting field
    */
   const handleReset = useCallback(() => {
-    console.warn(
-      '[UnifiedValueColumn] Resetting field:',
-      field.key,
-      'from',
-      effectiveValue,
-      'to original:',
-      field.originalValue
-    );
-
-    // Immediately update effective value to original value for immediate UI feedback
     setEffectiveValue(field.originalValue);
     setIsEditing(false);
     clearValidation();
@@ -236,7 +198,6 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
    */
   const handleResetAllChildren = useCallback(
     (customizedPaths: string[]) => {
-      console.warn('[UnifiedValueColumn] Resetting children paths:', customizedPaths);
       setIsEditing(false);
       clearValidation();
 

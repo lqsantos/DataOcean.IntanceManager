@@ -2,8 +2,8 @@
 'use client';
 
 import { Bell, Key, Menu, Moon, Search, Sun, User } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageSwitcher } from '@/components/language-switcher';

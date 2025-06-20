@@ -1,10 +1,5 @@
 /**
- * EditableValueContainer component - SIMPLIFIED VERSION
- *
- * Simplified state management with clearer separation of concerns:
- * - Single source of truth for tempValue
- * - Clear interaction tracking
- * - Simplified validation logic
+ * EditableValueContainer component
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -54,7 +49,7 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
 }) => {
   const { t } = useTranslation('blueprints');
 
-  // SIMPLIFIED STATE: Clear single source of truth
+  // Component state
   const [tempValue, setTempValue] = useState<string | number | boolean>(initialValue);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
 
@@ -65,16 +60,8 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
       blueprintVariables,
     });
 
-  // Reset state when initialValue changes (e.g., after field reset) - FIXED
+  // Reset state when initialValue changes (e.g., after field reset)
   useEffect(() => {
-    console.warn(
-      '[EditableValueContainer] Resetting state for field:',
-      field.key,
-      'new initial value:',
-      initialValue,
-      'previous temp value:',
-      tempValue
-    );
     setTempValue(initialValue);
     setUserHasInteracted(false);
     clearValidation();
@@ -97,36 +84,20 @@ export const EditableValueContainer: React.FC<EditableValueContainerProps> = ({
     [initialValue, onValueChange, validateValueDebounced, clearValidation]
   );
 
-  // Handle apply action - SIMPLIFIED
+  // Handle apply action
   const handleApply = useCallback(() => {
     const hasActualChanges = tempValue !== initialValue;
     const isValid = !validationResult || validationResult.isValid;
 
-    console.warn('[EditableValueContainer] Apply clicked:', {
-      tempValue,
-      initialValue,
-      hasActualChanges,
-      isValid,
-      isCustomizing,
-      userHasInteracted,
-    });
-
-    // BUSINESS RULE: Apply if:
-    // - In customization mode (isCustomizing) OR user interacted OR there are changes
-    // - AND value is valid
     const shouldApply = (isCustomizing || userHasInteracted || hasActualChanges) && isValid;
 
     if (shouldApply) {
-      console.warn('[EditableValueContainer] Applying value:', tempValue);
       onApply(tempValue);
-    } else {
-      console.warn('[EditableValueContainer] Apply blocked - conditions not met');
     }
   }, [tempValue, initialValue, userHasInteracted, validationResult, onApply, isCustomizing]);
 
-  // Handle cancel action - SIMPLIFIED
+  // Handle cancel action
   const handleCancel = useCallback(() => {
-    console.warn('[EditableValueContainer] Canceling edit for field:', field.key);
     setTempValue(initialValue);
     setUserHasInteracted(false);
     clearValidation();

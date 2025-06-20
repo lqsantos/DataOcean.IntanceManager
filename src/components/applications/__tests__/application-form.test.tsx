@@ -99,6 +99,7 @@ describe('ApplicationForm', () => {
 
     // Simply check that the error element exists - don't check content or attributes
     const errorElement = screen.getByTestId('application-form-error-name');
+
     expect(errorElement).toBeInTheDocument();
     
     // Verify the submit function was not called
@@ -145,6 +146,7 @@ describe('ApplicationForm', () => {
 
     // Find the error message by test ID
     const errorElement = screen.getByTestId('application-form-error-slug');
+
     expect(errorElement).toBeInTheDocument();
     
     expect(mockOnSubmit).not.toHaveBeenCalled();
