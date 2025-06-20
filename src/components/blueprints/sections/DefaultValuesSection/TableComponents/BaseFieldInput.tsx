@@ -48,17 +48,18 @@ export interface SelectFieldProps extends BaseFieldInputProps {
 
 /**
  * Centralized width configuration for optimal space utilization
+ * Uses full available width to grow until buttons area
  */
 const INPUT_WIDTH_CLASSES = {
-  string: FIELD_INPUT_CONFIG.width, // Centralized width from constants
-  number: FIELD_INPUT_CONFIG.width, // Centralized width from constants
-  boolean: FIELD_INPUT_CONFIG.width, // Centralized width from constants
+  string: 'w-full', // Uses full available width
+  number: 'w-full', // Uses full available width
+  boolean: 'w-full', // Uses full available width
 } as const;
 
 /**
- * Base styling that applies to all field inputs
+ * Base styling that applies to all field inputs with proper overflow control
  */
-const BASE_INPUT_CLASSES = `rounded border p-1 ${FIELD_INPUT_CONFIG.fontSize} ${FIELD_INPUT_CONFIG.height} focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 overflow-hidden text-ellipsis`;
+const BASE_INPUT_CLASSES = `rounded border p-1 ${FIELD_INPUT_CONFIG.fontSize} ${FIELD_INPUT_CONFIG.height} focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 overflow-hidden whitespace-nowrap`;
 
 /**
  * Get complete styling for a specific field type

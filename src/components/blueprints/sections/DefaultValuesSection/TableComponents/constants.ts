@@ -5,20 +5,20 @@
 
 /**
  * Updated column widths for the unified table layout
- * Prioritizes space for the Value column which tends to have extensive content
+ * Optimized layout: maximize Value column while preventing toggle overlap
  *
  * Previous layout:
- * - field: 33%, type: 8%, value: 42%, exposed: 8.5%, overridable: 8.5%
+ * - field: 25%, type: 6%, value: 63%, exposed: 3%, overridable: 3%
  *
- * New optimized layout (more space for Value, less gap between columns):
- * - field: 30%, type: 7%, value: 50%, exposed: 6.5%, overridable: 6.5%
+ * Final optimized layout (prevent toggle overlap):
+ * - field: 25%, type: 6%, value: 57%, exposed: 6%, overridable: 6%
  */
 export const UNIFIED_COLUMN_WIDTHS = {
-  field: '30%',
-  type: '7%',
-  value: '50%', // Increased for extensive content
-  exposed: '6.5%',
-  overridable: '6.5%',
+  field: '25%',
+  type: '6%',
+  value: '57%', // Good balance of space while preventing toggle overlap
+  exposed: '6%', // Increased width to prevent overlap
+  overridable: '6%', // Increased width to prevent overlap
 } as const;
 
 /**
@@ -154,10 +154,10 @@ export const SIZE_CONFIG = {
 
 /**
  * Field input dimensions
- * Consistent sizing for all field editors
+ * Consistent sizing for all field editors with proper overflow control
  */
 export const FIELD_INPUT_CONFIG = {
-  width: 'w-full max-w-[280px] min-w-[120px]', // Flexible width with limits to prevent layout distortion
+  width: 'w-full max-w-full', // Use full available width but prevent overflow
   height: 'h-6',
   fontSize: 'text-xs',
 } as const;

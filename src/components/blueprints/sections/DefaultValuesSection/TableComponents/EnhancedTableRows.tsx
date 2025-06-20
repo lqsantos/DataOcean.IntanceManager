@@ -429,7 +429,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
                   {field.type}
                 </TableCell>
 
-                <TableCell style={{ width: COLUMN_WIDTHS.value }}>
+                <TableCell style={{ width: COLUMN_WIDTHS.value }} className="overflow-hidden p-2">
                   <UnifiedValueColumn
                     field={field}
                     onApplyChanges={(newValue) => onValueChange(field, newValue)}
@@ -451,7 +451,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="text-center" style={{ width: COLUMN_WIDTHS.exposed }}>
+                <TableCell className="text-center p-2" style={{ width: COLUMN_WIDTHS.exposed }}>
                   <Switch
                     checked={field.exposed}
                     onCheckedChange={handleExposeChangeWrapper}
@@ -459,7 +459,7 @@ export const EnhancedTableRows: React.FC<EnhancedTableRowsProps> = React.memo(
                   />
                 </TableCell>
 
-                <TableCell className="text-center" style={{ width: COLUMN_WIDTHS.overridable }}>
+                <TableCell className="text-center p-2" style={{ width: COLUMN_WIDTHS.overridable }}>
                   <Switch
                     checked={field.overridable}
                     onCheckedChange={handleOverrideChangeWrapper}

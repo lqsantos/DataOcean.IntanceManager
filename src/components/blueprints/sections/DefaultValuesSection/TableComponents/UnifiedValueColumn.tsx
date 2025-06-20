@@ -26,7 +26,6 @@ import {
   BUTTON_STYLES,
   FIELD_INPUT_CONFIG,
   SIZE_CONFIG,
-  UNIFIED_COLUMN_WIDTHS,
   VALIDATION_STYLES,
   VALUE_STATE_CONFIG,
 } from './constants';
@@ -319,11 +318,11 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              FIELD_INPUT_CONFIG.width,
+              'w-full min-w-0', // Use available space
               'rounded-md border transition-colors',
               isArrayFromTemplate ? visualConfig.bgColor : 'bg-white',
               isArrayFromTemplate ? visualConfig.borderColor : 'border-gray-300',
-              `${FIELD_INPUT_CONFIG.height} px-2 py-1` // Consistent height and padding
+              `${FIELD_INPUT_CONFIG.height} px-3 py-1` // Consistent height and padding
             )}
           >
             <ArrayEditor disabled={isArrayFromTemplate} />
@@ -345,22 +344,21 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
         return (
           <div
             className={cn(
-              FIELD_INPUT_CONFIG.width,
-              'flex items-center justify-between rounded-md border transition-colors',
+              'w-full min-w-0', // Use available space
+              'flex items-center rounded-md border transition-colors',
               visualConfig.bgColor,
               visualConfig.borderColor,
               ANIMATION_CONFIG.transition,
-              `${FIELD_INPUT_CONFIG.height} px-2 py-1` // Consistent height and padding
+              `${FIELD_INPUT_CONFIG.height} px-3 py-1` // Consistent height with more horizontal padding
             )}
           >
-            <div className="flex items-center gap-2">
-              <span
-                className={cn('truncate text-sm', visualConfig.textColor)}
-                data-testid="unified-value-text"
-              >
-                {displayValue}
-              </span>
-            </div>
+            <span
+              className={cn('truncate text-sm w-full', visualConfig.textColor)}
+              data-testid="unified-value-text"
+              title={displayValue} // Add tooltip for truncated values
+            >
+              {displayValue}
+            </span>
           </div>
         );
       }
@@ -485,8 +483,7 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
 
   return (
     <div
-      className="w-full"
-      style={{ width: UNIFIED_COLUMN_WIDTHS.value }}
+      className="w-full min-w-0" // Remove fixed width to use available table cell space
       data-testid="unified-value-column"
     >
       {/* Main value display/editor container */}
@@ -498,9 +495,9 @@ export const UnifiedValueColumn: React.FC<UnifiedValueColumnProps> = ({
           ANIMATION_CONFIG.transition
         )}
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1">{renderValueDisplay()}</div>
-          {renderActionButtons()}
+        <div className="flex w-full items-center min-w-0">
+          <div className="mr-2 min-w-0 flex-1 overflow-hidden">{renderValueDisplay()}</div>
+          <div className="flex flex-shrink-0 items-center gap-1">{renderActionButtons()}</div>
         </div>
 
         {renderValidationFeedback()}
