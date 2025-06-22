@@ -66,26 +66,27 @@ src/
 ```
 src/
 ├── app/                         # Next.js App Directory (mantém)
-├── features/                    # � Features/domínios de negócio
+├── features/                    # 🎯 Features/domínios de negócio
 │   └── [feature-name]/          # Feature específica
 │       ├── components/          # Components da feature
-│       ├── hooks/               # Hooks da feature
+│       ├── hooks/               # Hooks específicos da feature
 │       ├── services/            # Services da feature
 │       ├── types/               # Types da feature
 │       ├── constants/           # Constants da feature
 │       ├── contexts/            # Contexts da feature (se necessário)
 │       └── index.ts             # Public API da feature
-├── shared/                      # 🆕 Código compartilhado
-│   ├── components/              # Components reutilizáveis
-│   │   ├── ui/                 # shadcn/ui base components
-│   │   ├── forms/              # Form components genéricos
-│   │   ├── tables/             # Table components genéricos
-│   │   └── layout/             # Layout components
-│   ├── hooks/                  # Hooks genéricos
-│   ├── types/                  # Types compartilhados
-│   ├── constants/              # Constants globais
-│   ├── contexts/               # Contexts compartilhados
-│   └── utils/                  # Utility functions
+├── components/                  # 🧩 Componentes globais/reutilizáveis
+│   ├── ui/                     # shadcn/ui base components
+│   ├── forms/                  # Form components genéricos
+│   ├── tables/                 # Table components genéricos
+│   └── layout/                 # Layout components
+├── hooks/                      # 🎣 Hooks globais/reutilizáveis
+├── services/                   # 🔌 Services globais
+├── types/                      # 📊 Types globais
+├── utils/                      # 🛠️ Utility functions globais
+├── constants/                  # 📋 Constants globais
+├── config/                     # ⚙️ Configurações globais
+├── contexts/                   # 🔄 Contexts globais
 ├── lib/                        # 🔧 Core infrastructure (mantém)
 │   ├── api/                    # API client setup
 │   ├── store/                  # Global state management
@@ -115,15 +116,16 @@ A migração será **gradual** e **incremental**:
 
 1. **Fase 1**: Manter estrutura atual funcionando
 2. **Fase 2**: Criar `features/` e migrar domínio por domínio
-3. **Fase 3**: Reorganizar shared code em `shared/`
+3. **Fase 3**: Reorganizar código global conforme necessário
 4. **Fase 4**: Limpar estrutura antiga conforme features migram
 
 ### Princípios de Organização
 
 1. **Separação por responsabilidade**: Cada diretório tem propósito específico
-2. **Hierarquia clara**: Estrutura intuitiva para navegação
-3. **Escalabilidade**: Fácil adição de novas funcionalidades
-4. **Colocation**: Recursos relacionados próximos quando faz sentido
+2. **Categorização clara**: Global na raiz, específico em features
+3. **Hierarquia intuitiva**: Estrutura familiar e navegável
+4. **Escalabilidade**: Fácil adição de novas funcionalidades
+5. **Colocation**: Recursos relacionados próximos quando faz sentido
 
 ---
 
@@ -138,7 +140,7 @@ A arquitetura de features segue o padrão **Domain-Driven Design**, organizando 
 1. **Domain-Driven**: Organização por domínio de negócio
 2. **Self-Contained**: Cada feature é independente e auto-suficiente
 3. **Public API**: Interface limpa e bem definida entre features
-4. **Shared Resources**: Código comum centralizado em shared/
+4. **Global Resources**: Código comum centralizado na raiz para facilidade de acesso
 
 ### Estrutura de Feature
 
@@ -180,7 +182,7 @@ export type { Application, ApplicationFormData } from './types';
 export { APPLICATION_STATUS } from './constants';
 ```
 
-### Shared vs Feature-Specific
+### Global vs Feature-Specific
 
 #### Feature-Specific (features/[feature]/)
 
@@ -188,13 +190,15 @@ export { APPLICATION_STATUS } from './constants';
 - Lógica de negócio específica do domínio
 - Components que não serão reutilizados
 - Types específicos do domínio
+- Hooks que conhecem o domínio específico
 
-#### Shared (shared/)
+#### Global (raiz: components/, hooks/, services/, etc.)
 
 - Código usado por **múltiplas** features
 - Components genéricos reutilizáveis
-- Utilities comuns
+- Utilities agnósticas de domínio
 - Types compartilhados
+- Hooks reutilizáveis entre features
 
 ### Exemplos de Organização
 
@@ -204,14 +208,16 @@ export { APPLICATION_STATUS } from './constants';
 // features/applications/components/ApplicationTable.tsx
 // features/applications/hooks/use-applications.ts
 // features/applications/types/application.ts
+// features/blueprints/hooks/use-blueprint-wizard.ts
 ```
 
-#### ✅ Shared
+#### ✅ Global
 
 ```typescript
-// shared/components/ui/Button.tsx
-// shared/hooks/use-api.ts
-// shared/types/common.ts
+// components/ui/Button.tsx
+// hooks/use-debounce.ts
+// types/common.ts
+// utils/format.ts
 ```
 
 ---
@@ -221,7 +227,7 @@ export { APPLICATION_STATUS } from './constants';
 ### Estrutura de Componentes
 
 ```
-shared/components/              # Componentes compartilhados
+components/                    # Componentes globais/reutilizáveis
 ├── ui/                        # Base components (shadcn/ui)
 │   ├── button.tsx
 │   ├── input.tsx
@@ -237,7 +243,8 @@ shared/components/              # Componentes compartilhados
 └── layout/                    # Layout components
     ├── header.tsx
     ├── sidebar.tsx
-    └── footer.tsx
+    ├── footer.tsx
+    └── index.ts
 
 features/[feature]/components/ # Components específicos da feature
 ├── [Feature]Table.tsx        # Tabela específica
@@ -335,7 +342,7 @@ features/[feature]/types/      # Types específicos da feature
 ├── [feature]-api.ts          # Types de API
 └── index.ts                  # Exports
 
-shared/types/                 # Types compartilhados
+types/                        # Types globais/compartilhados
 ├── entities/                 # Business entities globais
 ├── api/                      # API-related types globais
 ├── ui/                       # UI component types
@@ -352,7 +359,7 @@ shared/types/                 # Types compartilhados
 - **API types**: Request/Response específicos
 - **State types**: Types para contextos da feature
 
-#### Shared Types
+#### Global Types
 
 - **Common entities**: Entidades usadas em múltiplas features
 - **Base interfaces**: Interfaces base para extensão
@@ -364,7 +371,7 @@ shared/types/                 # Types compartilhados
 - **PascalCase** para interfaces e types
 - **Prefixos descritivos**: `ApiResponse`, `FormData`, `EntityState`
 - **Granularidade apropriada**: Nem muito específico, nem muito genérico
-- **Reutilização**: Types compartilhados em shared/
+- **Reutilização**: Types compartilhados na raiz em `types/`
 - **Export consistency**: Sempre use barrel exports
 
 #### Exemplos de Feature Types
@@ -395,17 +402,17 @@ export * from './application';
 export * from './application-forms';
 ```
 
-#### Exemplos de Shared Types
+#### Exemplos de Global Types
 
 ```typescript
-// shared/types/entities/common.ts
+// types/entities/common.ts
 export interface BaseEntity {
   id: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// shared/types/api/responses.ts
+// types/api/responses.ts
 export interface ApiResponse<T> {
   data: T;
   success: boolean;
@@ -419,7 +426,7 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-// shared/types/ui/components.ts
+// types/ui/components.ts
 export interface BaseComponentProps {
   className?: string;
   children?: React.ReactNode;
@@ -484,7 +491,7 @@ features/[feature]/constants/  # Constants específicos da feature
 ├── [feature]-ui.ts           # Constants de UI específicos
 └── index.ts                  # Exports
 
-shared/constants/             # Constants compartilhados
+constants/                    # Constants globais/compartilhados
 ├── api.ts                    # API constants globais
 ├── ui.ts                     # UI constants (sizes, variants)
 ├── validation.ts             # Validation rules globais
@@ -499,7 +506,7 @@ features/[feature]/utils/     # Utils específicos da feature (se necessário)
 ├── [feature]-helpers.ts      # Helper functions específicos
 └── index.ts                  # Exports
 
-shared/utils/                 # Utils compartilhados
+utils/                        # Utils globais/compartilhados
 ├── format.ts                 # Formatação de dados
 ├── validation.ts             # Validação
 ├── date.ts                   # Manipulação de datas
@@ -515,7 +522,7 @@ shared/utils/                 # Utils compartilhados
 - **Feature states**: Estados específicos da feature
 - **Feature validation**: Rules de validação específicas
 
-#### Shared Constants
+#### Global Constants
 
 - **Global settings**: Configurações globais
 - **Common states**: Estados comuns entre features
@@ -551,15 +558,15 @@ export * from './application';
 export * from './application-validation';
 ```
 
-#### Exemplos de Shared Constants
+#### Exemplos de Global Constants
 
 ```typescript
-// shared/constants/api.ts
+// constants/api.ts
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export const DEFAULT_PAGE_SIZE = 20;
 export const REQUEST_TIMEOUT = 10000;
 
-// shared/constants/ui.ts
+// constants/ui.ts
 export const STATUS_COLORS = {
   ACTIVE: 'green',
   INACTIVE: 'gray',
@@ -575,10 +582,10 @@ export const BREAKPOINTS = {
 } as const;
 ```
 
-#### Exemplos de Shared Utils
+#### Exemplos de Global Utils
 
 ```typescript
-// shared/utils/format.ts
+// utils/format.ts
 export const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('pt-BR').format(date);
 };
@@ -590,7 +597,7 @@ export const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
-// shared/utils/validation.ts
+// utils/validation.ts
 export const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -610,35 +617,70 @@ export const isValidUrl = (url: string): boolean => {
 
 ## 🎣 Hooks
 
-### Organização por Escopo
+### Organização por Escopo - Abordagem Híbrida Pragmática
 
 ```
 features/[feature]/hooks/      # Hooks específicos da feature
 ├── use-[feature].ts          # Hook principal de dados
 ├── use-[feature]-form.ts     # Hook de formulário
-├── use-[feature]-actions.ts  # Hook de ações
+├── use-[feature]-actions.ts  # Hook de ações específicas
 └── index.ts                  # Exports
 
-shared/hooks/                 # Hooks compartilhados
-├── api/                      # Data fetching genérico
+hooks/                        # Hooks globais/reutilizáveis
+├── api/                      # Data fetching patterns genéricos
+│   ├── use-api-query.ts      # Base API query wrapper
+│   ├── use-optimistic-mutation.ts # Optimistic updates pattern
+│   └── index.ts
 ├── ui/                       # UI state genérico
+│   ├── use-toggle.ts         # Toggle state utility
+│   ├── use-pagination.ts     # Pagination pattern
+│   └── index.ts
 ├── forms/                    # Form management genérico
+│   ├── use-form-validation.ts # Validation patterns
+│   └── index.ts
 └── utils/                    # General utility hooks
+    ├── use-debounce.ts       # Input debouncing
+    ├── use-local-storage.ts  # Storage utilities
+    └── index.ts
 ```
 
-### Categorização
+### 🎯 Critério de Separação Claro
 
-#### Feature-Specific Hooks
+#### Feature-Specific Hooks (features/[domain]/hooks/)
+
+**Critério**: Hooks que conhecem o **domínio de negócio específico**
 
 - **Data hooks**: Fetching e mutação de dados da feature
-- **Form hooks**: Gestão de formulários específicos
-- **Action hooks**: Ações de negócio da feature
+- **Form hooks**: Gestão de formulários específicos da feature
+- **Business hooks**: Lógica de negócio específica do domínio
+- **Workflow hooks**: Fluxos específicos da feature (wizards, steppers)
 
-#### Shared Hooks
+#### Global Hooks (hooks/)
+
+**Critério**: Hooks **agnósticos de domínio**, reutilizáveis
 
 - **API hooks**: Patterns de fetching reutilizáveis
 - **UI hooks**: State de interface reutilizável
 - **Utility hooks**: Lógica utilitária comum
+- **Form hooks**: Patterns de formulário genéricos
+
+### 🔍 Exemplos Práticos de Categorização
+
+#### ✅ Feature-Specific (vai para `features/[domain]/hooks/`)
+
+| Hook                     | Localização                    | Por quê?                                       |
+| ------------------------ | ------------------------------ | ---------------------------------------------- |
+| `useApplications()`      | `features/applications/hooks/` | Conhece ApplicationFilters, applicationService |
+| `useBlueprintWizard()`   | `features/blueprints/hooks/`   | Conhece BlueprintWizardData, steps específicos |
+| `useEnvironmentStatus()` | `features/environments/hooks/` | Conhece Environment domain, status específicos |
+
+#### ✅ Global/Reusable (fica em `hooks/`)
+
+| Hook                | Localização    | Por quê?                                  |
+| ------------------- | -------------- | ----------------------------------------- |
+| `useDebounce()`     | `hooks/utils/` | Agnóstico, usado em qualquer input        |
+| `usePagination()`   | `hooks/ui/`    | Pattern reutilizável para qualquer lista  |
+| `useLocalStorage()` | `hooks/utils/` | Utility puro, sem conhecimento de domínio |
 
 ### Convenções
 
@@ -677,10 +719,10 @@ export const useApplicationForm = (application?: Application) => {
 };
 ```
 
-#### Exemplo de Shared Hook
+#### Exemplo de Global Hook
 
 ```typescript
-// shared/hooks/ui/use-toggle.ts
+// hooks/ui/use-toggle.ts
 export const useToggle = (initialValue = false) => {
   const [value, setValue] = useState(initialValue);
 
@@ -691,7 +733,7 @@ export const useToggle = (initialValue = false) => {
   return { value, toggle, setTrue, setFalse };
 };
 
-// shared/hooks/api/use-optimistic-mutation.ts
+// hooks/api/use-optimistic-mutation.ts
 export const useOptimisticMutation = <TData, TVariables>(
   mutationFn: (variables: TVariables) => Promise<TData>,
   queryKey: QueryKey
@@ -727,7 +769,7 @@ features/[feature]/services/   # Feature-specific services
 ├── [feature]-api.ts          # API calls específicos
 └── index.ts                  # Exports
 
-shared/services/              # Shared business logic
+services/                     # Services globais/compartilhados
 ├── notification.ts           # User notifications
 ├── storage.ts                # Data persistence
 └── validation.ts             # Validation utilities
@@ -749,7 +791,7 @@ shared/services/              # Shared business logic
 - **Data Transformation**: Transformação de dados da API
 - **Validation**: Validação específica do domínio
 
-#### Shared Services (shared/services/)
+#### Global Services (services/)
 
 - **Cross-cutting concerns**: Funcionalidades transversais
 - **Utilities**: Utilitários compartilhados
@@ -818,7 +860,7 @@ features/[feature]/contexts/   # Feature contexts
 ├── [feature]-context.tsx     # Context específico da feature
 └── index.ts                  # Exports
 
-shared/contexts/              # Shared contexts
+contexts/                     # Contexts globais/compartilhados
 ├── theme-context.tsx         # Tema global
 ├── i18n-context.tsx          # Internacionalização
 └── index.ts                  # Exports
@@ -970,7 +1012,7 @@ __tests__/
 
 ### Configuração Jest + Next.js
 
-### Configuração Jest + Next.js
+### Configuração vc + Next.js
 
 #### Setup Básico
 
@@ -1161,7 +1203,7 @@ import { instancesService } from '../../services/api/instances';
 
 Este documento estabelece os **padrões arquiteturais** para o DataOcean Instance Manager, fornecendo diretrizes claras para:
 
-- **Estrutura** de projeto consistente com arquitetura híbrida features + shared
+- **Estrutura** de projeto consistente com arquitetura híbrida pragmática (global + features)
 - **Organização** de código padronizada por domínio de negócio
 - **Convenções** de desenvolvimento e nomenclatura
 - **Ferramentas** e configurações recomendadas
@@ -1174,7 +1216,16 @@ Este documento serve como **base arquitetural** para a implementação da [Estra
 - **Padrões estruturais** aplicados na migração
 - **Convenções de código** seguidas nas features
 - **Guidelines de organização** para cada domínio
-- **Shared resources** e feature isolation
+- **Abordagem híbrida**: Global na raiz + Features específicas
+- **Critérios claros** para separação de código (domain-specific vs. agnóstico)
+
+### ✅ **Benefícios da Abordagem Híbrida**
+
+1. **Simplicidade**: Estrutura familiar e intuitiva
+2. **Pragmatismo**: Sem overhead desnecessário de camadas
+3. **Escalabilidade**: Fácil crescimento por features
+4. **Clareza**: Critérios objetivos para organização
+5. **Developer Experience**: Imports limpos e navegação eficiente
 
 **Importante**: Este documento é **vivo** e deve evoluir conforme o projeto cresce e novas necessidades surgem. Os padrões aqui definidos servem como base para decisões arquiteturais e desenvolvimento consistente, especialmente durante a migração para arquitetura por features.
 
