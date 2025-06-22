@@ -6,20 +6,14 @@ Estabelecer base arquitetural sólida com configurações centralizadas, utilit�
 
 ## Análise da Situação Atual
 
-### 1. Verificar Configurações Atuais
+### 1. O Copilot Agent irá automaticamente:
 
-```bash
-# Procurar configs espalhadas
-grep -r "const.*URL\|API_BASE\|BASE_URL" src/ --include="*.ts" --include="*.tsx" | head -10
+- Verificar estrutura de diretórios existente
+- Buscar configurações espalhadas no código
+- Identificar padrões de organização atual
+- Detectar gaps na arquitetura
 
-# Verificar estrutura de utils
-ls -la src/utils/ 2>/dev/null || echo "Utils não organizadas"
-
-# Verificar estrutura de types
-ls -la src/types/ 2>/dev/null || echo "Types não organizadas"
-```
-
-### 2. Identificar Gaps
+### 2. Gaps Típicos Esperados
 
 - [ ] **Config centralizada**: Falta src/config/
 - [ ] **Constants centralizadas**: Falta src/constants/
@@ -29,17 +23,25 @@ ls -la src/types/ 2>/dev/null || echo "Types não organizadas"
 
 ## Implementação
 
-### Step 1: Instalar Dependências
+### Step 1: Instruções de Backup (Usuário)
+
+**ANTES DE INICIAR**: O usuário deve criar backup:
 
 ```bash
-npm install zod  # Para validação de schemas
+git add .
+git commit -m "Backup before foundation architecture"
 ```
 
-### Step 2: Criar Estrutura de Config
+### Step 2: Análise da Estrutura Atual (Copilot Agent)
 
-```bash
-mkdir -p src/config src/constants
-```
+O Copilot Agent irá primeiro analisar:
+
+- Verificar estrutura de diretórios existente usando `file_search`
+- Buscar configurações espalhadas com `grep_search`
+- Identificar padrões de organização atual
+- Detectar gaps na arquitetura
+
+### Step 3: Criar Estrutura de Config (Copilot Agent)
 
 ```typescript
 // src/config/index.ts
@@ -62,9 +64,10 @@ export const config = {
 } as const;
 ```
 
+### Step 4: Constants Organizadas (Copilot Agent)
+
 ```typescript
 // src/constants/index.ts
-export const ROUTES = {
   HOME: '/',
   APPLICATIONS: '/applications',
   ENVIRONMENTS: '/environments',
@@ -85,7 +88,7 @@ export const STATUS = {
 } as const;
 ```
 
-### Step 3: Utils Aprimorados
+### Step 5: Utils Aprimorados (Copilot Agent)
 
 ```typescript
 // src/utils/error.ts
@@ -141,7 +144,7 @@ export const formatters = {
 };
 ```
 
-### Step 4: Types Base
+### Step 6: Types Base (Copilot Agent)
 
 ```typescript
 // src/types/common.ts
@@ -171,7 +174,7 @@ export interface ApiResponse<T> {
 export type Status = 'idle' | 'loading' | 'success' | 'error';
 ```
 
-### Step 5: Barrel Exports
+### Step 7: Barrel Exports (Copilot Agent)
 
 ```typescript
 // src/config/index.ts
@@ -195,7 +198,7 @@ export * from './environment';
 export * from './location';
 ```
 
-### Step 6: Atualizar TSConfig
+### Step 8: Atualizar TSConfig (Copilot Agent)
 
 ```json
 // tsconfig.json - adicionar paths
@@ -212,18 +215,36 @@ export * from './location';
 }
 ```
 
-### Step 7: Migrar Imports Existentes
+### Step 9: Migrar Imports Existentes (Copilot Agent)
+
+O Copilot Agent irá usar suas ferramentas nativas para:
+
+1. **Identificar imports antigos**: `grep_search` para encontrar imports relativos
+2. **Atualizar automaticamente**: `replace_string_in_file` para corrigir imports
+3. **Validar mudanças**: `get_errors` para verificar se não quebrou nada
+
+### Step 10: Validação e Commit (Usuário)
+
+**APÓS a refatoração completa**: O usuário deve validar e commitar:
 
 ```bash
-# Atualizar imports para usar nova estrutura
-find src/ -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/\.\.\/.*config/@\/config/g'
-find src/ -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/\.\.\/.*constants/@\/constants/g'
-find src/ -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/\.\.\/.*utils/@\/utils/g'
+# Validar
+npm run type-check  # Verificar types
+npm run build       # Verificar se build passa
+npm run lint        # Verificar se não há erros críticos
+
+# Commitar
+git add .
+git commit -m "feat: establish foundation architecture with centralized config and utils"
 ```
 
 ## Checklist de Finalização
 
-### Estrutura Criada
+### ✅ Antes de Iniciar (Usuário)
+
+- [ ] Backup realizado
+
+### ✅ Estrutura Criada (Copilot Agent)
 
 - [ ] `src/config/` com configurações centralizadas
 - [ ] `src/constants/` com constantes organizadas
@@ -231,15 +252,21 @@ find src/ -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/\.\.\/.*utils/@\/ut
 - [ ] `src/types/` com tipos base definidos
 - [ ] Barrel exports implementados
 
-### Funcionalidade
+### ✅ Funcionalidade (Copilot Agent)
+
+- [ ] TSConfig paths configurados
+- [ ] Imports migrados para nova estrutura
+- [ ] Barrel exports funcionando
+
+### ✅ Validação Final (Usuário)
 
 - [ ] `npm run type-check` - Types válidos
 - [ ] `npm run build` - Build successful
 - [ ] `npm run lint` - Sem erros críticos
-- [ ] Imports atualizados para nova estrutura
 - [ ] App funciona normalmente
+- [ ] Alterações commitadas
 
-### Impacto
+### ✅ Impacto Esperado
 
 - [ ] Configurações centralizadas
 - [ ] Import paths simplificados

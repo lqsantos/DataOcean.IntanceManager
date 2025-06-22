@@ -2,51 +2,58 @@
 
 ## Objetivo
 
-Implementar arquitetura de APIs robusta com HTTP client centralizado, cache inteligente (React Query), tratamento de erros consistente e documentação automatizada.
+Implementar arquitetura robusta para consumo de APIs com HTTP client centralizado, cache inteligente (migração SWR → React Query) e tratamento de erros consistente.
 
 ## Análise da Situação Atual
 
-### 1. Verificar APIs Atuais
+### 1. O Copilot Agent irá automaticamente:
 
-```bash
-# Verificar API routes
-find src/app/api -name "route.ts" 2>/dev/null || find pages/api -name "*.ts" 2>/dev/null
+- Verificar API routes existentes (App Router)
+- Analisar services atuais e uso do SWR
+- Identificar padrões de fetch e cache atuais
+- Planejar migração de SWR para React Query
+- Avaliar tratamento de erros e type safety
 
-# Verificar services existentes
-ls -la src/services/ 2>/dev/null
+### 2. Gaps Típicos Esperados
 
-# Verificar padrões de fetch
-grep -r "fetch\|axios" src/ --include="*.ts" --include="*.tsx" | wc -l
-
-# Verificar uso de cache
-grep -r "useQuery\|useSWR" src/ --include="*.ts" --include="*.tsx" | wc -l
-```
-
-### 2. Identificar Gaps
-
-- [ ] **HTTP Client centralizado**: Falta wrapper consistente
-- [ ] **Cache strategy**: Falta React Query/SWR
+- [ ] **HTTP Client centralizado**: Falta wrapper consistente para fetch
+- [ ] **Migração SWR → React Query**: Padronizar cache strategy
 - [ ] **Error handling**: Inconsistente entre services
-- [ ] **Request/Response validation**: Falta schemas
-- [ ] **API documentation**: Falta OpenAPI
+- [ ] **Request/Response validation**: Otimizar uso do Zod existente
+- [ ] **Type safety**: Melhorar tipagem de APIs consumidas
 
 ## Implementação
 
-### Step 1: Instalar Dependências
+### Step 1: Instruções de Backup (Usuário)
+
+**ANTES DE INICIAR**: O usuário deve criar backup:
 
 ```bash
-# State management e cache
-npm install @tanstack/react-query @tanstack/react-query-devtools
-
-# Validation
-npm install zod
-
-# API documentation
-npm install swagger-ui-react swagger-jsdoc
-npm install -D @types/swagger-ui-react @types/swagger-jsdoc
+git add .
+git commit -m "Backup before API architecture refactoring"
 ```
 
-### Step 2: HTTP Client Centralizado
+### Step 2: Análise da Infraestrutura Atual (Copilot Agent)
+
+O Copilot Agent irá primeiro analisar usando `read_file` e `grep_search`:
+
+- ✅ **SWR já instalado**: (2.3.3) - precisa migrar para React Query
+- ✅ **Zod já instalado**: (3.24.4) - otimizar uso para validation
+- ❓ **Verificar se faltam**: @tanstack/react-query
+- 🔍 **Analisar**: Padrões atuais de API calls e cache
+
+### Step 3: Instalar Dependências Faltantes (Copilot Agent)
+
+**IMPORTANTE**: Usar `pnpm` e verificar apenas o que está faltando:
+
+```bash
+# State management e cache (substituto do SWR)
+pnpm add @tanstack/react-query @tanstack/react-query-devtools
+
+# Zod já está instalado ✅
+```
+
+### Step 4: HTTP Client Centralizado (Copilot Agent)
 
 ```typescript
 // src/lib/http-client.ts
@@ -134,7 +141,7 @@ class HttpClient {
 export const httpClient = new HttpClient(config.api.baseUrl);
 ```
 
-### Step 3: React Query Setup
+### Step 5: React Query Setup (Copilot Agent)
 
 ```typescript
 // src/lib/query-client.ts
@@ -175,7 +182,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### Step 4: Service Layer com Validation
+### Step 6: Service Layer com Validation (Copilot Agent)
 
 ```typescript
 // src/services/base-service.ts
@@ -275,7 +282,9 @@ class ApplicationService extends BaseService {
 export const applicationService = new ApplicationService();
 ```
 
-### Step 5: React Query Hooks
+### Step 7: Migração SWR → React Query (Copilot Agent)
+
+**IMPORTANTE**: Migrar hooks existentes que usam SWR para React Query:
 
 ```typescript
 // src/hooks/use-applications.ts
@@ -341,7 +350,7 @@ export function useDeleteApplication() {
 }
 ```
 
-### Step 6: Error Boundary
+### Step 8: Error Boundary (Copilot Agent)
 
 ```tsx
 // src/components/error-boundary.tsx
@@ -391,7 +400,7 @@ export class ErrorBoundary extends React.Component<
 }
 ```
 
-### Step 7: Atualizar Layout
+### Step 9: Atualizar Layout (Copilot Agent)
 
 ```tsx
 // src/app/layout.tsx - adicionar providers
@@ -411,74 +420,82 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-### Step 8: API Documentation
+### Step 10: Limpeza e Migração Final (Copilot Agent)
 
-```typescript
-// src/lib/swagger.ts
-import swaggerJsdoc from 'swagger-jsdoc';
+**DEPOIS** que React Query estiver funcionando:
 
-const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'DataOcean Instance Manager API',
-      version: '1.0.0',
-    },
-    servers: [{ url: '/api' }],
-  },
-  apis: ['./src/app/api/**/*.ts'],
-};
+1. **Migrar hooks existentes**: Trocar `useSWR` por `useQuery`
+2. **Atualizar imports**: Remover imports do SWR
+3. **Remover dependência SWR**: Atualizar package.json (após validação)
 
-export const specs = swaggerJsdoc(options);
-```
+### Step 11: Validação e Commit (Usuário)
 
-```typescript
-// src/app/api/docs/route.ts
-import { NextResponse } from 'next/server';
-import { specs } from '@/lib/swagger';
+**APÓS a migração completa**: O usuário deve validar e commitar:
 
-export async function GET() {
-  return NextResponse.json(specs);
-}
+```bash
+# Validar migração
+pnpm build        # Verificar se build passa
+pnpm test         # Verificar se testes passam
+pnpm dev          # Verificar se app funciona
+
+# Commitar
+git add .
+git commit -m "feat: implement frontend API architecture with React Query and centralized HTTP client"
 ```
 
 ## Checklist de Finalização
 
-### HTTP Client & Services
+### ✅ Antes de Iniciar (Usuário)
+
+- [ ] Backup realizado
+
+### ✅ HTTP Client & Services (Copilot Agent)
 
 - [ ] HTTP client centralizado implementado
 - [ ] Base service class criada
 - [ ] Validation com Zod implementada
 - [ ] Error handling consistente
 
-### React Query
+### ✅ React Query Migration (Copilot Agent)
 
-- [ ] Query client configurado
+- [ ] React Query instalado e configurado
+- [ ] SWR hooks migrados para useQuery/useMutation
 - [ ] Provider integrado no layout
 - [ ] DevTools habilitadas
 - [ ] Cache strategy definida
 
-### Hooks & State
+### ✅ Hooks & State (Copilot Agent)
 
-- [ ] Query hooks implementados
+- [ ] Query hooks implementados (migrados de SWR)
 - [ ] Mutation hooks criados
 - [ ] Cache invalidation funcionando
 - [ ] Loading/error states gerenciados
 
-### Error Handling
+### ✅ Error Handling (Copilot Agent)
 
 - [ ] Error boundary implementado
 - [ ] Custom error classes definidas
 - [ ] User-friendly error messages
 - [ ] Recovery mechanisms
 
-### Funcionalidade
+### ✅ Validação Final (Usuário)
 
-- [ ] `npm run build` - Build successful
+- [ ] `pnpm build` - Build successful
+- [ ] `pnpm test` - Testes passam
 - [ ] APIs respondem corretamente
 - [ ] Cache funciona como esperado
 - [ ] DevTools aparecem em desenvolvimento
-- [ ] Error handling funciona
+- [ ] SWR completamente removido
+- [ ] Alterações commitadas
+
+### ✅ Impacto Esperado
+
+- [ ] **React Query** como framework principal de cache/state
+- [ ] **SWR** completamente removido do projeto
+- [ ] **HTTP Client** centralizado para consumo de APIs
+- [ ] **Zod** integrado para validation de requests/responses
+- [ ] **Error handling** consistente em toda aplicação
+- [ ] **Type safety** melhorada para dados de APIs externas
 
 ## Próximo Passo
 

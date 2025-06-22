@@ -2,6 +2,7 @@
 
 - [Visão Geral](#-visão-geral)
 - [Estrutura Global](#-estrutura-global)
+- [Feature Architecture](#-feature-architecture)
 - [Padrões de Componentes](#-padrões-de-componentes)
 - [Design System - shadcn/ui](#-design-system---shadcnui)
 - [Sistema de Types](#-sistema-de-types)
@@ -36,29 +37,86 @@ Este documento define os **padrões arquiteturais** para o DataOcean Instance Ma
 
 ### Organização de Diretórios
 
+#### Estrutura Atual (Pré-migração)
+
 ```
 src/
 ├── app/                         # Next.js App Directory
 ├── components/                  # Componentes React
 │   ├── ui/                     # shadcn/ui base components
-│   ├── features/               # Feature-specific components
+│   ├── features/               # Feature-specific components (existente)
 │   └── layout/                 # Layout components
 ├── lib/                        # Bibliotecas e configurações
 ├── services/                   # Business logic e API calls
 ├── hooks/                      # Custom React hooks
 ├── types/                      # TypeScript definitions
-├── constants/                  # Application constants
+├── contexts/                   # React contexts
 ├── utils/                      # Utility functions
-├── styles/                     # CSS e tema
 ├── locales/                    # Internacionalização
-├── store/                      # State management
 ├── mocks/                      # MSW handlers e mock data
 │   ├── handlers/               # API handlers
 │   ├── data/                   # Mock data
 │   ├── browser.ts              # Browser setup
 │   └── server.ts               # Node.js setup
-└── __tests__/                  # Testes
+└── tests/                      # Testes
 ```
+
+#### Estrutura Target (Pós-migração para Features)
+
+```
+src/
+├── app/                         # Next.js App Directory (mantém)
+├── features/                    # � Features/domínios de negócio
+│   └── [feature-name]/          # Feature específica
+│       ├── components/          # Components da feature
+│       ├── hooks/               # Hooks da feature
+│       ├── services/            # Services da feature
+│       ├── types/               # Types da feature
+│       ├── constants/           # Constants da feature
+│       ├── contexts/            # Contexts da feature (se necessário)
+│       └── index.ts             # Public API da feature
+├── shared/                      # 🆕 Código compartilhado
+│   ├── components/              # Components reutilizáveis
+│   │   ├── ui/                 # shadcn/ui base components
+│   │   ├── forms/              # Form components genéricos
+│   │   ├── tables/             # Table components genéricos
+│   │   └── layout/             # Layout components
+│   ├── hooks/                  # Hooks genéricos
+│   ├── types/                  # Types compartilhados
+│   ├── constants/              # Constants globais
+│   ├── contexts/               # Contexts compartilhados
+│   └── utils/                  # Utility functions
+├── lib/                        # 🔧 Core infrastructure (mantém)
+│   ├── api/                    # API client setup
+│   ├── store/                  # Global state management
+│   ├── i18n/                   # Internationalization setup
+│   └── utils/                  # Core utilities
+├── locales/                    # 🌍 Internacionalização (mantém)
+│   ├── en/                     # English translations
+│   ├── pt/                     # Portuguese translations
+│   └── index.ts                # i18n configuration
+├── mocks/                      # 🎭 MSW handlers e mock data (mantém)
+│   ├── handlers/               # API handlers
+│   ├── data/                   # Mock data
+│   ├── browser.ts              # Browser setup
+│   └── server.ts               # Node.js setup
+├── styles/                     # 🎨 CSS e tema global (mantém)
+│   ├── globals.css             # Global styles
+│   └── theme.css               # Theme configuration
+└── tests/                      # 🧪 Testes globais (mantém)
+    ├── __mocks__/              # Test mocks
+    ├── setup.ts                # Test setup
+    └── utils.ts                # Test utilities
+```
+
+#### Estratégia de Migração
+
+A migração será **gradual** e **incremental**:
+
+1. **Fase 1**: Manter estrutura atual funcionando
+2. **Fase 2**: Criar `features/` e migrar domínio por domínio
+3. **Fase 3**: Reorganizar shared code em `shared/`
+4. **Fase 4**: Limpar estrutura antiga conforme features migram
 
 ### Princípios de Organização
 
@@ -69,24 +127,123 @@ src/
 
 ---
 
+## 🏗️ Feature Architecture
+
+### Princípios de Features
+
+A arquitetura de features segue o padrão **Domain-Driven Design**, organizando código por domínios de negócio ao invés de tipos técnicos.
+
+#### Conceitos Fundamentais
+
+1. **Domain-Driven**: Organização por domínio de negócio
+2. **Self-Contained**: Cada feature é independente e auto-suficiente
+3. **Public API**: Interface limpa e bem definida entre features
+4. **Shared Resources**: Código comum centralizado em shared/
+
+### Estrutura de Feature
+
+```
+features/[feature-name]/
+├── components/              # Components específicos da feature
+│   ├── [Feature]Table.tsx   # Tabela principal
+│   ├── [Feature]Form.tsx    # Formulário principal
+│   ├── [Feature]Modal.tsx   # Modal específico
+│   └── index.ts            # Exports dos components
+├── hooks/                   # Hooks específicos da feature
+│   ├── use-[feature].ts     # Hook principal de dados
+│   ├── use-[feature]-form.ts # Hook de formulário
+│   └── index.ts            # Exports dos hooks
+├── services/               # Services específicos da feature
+│   ├── [feature]-service.ts # Service principal
+│   └── index.ts            # Exports dos services
+├── types/                  # Types específicos da feature
+│   ├── [feature].ts        # Types principais
+│   └── index.ts            # Exports dos types
+├── constants/              # Constants específicos da feature
+│   ├── [feature].ts        # Constants principais
+│   └── index.ts            # Exports dos constants
+├── contexts/               # Contexts específicos (se necessário)
+│   └── [feature]-context.tsx
+└── index.ts               # Public API da feature
+```
+
+### Public API Pattern
+
+Cada feature exporta uma API pública limpa que esconde detalhes de implementação:
+
+```typescript
+// features/applications/index.ts
+export { ApplicationTable, ApplicationForm } from './components';
+export { useApplications, useApplicationForm } from './hooks';
+export { applicationService } from './services';
+export type { Application, ApplicationFormData } from './types';
+export { APPLICATION_STATUS } from './constants';
+```
+
+### Shared vs Feature-Specific
+
+#### Feature-Specific (features/[feature]/)
+
+- Código usado **apenas** pela feature
+- Lógica de negócio específica do domínio
+- Components que não serão reutilizados
+- Types específicos do domínio
+
+#### Shared (shared/)
+
+- Código usado por **múltiplas** features
+- Components genéricos reutilizáveis
+- Utilities comuns
+- Types compartilhados
+
+### Exemplos de Organização
+
+#### ✅ Feature-Specific
+
+```typescript
+// features/applications/components/ApplicationTable.tsx
+// features/applications/hooks/use-applications.ts
+// features/applications/types/application.ts
+```
+
+#### ✅ Shared
+
+```typescript
+// shared/components/ui/Button.tsx
+// shared/hooks/use-api.ts
+// shared/types/common.ts
+```
+
+---
+
 ## 🧩 Padrões de Componentes
 
 ### Estrutura de Componentes
 
 ```
-components/
-├── ui/                         # Base components (shadcn/ui)
+shared/components/              # Componentes compartilhados
+├── ui/                        # Base components (shadcn/ui)
 │   ├── button.tsx
 │   ├── input.tsx
-│   └── index.ts               # Barrel exports
-├── features/                   # Feature components
-│   ├── instances/
-│   ├── blueprints/
-│   └── applications/
-└── layout/                     # Layout components
+│   └── index.ts              # Barrel exports
+├── forms/                     # Form components genéricos
+│   ├── field-wrapper.tsx
+│   ├── form-section.tsx
+│   └── index.ts
+├── tables/                    # Table components genéricos
+│   ├── data-table.tsx
+│   ├── table-actions.tsx
+│   └── index.ts
+└── layout/                    # Layout components
     ├── header.tsx
     ├── sidebar.tsx
     └── footer.tsx
+
+features/[feature]/components/ # Components específicos da feature
+├── [Feature]Table.tsx        # Tabela específica
+├── [Feature]Form.tsx         # Formulário específico
+├── [Feature]Modal.tsx        # Modal específico
+└── index.ts                  # Exports da feature
 ```
 
 ### Convenções
@@ -169,46 +326,104 @@ export const DataTable = <T>({ data, columns, ...props }: DataTableProps<T>) => 
 
 ## 📊 Sistema de Types
 
-### Estrutura
+### Organização por Escopo
 
 ```
-types/
-├── entities/                   # Business entities
-├── api/                       # API-related types
-├── ui/                        # UI component types
-├── forms/                     # Form-specific types
-└── global.d.ts               # Global type declarations
+features/[feature]/types/      # Types específicos da feature
+├── [feature].ts              # Entidades principais
+├── [feature]-forms.ts        # Types de formulários
+├── [feature]-api.ts          # Types de API
+└── index.ts                  # Exports
+
+shared/types/                 # Types compartilhados
+├── entities/                 # Business entities globais
+├── api/                      # API-related types globais
+├── ui/                       # UI component types
+├── forms/                    # Form types genéricos
+└── global.d.ts              # Global type declarations
 ```
+
+### Categorização
+
+#### Feature-Specific Types
+
+- **Domain entities**: Entidades específicas do domínio
+- **Form types**: Types para formulários da feature
+- **API types**: Request/Response específicos
+- **State types**: Types para contextos da feature
+
+#### Shared Types
+
+- **Common entities**: Entidades usadas em múltiplas features
+- **Base interfaces**: Interfaces base para extensão
+- **Utility types**: Types utilitários
+- **Global declarations**: Declarações globais
 
 ### Convenções
 
 - **PascalCase** para interfaces e types
 - **Prefixos descritivos**: `ApiResponse`, `FormData`, `EntityState`
 - **Granularidade apropriada**: Nem muito específico, nem muito genérico
-- **Reutilização**: Types compartilhados em arquivos centrais
+- **Reutilização**: Types compartilhados em shared/
+- **Export consistency**: Sempre use barrel exports
 
-#### Exemplos de Types
+#### Exemplos de Feature Types
 
 ```typescript
-// types/entities/instance.ts
-export interface Instance {
+// features/applications/types/application.ts
+export interface Application {
   id: string;
   name: string;
-  status: InstanceStatus;
+  status: ApplicationStatus;
+  description?: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
-// types/api/responses.ts
+export interface CreateApplicationRequest {
+  name: string;
+  description?: string;
+}
+
+export interface ApplicationFormData {
+  name: string;
+  description: string;
+}
+
+// features/applications/types/index.ts
+export * from './application';
+export * from './application-forms';
+```
+
+#### Exemplos de Shared Types
+
+```typescript
+// shared/types/entities/common.ts
+export interface BaseEntity {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// shared/types/api/responses.ts
 export interface ApiResponse<T> {
   data: T;
   success: boolean;
   message?: string;
 }
 
-// types/ui/components.ts
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+// shared/types/ui/components.ts
 export interface BaseComponentProps {
   className?: string;
   children?: React.ReactNode;
+  'data-testid'?: string;
 }
 ```
 
@@ -258,25 +473,53 @@ const title = t('instances.title') // "Instâncias"
 
 ## 🔧 Constants e Utils
 
-### Constants
+### Organização por Escopo
+
+#### Constants
 
 ```
-constants/
-├── api.ts
-├── ui.ts                      # UI constants (sizes, variants)
-├── validation.ts              # Validation rules
-└── business.ts               # Business rules
+features/[feature]/constants/  # Constants específicos da feature
+├── [feature].ts              # Constants principais da feature
+├── [feature]-validation.ts   # Rules de validação
+├── [feature]-ui.ts           # Constants de UI específicos
+└── index.ts                  # Exports
+
+shared/constants/             # Constants compartilhados
+├── api.ts                    # API constants globais
+├── ui.ts                     # UI constants (sizes, variants)
+├── validation.ts             # Validation rules globais
+├── business.ts               # Business rules globais
+└── index.ts                  # Exports
 ```
 
-### Utils
+#### Utils
 
 ```
-utils/
-├── format.ts                  # Formatação de dados
-├── validation.ts              # Validação
-├── date.ts                    # Manipulação de datas
-└── api.ts                     # API utilities
+features/[feature]/utils/     # Utils específicos da feature (se necessário)
+├── [feature]-helpers.ts      # Helper functions específicos
+└── index.ts                  # Exports
+
+shared/utils/                 # Utils compartilhados
+├── format.ts                 # Formatação de dados
+├── validation.ts             # Validação
+├── date.ts                   # Manipulação de datas
+├── api.ts                    # API utilities
+└── index.ts                  # Exports
 ```
+
+### Categorização
+
+#### Feature-Specific Constants
+
+- **Domain rules**: Regras específicas do domínio
+- **Feature states**: Estados específicos da feature
+- **Feature validation**: Rules de validação específicas
+
+#### Shared Constants
+
+- **Global settings**: Configurações globais
+- **Common states**: Estados comuns entre features
+- **API constants**: URLs, timeouts, headers
 
 ### Convenções
 
@@ -284,20 +527,58 @@ utils/
 - **camelCase** para utility functions
 - **Pure functions** sempre que possível
 - **Single responsibility** por função
+- **Feature isolation**: Constants de feature ficam na feature
 
-#### Exemplos
+#### Exemplos de Feature Constants
 
 ```typescript
-// constants/api.ts
+// features/applications/constants/application.ts
+export const APPLICATION_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  PENDING: 'pending',
+  ERROR: 'error',
+} as const;
+
+export const APPLICATION_VALIDATION = {
+  MIN_NAME_LENGTH: 3,
+  MAX_NAME_LENGTH: 50,
+  MAX_DESCRIPTION_LENGTH: 500,
+} as const;
+
+// features/applications/constants/index.ts
+export * from './application';
+export * from './application-validation';
+```
+
+#### Exemplos de Shared Constants
+
+```typescript
+// shared/constants/api.ts
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export const DEFAULT_PAGE_SIZE = 20;
+export const REQUEST_TIMEOUT = 10000;
+
+// shared/constants/ui.ts
 export const STATUS_COLORS = {
   ACTIVE: 'green',
   INACTIVE: 'gray',
   ERROR: 'red',
+  WARNING: 'yellow',
 } as const;
 
-// utils/format.ts
+export const BREAKPOINTS = {
+  SM: '640px',
+  MD: '768px',
+  LG: '1024px',
+  XL: '1280px',
+} as const;
+```
+
+#### Exemplos de Shared Utils
+
+```typescript
+// shared/utils/format.ts
 export const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('pt-BR').format(date);
 };
@@ -308,21 +589,56 @@ export const formatCurrency = (value: number): string => {
     currency: 'BRL',
   }).format(value);
 };
+
+// shared/utils/validation.ts
+export const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+export const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
 ```
 
 ---
 
 ## 🎣 Hooks
 
-### Categorização
+### Organização por Escopo
 
 ```
-hooks/
-├── api/                       # Data fetching hooks
-├── ui/                        # UI state hooks
-├── forms/                     # Form management hooks
-└── utils/                     # General utility hooks
+features/[feature]/hooks/      # Hooks específicos da feature
+├── use-[feature].ts          # Hook principal de dados
+├── use-[feature]-form.ts     # Hook de formulário
+├── use-[feature]-actions.ts  # Hook de ações
+└── index.ts                  # Exports
+
+shared/hooks/                 # Hooks compartilhados
+├── api/                      # Data fetching genérico
+├── ui/                       # UI state genérico
+├── forms/                    # Form management genérico
+└── utils/                    # General utility hooks
 ```
+
+### Categorização
+
+#### Feature-Specific Hooks
+
+- **Data hooks**: Fetching e mutação de dados da feature
+- **Form hooks**: Gestão de formulários específicos
+- **Action hooks**: Ações de negócio da feature
+
+#### Shared Hooks
+
+- **API hooks**: Patterns de fetching reutilizáveis
+- **UI hooks**: State de interface reutilizável
+- **Utility hooks**: Lógica utilitária comum
 
 ### Convenções
 
@@ -330,20 +646,41 @@ hooks/
 - **Single responsibility** por hook
 - **Proper dependencies** em arrays de dependência
 - **Error handling** apropriado
+- **Return consistent interface** para facilitar uso
 
-#### Exemplo de Hook
+#### Exemplo de Feature Hook
 
 ```typescript
-// hooks/api/use-instances.ts
-export const useInstances = (filters?: InstanceFilters) => {
+// features/applications/hooks/use-applications.ts
+export const useApplications = (filters?: ApplicationFilters) => {
   return useQuery({
-    queryKey: ['instances', filters],
-    queryFn: () => instancesService.getAll(filters),
+    queryKey: ['applications', filters],
+    queryFn: () => applicationService.getAll(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
-// hooks/ui/use-toggle.ts
+// features/applications/hooks/use-application-form.ts
+export const useApplicationForm = (application?: Application) => {
+  const form = useForm<ApplicationFormData>({
+    defaultValues: application || defaultApplicationData,
+  });
+
+  const { mutate: createApplication } = useMutation({
+    mutationFn: applicationService.create,
+    onSuccess: () => {
+      // Handle success
+    },
+  });
+
+  return { form, createApplication };
+};
+```
+
+#### Exemplo de Shared Hook
+
+```typescript
+// shared/hooks/ui/use-toggle.ts
 export const useToggle = (initialValue = false) => {
   const [value, setValue] = useState(initialValue);
 
@@ -353,94 +690,201 @@ export const useToggle = (initialValue = false) => {
 
   return { value, toggle, setTrue, setFalse };
 };
+
+// shared/hooks/api/use-optimistic-mutation.ts
+export const useOptimisticMutation = <TData, TVariables>(
+  mutationFn: (variables: TVariables) => Promise<TData>,
+  queryKey: QueryKey
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn,
+    onMutate: async (variables) => {
+      // Optimistic update logic
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+};
 ```
 
 ---
 
 ## 🔌 Services Architecture
 
-### Estrutura
+### Hierarquia de Services
 
 ```
-services/
-├── api/                       # API communication
-├── auth/                      # Authentication
-├── storage/                   # Data persistence
-└── notifications/             # User notifications
+lib/api/                       # Core API infrastructure
+├── client.ts                 # HTTP client base
+├── auth.ts                   # Authentication setup
+└── types.ts                  # API types globais
+
+features/[feature]/services/   # Feature-specific services
+├── [feature]-service.ts      # Main service
+├── [feature]-api.ts          # API calls específicos
+└── index.ts                  # Exports
+
+shared/services/              # Shared business logic
+├── notification.ts           # User notifications
+├── storage.ts                # Data persistence
+└── validation.ts             # Validation utilities
 ```
 
 ### Responsabilidades
 
-- **API Services**: HTTP requests, data transformation
-- **Auth Service**: Login, logout, token management
-- **Storage Service**: Local/session storage management
-- **Notification Service**: Toast, alerts, modal management
+#### Core API (lib/api/)
+
+- **HTTP Client**: Configuração base do cliente HTTP
+- **Authentication**: Setup de autenticação global
+- **Error Handling**: Interceptors e tratamento global de erros
+- **Types**: Types globais para APIs
+
+#### Feature Services (features/[feature]/services/)
+
+- **Domain Logic**: Lógica de negócio específica da feature
+- **API Calls**: Requests específicos do domínio
+- **Data Transformation**: Transformação de dados da API
+- **Validation**: Validação específica do domínio
+
+#### Shared Services (shared/services/)
+
+- **Cross-cutting concerns**: Funcionalidades transversais
+- **Utilities**: Utilitários compartilhados
+- **Common Logic**: Lógica comum entre features
 
 ### Princípios
 
 - **Single responsibility** por service
 - **Error handling** consistente
 - **Testability** por design
-- **Dependency injection** quando necessário
+- **Feature isolation**: Services de feature são independentes
 
-#### Exemplo de Service
+#### Exemplo de Service Structure
 
 ```typescript
-// services/api/instances.service.ts
-class InstancesService {
-  async getAll(filters?: InstanceFilters): Promise<Instance[]> {
+// lib/api/client.ts
+export const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  timeout: 10000,
+});
+
+// features/applications/services/application-service.ts
+class ApplicationService {
+  async getAll(filters?: ApplicationFilters): Promise<Application[]> {
     try {
-      const response = await apiClient.get('/instances', { params: filters });
+      const response = await apiClient.get('/applications', { params: filters });
       return response.data;
     } catch (error) {
-      throw new ApiError('Failed to fetch instances', error);
+      throw new ApiError('Failed to fetch applications', error);
     }
   }
 
-  async create(data: CreateInstanceRequest): Promise<Instance> {
+  async create(data: CreateApplicationRequest): Promise<Application> {
     // Implementation
   }
 }
 
-export const instancesService = new InstancesService();
+export const applicationService = new ApplicationService();
+
+// features/applications/services/index.ts
+export { applicationService } from './application-service';
 ```
 
 ---
 
 ## 🏪 State Management
 
-### Estratégia
+### Hierarquia de Estado
 
-1. **Local State**: useState para componentes simples
-2. **Shared State**: Context API para estado compartilhado
-3. **Server State**: React Query para dados do servidor
-4. **Global State**: Zustand para estado complexo (se necessário)
+A gestão de estado segue uma hierarquia clara baseada no escopo e responsabilidade:
 
-### Hierarquia
+1. **Component State**: useState para estado local simples
+2. **Feature Context**: Context para estado compartilhado dentro da feature
+3. **Global State**: Zustand para estado global da aplicação
+4. **Server State**: React Query para dados do servidor
 
-- **Component Level**: Estado local do componente
-- **Feature Level**: Context para features específicas
-- **App Level**: Estado global da aplicação
+### Organização por Escopo
 
-#### Exemplo de Context
+```
+lib/store/                     # Global state (Zustand)
+├── app-store.ts              # Estado global da aplicação
+├── user-store.ts             # Estado do usuário
+└── settings-store.ts         # Configurações globais
+
+features/[feature]/contexts/   # Feature contexts
+├── [feature]-context.tsx     # Context específico da feature
+└── index.ts                  # Exports
+
+shared/contexts/              # Shared contexts
+├── theme-context.tsx         # Tema global
+├── i18n-context.tsx          # Internacionalização
+└── index.ts                  # Exports
+```
+
+### Guidelines de Uso
+
+#### Component State (useState)
 
 ```typescript
-// contexts/instances-context.tsx
-interface InstancesContextValue {
-  selectedInstance: Instance | null;
-  setSelectedInstance: (instance: Instance | null) => void;
-  filters: InstanceFilters;
-  setFilters: (filters: InstanceFilters) => void;
+// Para estado local simples
+const [isOpen, setIsOpen] = useState(false);
+const [formData, setFormData] = useState(initialData);
+```
+
+#### Feature Context
+
+```typescript
+// features/applications/contexts/applications-context.tsx
+interface ApplicationsContextValue {
+  selectedApplication: Application | null;
+  setSelectedApplication: (app: Application | null) => void;
+  filters: ApplicationFilters;
+  setFilters: (filters: ApplicationFilters) => void;
 }
 
-export const InstancesContext = createContext<InstancesContextValue | null>(null);
+export const ApplicationsContext = createContext<ApplicationsContextValue | null>(null);
 
-export const useInstancesContext = () => {
-  const context = useContext(InstancesContext);
+export const useApplicationsContext = () => {
+  const context = useContext(ApplicationsContext);
   if (!context) {
-    throw new Error('useInstancesContext must be used within InstancesProvider');
+    throw new Error('useApplicationsContext must be used within ApplicationsProvider');
   }
   return context;
+};
+```
+
+#### Global State (Zustand)
+
+```typescript
+// lib/store/app-store.ts
+interface AppState {
+  sidebarCollapsed: boolean;
+  currentUser: User | null;
+  toggleSidebar: () => void;
+  setCurrentUser: (user: User | null) => void;
+}
+
+export const useAppStore = create<AppState>((set) => ({
+  sidebarCollapsed: false,
+  currentUser: null,
+  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  setCurrentUser: (user) => set({ currentUser: user }),
+}));
+```
+
+#### Server State (React Query)
+
+```typescript
+// features/applications/hooks/use-applications.ts
+export const useApplications = (filters?: ApplicationFilters) => {
+  return useQuery({
+    queryKey: ['applications', filters],
+    queryFn: () => applicationService.getAll(filters),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 };
 ```
 
@@ -717,12 +1161,22 @@ import { instancesService } from '../../services/api/instances';
 
 Este documento estabelece os **padrões arquiteturais** para o DataOcean Instance Manager, fornecendo diretrizes claras para:
 
-- **Estrutura** de projeto consistente
-- **Organização** de código padronizada
-- **Convenções** de desenvolvimento
+- **Estrutura** de projeto consistente com arquitetura híbrida features + shared
+- **Organização** de código padronizada por domínio de negócio
+- **Convenções** de desenvolvimento e nomenclatura
 - **Ferramentas** e configurações recomendadas
+- **Feature Architecture** para modularidade e escalabilidade
 
-**Importante**: Este documento é **vivo** e deve evoluir conforme o projeto cresce e novas necessidades surgem. Os padrões aqui definidos servem como base para decisões arquiteturais e desenvolvimento consistente.
+### 🔗 Integração com Estratégia de Features
+
+Este documento serve como **base arquitetural** para a implementação da [Estratégia de Organização por Features](./features-organization-strategy.md), definindo:
+
+- **Padrões estruturais** aplicados na migração
+- **Convenções de código** seguidas nas features
+- **Guidelines de organização** para cada domínio
+- **Shared resources** e feature isolation
+
+**Importante**: Este documento é **vivo** e deve evoluir conforme o projeto cresce e novas necessidades surgem. Os padrões aqui definidos servem como base para decisões arquiteturais e desenvolvimento consistente, especialmente durante a migração para arquitetura por features.
 
 ---
 

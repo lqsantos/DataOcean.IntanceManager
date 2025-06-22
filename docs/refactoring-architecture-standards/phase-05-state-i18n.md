@@ -6,31 +6,14 @@ Implementar uma arquitetura robusta de estado global com Zustand e sistema de in
 
 ## Análise da Situação Atual
 
-### 1. Verificar Estado Atual
+### 1. O Copilot Agent irá automaticamente:
 
-```bash
-# Verificar gerenciamento de estado atual
-echo "Estado atual - Context API:"
-find src/ -name "*context*" -o -name "*provider*" | head -10
+- Verificar gerenciamento de estado atual (Context API, Redux, etc.)
+- Analisar sistema de i18n existente (react-i18next, next-i18next)
+- Identificar padrões de estado local vs global
+- Avaliar necessidades de persistência de estado
 
-echo "Estado atual - Local state:"
-grep -r "useState\|useReducer" src/ --include="*.tsx" | wc -l
-
-echo "Bibliotecas de estado instaladas:"
-grep -E "(zustand|redux|jotai|valtio)" package.json
-```
-
-### 2. Verificar i18n Atual
-
-```bash
-# Verificar sistema de tradução atual
-echo "Sistema i18n atual:"
-ls src/locales/ 2>/dev/null || echo "Sem locales directory"
-grep -r "useTranslation\|t(" src/ --include="*.tsx" | head -5
-grep -E "(react-i18next|next-i18next|i18n)" package.json
-```
-
-### 3. Identificar Gaps
+### 2. Gaps Típicos Esperados
 
 - [ ] **Estado global**: Sem gerenciamento centralizado
 - [ ] **State persistence**: Sem persistência de estado
