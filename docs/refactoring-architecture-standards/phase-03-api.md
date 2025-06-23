@@ -4,6 +4,15 @@
 
 Implementar arquitetura robusta para consumo de APIs com HTTP client centralizado, cache inteligente (migração SWR → React Query) e tratamento de erros consistente.
 
+> **📋 Contexto do Projeto**: Consulte sempre [project-architecture-context.md](./project-architecture-context.md) para entender a estrutura target e convenções do DataOcean Instance Manager.
+
+### **Categorização Global vs. Feature**
+
+- **GLOBAL** (`src/lib/`, `src/services/base-*`): HTTP Client, Base Service, Query Provider
+- **FEATURE-BOUND** (`src/services/*-service.ts`, `src/hooks/use-*`): Services específicos, hooks de domínio
+
+### **Package Manager**: pnpm (padrão do projeto)
+
 ## Análise da Situação Atual
 
 ### 1. O Copilot Agent irá automaticamente:
@@ -55,8 +64,10 @@ pnpm add @tanstack/react-query @tanstack/react-query-devtools
 
 ### Step 4: HTTP Client Centralizado (Copilot Agent)
 
+**CATEGORIA**: Global - Infraestrutura compartilhada em toda aplicação
+
 ```typescript
-// src/lib/http-client.ts
+// src/lib/http-client.ts (GLOBAL)
 import { config } from '@/config';
 
 export class ApiError extends Error {
@@ -143,8 +154,10 @@ export const httpClient = new HttpClient(config.api.baseUrl);
 
 ### Step 5: React Query Setup (Copilot Agent)
 
+**CATEGORIA**: Global - Provider e configuração para toda aplicação
+
 ```typescript
-// src/lib/query-client.ts
+// src/lib/query-client.ts (GLOBAL)
 import { QueryClient } from '@tanstack/react-query';
 
 export const queryClient = new QueryClient({
@@ -166,7 +179,7 @@ export const queryClient = new QueryClient({
 ```
 
 ```tsx
-// src/lib/query-provider.tsx
+// src/lib/query-provider.tsx (GLOBAL)
 'use client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -184,8 +197,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
 ### Step 6: Service Layer com Validation (Copilot Agent)
 
+**CATEGORIA**: Base Service (Global) + Implementation Services (Feature-bound)
+
 ```typescript
-// src/services/base-service.ts
+// src/services/base-service.ts (GLOBAL)
 import { z } from 'zod';
 import { httpClient } from '@/lib/http-client';
 
@@ -230,7 +245,7 @@ export abstract class BaseService {
 ```
 
 ```typescript
-// src/services/application-service.ts
+// src/services/application-service.ts (FEATURE-BOUND)
 import { z } from 'zod';
 import { BaseService, baseResponseSchema } from './base-service';
 
@@ -284,10 +299,12 @@ export const applicationService = new ApplicationService();
 
 ### Step 7: Migração SWR → React Query (Copilot Agent)
 
+**CATEGORIA**: Feature-bound - Hooks específicos por domínio
+
 **IMPORTANTE**: Migrar hooks existentes que usam SWR para React Query:
 
 ```typescript
-// src/hooks/use-applications.ts
+// src/hooks/use-applications.ts (FEATURE-BOUND)
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationService, type Application } from '@/services/application-service';
 
@@ -352,8 +369,10 @@ export function useDeleteApplication() {
 
 ### Step 8: Error Boundary (Copilot Agent)
 
+**CATEGORIA**: Global - Component de infraestrutura para toda aplicação
+
 ```tsx
-// src/components/error-boundary.tsx
+// src/components/error-boundary.tsx (GLOBAL)
 'use client';
 import React from 'react';
 
@@ -402,8 +421,10 @@ export class ErrorBoundary extends React.Component<
 
 ### Step 9: Atualizar Layout (Copilot Agent)
 
+**CATEGORIA**: Global - Root layout da aplicação
+
 ```tsx
-// src/app/layout.tsx - adicionar providers
+// src/app/layout.tsx - adicionar providers (GLOBAL)
 import { QueryProvider } from '@/lib/query-provider';
 import { ErrorBoundary } from '@/components/error-boundary';
 
@@ -428,17 +449,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 2. **Atualizar imports**: Remover imports do SWR
 3. **Remover dependência SWR**: Atualizar package.json (após validação)
 
-### Step 11: Validação e Commit (Usuário)
+### Step 11: Validação Automática (Copilot Agent)
 
-**APÓS a migração completa**: O usuário deve validar e commitar:
+**COMANDO**: Use ferramentas do VS Code para validação:
+
+1. **Verificar Erros**: Use `get_errors` para identificar problemas de build
+2. **Executar Build**: Use `run_in_terminal` com pnpm para build validation
+3. **Executar Testes**: Use `run_tests` ou `run_in_terminal` para test validation
+
+```typescript
+// Copilot Agent deve usar:
+// 1. get_errors(filePaths) - Verificar problemas de compilação
+// 2. run_in_terminal("pnpm build") - Validar build
+// 3. run_in_terminal("pnpm test") - Validar testes
+// 4. Verificar no Problems panel do VS Code se há erros
+```
+
+**APÓS validação automática**, fazer commit:
 
 ```bash
-# Validar migração
-pnpm build        # Verificar se build passa
-pnpm test         # Verificar se testes passam
-pnpm dev          # Verificar se app funciona
-
-# Commitar
 git add .
 git commit -m "feat: implement frontend API architecture with React Query and centralized HTTP client"
 ```
@@ -478,10 +507,12 @@ git commit -m "feat: implement frontend API architecture with React Query and ce
 - [ ] User-friendly error messages
 - [ ] Recovery mechanisms
 
-### ✅ Validação Final (Usuário)
+### ✅ Validação Final (Copilot Agent)
 
-- [ ] `pnpm build` - Build successful
-- [ ] `pnpm test` - Testes passam
+- [ ] `get_errors` - Sem erros de compilação/lint
+- [ ] `run_in_terminal("pnpm build")` - Build successful
+- [ ] `run_in_terminal("pnpm test")` - Testes passam
+- [ ] Problems panel vazio no VS Code
 - [ ] APIs respondem corretamente
 - [ ] Cache funciona como esperado
 - [ ] DevTools aparecem em desenvolvimento

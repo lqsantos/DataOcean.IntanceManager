@@ -1,150 +1,139 @@
 # Phase 01: Foundation Architecture
 
+## Architecture Context for Agent
+
+**REFERENCE**: Ver `project-architecture-context.md` para contexto completo do projeto
+
+**CURRENT STATE**: Configurações e utils espalhados pelo código
+**TARGET STATE**: Foundation global consolidada conforme `docs/architecture-standards.md`
+**APPROACH**: Criar estrutura TARGET FINAL para código global cross-cutting
+
+### Key Decisions for Agent:
+
+- **Foundation é PERMANENTE**: Esta é a estrutura final, não temporária
+- **Global na raiz**: Para código usado por múltiplas features
+- **Domain-specific mantém**: Services específicos ficam atuais até Phase 04
+
 ## Objetivo
 
-Estabelecer base arquitetural sólida com configurações centralizadas, utilitários padronizados e estrutura de tipos consistente.
+Estabelecer foundation arquitetural final com configurações centralizadas, utilitários globais e tipos base conforme architecture standards.
 
-## Análise da Situação Atual
+## Análise para Agent
 
-### 1. O Copilot Agent irá automaticamente:
+### 1. O Copilot Agent deve executar:
 
-- Verificar estrutura de diretórios existente
-- Buscar configurações espalhadas no código
-- Identificar padrões de organização atual
-- Detectar gaps na arquitetura
+**COMANDOS específicos:**
 
-### 2. Gaps Típicos Esperados
+- `file_search` pattern="\*_/_.{ts,tsx}" para mapear estrutura atual
+- `grep_search` pattern="config|Config" para encontrar configurações espalhadas
+- `grep_search` pattern="const._=._{" includePattern="src/\*\*" para constants
+- Categorizar findings: **Global** (vai para foundation) vs **Feature-specific** (fica atual)
 
-- [ ] **Config centralizada**: Falta src/config/
-- [ ] **Constants centralizadas**: Falta src/constants/
-- [ ] **Utils padronizadas**: Falta organização
-- [ ] **Types base**: Falta tipos comuns
-- [ ] **Error handling**: Falta sistema consistente
+### 2. Expected Agent Analysis:
+
+```
+✅ Para Foundation (src/raiz/): API configs, formatters, BaseEntity, validators
+🔄 Mantém atual: Application types, Environment services, Location hooks
+📝 Output: Lista categorizada do que vai para cada diretório
+```
 
 ## Implementação
 
-### Step 1: Instruções de Backup (Usuário)
+### Step 1: Backup (Usuário)
 
-**ANTES DE INICIAR**: O usuário deve criar backup:
+**OBRIGATÓRIO antes de iniciar**:
 
 ```bash
-git add .
-git commit -m "Backup before foundation architecture"
+git add . && git commit -m "backup: before foundation architecture"
 ```
 
-### Step 2: Análise da Estrutura Atual (Copilot Agent)
+### Step 2: Análise e Categorização (Copilot Agent)
 
-O Copilot Agent irá primeiro analisar:
+**Agent deve mapear e categorizar código atual:**
 
-- Verificar estrutura de diretórios existente usando `file_search`
-- Buscar configurações espalhadas com `grep_search`
-- Identificar padrões de organização atual
-- Detectar gaps na arquitetura
+**COMANDOS:**
 
-### Step 3: Criar Estrutura de Config (Copilot Agent)
+1. `file_search` pattern="src/\*_/_.{ts,tsx}"
+2. `grep_search` pattern="export const.\*config" isRegexp=true
+3. `grep_search` pattern="export.*interface.*Entity" isRegexp=true
+
+**CATEGORIZAÇÃO esperada:**
+
+- ✅ **Global (move para foundation)**: API configs, formatters, BaseEntity, error classes
+- 🔄 **Feature-specific (mantém atual)**: ApplicationService, EnvironmentType, LocationHook
+
+**Agent Output**: Lista do que vai para `src/{config,constants,utils,types}/`
+
+### Step 3: Configurações Globais (Copilot Agent)
+
+**Agent deve criar estrutura:**
+
+- `src/config/app.ts` - configurações da aplicação
+- `src/config/api.ts` - settings de API
+- `src/config/index.ts` - barrel exports
+
+**Exemplo essencial:**
 
 ```typescript
-// src/config/index.ts
-export const config = {
-  app: {
-    name: 'DataOcean Instance Manager',
-    version: process.env.npm_package_version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-  },
-  api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || '/api',
-    timeout: 30000,
-    retries: 3,
-  },
-  ui: {
-    defaultPageSize: 10,
-    maxPageSize: 100,
-    debounceMs: 300,
-  },
+// src/config/api.ts
+export const apiConfig = {
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || '/api',
+  timeout: 30000,
 } as const;
 ```
 
-### Step 4: Constants Organizadas (Copilot Agent)
+### Step 4: Constants Globais (Copilot Agent)
+
+**Agent deve criar:**
+
+- `src/constants/routes.ts` - rotas da aplicação
+- `src/constants/status.ts` - status globais (loading, error, etc)
+- `src/constants/index.ts` - barrel exports
+
+**Exemplo pattern:**
 
 ```typescript
-// src/constants/index.ts
+// src/constants/routes.ts
+export const ROUTES = {
   HOME: '/',
   APPLICATIONS: '/applications',
-  ENVIRONMENTS: '/environments',
-  LOCATIONS: '/locations',
-} as const;
-
-export const API_ENDPOINTS = {
-  APPLICATIONS: '/api/applications',
-  ENVIRONMENTS: '/api/environments',
-  LOCATIONS: '/api/locations',
-} as const;
-
-export const STATUS = {
-  IDLE: 'idle',
-  LOADING: 'loading',
-  SUCCESS: 'success',
-  ERROR: 'error',
 } as const;
 ```
 
-### Step 5: Utils Aprimorados (Copilot Agent)
+### Step 5: Utils Globais (Copilot Agent)
+
+**Agent deve criar:**
+
+- `src/utils/validation.ts` - validators reutilizáveis
+- `src/utils/formatting.ts` - formatters cross-domain
+- `src/utils/error.ts` - error handling global
+- `src/utils/index.ts` - barrel exports
+
+**Exemplo key:**
 
 ```typescript
 // src/utils/error.ts
 export class AppError extends Error {
   constructor(
     message: string,
-    public code: string,
-    public statusCode: number = 500
+    public code: string
   ) {
     super(message);
-    this.name = 'AppError';
   }
 }
-
-export const errorHandler = {
-  handle: (error: unknown): AppError => {
-    if (error instanceof AppError) return error;
-    if (error instanceof Error) return new AppError(error.message, 'UNKNOWN_ERROR');
-    return new AppError('An unknown error occurred', 'UNKNOWN_ERROR');
-  },
-};
-```
-
-```typescript
-// src/utils/validation.ts
-export const validators = {
-  email: (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
-  required: (value: unknown) => value != null && value !== '',
-  minLength: (value: string, min: number) => value.length >= min,
-  maxLength: (value: string, max: number) => value.length <= max,
-};
-```
-
-```typescript
-// src/utils/format.ts
-export const formatters = {
-  date: (date: Date | string) => new Date(date).toLocaleDateString(),
-  currency: (amount: number) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount),
-  fileSize: (bytes: number) => {
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let size = bytes;
-    let unitIndex = 0;
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex++;
-    }
-    return `${size.toFixed(1)} ${units[unitIndex]}`;
-  },
-};
 ```
 
 ### Step 6: Types Base (Copilot Agent)
+
+**Agent deve criar APENAS types GLOBAIS:**
+
+- `src/types/common.ts` - BaseEntity, ApiResponse
+- `src/types/ui.ts` - Status, LoadingState
+- `src/types/index.ts` - barrel exports
+
+**IMPORTANTE**: Domain types (Application, Environment) ficam atuais
+
+**Exemplo:**
 
 ```typescript
 // src/types/common.ts
@@ -153,126 +142,52 @@ export interface BaseEntity {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-export interface ApiResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-  errors?: Record<string, string[]>;
-}
-
-export type Status = 'idle' | 'loading' | 'success' | 'error';
 ```
 
-### Step 7: Barrel Exports (Copilot Agent)
+### Step 7: TSConfig Paths (Copilot Agent)
 
-```typescript
-// src/config/index.ts
-export * from './app';
-export * from './api';
-
-// src/constants/index.ts
-export * from './routes';
-export * from './api';
-export * from './status';
-
-// src/utils/index.ts
-export * from './error';
-export * from './validation';
-export * from './format';
-
-// src/types/index.ts
-export * from './common';
-export * from './application';
-export * from './environment';
-export * from './location';
-```
-
-### Step 8: Atualizar TSConfig (Copilot Agent)
+**Agent deve atualizar `tsconfig.json`:**
 
 ```json
-// tsconfig.json - adicionar paths
 {
   "compilerOptions": {
     "paths": {
-      "@/*": ["src/*"],
-      "@/config": ["src/config"],
-      "@/constants": ["src/constants"],
-      "@/utils": ["src/utils"],
-      "@/types": ["src/types"]
+      "@/config/*": ["src/config/*"],
+      "@/constants/*": ["src/constants/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@/types/*": ["src/types/*"]
     }
   }
 }
 ```
 
-### Step 9: Migrar Imports Existentes (Copilot Agent)
+### Step 8: Validação Final (Copilot Agent)
 
-O Copilot Agent irá usar suas ferramentas nativas para:
+**Agent deve PRIORIZAR VS Code integration:**
 
-1. **Identificar imports antigos**: `grep_search` para encontrar imports relativos
-2. **Atualizar automaticamente**: `replace_string_in_file` para corrigir imports
-3. **Validar mudanças**: `get_errors` para verificar se não quebrou nada
+1. `get_errors` - verificar Problems panel primeiro
+2. Se necessário: `run_in_terminal: 'pnpm run type-check'`
+3. Se necessário: `run_in_terminal: 'pnpm run build'`
 
-### Step 10: Validação e Commit (Usuário)
-
-**APÓS a refatoração completa**: O usuário deve validar e commitar:
-
-```bash
-# Validar
-npm run type-check  # Verificar types
-npm run build       # Verificar se build passa
-npm run lint        # Verificar se não há erros críticos
-
-# Commitar
-git add .
-git commit -m "feat: establish foundation architecture with centralized config and utils"
-```
+**Success criteria:** Zero errors no Problems panel, build successful
 
 ## Checklist de Finalização
 
-### ✅ Antes de Iniciar (Usuário)
+### ✅ Para o Agent
 
-- [ ] Backup realizado
-
-### ✅ Estrutura Criada (Copilot Agent)
-
-- [ ] `src/config/` com configurações centralizadas
-- [ ] `src/constants/` com constantes organizadas
-- [ ] `src/utils/` com utilitários padronizados
-- [ ] `src/types/` com tipos base definidos
+- [ ] Foundation structure criada (`src/{config,constants,utils,types}/`)
 - [ ] Barrel exports implementados
-
-### ✅ Funcionalidade (Copilot Agent)
-
 - [ ] TSConfig paths configurados
-- [ ] Imports migrados para nova estrutura
-- [ ] Barrel exports funcionando
+- [ ] Build e type-check passando
 
-### ✅ Validação Final (Usuário)
+### ✅ Para o Usuário
 
-- [ ] `npm run type-check` - Types válidos
-- [ ] `npm run build` - Build successful
-- [ ] `npm run lint` - Sem erros críticos
-- [ ] App funciona normalmente
-- [ ] Alterações commitadas
-
-### ✅ Impacto Esperado
-
-- [ ] Configurações centralizadas
-- [ ] Import paths simplificados
-- [ ] Error handling consistente
-- [ ] Developer experience melhorada
+- [ ] Validar funcionamento da aplicação
+- [ ] Commit das mudanças
+- [ ] Pronto para Phase 02
 
 ## Próximo Passo
 
 → **Phase 02: Testing Framework**
+
+_Foundation estabelecida conforme architecture standards._

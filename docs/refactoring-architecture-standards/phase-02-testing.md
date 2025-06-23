@@ -1,47 +1,55 @@
-# Phase 02: Testing Framework
+# Phase 02: Testing Fr### 1. O Copilot Agent irá automaticamente:
 
-## Objetivo
+- Verificar configuração atual de Vitest (será migrado para Jest)
+- Analisar dependências de teste existentes
+- Planejar migração completa Vitest → Jest seguindo architecture-standards.md
+- Avaliar se E2E (Playwright) e Storybook são necessários
+- Configurar MSW integration com Jest
 
-Mig**IMPORTANTE**: Migrar de Vitest para Jest:
+### 2. Gaps Típicos Esperados
 
-```bash
-# Instalar Jest e dependências
-pnpm add -D jest @types/jest jest-environment-jsdom
+- [ ] **Migração Vitest → Jest**: Substituir framework atual pelo padrão
+- [ ] **Jest + @next/jest Configuration**: Setup conforme architecture-standards.md
+- [ ] **E2E Testing**: Playwright setup (se necessário)
+- [ ] **Component Docs**: Storybook (se necessário)
+- [ ] **API Mocking**: Integrar MSW com Jest
+- [ ] **Test Utils**: Criar helpers centralizados para Jestetivo
 
-# E2E testing (verificar se precisa)
-pnpm add -D @playwright/test
+Migrar de Vitest para Jest e estabelecer framework de testes robusto seguindo architecture-standards.md, implementar E2E tests (Playwright), component documentation (Storybook) e API mocking (MSW).
 
-# Component documentation (verificar se precisa)
-pnpm add -D @storybook/react-vite @storybook/addon-essentials @storybook/addon-interactions
+> **📋 Contexto do Projeto**: Consulte sempre [project-architecture-context.md](./project-architecture-context.md) para entender a estrutura target e convenções do DataOcean Instance Manager.
 
-# Faker para mocks (verificar se precisa)
-pnpm add -D @faker-js/faker
+### **Categorização Global vs. Feature**
 
-# Remover Vitest (após migração completa)
-# pnpm remove vitest @vitest/ui @vitest/coverage-v8
-```
+- **GLOBAL** (`src/tests/`, configs raiz): Setup, utils, mocks globais, configurações Jest
+- **FEATURE-BOUND** (`src/components/*.test.tsx`, `*.stories.tsx`): Testes específicos por componente/feature
 
-### Step 4: Configurar Jest (Copilot Agent)
+### **Tecnologias & Padrões (conforme architecture-standards.md)**
 
-**IMPORTANTE**: Substituir vitest.config.ts por jest.config.js: Jest como framework principal de testes unitários, implementar E2E tests (Playwright), component documentation (Storybook) e API mocking (MSW).
+- **Jest + @next/jest**: Framework principal de testes (substituir Vitest)
+- **@testing-library/react**: Component testing
+- **Playwright**: E2E testing opcional
+- **Storybook**: Component documentation opcional
+- **MSW**: API mocking (otimizar integração com Jest)
+- **Package Manager**: pnpm (padrão do projeto)
 
 ## Análise da Situação Atual
 
 ### 1. O Copilot Agent irá automaticamente:
 
-- Verificar configuração atual de Vitest
+- Verificar configuração atual de Vitest (manter)
 - Analisar dependências de teste existentes
-- Planejar migração de Vitest para Jest
-- Identificar testes existentes que precisam ser migrados
-- Avaliar configurações e gaps no framework
+- Avaliar se E2E (Playwright) e Storybook são necessários
+- Otimizar configuração MSW existente
+- Identificar gaps na estrutura de testes
 
 ### 2. Gaps Típicos Esperados
 
-- [ ] **Migração Vitest → Jest**: Substituir framework atual
-- [ ] **Jest Configuration**: Setup completo do Jest
-- [ ] **E2E Testing**: Playwright setup
-- [ ] **Component Docs**: Storybook
-- [ ] **API Mocking**: MSW integration com Jest
+- [ ] **Vitest otimização**: Melhorar configuração existente
+- [ ] **E2E Testing**: Playwright setup (se necessário)
+- [ ] **Component Docs**: Storybook (se necessário)
+- [ ] **API Mocking**: Otimizar MSW integration existente
+- [ ] **Test Utils**: Criar helpers centralizados
 
 ## Implementação
 
@@ -58,42 +66,54 @@ git commit -m "Backup before testing framework setup"
 
 O Copilot Agent irá primeiro analisar usando `read_file` e `file_search`:
 
-- 🔄 **Vitest configurado**: Precisa ser migrado para Jest
+- 🔄 **Vitest configurado**: Será migrado para Jest (padrão architecture-standards.md)
 - ✅ **Testing Library**: @testing-library/\* já instaladas (compatível com Jest)
-- ✅ **MSW**: msw (2.8.2) já instalado (compatível com Jest)
-- 🔄 **Coverage**: @vitest/coverage-v8 → jest coverage
-- ❓ **Verificar se faltam**: jest, @playwright/test, storybook, @faker-js/faker
+- ✅ **MSW**: msw já instalado (será integrado com Jest)
+- 🔄 **Vitest coverage**: Será substituído por Jest coverage
+- ❓ **Verificar se faltam**: @next/jest, jest, @types/jest, jest-environment-jsdom
 
-### Step 3: Instalar Jest e Dependências (Copilot Agent)
+### Step 3: Instalar Jest e Remover Vitest (Copilot Agent)
 
-**IMPORTANTE**: Usar `pnpm` e verificar apenas o que está faltando:
+**COMANDO**: Use pnpm para instalar Jest e remover Vitest:
 
 ```bash
-# E2E testing (verificar se precisa)
+# Instalar Jest + Next.js integration conforme architecture-standards.md
+pnpm add -D @next/jest jest @types/jest jest-environment-jsdom
+
+# E2E testing (apenas se requisitado)
 pnpm add -D @playwright/test
 
-# Component documentation (verificar se precisa)
+# Component documentation (apenas se requisitado)
 pnpm add -D @storybook/react-vite @storybook/addon-essentials @storybook/addon-interactions
 
-# Faker para mocks (verificar se precisa)
+# Faker para mocks (apenas se necessário)
 pnpm add -D @faker-js/faker
+
+# Remover Vitest completamente após migração
+pnpm remove vitest @vitest/ui @vitest/coverage-v8
 ```
 
-### Step 4: Otimizar Configuração Vitest (Copilot Agent)
+### Step 4: Configurar Jest + @next/jest (Copilot Agent)
 
-**IMPORTANTE**: Vitest já está configurado! Apenas verificar/otimizar se necessário.
+**CATEGORIA**: Global - Configuração conforme architecture-standards.md
 
-O Agent deve `read_file` em `vitest.config.ts` e verificar se tem:
+**COMANDO**: Agent deve criar `jest.config.js` seguindo padrão do architecture-standards.md:
 
 ```javascript
-// jest.config.js
-module.exports = {
-  testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
-  moduleNameMapping: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/tests/**/*', '!src/mocks/**/*'],
+// jest.config.js (GLOBAL)
+const nextJest = require('@next/jest');
+
+const createJestConfig = nextJest({
+  // Caminho para sua aplicação Next.js
+  dir: './',
+});
+
+// Configuração customizada do Jest
+const customJestConfig = {
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testEnvironment: 'jest-environment-jsdom',
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}', '!src/**/*.d.ts', '!src/mocks/**'],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -102,87 +122,61 @@ module.exports = {
       statements: 80,
     },
   },
-  transform: {
-    '^.+\\.(ts|tsx)$': '@swc/jest',
-  },
 };
+
+module.exports = createJestConfig(customJestConfig);
 ```
 
-```typescript
-// src/tests/setup.ts
+```javascript
+// jest.setup.js (GLOBAL)
 import '@testing-library/jest-dom';
-import { server } from './mocks/server';
+import { server } from './src/tests/mocks/server';
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => {
-  server.resetHandlers();
-});
+// Setup MSW conforme architecture-standards.md
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-// Mock Next.js router
-jest.mock('next/router', () => ({
+// Mock next/navigation conforme architecture-standards.md
+jest.mock('next/navigation', () => ({
   useRouter: () => ({
-    route: '/',
-    pathname: '/',
-    query: {},
     push: jest.fn(),
     replace: jest.fn(),
+    back: jest.fn(),
   }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/',
 }));
 ```
 
-```typescript
-// src/tests/setup.ts
-import '@testing-library/jest-dom';
-import { beforeAll, afterEach, afterAll } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import { server } from './mocks/server';
+**Remover vitest.config.ts após validação**
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => {
-  server.resetHandlers();
-  cleanup();
-});
-afterAll(() => server.close());
+### Step 5: Configurar MSW com Jest (Copilot Agent)
 
-// Mock Next.js router
-vi.mock('next/router', () => ({
-  useRouter: () => ({
-    route: '/',
-    pathname: '/',
-    query: {},
-    push: vi.fn(),
-    replace: vi.fn(),
-  }),
-}));
-```
-
-### Step 5: Configurar MSW (Copilot Agent)
+**CATEGORIA**: Global - Mocking de APIs para toda aplicação
 
 ```typescript
-// src/tests/mocks/handlers.ts
-import { rest } from 'msw';
+// src/tests/mocks/handlers.ts (GLOBAL)
+import { http, HttpResponse } from 'msw';
 import { faker } from '@faker-js/faker';
 
 export const handlers = [
-  rest.get('/api/applications', (req, res, ctx) => {
-    return res(
-      ctx.json({
-        data: Array.from({ length: 10 }, () => ({
-          id: faker.string.uuid(),
-          name: faker.company.name(),
-          status: faker.helpers.arrayElement(['active', 'inactive']),
-          createdAt: faker.date.past(),
-        })),
-        success: true,
-      })
-    );
+  http.get('/api/applications', (req, res, ctx) => {
+    return HttpResponse.json({
+      data: Array.from({ length: 10 }, () => ({
+        id: faker.string.uuid(),
+        name: faker.company.name(),
+        status: faker.helpers.arrayElement(['active', 'inactive']),
+        createdAt: faker.date.past(),
+      })),
+      success: true,
+    });
   }),
 ];
 ```
 
 ```typescript
-// src/tests/mocks/server.ts
+// src/tests/mocks/server.ts (GLOBAL)
 import { setupServer } from 'msw/node';
 import { handlers } from './handlers';
 
@@ -191,8 +185,10 @@ export const server = setupServer(...handlers);
 
 ### Step 6: Configurar Playwright (Copilot Agent)
 
+**CATEGORIA**: Global - E2E testing para toda aplicação (opcional)
+
 ```typescript
-// playwright.config.ts
+// playwright.config.ts (GLOBAL)
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -211,7 +207,7 @@ export default defineConfig({
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
@@ -219,7 +215,48 @@ export default defineConfig({
 ```
 
 ```typescript
-// e2e/example.spec.ts
+// e2e/example.spec.ts (FEATURE-BOUND)
+import { test, expect } from '@playwright/test';
+
+test('should display applications page', async ({ page }) => {
+  await page.goto('/applications');
+  await expect(page.locator('h1')).toContainText('Applications');
+});
+```
+
+### Step 6: Configurar Playwright (Copilot Agent)
+
+**CATEGORIA**: Global - E2E testing para toda aplicação (opcional)
+
+```typescript
+// playwright.config.ts (GLOBAL)
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+  ],
+  webServer: {
+    command: 'pnpm dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+  },
+});
+```
+
+```typescript
+// e2e/example.spec.ts (FEATURE-BOUND)
 import { test, expect } from '@playwright/test';
 
 test('should display applications page', async ({ page }) => {
@@ -230,8 +267,10 @@ test('should display applications page', async ({ page }) => {
 
 ### Step 7: Configurar Storybook (Copilot Agent)
 
+**CATEGORIA**: Global - Configuração + Feature-bound stories
+
 ```typescript
-// .storybook/main.ts
+// .storybook/main.ts (GLOBAL)
 import type { StorybookConfig } from '@storybook/react-vite';
 
 const config: StorybookConfig = {
@@ -247,7 +286,7 @@ export default config;
 ```
 
 ```typescript
-// .storybook/preview.ts
+// .storybook/preview.ts (GLOBAL)
 import '../src/globals.css';
 
 export const parameters = {
@@ -263,8 +302,10 @@ export const parameters = {
 
 ### Step 8: Criar Test Utils (Copilot Agent)
 
+**CATEGORIA**: Global - Utilitários compartilhados para testes
+
 ```typescript
-// src/tests/utils/test-utils.tsx
+// src/tests/utils/test-utils.tsx (GLOBAL)
 import React from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -290,10 +331,12 @@ export { customRender as render };
 
 ### Step 9: Testes de Exemplo com Jest (Copilot Agent)
 
-**IMPORTANTE**: Criar apenas **poucos exemplos** como prova de conceito, agora usando Jest:
+**CATEGORIA**: Feature-bound - Exemplos mínimos conforme architecture-standards.md
+
+**COMANDO**: Criar apenas **poucos exemplos** para validar setup Jest:
 
 ```typescript
-// src/components/button.test.tsx
+// src/components/button.test.tsx (FEATURE-BOUND)
 import { describe, it, expect, jest } from '@jest/globals';
 import { render, screen } from '@/tests/utils/test-utils';
 import { Button } from './button';
@@ -314,7 +357,7 @@ describe('Button', () => {
 ```
 
 ```typescript
-// src/components/button.stories.tsx
+// src/components/button.stories.tsx (FEATURE-BOUND)
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './button';
 
@@ -337,17 +380,50 @@ export const Secondary: Story = {
 };
 ```
 
-### Step 10: Atualizar Scripts para Jest (Copilot Agent)
+    screen.getByRole('button').click();
+    expect(handleClick).toHaveBeenCalledTimes(1);
 
-O Copilot Agent deve atualizar os scripts em package.json para usar Jest em vez de Vitest:
+});
+});
+
+````
+
+```typescript
+// src/components/button.stories.tsx (FEATURE-BOUND)
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button } from './button';
+
+const meta: Meta<typeof Button> = {
+  title: 'Components/Button',
+  component: Button,
+  parameters: { layout: 'centered' },
+  tags: ['autodocs'],
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Primary: Story = {
+  args: { children: 'Button' },
+};
+
+export const Secondary: Story = {
+  args: { variant: 'secondary', children: 'Button' },
+};
+````
+
+### Step 10: Atualizar Scripts Package.json (Copilot Agent)
+
+**COMANDO**: Agent deve usar `read_file` e `replace_string_in_file` para migrar scripts para Jest:
 
 ```json
-// package.json
+// package.json - Scripts Jest conforme architecture-standards.md
 {
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:ci": "jest --coverage --watchAll=false",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "storybook": "storybook dev -p 6006",
@@ -356,28 +432,40 @@ O Copilot Agent deve atualizar os scripts em package.json para usar Jest em vez 
 }
 ```
 
-### Step 11: Migração e Limpeza (Copilot Agent)
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
 
-**DEPOIS** que Jest estiver funcionando:
+}
+}
 
-1. **Migrar testes existentes**: Trocar `vi` por `jest`, `import` por `require` se necessário
-2. **Remover vitest.config.ts**: Deletar arquivo obsoleto
-3. **Remover dependências Vitest**: Atualizar package.json
+````
 
-### Step 12: Validação e Commit (Usuário)
+### Step 11: Migração de Testes Existentes e Validação (Copilot Agent)
 
-**APÓS a migração completa**: O usuário deve validar e commitar:
+**COMANDO**: Use ferramentas do VS Code para migração e validação:
+
+1. **Migrar testes existentes**: Substituir `vi` por `jest`, `import { vi }` por `import { jest }`
+2. **Verificar Erros**: Use `get_errors` para identificar problemas de build
+3. **Executar Testes**: Use `run_tests` ou `run_in_terminal` para test validation
+4. **Verificar Coverage**: Use `run_in_terminal("pnpm test:coverage")`
+5. **Remover vitest.config.ts**: Deletar após validação completa
+
+```typescript
+// Copilot Agent deve usar:
+// 1. Migrar todos os testes de Vitest para Jest
+// 2. get_errors(filePaths) - Verificar problemas de compilação
+// 3. run_tests() - Executar testes com Jest
+// 4. run_in_terminal("pnpm test:coverage") - Verificar coverage
+// 5. Verificar no Problems panel do VS Code se há erros
+````
+
+**APÓS validação automática**, fazer commit:
 
 ```bash
-# Validar migração para Jest
-pnpm test          # Verificar se Jest funciona
-pnpm test:coverage # Verificar se coverage funciona
-pnpm test:e2e      # Verificar se playwright funciona (se instalado)
-pnpm run storybook # Verificar se storybook funciona (se instalado)
-
-# Commitar
 git add .
-git commit -m "feat: migrate from Vitest to Jest testing framework"
+git commit -m "feat: migrate from Vitest to Jest following architecture-standards.md"
 ```
 
 ## Checklist de Finalização
@@ -388,43 +476,62 @@ git commit -m "feat: migrate from Vitest to Jest testing framework"
 
 ### ✅ Framework Setup (Copilot Agent)
 
-- [ ] Jest instalado e configurado (jest.config.js)
-- [ ] Vitest removido (config e dependências)
+- [ ] Jest + @next/jest instalado e configurado (conforme architecture-standards.md)
+- [ ] Vitest completamente removido (dependências e configs)
 - [ ] Playwright configurado multi-browser (se escolhido)
 - [ ] Storybook configurado com addons (se escolhido)
 - [ ] MSW integrado com Jest
 
 ### ✅ Infraestrutura Básica (Copilot Agent)
 
-- [ ] Test utils criados (`src/tests/utils/`)
-- [ ] MSW handlers básicos (`src/tests/mocks/`)
-- [ ] Exemplo de unit test **simples** (1-2 testes)
-- [ ] Exemplo de E2E test **simples** (1 teste)
-- [ ] Exemplo de story **simples** (1-2 stories)
+- [ ] Test utils criados (`src/tests/utils/`) (GLOBAL)
+- [ ] MSW handlers básicos (`src/tests/mocks/`) (GLOBAL)
+- [ ] Exemplo de unit test **simples** com Jest (1-2 testes) (FEATURE-BOUND)
+- [ ] Exemplo de E2E test **simples** (1 teste) (FEATURE-BOUND)
+- [ ] Exemplo de story **simples** (1-2 stories) (FEATURE-BOUND)
 
 ### ✅ Scripts & Configuração (Copilot Agent)
 
-- [ ] Scripts de teste adicionados ao package.json
+- [ ] Scripts de teste otimizados no package.json
 - [ ] Configurações criadas (vitest.config.ts, playwright.config.ts, etc.)
 - [ ] Setup files criados
 
-### ✅ Validação Final (Usuário)
+### ✅ Validação Final (Copilot Agent)
 
-- [ ] `pnpm test` - Jest funciona
-- [ ] `pnpm test:coverage` - Coverage funciona
-- [ ] `pnpm test:e2e` - E2E funciona (se configurado)
-- [ ] `pnpm run storybook` - Storybook abre (se configurado)
-- [ ] Vitest completamente removido
+- [ ] `get_errors` - Sem erros de compilação/lint
+- [ ] `run_tests()` - Vitest funciona
+- [ ] `run_in_terminal("pnpm test:coverage")` - Coverage funciona
+- [ ] `run_in_terminal("pnpm test:e2e")` - E2E funciona (se configurado)
+- [ ] `run_in_terminal("pnpm run storybook")` - Storybook abre (se configurado)
+- [ ] Problems panel vazio no VS Code
+- [ ] Alterações commitadas
+
+### ✅ Scripts & Configuração (Copilot Agent)
+
+- [ ] Scripts de teste migrados para Jest no package.json
+- [ ] jest.config.js criado conforme architecture-standards.md
+- [ ] jest.setup.js criado com MSW integration
+- [ ] vitest.config.ts removido
+
+### ✅ Validação Final (Copilot Agent)
+
+- [ ] `get_errors` - Sem erros de compilação/lint
+- [ ] `run_tests()` - Jest funciona
+- [ ] `run_in_terminal("pnpm test:coverage")` - Coverage funciona
+- [ ] `run_in_terminal("pnpm test:e2e")` - E2E funciona (se configurado)
+- [ ] `run_in_terminal("pnpm run storybook")` - Storybook abre (se configurado)
+- [ ] Problems panel vazio no VS Code
 - [ ] Alterações commitadas
 
 ### ✅ Impacto Esperado
 
-- [ ] **Jest** como framework principal de testes unitários
+- [ ] **Jest + @next/jest** como framework principal conforme architecture-standards.md
 - [ ] **Vitest** completamente removido do projeto
-- [ ] **MSW** integrado para API mocking
-- [ ] **Playwright** para E2E (se configurado)
-- [ ] **Storybook** para component docs (se configurado)
+- [ ] **MSW** integrado para API mocking robusto
+- [ ] **Playwright** para E2E (se configurado e necessário)
+- [ ] **Storybook** para component docs (se configurado e necessário)
 - [ ] **Coverage** funcionando com Jest
+- [ ] **Test Utils** centralizados para reuso
 
 ## Próximo Passo
 
