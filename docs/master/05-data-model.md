@@ -1,397 +1,226 @@
-# 🗄️ Data Model - DataOcean Instance Manager
+# � Data Model - Business Logic & Workflows
 
 ## 📋 Overview
 
-Defines the core entities and relationships for managing ArgoCD App of Apps deployments across multiple regions and environments.
+Defines **business logic, data flows, and architectural strategies** for managing ArgoCD App of Apps deployments across multiple regions and environments.
 
-**Key Enhancements:** 
-- **Template Versioning:** Templates + Template_Versions separation enables multiple template versions in use simultaneously
-- **Blueprint Governance:** Blueprint_Templates reference specific Template_Versions (tested combinations)
-- **Instance Simplicity:** Instance chooses Blueprint_Version, automatically inherits all template versions
+> **📄 Technical Schema:** Complete database structure in [`database-schema.dbml`](./database-schema.dbml)
 
----
-
-## 🏗️ Core Domain Entities
-
-### **1. Location**
-Geographical region for deployments.
-
-**Attributes:**
-- `id`, `name`, `description`, `created_at`, `updated_at`
-
-**Rules:** Names must be globally unique and follow naming convention: alphanumeric + hyphens only, start and end with letters (e.g., "Brazil", "EMEA", "USA").
+**Key Architectural Enhancements:** 
+- **Template Versioning Strategy:** Separation of metadata from versioned data enables concurrent template versions
+- **Blueprint Governance Model:** Tested template version combinations with commit-based isolation
+- **Instance Inheritance Pattern:** Automatic template version inheritance via Blueprint_Version selection
 
 ---
 
-### **2. Environment**
-Deployment environment type (dev, staging, production).
+> **💡 Note on Source of Truth:** `database-schema.dbml` is the canonical source for all table/column/index/type definitions. Do not duplicate schema details here — use this document for business rules, flows and architecturally relevant explanations only.
 
-**Attributes:**
-- `id`, `name`, `description`, `created_at`, `updated_at`
 
-**Rules:** Names must be globally unique and follow naming convention: alphanumeric + hyphens only, start and end with letters (e.g., "Development", "Staging", "Production").
+## � Core Business Entities & Workflows
 
----
-
-### **3. Application**
-Business application that can be deployed.
-
-**Attributes:**
-- `id`, `name`, `description`, `repository_url`, `created_at`, `updated_at`
-
-**Rules:** Names must be globally unique and follow naming convention: alphanumeric + hyphens only, start and end with letters (e.g., "Ecommerce-Platform", "Analytics-Service"). Has multiple blueprints.
-
----
-
-### **4. Template**
-Metadata and configuration for external Helm Chart repositories.
-
-**Attributes:**
-- `id` (UUID, PK): Unique identifier
-- `name` (VARCHAR(100), NOT NULL, UNIQUE): Template name
-- `description` (TEXT): Optional description
-- `git_repository_url` (VARCHAR(500), NOT NULL): Git repository URL
-- `git_path` (VARCHAR(255), NOT NULL): Path to Helm Chart within repository
-- `current_version_id` (UUID, FK): Reference to current Template_Version
-- `created_at` (TIMESTAMP): Creation timestamp
-- `updated_at` (TIMESTAMP): Last update timestamp
-
-**Rules:** 
-- Names must be globally unique and follow alphanumeric + hyphen convention
-- git_repository_url and git_path define location of Helm Chart
-- current_version_id points to latest imported Template_Version
-- Template serves as container for multiple versions of same Helm Chart
+### **1. Infrastructure Foundation**
+**Location + Environment + Cluster** create the deployment target matrix.
 
 **Business Logic:**
-- CREATE: Creates Template + initial Template_Version from Git import
-- UPDATE: Creates new Template_Version, updates current_version_id
-- DELETE: Only if no Template_Versions are referenced by Blueprint_Templates
+- **Location:** Geographic regions (Brazil, EMEA, USA) for compliance and latency
+- **Environment:** Deployment stages (Development, Staging, Production, DR)
+- **Cluster:** Kubernetes clusters with unique `(server_url, location_id, environment_id)` combinations
 
-**Relationships:**
-- **1:N** with Template_Version (one template has multiple versions)
-- **1:1** with Template_Version (current_version_id points to latest)
+**Workflow:**
+```
+Location + Environment + Cluster = Complete Deployment Target
+Instance specifies all three explicitly for precise targeting
+Multiple clusters per location+environment supported (HA, scaling)
+```
 
----
-
-### **4.1. Template_Version**
-Historical versions of Helm Chart data imported from Git repository.
-
-**Attributes:**
-- `id` (UUID, PK): Unique identifier
-- `template_id` (UUID, FK, NOT NULL): Reference to parent Template
-- `git_commit_hash` (VARCHAR(40), NOT NULL): Commit hash used for import
-- `chart_metadata` (JSON, NOT NULL): Complete Chart.yaml content
-- `default_values` (JSON, NOT NULL): Complete values.yaml content
-- `values_schema` (JSON, NULL): values.schema.json content (optional)
-- `commit_message` (TEXT): Git commit message
-- `commit_author` (VARCHAR(255)): Git commit author
-- `imported_at` (TIMESTAMP, DEFAULT NOW()): Import timestamp
-
-**Rules:**
-- Unique combination of (template_id, git_commit_hash)
-- chart_metadata, default_values must be valid JSON/YAML
-- values_schema optional but enables custom values validation
-- Each version is immutable after creation
-- All Template_Versions preserved for historical reference
+### **2. Application Lifecycle**
+**Applications** represent business services that can be deployed via multiple blueprint patterns.
 
 **Business Logic:**
-- CREATE: During Template import/sync operations
-- READ: Used by Blueprint_Templates and Instance operations
-- VALIDATE: Schema-based validation of custom values
-- COMPARE: Version comparison and diff operations
-- DELETE: Only if not referenced by any Blueprint_Template
+- One Application can have multiple Blueprints (different deployment patterns)
+- Applications define the business domain, Blueprints define deployment strategies
+- Global naming ensures unique identification across entire organization
 
-**Relationships:**
-- **N:1** with Template (multiple versions belong to one template)
-- **1:N** with Blueprint_Template (one version used by multiple blueprint templates)
+### **3. Template Versioning Strategy**
+**Templates + Template_Versions** implement **commit-based isolation** for Helm Chart management.
 
----
+**Business Model:**
+- **Template:** Metadata container for external Helm Chart repository
+- **Template_Version:** Immutable snapshot of chart data at specific Git commit
 
-### **4.1. Cluster**
-Kubernetes cluster where applications are deployed.
+**Key Workflows:**
 
-**Attributes:**
-- `id` (UUID, PK): Identificador único
-- `name` (VARCHAR(100), NOT NULL, UNIQUE): Nome do cluster (ex: "brazil-prod-aks", "emea-dev-aks")
-- `description` (TEXT): Descrição do cluster
-- `server_url` (VARCHAR(500), NOT NULL): URL do servidor Kubernetes API
-- `location_id` (UUID, FK, NOT NULL): Referência à localização
-- `environment_id` (UUID, FK, NOT NULL): Referência ao ambiente
-- `is_active` (BOOLEAN, DEFAULT true): Indica se o cluster está ativo
-- `created_at` (TIMESTAMP, DEFAULT NOW()): Data de criação
-- `updated_at` (TIMESTAMP, DEFAULT NOW()): Data da última atualização
-
-**Rules:** 
-- Names must be globally unique and follow alphanumeric + hyphen convention
-- Combination (location_id, environment_id) must be unique (1 cluster per location+environment)
-- server_url must be valid Kubernetes API URL (ex: "https://brasil-prod-aks.hcp.eastus.azmk8s.io:443")
-- Cannot be deleted if there are associated Instances
-
-**Relationships:**
-- **N:1** with Location (multiple clusters can be in same location)
-- **N:1** with Environment (multiple clusters can be in same environment)  
-- **1:N** with Instance (one cluster can have multiple instances)
-
----
-
-### 5. Blueprint (Modelo de Deployment - Dados Imutáveis)
-
-Representa a identidade e metadados imutáveis de um blueprint. Contém informações que nunca mudam durante a vida do blueprint.
-
-**Atributos:**
-- `id` (UUID, PK): Identificador único
-- `name` (VARCHAR(100), NOT NULL): Nome do blueprint (ex: "api-standard", "microservice-basic")
-- `description` (TEXT): Descrição detalhada do blueprint
-- `application_id` (UUID, FK, NOT NULL): Referência à aplicação
-- `current_version_id` (UUID, FK): Referência à versão atual do blueprint
-- `is_active` (BOOLEAN, DEFAULT true): Indica se o blueprint está ativo
-- `created_at` (TIMESTAMP, DEFAULT NOW()): Data de criação
-
-**Regras de Negócio:**
-- Nome deve ser único por aplicação
-- Nome deve seguir padrão alphanuméricocom hífens (inicia e termina com letra)
-- Nome será usado como prefixo nos helpers: `blueprint-name.component.property`
-- Não pode ser deletado se houver Instances associadas
-- current_version_id aponta para a Blueprint_Version mais recente
-
-**Relacionamentos:**
-- **N:1** com Application (vários blueprints podem pertencer a uma aplicação)
-- **1:N** com Blueprint_Version (um blueprint pode ter várias versões)
-- **1:1** com Blueprint_Version (current_version_id - versão atual)
-- **1:N** com Instance (um blueprint pode ter várias instâncias)
-
-### 5.1. Blueprint_Version (Modelo de Deployment - Dados Versionados)
-
-Representa uma versão específica de um blueprint, contendo as configurações que podem evoluir ao longo do tempo.
-
-**Atributos:**
-- `id` (UUID, PK): Identificador único
-- `blueprint_id` (UUID, FK, NOT NULL): Referência ao blueprint pai
-- `version_number` (INTEGER, NOT NULL): Número sequencial da versão (1, 2, 3...)
-- `helper_templates` (TEXT): Conteúdo do arquivo _helpers.tpl com defines Helm
-- `created_at` (TIMESTAMP, DEFAULT NOW()): Data de criação desta versão
-
-**Regras de Negócio:**
-- version_number deve ser único por blueprint_id
-- version_number é incrementado automaticamente (1, 2, 3...)
-- helper_templates contém Go template válido (validação sintática apenas)
-- helper_templates recomendado formato: `blueprint-name.component.property`
-- Cada versão é imutável após criação (não pode ser editada)
-- Nova versão é criada sempre que helper_templates muda
-
-**Validação MVP:**
-- Apenas validação sintática Go template: `template.New("helper").Parse(helper_templates)`
-- Não validação de nomenclatura, variáveis não utilizadas ou referências
-- Critério de sucesso: `helm template` funciona sem erro
-
-**Relacionamentos:**
-- **N:1** com Blueprint (várias versões pertencem a um blueprint)
-- **N:M** com Template via Blueprint_Template
-- **1:N** com Instance (uma versão pode ser usada por várias instâncias)
-
----
-
-### 6. Blueprint_Template (Relacionamento Blueprint_Version-Template_Version)
-
-Define quais versões específicas de templates fazem parte de uma versão de blueprint, incluindo configurações globais e ordem de execução.
-
-**Atributos:**
-- `id` (UUID, PK): Identificador único
-- `blueprint_version_id` (UUID, FK, NOT NULL): Referência à versão específica do blueprint
-- `template_version_id` (UUID, FK, NOT NULL): Referência à versão específica do template
-- `order` (INTEGER, NOT NULL): Ordem de execução do template no blueprint
-- `alias` (VARCHAR(100), NOT NULL): Nome único do template nesta versão (para ArgoCD Application names)
-- `custom_values` (JSON): Valores globais aplicados pelo blueprint para este template
-
-**Regras de Negócio:**
-- Chave primária: id (permite mesmo template_version múltiplas vezes)
-- Unique constraint: (blueprint_version_id, template_version_id, alias)
-- Order deve ser único por blueprint_version_id
-- Alias deve ser único por blueprint_version_id
-- custom_values define configuração global do blueprint para o template
-- Order define a sequência de deployment no ArgoCD App of Apps
-- Alias usado para nomear ArgoCD Applications: `{instance.name}-{alias}`
-- Blueprint "pina" versões específicas de templates (tested combinations)
-
-**Values Inheritance:**
-- Template_Version.default_values (base do Helm Chart)
-- Blueprint_Template.custom_values (configuração global do blueprint)
-- Instance_Template.template_values (overrides específicos da instância)
-
-**Relacionamentos:**
-- **N:1** com Blueprint_Version
-- **N:1** com Template_Version
-- **1:N** com Instance_Template
-
----
-
-### 7. Instance (Instância de Deployment)
-
-Representa uma implantação concreta de uma versão específica de blueprint em um cluster target. Funciona como um "snapshot" que herda configurações do blueprint.
-
-**Atributos:**
-- `id` (UUID, PK): Identificador único
-- `name` (VARCHAR(100), NOT NULL, UNIQUE): Nome da instância (globalmente único)
-- `blueprint_version_id` (UUID, FK, NOT NULL): Referência à versão específica do blueprint
-- `cluster_id` (UUID, FK, NOT NULL): Referência ao cluster de deployment
-- `auto_sync_enabled` (BOOLEAN, DEFAULT true): Habilita sincronização automática ArgoCD
-- `auto_prune_enabled` (BOOLEAN, DEFAULT true): Habilita remoção automática de recursos
-- `auto_heal_enabled` (BOOLEAN, DEFAULT true): Habilita auto-healing de recursos
-- `create_namespace` (BOOLEAN, DEFAULT true): Cria namespace automaticamente
-- `git_repository` (VARCHAR(500), NOT NULL): URL do repositório Git onde será gerado o App of Apps
-- `git_path` (VARCHAR(200), NOT NULL): Caminho no repositório onde ficará o chart
-- `git_branch` (VARCHAR(100), DEFAULT 'main'): Branch do Git para o deployment
-- `status` (ENUM: pending, deployed, failed, updating): Status atual da instância
-- `created_at` (TIMESTAMP, DEFAULT NOW()): Data de criação
-- `updated_at` (TIMESTAMP, DEFAULT NOW()): Data da última atualização
-
-**Regras de Negócio:**
-- Nome deve ser globalmente único (não apenas por blueprint)
-- Nome deve seguir padrão alphanuméricocom hífens
-- blueprint_version_id é imutável após criação (snapshot de versão específica)
-- cluster_id deve referenciar cluster ativo
-- Herda template versions do Blueprint_Version via Blueprint_Templates
-- Gera Helm Chart App of Apps no repositório Git especificado
-- Configurações syncPolicy são específicas por instância
-- Template versions controladas pelo blueprint (governance)
-
-**Blueprint Version Evolution:**
-- Para upgrade de template versions: muda blueprint_version_id
-- Uma mudança de blueprint_version_id afeta todas as templates da instância
-- Garante combinações testadas de template versions
-
-**Relacionamentos:**
-- **N:1** com Blueprint_Version (várias instâncias podem usar a mesma versão)
-- **N:1** com Cluster (várias instâncias podem usar o mesmo cluster)
-- **1:N** com Instance_Template (uma instância tem vários templates)
-
-### 8. Instance_Template (Template Específico da Instância)
-
-**Entidade central** - Representa a configuração final de cada template dentro de uma instância específica, com valores finais aplicados e overrides da instância.
-
-**Atributos:**
-- `id` (UUID, PK): Identificador único
-- `instance_id` (UUID, FK, NOT NULL): Referência à instância
-- `blueprint_template_id` (UUID, FK, NOT NULL): Referência ao Blueprint_Template específico
-- `template_values` (JSONB, NOT NULL): Valores finais aplicados ao template (merged)
-- `target_namespace` (VARCHAR(63)): Namespace Kubernetes de destino
-- `created_at` (TIMESTAMP, DEFAULT NOW()): Data de criação
-- `updated_at` (TIMESTAMP, DEFAULT NOW()): Data da última atualização
-
-**Regras de Negócio:**
-- Chave única composta: (instance_id, blueprint_template_id)
-- template_values são resultado do merge: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
-- target_namespace deve seguir padrões Kubernetes (DNS-1123)
-- Template version é herdada do Blueprint_Template.template_version_id
-- **Entidade central** para comparação de configurações entre instâncias
-- Auto-created quando Instance é criada (um por Blueprint_Template)
-
-**Values Merge Logic:**
-1. **Base:** Template_Version.default_values (from Blueprint_Template.template_version_id)
-2. **Blueprint:** Blueprint_Template.custom_values (global blueprint config)
-3. **Instance:** Instance-specific overrides (stored in template_values)
-4. **Result:** Final merged configuration for Helm Chart generation
-
-**Template Version Inheritance:**
-- Template version vem de Blueprint_Template.template_version_id
-- Instance não escolhe template version diretamente
-- Para mudar template version: muda Instance.blueprint_version_id
-
-**Relacionamentos:**
-- **N:1** com Instance (vários templates pertencem a uma instância)
-- **N:1** com Blueprint_Template (várias instâncias podem referenciar o mesmo blueprint template)
-- **Via Blueprint_Template → Template_Version** (template version data)
-
----
-
-## 🔗 Relacionamentos Entre Entidades
-
+#### **Template Import Process:**
 ```
-Application (1→N) Blueprint (1→N) Blueprint_Version (1→N) Instance (1→N) Instance_Template
-Blueprint (1→1) Blueprint_Version [current_version_id - versão atual]
-Template (1→N) Template_Version [versioned chart data]
-Template (1→1) Template_Version [current_version_id - versão atual]
-Blueprint_Version (1→N) Blueprint_Template (N→1) Template_Version
-Blueprint_Template (1→N) Instance_Template
-Location (1→N) Cluster (1→N) Instance  
-Environment (1→N) Cluster
+1. Developer specifies Git repository + path + commit
+2. System imports complete chart data:
+   - Chart.yaml metadata
+   - values.yaml defaults  
+   - values.schema.json (optional)
+3. Creates immutable Template_Version record
+4. Updates Template.current_version_id to new version
 ```
 
-**Abordagem de Versionamento:**
-- **Blueprint:** Dados imutáveis (nome, descrição, application_id)
-- **Blueprint_Version:** Dados mutáveis (helper_templates, template combinations)
-- **Template:** Dados imutáveis (nome, descrição, git_repository_url)
-- **Template_Version:** Dados mutáveis (chart_metadata, default_values, values_schema)
-- **Instance:** Snapshot de blueprint_version_id específica para estabilidade
-- **Template Versions:** Controladas via Blueprint_Template (tested combinations)
+#### **Template Sync Process:**
+```
+1. System checks Git repository for new commits
+2. For each new commit: creates new Template_Version
+3. Preserves all historical versions (no deletion)
+4. Updates current_version_id to latest
+5. Existing instances continue using pinned versions
+```
+
+**Business Benefits:**
+- **Commit Isolation:** Each Template_Version references specific Git commit hash
+- **Version History:** Complete audit trail of all chart changes
+- **Rollback Safety:** Previous versions always available
+- **Schema Evolution:** values.schema.json enables custom values validation
+
+### **4. Blueprint Governance Model**
+**Blueprints + Blueprint_Versions** implement **tested template combinations** with version control.
+
+**Governance Strategy:**
+- **Blueprint:** Immutable identity (name, application, description)
+- **Blueprint_Version:** Mutable configuration (helper templates, template version selections)
+- **Blueprint_Template:** Tested combination of specific template versions
+
+#### **Blueprint Version Workflow:**
+```
+1. DevOps creates Blueprint_Version with helper templates
+2. DevOps selects specific Template_Versions for blueprint
+3. Blueprint_Template records define tested combinations:
+   - Specific template version (commit hash)
+   - Custom values for blueprint context
+   - Execution order and alias naming
+4. Blueprint_Version becomes immutable after creation
+5. Instances inherit template versions from Blueprint_Version
+```
+
+**Blueprint Governance Benefits:**
+- **Tested Combinations:** Blueprint validates template versions work together
+- **Version Control:** Numeric versioning (1, 2, 3...) with upgrade tracking
+- **Instance Isolation:** Instances snapshot blueprint version for stability
+- **Helper Templates:** Blueprint-specific Helm template definitions
+
+### **5. Instance Deployment Pattern**
+**Instances + Instance_Templates** implement **blueprint inheritance** with cluster-specific deployment.
+
+**Instance Model:**
+- **Instance:** Deployment configuration snapshot for specific cluster + location + environment + blueprint version
+- **Instance_Template:** Final merged configuration per template within instance
+
+#### **Instance Creation Workflow:**
+```
+1. DevOps selects Blueprint_Version + target Cluster + Location + Environment
+2. System creates Instance with snapshot reference and explicit targeting
+3. System auto-generates Instance_Templates:
+   - One per Blueprint_Template in blueprint version
+   - Inherits template versions from Blueprint_Templates
+   - Applies 3-level values merge
+4. Instance ready for Helm Chart generation
+```
+
+#### **Template Version Inheritance:**
+```
+Instance → Blueprint_Version → Blueprint_Template → Template_Version
+                                       ↓
+                              Specific commit hash + chart data
+```
+
+**Instance Evolution Strategies:**
+- **Configuration Updates:** Modify instance-specific settings (Git repo, sync policies)
+- **Template Upgrades:** Change Instance.blueprint_version_id (inherits new template versions)
+- **Value Overrides:** Update Instance_Template.template_values for specific customizations
+
+
 
 ---
 
-## 📊 Fluxo Central de Dados
+## � **Core Data Flow Architecture**
 
+### **📊 Entity Relationship Flow**
 ```
 Application → Blueprint → Blueprint_Version → Instance → Instance_Template
      ↓           ↓            ↓                ↓            ↓
-Templates → Template_Versions → Blueprint_Template → Helper Templates → ArgoCD App
+Templates → Template_Versions → Blueprint_Template → Merged Values → ArgoCD App
 ```
 
-**Fluxo de Versionamento:**
-1. **Template** criado com metadados imutáveis + **Template_Version** inicial
-2. **Blueprint** criado com metadados imutáveis
-3. **Blueprint_Version** criada com helper_templates + **Blueprint_Templates** específicos
-4. **Blueprint_Template** referencia Template_Version específica (tested combination)
-5. **Instance** criada referenciando blueprint_version_id específica
-6. **Instance_Template** gerados automaticamente com valores finais merged
-7. **Git Repository** recebe App of Apps chart com template versions fixas
+### **🔄 Version Control Flow**
+```
+1. Template Import:
+   Git Repository → Template + Template_Version (immutable chart data)
 
-**Versioning Strategy:** 
-- `Blueprint_Version.version_number` increments on changes (1 → 2 → 3...)
-- `Instance.blueprint_version_id` snapshots specific version at creation
-- `Blueprint.current_version_id` points to latest version
-- Simple numeric comparison enables upgrade decisions
+2. Blueprint Evolution:
+   Blueprint → Blueprint_Version (helper templates + template selections)
+
+3. Template Governance:
+   Blueprint_Version → Blueprint_Template (tested template version combinations)
+
+4. Instance Deployment:
+   Blueprint_Version + Cluster → Instance (deployment snapshot)
+
+5. Configuration Resolution:
+   Instance → Instance_Templates (final merged values per template)
+
+6. Chart Generation:
+   Instance_Templates → ArgoCD App of Apps (Git repository output)
+```
+
+### **📈 Versioning Strategy**
+- **Incremental Versioning:** Blueprint_Version.version_number (1 → 2 → 3...)
+- **Snapshot Isolation:** Instance.blueprint_version_id locks specific version
+- **Current Tracking:** Blueprint.current_version_id points to latest
+- **Upgrade Detection:** Numeric comparison identifies drift
+
+## 🎯 **Configuration Inheritance Strategy**
+
+### **📋 3-Level Values Merge Hierarchy**
+```
+Template_Version.default_values (Helm Chart base)
+         ↓
+Blueprint_Template.custom_values (Blueprint global config)  
+         ↓
+Instance_Template.template_values (Final merged + instance overrides)
+         ↓
+ArgoCD Application values (Generated chart output)
+```
+
+### **🔄 Values Merge Logic**
+1. **Base Layer:** Template_Version provides chart defaults from values.yaml
+2. **Blueprint Layer:** Blueprint_Template applies global blueprint configuration
+3. **Instance Layer:** Instance-specific overrides and final computed values
+4. **Result:** Complete configuration ready for ArgoCD deployment
+
+### **🔒 Template Version Governance**
+- **Blueprint Control:** Blueprint_Template selects exact Template_Version (commit hash)
+- **Instance Inheritance:** Instance inherits template versions via Blueprint_Version
+- **Upgrade Pattern:** Template version changes require new Blueprint_Version
+- **Tested Combinations:** Blueprint ensures template versions work together
+
+### **📦 Data Completeness for Helm Generation**
+**Complete autonomous generation capability - no external dependencies:**
+
+- **Template Source:** External Git repository + path + commit hash
+- **Chart Metadata:** Complete Chart.yaml content stored in Template_Version
+- **Default Values:** Complete values.yaml stored in Template_Version  
+- **Blueprint Config:** Blueprint-specific values in Blueprint_Template
+- **Instance Config:** Final merged values in Instance_Template
+- **Target Context:** Cluster server URL + namespace configuration
 
 ---
 
-## 🎯 Configuration Inheritance & Data Completeness
+## 🆔 ID Strategy (Design Decision)
 
-```
-Template_Version (default_values) → Blueprint_Template (custom_values) → Instance_Template (template_values) → ArgoCD App
-```
+To avoid schema duplication while keeping operational simplicity and performance, the canonical schema (`database-schema.dbml`) uses **sequential numeric primary keys** (PostgreSQL `BIGSERIAL`) for all core tables. Rationale:
 
-**Values Merge Hierarchy:**
-1. **Template_Version.default_values** - Base configuration from Helm Chart
-2. **Blueprint_Template.custom_values** - Global blueprint configuration
-3. **Instance_Template.template_values** - Final merged values (includes instance overrides)
+- **Performance:** Sequential keys produce smaller, more cache-friendly indexes and faster joins.
+- **Simplicity:** Easier debugging and human-readable identifiers in logs and dashboards.
+- **Storage efficiency:** Numeric keys require less space than UUIDs, especially for foreign keys.
 
-**Template Version Control:**
-- **Blueprint_Template.template_version_id** defines exact template version to use
-- **Instance** inherits template versions from its Blueprint_Version
-- **Template version changes** require new Blueprint_Version (tested combinations)
+When an external, non-guessable identifier is required (for public APIs or cross-system exchanges), add an auxiliary column such as `external_id UUID DEFAULT gen_random_uuid() UNIQUE`. This keeps internal performance benefits while allowing secure external references when needed.
 
-**Required Fields for Helm Chart Generation:**
+Reference implementations and the definitive column types live in [`database-schema.dbml`](./database-schema.dbml).
 
-**Instance Level:**
-- `git_repository`: Where to write generated Helm Chart
-- `git_path`: Path within repository for instance files  
-- `git_branch`: Target branch for generated files
-- `name`: Used for ArgoCD Application names and namespaces
-
-**Instance_Template Level:**
-- `template_values`: Final merged configuration (JSON/YAML)
-- `target_namespace`: Kubernetes namespace for deployment
-
-**Template_Version Level (via Blueprint_Template):**
-- `git_commit_hash`: Specific commit version of external template
-- `chart_metadata`: Helm chart metadata for ArgoCD Application
-- `default_values`: Base values for merging
-
-**Template Level:**
-- `git_repository_url`: External Helm Chart repository
-- `git_path`: Path to chart within external repository
-
-**All fields required for autonomous generation - no external lookups needed.**
-
----
 
 ## 🔄 Blueprint Versioning Strategy
 

@@ -1,0 +1,324 @@
+// DataOcean Instance Manager - Database Schema
+// DBML (Database Markup Language) for visual modeling and refinement
+// Generated from: docs/master/05-data-model.md
+// Architecture: ArgoCD App of Apps pattern with Template Versioning
+
+Project DataOcean_Instance_Manager {
+  database_type: 'PostgreSQL'
+  Note: '''
+  # DataOcean Instance Manager Database Schema
+  
+  Core Features:
+  - Multi-region ArgoCD App of Apps deployments
+  - Template versioning with Blueprint governance
+  - Commit-based instance isolation
+  - 3-level values inheritance hierarchy
+  
+  Key Design Patterns:
+  - Template + Template_Version separation for versioning
+  - Blueprint + Blueprint_Version for governance
+  - Instance inherits template versions via Blueprint_Version
+  - BIGSERIAL PKs for performance (internal IDs)
+  - UUID columns when external exposure needed (security)
+  '''
+}
+
+// ================================================================
+// INFRASTRUCTURE ENTITIES
+// ================================================================
+
+Table locations {
+  id bigserial [pk]
+  name varchar(100) [not null, unique]
+  description text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Geographical regions for deployments (Brazil, EMEA, USA)'
+  
+  indexes {
+    name [unique, name: "idx_locations_name"]
+  }
+}
+
+Table environments {
+  id bigserial [pk]
+  name varchar(100) [not null, unique]
+  description text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Deployment environments (Development, Staging, Production)'
+  
+  indexes {
+    name [unique, name: "idx_environments_name"]
+  }
+}
+
+Table clusters {
+  id bigserial [pk]
+  name varchar(100) [not null, unique]
+  description text
+  server_url varchar(500) [not null]
+  location_id bigint [not null]
+  environment_id bigint [not null]
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Kubernetes clusters where applications are deployed'
+  
+  indexes {
+    name [unique, name: "idx_clusters_name"]
+    (server_url, location_id, environment_id) [unique, name: "idx_clusters_server_location_environment"]
+    location_id [name: "idx_clusters_location"]
+    environment_id [name: "idx_clusters_environment"]
+  }
+}
+
+// ================================================================
+// APPLICATION ENTITIES
+// ================================================================
+
+Table applications {
+  id bigserial [pk]
+  name varchar(100) [not null, unique]
+  description text
+  repository_url varchar(500)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Business applications that can be deployed'
+  
+  indexes {
+    name [unique, name: "idx_applications_name"]
+  }
+}
+
+// ================================================================
+// TEMPLATE VERSIONING ENTITIES
+// ================================================================
+
+Table templates {
+  id bigserial [pk]
+  name varchar(100) [not null, unique]
+  description text
+  git_repository_url varchar(500) [not null]
+  git_path varchar(255) [not null]
+  current_version_id bigint
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: '''
+  Template metadata and configuration for external Helm Chart repositories.
+  Container for multiple versions of same Helm Chart.
+  '''
+  
+  indexes {
+    name [unique, name: "idx_templates_name"]
+    git_repository_url [name: "idx_templates_git_repo"]
+    current_version_id [name: "idx_templates_current_version"]
+  }
+}
+
+Table template_versions {
+  id bigserial [pk]
+  template_id bigint [not null]
+  git_commit_hash varchar(40) [not null]
+  chart_metadata jsonb [not null]
+  default_values jsonb [not null]
+  values_schema jsonb
+  commit_message text
+  commit_author varchar(255)
+  imported_at timestamp [default: `now()`]
+  
+  Note: '''
+  Historical versions of Helm Chart data imported from Git repository.
+  Each version is immutable after creation.
+  Contains complete Chart.yaml, values.yaml, and values.schema.json content.
+  '''
+  
+  indexes {
+    (template_id, git_commit_hash) [unique, name: "idx_template_versions_template_commit"]
+    template_id [name: "idx_template_versions_template"]
+    git_commit_hash [name: "idx_template_versions_commit"]
+    imported_at [name: "idx_template_versions_imported"]
+  }
+}
+
+// ================================================================
+// BLUEPRINT ENTITIES (GOVERNANCE)
+// ================================================================
+
+Table blueprints {
+  id bigserial [pk]
+  name varchar(100) [not null]
+  description text
+  application_id bigint [not null]
+  current_version_id bigint
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  
+  Note: '''
+  Blueprint metadata (immutable).
+  Represents deployment model identity for an application.
+  '''
+  
+  indexes {
+    (application_id, name) [unique, name: "idx_blueprints_app_name"]
+    application_id [name: "idx_blueprints_application"]
+    current_version_id [name: "idx_blueprints_current_version"]
+  }
+}
+
+Table blueprint_versions {
+  id bigserial [pk]
+  blueprint_id bigint [not null]
+  version_number integer [not null]
+  helper_templates text
+  created_at timestamp [default: `now()`]
+  
+  Note: '''
+  Blueprint version data (mutable configurations).
+  Contains helper templates and tested template combinations.
+  Version numbers increment: 1, 2, 3...
+  '''
+  
+  indexes {
+    (blueprint_id, version_number) [unique, name: "idx_blueprint_versions_blueprint_version"]
+    blueprint_id [name: "idx_blueprint_versions_blueprint"]
+    version_number [name: "idx_blueprint_versions_version"]
+  }
+}
+
+Table blueprint_templates {
+  id bigserial [pk]
+  blueprint_version_id bigint [not null]
+  template_version_id bigint [not null]
+  order_index integer [not null]
+  alias varchar(100) [not null]
+  custom_values jsonb
+  
+  Note: '''
+  Relationship between Blueprint_Version and Template_Version.
+  Defines tested combinations of template versions in a blueprint.
+  Blueprint governance: blueprint controls which template versions to use.
+  '''
+  
+  indexes {
+    (blueprint_version_id, template_version_id, alias) [unique, name: "idx_blueprint_templates_unique"]
+    (blueprint_version_id, order_index) [unique, name: "idx_blueprint_templates_order"]
+    (blueprint_version_id, alias) [unique, name: "idx_blueprint_templates_alias"]
+    blueprint_version_id [name: "idx_blueprint_templates_blueprint_version"]
+    template_version_id [name: "idx_blueprint_templates_template_version"]
+  }
+}
+
+// ================================================================
+// INSTANCE ENTITIES (DEPLOYMENTS)
+// ================================================================
+
+Table instances {
+  id bigserial [pk]
+  name varchar(100) [not null, unique]
+  blueprint_version_id bigint [not null]
+  cluster_id bigint [not null]
+  location_id bigint [not null]
+  environment_id bigint [not null]
+  auto_sync_enabled boolean [default: true]
+  auto_prune_enabled boolean [default: true]
+  auto_heal_enabled boolean [default: true]
+  create_namespace boolean [default: true]
+  git_repository varchar(500) [not null]
+  git_path varchar(200) [not null]
+  git_branch varchar(100) [default: 'main']
+  status instance_status [default: 'pending']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: '''
+  Concrete deployment configuration for specific cluster target.
+  Inherits template versions from Blueprint_Version via Blueprint_Templates.
+  Snapshot of blueprint_version_id for stability.
+  Explicit location_id and environment_id for precise deployment targeting.
+  '''
+  
+  indexes {
+    name [unique, name: "idx_instances_name"]
+    blueprint_version_id [name: "idx_instances_blueprint_version"]
+    cluster_id [name: "idx_instances_cluster"]
+    location_id [name: "idx_instances_location"]
+    environment_id [name: "idx_instances_environment"]
+    status [name: "idx_instances_status"]
+    (blueprint_version_id, cluster_id) [name: "idx_instances_blueprint_cluster"]
+    (location_id, environment_id) [name: "idx_instances_location_environment"]
+  }
+}
+
+Table instance_templates {
+  id bigserial [pk]
+  instance_id bigint [not null]
+  blueprint_template_id bigint [not null]
+  template_values jsonb [not null]
+  target_namespace varchar(63)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: '''
+  Central entity: Template configuration within specific instance.
+  Contains final merged values: Template_Version.default_values + 
+  Blueprint_Template.custom_values + Instance overrides.
+  Template version inherited from Blueprint_Template.template_version_id.
+  '''
+  
+  indexes {
+    (instance_id, blueprint_template_id) [unique, name: "idx_instance_templates_unique"]
+    instance_id [name: "idx_instance_templates_instance"]
+    blueprint_template_id [name: "idx_instance_templates_blueprint_template"]
+    target_namespace [name: "idx_instance_templates_namespace"]
+  }
+}
+
+// ================================================================
+// RELATIONSHIPS DOCUMENTATION
+// ================================================================
+
+// Infrastructure relationships
+Ref: clusters.location_id > locations.id [delete: restrict]
+Ref: clusters.environment_id > environments.id [delete: restrict]
+
+// Application relationships  
+Ref: blueprints.application_id > applications.id [delete: restrict]
+
+// Template versioning relationships
+Ref: template_versions.template_id > templates.id [delete: restrict]
+Ref: templates.current_version_id > template_versions.id [delete: set null]
+
+// Blueprint versioning relationships
+Ref: blueprint_versions.blueprint_id > blueprints.id [delete: restrict]
+Ref: blueprints.current_version_id > blueprint_versions.id [delete: set null]
+
+// Blueprint-Template associations (governance)
+Ref: blueprint_templates.blueprint_version_id > blueprint_versions.id [delete: restrict]
+Ref: blueprint_templates.template_version_id > template_versions.id [delete: restrict]
+
+// Instance deployment relationships
+Ref: instances.blueprint_version_id > blueprint_versions.id [delete: restrict]
+Ref: instances.cluster_id > clusters.id [delete: restrict]
+Ref: instances.location_id > locations.id [delete: restrict]
+Ref: instances.environment_id > environments.id [delete: restrict]
+
+// Instance-Template configurations
+Ref: instance_templates.instance_id > instances.id [delete: cascade]
+Ref: instance_templates.blueprint_template_id > blueprint_templates.id [delete: restrict]
+
+// ================================================================
+// ENUMS AND CHECK CONSTRAINTS
+// ================================================================
+
+Enum instance_status {
+  pending
+  deployed 
+  failed
+  updating
+}
