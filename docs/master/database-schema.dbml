@@ -62,7 +62,6 @@ Table clusters {
   server_url varchar(500) [not null]
   location_id bigint [not null]
   environment_id bigint [not null]
-  is_active boolean [default: true]
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   
@@ -156,7 +155,6 @@ Table blueprints {
   description text
   application_id bigint [not null]
   current_version_id bigint
-  is_active boolean [default: true]
   created_at timestamp [default: `now()`]
   
   Note: '''
@@ -259,7 +257,7 @@ Table instance_templates {
   id bigserial [pk]
   instance_id bigint [not null]
   blueprint_template_id bigint [not null]
-  template_values jsonb [not null]
+  instance_values jsonb
   target_namespace varchar(63)
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]

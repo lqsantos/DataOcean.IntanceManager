@@ -130,7 +130,10 @@ Instance → Blueprint_Version → Blueprint_Template → Template_Version
 **Instance Evolution Strategies:**
 - **Configuration Updates:** Modify instance-specific settings (Git repo, sync policies)
 - **Template Upgrades:** Change Instance.blueprint_version_id (inherits new template versions)
-- **Value Overrides:** Update Instance_Template.template_values for specific customizations
+- **Deployment Workflow:**
+```
+Instance Creation → Blueprint_Template Selection → Instance Configuration
+- **Value Overrides:** Update Instance_Template.instance_values for specific customizations
 
 
 
@@ -180,7 +183,7 @@ Template_Version.default_values (Helm Chart base)
          ↓
 Blueprint_Template.custom_values (Blueprint global config)  
          ↓
-Instance_Template.template_values (Final merged + instance overrides)
+Instance_Template.instance_values (Final merged + instance overrides)
          ↓
 ArgoCD Application values (Generated chart output)
 ```
@@ -348,7 +351,7 @@ spec:
     targetRevision: {instance_template.git_revision}
     helm:
       values: |
-        {instance_template.template_values}
+        {instance_template.instance_values}
   destination:
     namespace: {instance_template.target_namespace}
 ```

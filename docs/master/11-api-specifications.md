@@ -13,48 +13,137 @@ This document defines backend API operations with focus on **business rules and 
 
 ### **1. Locations API**
 
-#### **CREATE/UPDATE/DELETE Location**
-- **What:** Manage geographical deployment regions
+#### **CREATE Location**
+- **What:** Create geographical deployment region
+- **Fields:**
+  - `name` (required): Unique identifier for location (Brazil, EMEA, USA)
+  - `description` (optional): Human-readable description
 - **Rules:**
-  - Name must be globally unique
-  - Cannot change name or delete if referenced by clusters
-  - Optional description field
+  - Name must be globally unique (varchar 100)
+  - Name format: alphanumeric + hyphens, start/end with letter
+
+#### **UPDATE Location**
+- **What:** Modify location metadata
+- **Fields:**
+  - `description` (optional): Can be updated freely
+- **Rules:**
+  - Name cannot be changed after creation (stability)
+
+#### **DELETE Location**
+- **What:** Remove location if not in use
+- **Rules:**
+  - Cannot delete if referenced by clusters
+  - Cannot delete if referenced by instances
+  - Cascade protection via foreign key constraints
+
+#### **LIST/GET Locations**
+- **What:** Retrieve location data
+- **Returns:** All location fields including usage counts
 
 ---
 
 ### **2. Environments API**
 
-#### **CREATE/UPDATE/DELETE Environment**
-- **What:** Manage environment types (Development, Staging, Production)
+#### **CREATE Environment**
+- **What:** Create deployment environment type
+- **Fields:**
+  - `name` (required): Unique identifier for environment (Development, Staging, Production)
+  - `description` (optional): Human-readable description
 - **Rules:**
-  - Name must be globally unique
-  - Cannot change name or delete if referenced by clusters
-  - Optional description field
+  - Name must be globally unique (varchar 100)
+  - Name format: alphanumeric + hyphens, start/end with letter
+
+#### **UPDATE Environment**
+- **What:** Modify environment metadata
+- **Fields:**
+  - `description` (optional): Can be updated freely
+- **Rules:**
+  - Name cannot be changed after creation (stability)
+
+#### **DELETE Environment**
+- **What:** Remove environment if not in use
+- **Rules:**
+  - Cannot delete if referenced by clusters
+  - Cannot delete if referenced by instances
+  - Cascade protection via foreign key constraints
+
+#### **LIST/GET Environments**
+- **What:** Retrieve environment data
+- **Returns:** All environment fields including usage counts
 
 ---
 
 ### **3. Clusters API**
 
-#### **CREATE/UPDATE/DELETE Cluster**
-- **What:** Manage Kubernetes clusters as deployment targets
+#### **CREATE Cluster**
+- **What:** Create Kubernetes cluster as deployment target
+- **Fields:**
+  - `name` (required): Unique identifier for cluster
+  - `description` (optional): Human-readable description
+  - `server_url` (required): Kubernetes API server URL
+  - `location_id` (required): Reference to location
+  - `environment_id` (required): Primary environment served
 - **Rules:**
-  - Name must be globally unique
-  - server_url must be valid Kubernetes API server URL
-  - Unique combination of (location_id + environment_id) - one cluster per location/environment
-  - Cannot change location/environment or delete if referenced by instances
-  - Optional description field
+  - Name must be globally unique (varchar 100)
+  - Name format: alphanumeric + hyphens, start/end with letter
+  - server_url must be valid URL format (varchar 500)
+  - Unique combination of (server_url + location_id + environment_id)
+  - Multiple clusters allowed per location/environment (HA scenarios)
+
+#### **UPDATE Cluster**
+- **What:** Modify cluster metadata and configuration
+- **Fields:**
+  - `description` (optional): Can be updated freely
+  - `server_url` (restricted): Can be updated but must maintain uniqueness
+- **Rules:**
+  - Name, location_id, environment_id cannot be changed after creation
+  - server_url changes must maintain unique constraint
+
+#### **DELETE Cluster**
+- **What:** Remove cluster if not in use
+- **Rules:**
+  - Cannot delete if referenced by instances
+  - Cascade protection via foreign key constraints
+
+#### **LIST/GET Clusters**
+- **What:** Retrieve cluster data with relationships
+- **Returns:** All cluster fields plus location/environment names and instance counts
+- **Filters:** By location_id, environment_id
 
 ---
 
 ### **4. Applications API**
 
-#### **CREATE/UPDATE/DELETE Application**
-- **What:** Manage business applications for deployment
+#### **CREATE Application**
+- **What:** Create business application for deployment
+- **Fields:**
+  - `name` (required): Unique identifier for application
+  - `description` (optional): Human-readable description
+  - `repository_url` (optional): Git repository URL for application source code
 - **Rules:**
-  - Name must be globally unique
-  - repository_url must be valid Git repository
-  - Cannot change name or delete if referenced by blueprints
-  - Optional description field
+  - Name must be globally unique (varchar 100)
+  - Name format: alphanumeric + hyphens, start/end with letter
+  - repository_url must be valid Git URL format if provided (varchar 500)
+
+#### **UPDATE Application**
+- **What:** Modify application metadata
+- **Fields:**
+  - `description` (optional): Can be updated freely
+  - `repository_url` (optional): Can be updated freely
+- **Rules:**
+  - Name cannot be changed after creation (stability)
+
+#### **DELETE Application**
+- **What:** Remove application if not in use
+- **Rules:**
+  - Cannot delete if referenced by blueprints
+  - Cascade protection via foreign key constraints
+  - Check for any blueprint dependencies before deletion
+
+#### **LIST/GET Applications**
+- **What:** Retrieve application data with relationships
+- **Returns:** All application fields plus blueprint counts and active instance counts
+- **Filters:** By name pattern, repository domain
 
 ---
 
@@ -236,7 +325,7 @@ This document defines backend API operations with focus on **business rules and 
 - **Rules:**
   - One Instance_Template per Blueprint_Template in blueprint version
   - Template versions inherited from blueprint (no instance choice)
-  - template_values are pre-merged ready for Helm Chart generation
+  - instance_values are pre-merged ready for Helm Chart generation
 - **Impact:** Complete deployment configuration with tested template combinations
 
 #### **UPDATE Instance Metadata**
@@ -264,7 +353,7 @@ This document defines backend API operations with focus on **business rules and 
 - **What:** Override specific template values for this instance
 - **When:** Instance-specific customization beyond blueprint defaults
 - **Rules:**
-  - template_values merge: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
+  - instance_values merge: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
   - Cannot change template version (controlled by blueprint)
   - target_namespace changes must follow naming conventions
 - **Impact:** Instance-specific customization while maintaining template version governance
@@ -369,6 +458,10 @@ This document defines backend API operations with focus on **business rules and 
 ---
 
 ## 🔄 Global Business Rules
+
+### **Auto-Generated Fields**
+- **CREATE Operations:** All entities auto-generate `id` (BIGSERIAL), `created_at`, `updated_at` timestamps
+- **UPDATE Operations:** All entities auto-update `updated_at` timestamp on any field modification
 
 ### **Naming Convention**
 - **Format:** Alphanumeric + hyphens only, start and end with letters
