@@ -188,11 +188,55 @@ Instance_Template.instance_values (Final merged + instance overrides)
 ArgoCD Application values (Generated chart output)
 ```
 
+### **🎯 Layer Override Strategy**
+
+**CRITICAL ARCHITECTURAL PRINCIPLE:** Each layer stores **ONLY** its customizations, not complete values.
+
+**Storage Strategy:**
+- **Template_Version.default_values:** Complete Helm Chart values.yaml (baseline)
+- **Blueprint_Template.custom_values:** ONLY blueprint-specific overrides (partial JSON)
+- **Instance_Template.instance_values:** ONLY instance-specific overrides (partial JSON)
+
+**Benefits:**
+- ✅ **Storage Efficiency:** No duplication of template defaults
+- ✅ **Change Traceability:** Clear visibility of what was customized at each layer
+- ✅ **Template Updates:** Template changes don't break existing blueprints/instances
+- ✅ **Override Clarity:** Explicit separation between defaults and customizations
+
+**Example:**
+```json
+// Template_Version.default_values (complete)
+{
+  "image": { "tag": "1.0.0", "repository": "nginx" },
+  "replicas": 1,
+  "resources": { "cpu": "100m", "memory": "128Mi" }
+}
+
+// Blueprint_Template.custom_values (overrides only)
+{
+  "replicas": 3,
+  "resources": { "cpu": "200m" }
+}
+
+// Instance_Template.instance_values (overrides only)  
+{
+  "image": { "tag": "1.2.0" },
+  "resources": { "memory": "256Mi" }
+}
+
+// Final merged result (runtime only)
+{
+  "image": { "tag": "1.2.0", "repository": "nginx" },
+  "replicas": 3,
+  "resources": { "cpu": "200m", "memory": "256Mi" }
+}
+```
+
 ### **🔄 Values Merge Logic**
-1. **Base Layer:** Template_Version provides chart defaults from values.yaml
-2. **Blueprint Layer:** Blueprint_Template applies global blueprint configuration
-3. **Instance Layer:** Instance-specific overrides and final computed values
-4. **Result:** Complete configuration ready for ArgoCD deployment
+1. **Base Layer:** Template_Version provides complete chart defaults from values.yaml
+2. **Blueprint Layer:** Blueprint_Template applies global blueprint overrides only
+3. **Instance Layer:** Instance-specific overrides only (not merged values)
+4. **Runtime Merge:** System merges all layers at deployment time
 
 ### **🔒 Template Version Governance**
 - **Blueprint Control:** Blueprint_Template selects exact Template_Version (commit hash)

@@ -205,16 +205,7 @@ This document defines backend API operations with focus on **business rules and 
   - If no schema exists for that version, validation passes
   - Returns version-specific validation results
 
-#### **GET Template History**
-- **What:** List all versions of template with metadata
-- **Returns:** All Template_Versions for template with commit info, dates, changes
-- **Rules:** Read-only operation showing complete version history
 
-#### **COMPARE Template Versions**
-- **What:** Show differences between two template versions
-- **Input:** template_id + commit_hash_1 + commit_hash_2
-- **Returns:** Diff of chart_metadata, default_values, values_schema
-- **Rules:** Helps DevOps understand changes between versions
 
 #### **DELETE Template**
 - **What:** Remove template and all versions
@@ -273,17 +264,7 @@ This document defines backend API operations with focus on **business rules and 
   - Changes affect new instances only; existing instances unchanged
 - **Impact:** Blueprint version updated with new template configuration
 
-#### **GET Blueprint Template Versions Available**
-- **What:** Show available template versions for blueprint configuration
-- **Input:** template_id
-- **Returns:** All Template_Versions for template with metadata and compatibility info
-- **Use Case:** Help DevOps choose appropriate template version for blueprint
 
-#### **COMPARE Blueprint Versions**
-- **What:** Show differences between two blueprint versions
-- **Input:** blueprint_id + version_number_1 + version_number_2
-- **Returns:** Diff of helper_templates and Blueprint_Template configurations
-- **Use Case:** Understand what changed between blueprint versions
 
 #### **DELETE Blueprint**
 - **What:** Remove blueprint and all versions
@@ -367,48 +348,14 @@ This document defines backend API operations with focus on **business rules and 
   - Include template version information (commit hashes, chart metadata)
 - **Usage:** Primary API for deployment configuration review
 
-#### **GET Instance_Template Details**  
-- **What:** Retrieve specific template configuration within instance
-- **Response:** Instance_Template with complete template version details
-- **Data Flow:**
-  - Instance_Template → Blueprint_Template → Template_Version
-  - Show resolved configuration ready for Helm Chart generation
-  - Include template version history and chart source information
-- **Usage:** Template-level configuration debugging
-
-#### **LIST Instances by Cluster**
-- **What:** Find all instances deployed to specific cluster
-- **Filter:** cluster_id required
-- **Response:** Instances with blueprint version and template version summary
-- **Usage:** Infrastructure management and cluster resource planning
-
-#### **LIST Instances by Blueprint**
-- **What:** Find all instances using specific blueprint (any version)
-- **Filter:** blueprint_id required  
-- **Response:** Instances grouped by blueprint version with template version details
-- **Usage:** Blueprint impact analysis and version rollout tracking
-
-#### **LIST Instances by Template Version**
-- **What:** Find instances using specific template version
-- **Filter:** template_version_id required
-- **Response:** Instances via Blueprint_Template relationships
-- **Usage:** Template version impact analysis and upgrade planning
-
-#### **COMPARE Instance Template Versions**
-- **What:** Compare template versions between instances
-- **Input:** Two instance IDs
-- **Process:**
-  1. Compare Blueprint_Template.template_version_id between instances
-  2. Show template version differences (chart changes, value schema updates)
-  3. Highlight configuration drift in merged values
-- **Response:** Template version diff with upgrade recommendations
-- **Usage:** Version drift analysis and upgrade planning
-
-#### **GET Instance Deployment Status**
-- **What:** Retrieve deployment status across all templates
-- **Response:** Instance_Template deployment status, ArgoCD sync status, health indicators  
-- **Integration:** Real-time status from ArgoCD Applications when available
-- **Usage:** Operations monitoring and deployment health tracking
+#### **LIST Instances**
+- **What:** Retrieve instances with basic filtering
+- **Response:** Instance list with essential metadata (name, blueprint, cluster, status)
+- **Filters:** 
+  - By cluster_id (infrastructure management)
+  - By blueprint_id (blueprint usage tracking)
+  - By application_id (application-focused view)
+- **Usage:** Primary dashboard and operational views
 
 #### **GENERATE Helm Chart**
 - **What:** Create/update App of Apps Helm Chart in Git repository using template versions
@@ -429,18 +376,7 @@ This document defines backend API operations with focus on **business rules and 
   - Ready for ArgoCD deployment with tested template combinations
   - Provides complete deployment specification with version governance
 
-#### **COMPARE Instances**
-- **What:** Compare configurations between multiple instances
-- **Process:**
-  1. Compare Blueprint_Version usage between instances
-  2. Show template version differences via Blueprint_Template relationships  
-  3. Compare merged values: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
-  4. Highlight configuration and version drift
-- **Rules:**
-  - Can compare any instances (same blueprint recommended for meaningful results)
-  - Focus on template version differences and value merging results
-  - Show upgrade paths when instances use different blueprint versions
-- **Usage:** Configuration standardization and upgrade planning
+
 
 #### **DELETE Instance**
 - **What:** Remove instance and cascade delete Instance_Templates
@@ -482,9 +418,22 @@ This document defines backend API operations with focus on **business rules and 
 
 ## 🎯 MVP Priorities
 
-**Core Operations:** Instance management, Blueprint configuration, Helm Chart generation
-**Secondary:** Template/Blueprint lifecycle, Instance comparison, Sync policies
-**Future:** Git monitoring, Batch operations, ArgoCD API integration
+### **✅ Phase 1 (MVP Core)**
+- **Basic CRUD:** Locations, Environments, Clusters, Applications (with simple LIST operations)
+- **Template Management:** CREATE, UPDATE metadata, SYNC versions, VALIDATE access
+- **Blueprint Management:** CREATE, CREATE version, ADD/UPDATE templates
+- **Instance Management:** CREATE, UPDATE metadata/values, UPGRADE blueprint, GET details, LIST with filters
+- **Helm Chart Generation:** GENERATE chart operation
+
+### **🔄 Phase 2 (Enhanced Operations)**
+- **Advanced Queries:** Template history, Blueprint version comparison
+- **Instance Operations:** Detailed template debugging, advanced filtering
+- **Monitoring Integration:** Deployment status, ArgoCD sync status
+
+### **🚀 Phase 3 (Advanced Features)**
+- **Comparison Tools:** Instance comparison, template version diffs
+- **Automation:** Batch operations, automated upgrades
+- **External Integration:** Git monitoring, ArgoCD API, CI/CD pipelines
 
 ---
 

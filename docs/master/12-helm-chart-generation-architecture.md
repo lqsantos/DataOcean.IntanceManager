@@ -88,7 +88,7 @@ spec:
     helm:
       releaseName: {instance.name}-{blueprint_template.alias}
       values: |
-{instance_template.template_values}
+{instance_template.instance_values}
   destination:
     server: {cluster.server_url}
     namespace: {instance_template.target_namespace}
@@ -150,7 +150,7 @@ Blueprint_Template (for each template in the blueprint version)
 └── templates/{alias}-app.yaml (ArgoCD Application manifest)
 
 Instance_Template (for each template instance)
-├── Application.spec.helm.values (template_values as YAML)
+├── Application.spec.helm.values (instance_values merged at runtime)
 └── Application.spec.destination.namespace (target_namespace)
 
 Template
@@ -184,7 +184,7 @@ Template
    ├── spec.source.*: Template entity values
    ├── spec.destination.server: Cluster.server_url
    ├── spec.destination.namespace: Instance_Template.target_namespace
-   ├── spec.helm.values: Instance_Template.template_values
+   ├── spec.helm.values: Instance_Template.instance_values (merged at runtime)
    └── spec.syncPolicy.*: Instance sync configuration fields
 
 6. Write complete Helm Chart to Git repository:
@@ -219,9 +219,9 @@ Blueprint_Templates:
 3. alias="cache", template="Redis-Cache", order=3
 
 Instance_Templates:
-1. template_values="database config...", target_namespace="ecommerce-prod"
-2. template_values="api config...", target_namespace="ecommerce-prod"
-3. template_values="cache config...", target_namespace="ecommerce-prod"
+1. instance_values="database config overrides...", target_namespace="ecommerce-prod"
+2. instance_values="api config overrides...", target_namespace="ecommerce-prod"
+3. instance_values="cache config overrides...", target_namespace="ecommerce-prod"
 ```
 
 **Generated Helm Chart:**
@@ -284,19 +284,46 @@ spec:
 
 ## 🛠️ Implementation Considerations
 
-### **Template Values Processing**
+### **Template Values Processing - Layer Override Implementation**
+
+**CRITICAL:** Values are stored as **layer-specific overrides**, requiring runtime merge for chart generation.
+
 ```python
-# Pseudocode for values processing
+# Pseudocode for Layer Override Merge
 def generate_application_values(instance_template):
-    # Start with template defaults (if any stored)
-    values = {}
+    # Step 1: Load complete template defaults
+    template_version = instance_template.blueprint_template.template_version
+    base_values = json.loads(template_version.default_values)
     
-    # Apply instance-specific template values
-    values.update(instance_template.template_values)
+    # Step 2: Apply blueprint-specific overrides (if any)
+    blueprint_template = instance_template.blueprint_template
+    if blueprint_template.custom_values:
+        blueprint_overrides = json.loads(blueprint_template.custom_values)
+        base_values = deep_merge(base_values, blueprint_overrides)
     
-    # Return as YAML string for ArgoCD
-    return yaml.dump(values, default_flow_style=False)
+    # Step 3: Apply instance-specific overrides (if any)
+    if instance_template.instance_values:
+        instance_overrides = json.loads(instance_template.instance_values)
+        base_values = deep_merge(base_values, instance_overrides)
+    
+    # Step 4: Return complete merged values as YAML
+    return yaml.dump(base_values, default_flow_style=False)
+
+def deep_merge(base_dict, override_dict):
+    """Recursively merge override values into base dictionary"""
+    result = base_dict.copy()
+    for key, value in override_dict.items():
+        if isinstance(value, dict) and key in result and isinstance(result[key], dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
 ```
+
+**Storage vs Runtime:**
+- **Storage:** Only overrides stored (Blueprint_Template.custom_values, Instance_Template.instance_values)
+- **Runtime:** Complete merged values generated for ArgoCD Application
+- **Benefit:** Template updates don't require blueprint/instance updates
 
 ### **Helper Templates Integration**
 ```python
