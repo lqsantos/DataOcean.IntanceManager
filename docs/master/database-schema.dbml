@@ -59,19 +59,18 @@ Table clusters {
   id bigserial [pk]
   name varchar(100) [not null, unique]
   description text
-  server_url varchar(500) [not null]
-  location_id bigint [not null]
-  environment_id bigint [not null]
+  server_url varchar(500) [not null, unique]
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   
-  Note: 'Kubernetes clusters where applications are deployed'
+  Note: '''
+  Kubernetes clusters available for deployment.
+  User selects specific cluster during instance creation.
+  '''
   
   indexes {
     name [unique, name: "idx_clusters_name"]
-    (server_url, location_id, environment_id) [unique, name: "idx_clusters_server_location_environment"]
-    location_id [name: "idx_clusters_location"]
-    environment_id [name: "idx_clusters_environment"]
+    server_url [unique, name: "idx_clusters_server_url"]
   }
 }
 
@@ -83,7 +82,6 @@ Table applications {
   id bigserial [pk]
   name varchar(100) [not null, unique]
   description text
-  repository_url varchar(500)
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   
@@ -98,31 +96,75 @@ Table applications {
 // TEMPLATE VERSIONING ENTITIES
 // ================================================================
 
+Table repositories {
+  id bigserial [pk]
+  description text
+  azure_devops_org varchar(100) [not null]
+  azure_devops_project varchar(100) [not null]
+  git_repository_name varchar(100) [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: '''
+  Azure DevOps repositories that contain Helm Charts.
+  Uses Azure Managed Identity for authentication.
+  git_url constructed as: https://dev.azure.com/{azure_devops_org}/{azure_devops_project}/_git/{git_repository_name}
+  git_repository_name serves as the natural identifier.
+  '''
+  
+  indexes {
+    (azure_devops_org, azure_devops_project, git_repository_name) [unique, name: "idx_repositories_devops_repo"]
+    git_repository_name [name: "idx_repositories_name"]
+  }
+}
+
+Table branches {
+  id bigserial [pk]
+  repository_id bigint [not null]
+  name varchar(100) [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: '''
+  Branches within repositories that are being tracked/considered by the system.
+  User explicitly adds branches they want to monitor.
+  Populated automatically based on user selection.
+  '''
+  
+  indexes {
+    (repository_id, name) [unique, name: "idx_branches_repo_name"]
+    repository_id [name: "idx_branches_repository"]
+  }
+}
+
 Table templates {
   id bigserial [pk]
   name varchar(100) [not null, unique]
   description text
-  git_repository_url varchar(500) [not null]
+  repository_id bigint [not null]
   git_path varchar(255) [not null]
   current_version_id bigint
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   
   Note: '''
-  Template metadata and configuration for external Helm Chart repositories.
-  Container for multiple versions of same Helm Chart.
+  Template metadata for Helm Charts within a repository.
+  Each template represents a chart path within a repository.
+  Versions of this template can exist across multiple branches.
   '''
   
   indexes {
     name [unique, name: "idx_templates_name"]
-    git_repository_url [name: "idx_templates_git_repo"]
+    repository_id [name: "idx_templates_repository"]
     current_version_id [name: "idx_templates_current_version"]
+    (repository_id, git_path) [unique, name: "idx_templates_repo_path"]
   }
 }
 
 Table template_versions {
   id bigserial [pk]
   template_id bigint [not null]
+  branch_id bigint [not null]
   git_commit_hash varchar(40) [not null]
   chart_metadata jsonb [not null]
   default_values jsonb [not null]
@@ -132,14 +174,16 @@ Table template_versions {
   imported_at timestamp [default: `now()`]
   
   Note: '''
-  Historical versions of Helm Chart data imported from Git repository.
+  Historical versions of Helm Chart data imported from specific branch.
+  Each version is tied to a template and a specific branch.
+  Same template can have different versions across different branches.
   Each version is immutable after creation.
-  Contains complete Chart.yaml, values.yaml, and values.schema.json content.
   '''
   
   indexes {
-    (template_id, git_commit_hash) [unique, name: "idx_template_versions_template_commit"]
+    (template_id, branch_id, git_commit_hash) [unique, name: "idx_template_versions_template_branch_commit"]
     template_id [name: "idx_template_versions_template"]
+    branch_id [name: "idx_template_versions_branch"]
     git_commit_hash [name: "idx_template_versions_commit"]
     imported_at [name: "idx_template_versions_imported"]
   }
@@ -238,7 +282,8 @@ Table instances {
   Concrete deployment configuration for specific cluster target.
   Inherits template versions from Blueprint_Version via Blueprint_Templates.
   Snapshot of blueprint_version_id for stability.
-  Explicit location_id and environment_id for precise deployment targeting.
+  User selects cluster directly, but location_id and environment_id are required
+  for Helm chart generation and deployment context.
   '''
   
   indexes {
@@ -282,14 +327,16 @@ Table instance_templates {
 // ================================================================
 
 // Infrastructure relationships
-Ref: clusters.location_id > locations.id [delete: restrict]
-Ref: clusters.environment_id > environments.id [delete: restrict]
+// Note: clusters are now independent - no location/environment constraints
 
 // Application relationships  
 Ref: blueprints.application_id > applications.id [delete: restrict]
 
 // Template versioning relationships
+Ref: branches.repository_id > repositories.id [delete: restrict]
+Ref: templates.repository_id > repositories.id [delete: restrict]
 Ref: template_versions.template_id > templates.id [delete: restrict]
+Ref: template_versions.branch_id > branches.id [delete: restrict]
 Ref: templates.current_version_id > template_versions.id [delete: set null]
 
 // Blueprint versioning relationships

@@ -19,18 +19,18 @@ Defines **business logic, data flows, and architectural strategies** for managin
 ## � Core Business Entities & Workflows
 
 ### **1. Infrastructure Foundation**
-**Location + Environment + Cluster** create the deployment target matrix.
+**Location + Environment** provide deployment context for instances, while **Cluster** provides independent deployment targets.
 
 **Business Logic:**
-- **Location:** Geographic regions (Brazil, EMEA, USA) for compliance and latency
-- **Environment:** Deployment stages (Development, Staging, Production, DR)
-- **Cluster:** Kubernetes clusters with unique `(server_url, location_id, environment_id)` combinations
+- **Location:** Geographic regions (Brazil, EMEA, USA) for compliance and latency - used in instance context
+- **Environment:** Deployment stages (Development, Staging, Production, DR) - used in instance context  
+- **Cluster:** Independent Kubernetes clusters available for deployment - no relationship to location/environment
 
 **Workflow:**
 ```
-Location + Environment + Cluster = Complete Deployment Target
-Instance specifies all three explicitly for precise targeting
-Multiple clusters per location+environment supported (HA, scaling)
+Clusters are completely independent entities - just available deployment targets
+Instances specify: Cluster (where to deploy) + Location + Environment (for Helm chart generation)
+Location + Environment are instance-level concepts, not cluster-level
 ```
 
 ### **2. Application Lifecycle**
@@ -41,40 +41,61 @@ Multiple clusters per location+environment supported (HA, scaling)
 - Applications define the business domain, Blueprints define deployment strategies
 - Global naming ensures unique identification across entire organization
 
-### **3. Template Versioning Strategy**
-**Templates + Template_Versions** implement **commit-based isolation** for Helm Chart management.
+### **3. Repository-Branch-Template Architecture**
+**Repositories + Branches + Templates + Template_Versions** implement **user-controlled versioning** with branch-based organization.
 
 **Business Model:**
-- **Template:** Metadata container for external Helm Chart repository
-- **Template_Version:** Immutable snapshot of chart data at specific Git commit
+- **Repository:** Git repository container for Helm Charts with access control
+- **Branch:** User-defined branches within repository that system should track
+- **Template:** Chart metadata within repository (path-based identification)
+- **Template_Version:** Immutable snapshot from specific branch + commit combination
 
 **Key Workflows:**
 
-#### **Template Import Process:**
+#### **Repository Setup Process:**
 ```
-1. Developer specifies Git repository + path + commit
-2. System imports complete chart data:
+1. Platform Engineer registers Git repository with access credentials
+2. Platform Engineer adds specific branches to track (main, develop, release/v1.0)
+3. System validates repository accessibility and branch existence
+4. User controls which branches system considers (no automatic discovery)
+```
+
+#### **Template Creation Process:**
+```
+1. Platform Engineer creates Template pointing to repository + path
+2. Template becomes available for version imports from any tracked branch
+3. No automatic import - user explicitly controls when to import versions
+4. Same template can have versions from multiple branches
+```
+
+#### **Template Import Process (User-Controlled):**
+```
+1. User specifies template_id + branch_id for version import
+2. System fetches latest commit from specified branch
+3. System imports complete chart data from branch + commit:
    - Chart.yaml metadata
    - values.yaml defaults  
    - values.schema.json (optional)
-3. Creates immutable Template_Version record
-4. Updates Template.current_version_id to new version
+4. Creates immutable Template_Version with template_id + branch_id + commit hash
+5. Optionally updates Template.current_version_id to new version
 ```
 
-#### **Template Sync Process:**
+#### **Template Sync Process (Branch-Specific):**
 ```
-1. System checks Git repository for new commits
-2. For each new commit: creates new Template_Version
-3. Preserves all historical versions (no deletion)
-4. Updates current_version_id to latest
-5. Existing instances continue using pinned versions
+1. User initiates sync for specific template + branch combination
+2. System checks target branch for new commits
+3. If new commit found: creates new Template_Version for that branch
+4. Preserves all historical versions across all branches
+5. User decides whether to update current_version_id
+6. Existing instances continue using pinned versions
 ```
 
 **Business Benefits:**
-- **Commit Isolation:** Each Template_Version references specific Git commit hash
-- **Version History:** Complete audit trail of all chart changes
-- **Rollback Safety:** Previous versions always available
-- **Schema Evolution:** values.schema.json enables custom values validation
+- **User Control:** No automatic actions - all imports are user-initiated
+- **Branch Flexibility:** Same template can have versions from main, develop, release branches
+- **Repository Organization:** Clear separation of repositories, branches, and templates
+- **Access Management:** Repository-level credentials and access control
+- **Multi-Branch Strategy:** Support development → staging → production branch workflows
 
 ### **4. Blueprint Governance Model**
 **Blueprints + Blueprint_Versions** implement **tested template combinations** with version control.

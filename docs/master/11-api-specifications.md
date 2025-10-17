@@ -76,28 +76,25 @@ This document defines backend API operations with focus on **business rules and 
 ### **3. Clusters API**
 
 #### **CREATE Cluster**
-- **What:** Create Kubernetes cluster as deployment target
+- **What:** Register Kubernetes cluster as deployment target
 - **Fields:**
   - `name` (required): Unique identifier for cluster
   - `description` (optional): Human-readable description
-  - `server_url` (required): Kubernetes API server URL
-  - `location_id` (required): Reference to location
-  - `environment_id` (required): Primary environment served
+  - `server_url` (required): Kubernetes API server URL (must be globally unique)
 - **Rules:**
   - Name must be globally unique (varchar 100)
   - Name format: alphanumeric + hyphens, start/end with letter
-  - server_url must be valid URL format (varchar 500)
-  - Unique combination of (server_url + location_id + environment_id)
-  - Multiple clusters allowed per location/environment (HA scenarios)
+  - server_url must be valid URL format and globally unique (varchar 500)
+  - Clusters are completely independent - no location or environment association
 
 #### **UPDATE Cluster**
 - **What:** Modify cluster metadata and configuration
 - **Fields:**
   - `description` (optional): Can be updated freely
-  - `server_url` (restricted): Can be updated but must maintain uniqueness
+  - `server_url` (restricted): Can be updated but must maintain global uniqueness
 - **Rules:**
-  - Name, location_id, environment_id cannot be changed after creation
-  - server_url changes must maintain unique constraint
+  - Name cannot be changed after creation (stability)
+  - server_url changes must maintain unique constraint across all clusters
 
 #### **DELETE Cluster**
 - **What:** Remove cluster if not in use
@@ -106,9 +103,9 @@ This document defines backend API operations with focus on **business rules and 
   - Cascade protection via foreign key constraints
 
 #### **LIST/GET Clusters**
-- **What:** Retrieve cluster data with relationships
-- **Returns:** All cluster fields plus location/environment names and instance counts
-- **Filters:** By location_id, environment_id
+- **What:** Retrieve cluster data
+- **Returns:** All cluster fields and instance counts
+- **Filters:** By name pattern, server_url pattern
 
 ---
 
@@ -119,17 +116,14 @@ This document defines backend API operations with focus on **business rules and 
 - **Fields:**
   - `name` (required): Unique identifier for application
   - `description` (optional): Human-readable description
-  - `repository_url` (optional): Git repository URL for application source code
 - **Rules:**
   - Name must be globally unique (varchar 100)
   - Name format: alphanumeric + hyphens, start/end with letter
-  - repository_url must be valid Git URL format if provided (varchar 500)
 
 #### **UPDATE Application**
 - **What:** Modify application metadata
 - **Fields:**
   - `description` (optional): Can be updated freely
-  - `repository_url` (optional): Can be updated freely
 - **Rules:**
   - Name cannot be changed after creation (stability)
 
@@ -143,80 +137,176 @@ This document defines backend API operations with focus on **business rules and 
 #### **LIST/GET Applications**
 - **What:** Retrieve application data with relationships
 - **Returns:** All application fields plus blueprint counts and active instance counts
-- **Filters:** By name pattern, repository domain
+- **Filters:** By name pattern
 
 ---
 
-### **5. Templates API** *(Enhanced with Versioning)*
+### **5. Repositories API** *(New)*
+
+#### **CREATE Repository**
+- **What:** Register an Azure DevOps repository for template management
+- **Fields:**
+  - `description` (optional): Human-readable description
+  - `azure_devops_org` (required): Azure DevOps organization name
+  - `azure_devops_project` (required): Project name within organization
+  - `git_repository_name` (required): Repository name within project (serves as identifier)
+- **Rules:**
+  - Combination of org+project+git_repository_name must be globally unique
+  - git_repository_name serves as the natural identifier for the repository
+  - Repository accessibility is validated using Azure Managed Identity
+  - System constructs git_url as: `https://dev.azure.com/{org}/{project}/_git/{git_repository_name}`
+- **Returns:** Repository object with generated ID
+
+#### **UPDATE Repository**
+- **What:** Update repository description and Azure DevOps information
+- **Rules:**
+  - Azure DevOps parameters can be updated (with uniqueness validation)
+  - git_repository_name changes effectively point to a different repository
+  - Changes don't affect existing branches or template versions
+  - Updates affect future operations only
+
+#### **DELETE Repository**
+- **What:** Remove repository and all associated data
+- **Rules:**
+  - FORBIDDEN if any template versions are referenced by blueprints
+  - Cascades deletion of all branches, templates, and template versions
+
+#### **LIST/GET Repositories**
+- **What:** Retrieve repository information
+- **Returns:** Repository data with constructed git_url, git_repository_name as identifier, branch counts and template summaries
+
+---
+
+### **6. Branches API** *(New)*
+
+#### **CREATE Branch**
+- **What:** Add a branch to be tracked within a repository
+- **Fields:**
+  - `repository_id` (required): Target repository
+  - `name` (required): Branch name (main, develop, release/v1.0)
+- **Rules:**
+  - Branch name must be unique within repository
+  - Repository must exist and be accessible
+  - Branch existence is validated against Azure DevOps repository
+  - System populates branch automatically based on user selection
+- **Returns:** Branch object with generated ID
+
+#### **UPDATE Branch**
+- **What:** Update branch name within repository
+- **Rules:**
+  - Name can be updated (with repository uniqueness validation)
+  - Changes don't affect existing template versions
+
+#### **DELETE Branch**
+- **What:** Remove branch tracking
+- **Rules:**
+  - FORBIDDEN if any template versions from this branch are referenced by blueprints
+  - Cascades deletion of all template versions from this branch
+
+#### **LIST/GET Branches**
+- **What:** Retrieve branch information for repository
+- **Filters:** repository_id
+- **Returns:** Branch data with template version counts
+
+---
+
+### **7. Templates API** *(Enhanced with Repository Structure)*
 
 #### **CREATE Template**
-- **What:** Create template metadata and import initial chart version from Git
-- **Process:**
-  1. Create Template record (metadata)
-  2. Import chart data and create Template_Version
-  3. Set Template.current_version_id → new Template_Version
+- **What:** Create template metadata within a repository
+- **Fields:**
+  - `name` (required): Unique template identifier
+  - `description` (optional): Human-readable description
+  - `repository_id` (required): Target repository
+  - `git_path` (required): Path to Helm Chart within repository
 - **Rules:**
-  - Name must be globally unique
-  - git_repository_url must be accessible
-  - git_path must contain valid Helm Chart (Chart.yaml + values.yaml)
-  - Creates both Template and Template_Version atomically
+  - Name must be globally unique across all templates
+  - Repository must exist and be accessible
+  - git_path must be unique within repository
+  - Path validation ensures Helm Chart structure exists
+- **Process:**
+  1. Create Template record (metadata only)
+  2. No automatic version import - user controls when to import
+- **Returns:** Template object with generated ID
 
 #### **UPDATE Template Metadata**
-- **What:** Update template metadata (name, description, git repository info)
+- **What:** Update template metadata and repository path
 - **Rules:**
   - Name must remain globally unique
   - Can update description freely
-  - git_repository_url/git_path changes allowed (no version impact)
-  - No impact on existing Template_Versions or Blueprint_Templates
+  - repository_id and git_path changes allowed (affects future imports only)
+  - No impact on existing Template_Versions
 
-#### **SYNC Template (Create New Version)**
-- **What:** Import new version from Git repository
+#### **IMPORT Template Version**
+- **What:** Import specific version from branch+commit
+- **Fields:**
+  - `template_id` (required): Target template
+  - `branch_id` (required): Source branch
+  - `git_commit_hash` (optional): Specific commit (if not provided, uses latest)
 - **Process:**
-  1. Fetch Chart.yaml, values.yaml, values.schema.json from Git
-  2. Create new Template_Version with imported data
-  3. Update Template.current_version_id → new Template_Version
+  1. Validate branch belongs to template's repository
+  2. Fetch Chart.yaml, values.yaml, values.schema.json from branch+commit
+  3. Create Template_Version with imported data
+  4. Optionally update Template.current_version_id
 - **Rules:**
-  - Always creates new Template_Version (preserves history)
-  - Can be performed regardless of template usage
-  - All existing Template_Versions preserved
-  - Blueprint_Templates continue referencing their specific versions
+  - Branch must belong to template's repository
+  - Creates new Template_Version for branch+commit combination
+  - Same template can have versions from multiple branches
+  - Commit hash must exist in specified branch
+
+#### **SYNC Template Branch**
+- **What:** Import latest version from specific branch
+- **Fields:**
+  - `template_id` (required): Target template
+  - `branch_id` (required): Source branch to sync
+- **Process:**
+  1. Get latest commit from specified branch
+  2. Check if Template_Version already exists for template+branch+commit
+  3. If new commit, import and create new Template_Version
+  4. Update Template.current_version_id to new version
+- **Rules:**
+  - Only imports if new commit detected
+  - Preserves all existing Template_Versions
+  - User explicitly chooses which branch to sync
 
 #### **VALIDATE Template Access**
-- **What:** Test Git repository accessibility and chart validity
+- **What:** Test repository accessibility and chart validity
 - **Process:**
-  1. Test Git repository access for Template.git_repository_url
-  2. Verify Chart.yaml and values.yaml exist and are parseable
-  3. Check for values.schema.json availability
-  4. Return detailed validation report
+  1. Test repository access for template's repository
+  2. Verify Chart.yaml and values.yaml exist at git_path
+  3. Check across all tracked branches
+  4. Return detailed validation report per branch
 - **Rules:**
-  - Works with Template metadata (not specific version)
   - Read-only operation, no data changes
-  - Provides diagnostics for repository issues
+  - Provides diagnostics per branch
 
-#### **VALIDATE Values Against Schema (Any Version)**
-- **What:** Validate custom values against specific template version schema
-- **Input:** template_id + git_commit_hash + custom_values
+#### **VALIDATE Values Against Schema**
+- **What:** Validate custom values against specific template version
+- **Input:** template_version_id + custom_values
 - **Process:**
-  1. Find Template_Version by template_id + git_commit_hash
-  2. Load that version's values_schema
-  3. Validate custom_values against version-specific schema
+  1. Load Template_Version by ID
+  2. Use that version's values_schema for validation
+  3. Validate custom_values against schema
 - **Rules:**
   - Works for any stored Template_Version
-  - If no schema exists for that version, validation passes
-  - Returns version-specific validation results
-
-
+  - Version-specific validation (branch+commit context)
+  - If no schema exists, validation passes
 
 #### **DELETE Template**
 - **What:** Remove template and all versions
 - **Rules:**
   - FORBIDDEN if any Template_Version is referenced by Blueprint_Templates
   - Must be completely unused across all blueprints
-  - Cascades deletion of all Template_Versions
+  - Cascades deletion of all Template_Versions from all branches
+
+#### **LIST/GET Templates**
+- **What:** Retrieve template information
+- **Filters:** repository_id, branch_id (for versions)
+- **Returns:** Template metadata with version summaries per branch
 
 ---
 
-### **6. Blueprints API** *(Blueprint + Blueprint_Version Management)*
+### **8. Blueprints API** *(Blueprint + Blueprint_Version Management)*
 
 #### **CREATE Blueprint**
 - **What:** Create blueprint metadata and initial version
@@ -275,24 +365,33 @@ This document defines backend API operations with focus on **business rules and 
 
 ---
 
-### **7. Instances API** *(Most Complex)*
+### **9. Instances API** *(Most Complex)*
 
 #### **CREATE Instance**
 - **What:** Create concrete deployment configuration for specific cluster target
+- **Fields:**
+  - `name` (required): Unique instance identifier
+  - `blueprint_version_id` (required): Reference to blueprint version
+  - `cluster_id` (required): Target cluster (independent selection)
+  - `location_id` (required): Geographic location for Helm chart generation
+  - `environment_id` (required): Environment type for Helm chart generation
+  - `git_repository`, `git_path`, `git_branch` (required): Git repository configuration
+  - Sync policy fields: `auto_sync_enabled`, `auto_prune_enabled`, etc.
 - **Process:**
-  1. Validate blueprint_version_id and cluster_id
+  1. Validate blueprint_version_id, cluster_id, location_id, environment_id
   2. Auto-create Instance_Template for each Blueprint_Template in blueprint version
   3. Inherit template versions from Blueprint_Template.template_version_id
   4. Merge values: Template_Version.default_values + Blueprint_Template.custom_values
 - **Rules:**
   - Name must be globally unique across system
   - blueprint_version_id must reference valid Blueprint_Version
-  - cluster_id must exist and define valid location + environment combination
+  - cluster_id must exist (clusters are independent of location/environment)
+  - location_id and environment_id used for Helm chart generation context
   - git_repository must be accessible for Helm Chart generation
   - ArgoCD sync policy fields have sensible defaults
 - **Impact:** 
   - Creates Instance_Template records inheriting template versions from blueprint
-  - Triggers Helm Chart generation with specific template versions
+  - Triggers Helm Chart generation with location/environment context
   - Enables ArgoCD deployment workflow with tested template combinations
 
 #### **Instance_Template Auto-Creation Logic**
