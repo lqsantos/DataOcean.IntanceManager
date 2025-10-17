@@ -101,20 +101,20 @@ Table repositories {
   description text
   azure_devops_org varchar(100) [not null]
   azure_devops_project varchar(100) [not null]
-  git_repository_name varchar(100) [not null]
+  repository_name varchar(100) [not null]
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   
   Note: '''
   Azure DevOps repositories that contain Helm Charts.
   Uses Azure Managed Identity for authentication.
-  git_url constructed as: https://dev.azure.com/{azure_devops_org}/{azure_devops_project}/_git/{git_repository_name}
-  git_repository_name serves as the natural identifier.
+  git_url constructed as: https://dev.azure.com/{azure_devops_org}/{azure_devops_project}/_git/{repository_name}
+  repository_name serves as the natural identifier.
   '''
   
   indexes {
-    (azure_devops_org, azure_devops_project, git_repository_name) [unique, name: "idx_repositories_devops_repo"]
-    git_repository_name [name: "idx_repositories_name"]
+    (azure_devops_org, azure_devops_project, repository_name) [unique, name: "idx_repositories_devops_repo"]
+    repository_name [name: "idx_repositories_name"]
   }
 }
 
@@ -139,6 +139,7 @@ Table branches {
 
 Table templates {
   id bigserial [pk]
+  public_id uuid [unique, not null, default: `gen_random_uuid()`]
   name varchar(100) [not null, unique]
   description text
   repository_id bigint [not null]
@@ -151,9 +152,11 @@ Table templates {
   Template metadata for Helm Charts within a repository.
   Each template represents a chart path within a repository.
   Versions of this template can exist across multiple branches.
+  Uses UUID for external API exposure (security).
   '''
   
   indexes {
+    public_id [unique, name: "idx_templates_public_id"]
     name [unique, name: "idx_templates_name"]
     repository_id [name: "idx_templates_repository"]
     current_version_id [name: "idx_templates_current_version"]
@@ -195,6 +198,7 @@ Table template_versions {
 
 Table blueprints {
   id bigserial [pk]
+  public_id uuid [unique, not null, default: `gen_random_uuid()`]
   name varchar(100) [not null]
   description text
   application_id bigint [not null]
@@ -204,9 +208,11 @@ Table blueprints {
   Note: '''
   Blueprint metadata (immutable).
   Represents deployment model identity for an application.
+  Uses UUID for external API exposure (security).
   '''
   
   indexes {
+    public_id [unique, name: "idx_blueprints_public_id"]
     (application_id, name) [unique, name: "idx_blueprints_app_name"]
     application_id [name: "idx_blueprints_application"]
     current_version_id [name: "idx_blueprints_current_version"]
@@ -262,6 +268,7 @@ Table blueprint_templates {
 
 Table instances {
   id bigserial [pk]
+  public_id uuid [unique, not null, default: `gen_random_uuid()`]
   name varchar(100) [not null, unique]
   blueprint_version_id bigint [not null]
   cluster_id bigint [not null]
@@ -284,9 +291,11 @@ Table instances {
   Snapshot of blueprint_version_id for stability.
   User selects cluster directly, but location_id and environment_id are required
   for Helm chart generation and deployment context.
+  Uses UUID for external API exposure (security).
   '''
   
   indexes {
+    public_id [unique, name: "idx_instances_public_id"]
     name [unique, name: "idx_instances_name"]
     blueprint_version_id [name: "idx_instances_blueprint_version"]
     cluster_id [name: "idx_instances_cluster"]

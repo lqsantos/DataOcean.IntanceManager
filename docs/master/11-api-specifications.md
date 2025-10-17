@@ -7,6 +7,16 @@ This document defines backend API operations with focus on **business rules and 
 **Simple APIs:** Locations, Environments, Clusters, Applications - Basic CRUD with referential integrity
 **Complex APIs:** Templates, Blueprints, Instances - Advanced business logic, Git integration, and deployment orchestration
 
+## 🔐 Identifier Strategy
+
+**Configuration APIs (Name-based URLs):**
+- `/locations/{name}`, `/environments/{name}`, `/clusters/{name}`, `/applications/{name}`
+- Low volume, user-friendly identifiers, non-sensitive data
+
+**Operational APIs (UUID-based URLs):**  
+- `/templates/{uuid}`, `/blueprints/{uuid}`, `/instances/{uuid}`
+- High volume, security-sensitive, prevent enumeration attacks
+
 ---
 
 ## 🏗️ API Operations
@@ -30,14 +40,15 @@ This document defines backend API operations with focus on **business rules and 
   - Name cannot be changed after creation (stability)
 
 #### **DELETE Location**
-- **What:** Remove location if not in use
+- **What:** Remove location if not in use  
+- **URL:** `DELETE /locations/{name}`
 - **Rules:**
-  - Cannot delete if referenced by clusters
   - Cannot delete if referenced by instances
   - Cascade protection via foreign key constraints
 
 #### **LIST/GET Locations**
 - **What:** Retrieve location data
+- **URLs:** `GET /locations` (list), `GET /locations/{name}` (single)
 - **Returns:** All location fields including usage counts
 
 ---
@@ -77,6 +88,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **CREATE Cluster**
 - **What:** Register Kubernetes cluster as deployment target
+- **URL:** `POST /clusters`
 - **Fields:**
   - `name` (required): Unique identifier for cluster
   - `description` (optional): Human-readable description
@@ -89,6 +101,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **UPDATE Cluster**
 - **What:** Modify cluster metadata and configuration
+- **URL:** `PUT /clusters/{name}`
 - **Fields:**
   - `description` (optional): Can be updated freely
   - `server_url` (restricted): Can be updated but must maintain global uniqueness
@@ -98,12 +111,16 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **DELETE Cluster**
 - **What:** Remove cluster if not in use
+- **URL:** `DELETE /clusters/{name}`
 - **Rules:**
   - Cannot delete if referenced by instances
   - Cascade protection via foreign key constraints
 
 #### **LIST/GET Clusters**
 - **What:** Retrieve cluster data
+- **URLs:**
+  - GET `/clusters` - List all clusters
+  - GET `/clusters/{name}` - Get specific cluster (using name)
 - **Returns:** All cluster fields and instance counts
 - **Filters:** By name pattern, server_url pattern
 
@@ -113,6 +130,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **CREATE Application**
 - **What:** Create business application for deployment
+- **URL:** `POST /applications`
 - **Fields:**
   - `name` (required): Unique identifier for application
   - `description` (optional): Human-readable description
@@ -122,6 +140,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **UPDATE Application**
 - **What:** Modify application metadata
+- **URL:** `PUT /applications/{name}`
 - **Fields:**
   - `description` (optional): Can be updated freely
 - **Rules:**
@@ -129,6 +148,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **DELETE Application**
 - **What:** Remove application if not in use
+- **URL:** `DELETE /applications/{name}`
 - **Rules:**
   - Cannot delete if referenced by blueprints
   - Cascade protection via foreign key constraints
@@ -136,6 +156,9 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **LIST/GET Applications**
 - **What:** Retrieve application data with relationships
+- **URLs:**
+  - GET `/applications` - List all applications
+  - GET `/applications/{name}` - Get specific application (using name)
 - **Returns:** All application fields plus blueprint counts and active instance counts
 - **Filters:** By name pattern
 
@@ -145,23 +168,30 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **CREATE Repository**
 - **What:** Register an Azure DevOps repository for template management
+- **URL:** `POST /repositories`
 - **Fields:**
   - `description` (optional): Human-readable description
   - `azure_devops_org` (required): Azure DevOps organization name
   - `azure_devops_project` (required): Project name within organization
-  - `git_repository_name` (required): Repository name within project (serves as identifier)
+  - `repository_name` (required): Repository name within project (serves as identifier)
 - **Rules:**
-  - Combination of org+project+git_repository_name must be globally unique
-  - git_repository_name serves as the natural identifier for the repository
+  - Combination of org+project+repository_name must be globally unique
+  - repository_name serves as the natural identifier for the repository
   - Repository accessibility is validated using Azure Managed Identity
-  - System constructs git_url as: `https://dev.azure.com/{org}/{project}/_git/{git_repository_name}`
+  - System constructs git_url as: `https://dev.azure.com/{org}/{project}/_git/{repository_name}`
 - **Returns:** Repository object with generated ID
+
+#### **LIST/GET Repositories**
+- **What:** Retrieve repository information
+- **URLs:**
+  - GET `/repositories` - List all repositories
+  - GET `/repositories/{repository_name}` - Get specific repository (using name)
 
 #### **UPDATE Repository**
 - **What:** Update repository description and Azure DevOps information
 - **Rules:**
   - Azure DevOps parameters can be updated (with uniqueness validation)
-  - git_repository_name changes effectively point to a different repository
+  - repository_name changes effectively point to a different repository
   - Changes don't affect existing branches or template versions
   - Updates affect future operations only
 
@@ -173,7 +203,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **LIST/GET Repositories**
 - **What:** Retrieve repository information
-- **Returns:** Repository data with constructed git_url, git_repository_name as identifier, branch counts and template summaries
+- **Returns:** Repository data with constructed git_url, repository_name as identifier, branch counts and template summaries
 
 ---
 
@@ -181,8 +211,9 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **CREATE Branch**
 - **What:** Add a branch to be tracked within a repository
+- **URL:** `POST /repositories/{repository_name}/branches`
 - **Fields:**
-  - `repository_id` (required): Target repository
+  - `repository_name` (required): Target repository (repository_name)
   - `name` (required): Branch name (main, develop, release/v1.0)
 - **Rules:**
   - Branch name must be unique within repository
@@ -191,8 +222,15 @@ This document defines backend API operations with focus on **business rules and 
   - System populates branch automatically based on user selection
 - **Returns:** Branch object with generated ID
 
+#### **LIST/GET Branches**
+- **What:** Retrieve branch information within repository
+- **URLs:**
+  - GET `/repositories/{repository_name}/branches` - List branches in repository
+  - GET `/repositories/{repository_name}/branches/{branch_name}` - Get specific branch
+
 #### **UPDATE Branch**
 - **What:** Update branch name within repository
+- **URL:** `PUT /repositories/{repository_name}/branches/{branch_name}`
 - **Rules:**
   - Name can be updated (with repository uniqueness validation)
   - Changes don't affect existing template versions
@@ -205,7 +243,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **LIST/GET Branches**
 - **What:** Retrieve branch information for repository
-- **Filters:** repository_id
+- **Filters:** repository_name (repository_name)
 - **Returns:** Branch data with template version counts
 
 ---
@@ -214,10 +252,11 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **CREATE Template**
 - **What:** Create template metadata within a repository
+- **URL:** `POST /templates`
 - **Fields:**
   - `name` (required): Unique template identifier
   - `description` (optional): Human-readable description
-  - `repository_id` (required): Target repository
+  - `repository_name` (required): Target repository (repository_name)
   - `git_path` (required): Path to Helm Chart within repository
 - **Rules:**
   - Name must be globally unique across all templates
@@ -227,21 +266,23 @@ This document defines backend API operations with focus on **business rules and 
 - **Process:**
   1. Create Template record (metadata only)
   2. No automatic version import - user controls when to import
-- **Returns:** Template object with generated ID
+- **Returns:** Template object with generated UUID
 
 #### **UPDATE Template Metadata**
 - **What:** Update template metadata and repository path
+- **URL:** `PUT /templates/{public_id}` (using UUID)
 - **Rules:**
   - Name must remain globally unique
   - Can update description freely
-  - repository_id and git_path changes allowed (affects future imports only)
+  - repository_name and git_path changes allowed (affects future imports only)
   - No impact on existing Template_Versions
 
 #### **IMPORT Template Version**
 - **What:** Import specific version from branch+commit
+- **URL:** `POST /templates/{public_id}/import` (using UUID)
 - **Fields:**
-  - `template_id` (required): Target template
-  - `branch_id` (required): Source branch
+  - `template_public_id` (required): Target template (UUID)
+  - `branch_name` (required): Source branch name
   - `git_commit_hash` (optional): Specific commit (if not provided, uses latest)
 - **Process:**
   1. Validate branch belongs to template's repository
@@ -256,9 +297,10 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **SYNC Template Branch**
 - **What:** Import latest version from specific branch
+- **URL:** `POST /templates/{public_id}/sync` (using UUID)
 - **Fields:**
-  - `template_id` (required): Target template
-  - `branch_id` (required): Source branch to sync
+  - `template_public_id` (required): Target template (UUID)
+  - `branch_name` (required): Source branch name to sync
 - **Process:**
   1. Get latest commit from specified branch
   2. Check if Template_Version already exists for template+branch+commit
@@ -294,6 +336,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **DELETE Template**
 - **What:** Remove template and all versions
+- **URL:** `DELETE /templates/{public_id}` (using UUID)
 - **Rules:**
   - FORBIDDEN if any Template_Version is referenced by Blueprint_Templates
   - Must be completely unused across all blueprints
@@ -301,7 +344,10 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **LIST/GET Templates**
 - **What:** Retrieve template information
-- **Filters:** repository_id, branch_id (for versions)
+- **URLs:**
+  - GET `/templates` - List all templates
+  - GET `/templates/{public_id}` - Get specific template (using UUID)
+- **Filters:** repository_name, branch_name (for versions)
 - **Returns:** Template metadata with version summaries per branch
 
 ---
@@ -310,6 +356,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **CREATE Blueprint**
 - **What:** Create blueprint metadata and initial version
+- **URL:** `POST /blueprints`
 - **Process:**
   1. Create Blueprint record (metadata)
   2. Create Blueprint_Version with helper_templates
@@ -322,6 +369,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **CREATE Blueprint Version**
 - **What:** Create new version of existing blueprint
+- **URL:** `POST /blueprints/{public_id}/versions` (using UUID)
 - **When:** Updating helper_templates or template combinations
 - **Process:**
   1. Create new Blueprint_Version with updated helper_templates
@@ -335,6 +383,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **ADD Template to Blueprint Version**
 - **What:** Associate specific template version with blueprint version
+- **URL:** `POST /blueprints/{public_id}/versions/{version_id}/templates`
 - **Input:** blueprint_version_id + template_version_id + alias + custom_values
 - **Process:** Create Blueprint_Template record
 - **Rules:**
@@ -346,6 +395,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **UPDATE Blueprint Template**
 - **What:** Modify template configuration within blueprint version
+- **URL:** `PUT /blueprints/{public_id}/versions/{version_id}/templates/{template_alias}`
 - **When:** Adjusting template version, alias, or custom_values
 - **Rules:**
   - Can change template_version_id (upgrade/downgrade template version)
@@ -356,8 +406,16 @@ This document defines backend API operations with focus on **business rules and 
 
 
 
+#### **LIST/GET Blueprints**
+- **What:** Retrieve blueprint information
+- **URLs:**
+  - GET `/blueprints` - List all blueprints
+  - GET `/blueprints/{public_id}` - Get specific blueprint (using UUID)
+- **Returns:** Blueprint metadata with version information
+
 #### **DELETE Blueprint**
 - **What:** Remove blueprint and all versions
+- **URL:** `DELETE /blueprints/{public_id}` (using UUID)
 - **Rules:**
   - FORBIDDEN if any instances exist using any blueprint version
   - Must have zero instances across all versions before deletion
@@ -369,24 +427,25 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **CREATE Instance**
 - **What:** Create concrete deployment configuration for specific cluster target
+- **URL:** `POST /instances`
 - **Fields:**
   - `name` (required): Unique instance identifier
   - `blueprint_version_id` (required): Reference to blueprint version
-  - `cluster_id` (required): Target cluster (independent selection)
-  - `location_id` (required): Geographic location for Helm chart generation
-  - `environment_id` (required): Environment type for Helm chart generation
+  - `cluster_name` (required): Target cluster name (independent selection)
+  - `location_name` (required): Geographic location name for Helm chart generation
+  - `environment_name` (required): Environment name for Helm chart generation
   - `git_repository`, `git_path`, `git_branch` (required): Git repository configuration
   - Sync policy fields: `auto_sync_enabled`, `auto_prune_enabled`, etc.
 - **Process:**
-  1. Validate blueprint_version_id, cluster_id, location_id, environment_id
+  1. Validate blueprint_version_id, cluster_name, location_name, environment_name
   2. Auto-create Instance_Template for each Blueprint_Template in blueprint version
   3. Inherit template versions from Blueprint_Template.template_version_id
   4. Merge values: Template_Version.default_values + Blueprint_Template.custom_values
 - **Rules:**
   - Name must be globally unique across system
   - blueprint_version_id must reference valid Blueprint_Version
-  - cluster_id must exist (clusters are independent of location/environment)
-  - location_id and environment_id used for Helm chart generation context
+  - cluster_name must exist (clusters are independent of location/environment)
+  - location_name and environment_name used for Helm chart generation context
   - git_repository must be accessible for Helm Chart generation
   - ArgoCD sync policy fields have sensible defaults
 - **Impact:** 
@@ -398,7 +457,7 @@ This document defines backend API operations with focus on **business rules and 
 - **What:** Automatically create Instance_Template for each Blueprint_Template
 - **Process:**
   1. For each Blueprint_Template in blueprint version
-  2. Create Instance_Template with blueprint_template_id reference
+  2. Create Instance_Template with blueprint_template_id reference (internal relationship)
   3. Inherit template version from Blueprint_Template.template_version_id
   4. Merge values: Template_Version.default_values + Blueprint_Template.custom_values
   5. Generate target_namespace from instance naming pattern
@@ -410,14 +469,16 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **UPDATE Instance Metadata**
 - **What:** Update instance settings (sync policies, Git settings)
+- **URL:** `PUT /instances/{public_id}` (using UUID)
 - **Rules:**
-  - Cannot change blueprint_version_id or cluster_id (structural changes)
+  - Cannot change blueprint_version_id or cluster_name (structural changes)
   - Can update Git settings, sync policy fields, status
   - Git repository changes require validation of accessibility
 - **Impact:** Triggers Helm Chart regeneration with updated settings
 
 #### **UPGRADE Instance Blueprint Version**
 - **What:** Change instance to use different blueprint version (template upgrade)
+- **URL:** `PATCH /instances/{public_id}/blueprint-version` (using UUID)
 - **Process:**
   1. Validate new blueprint_version_id belongs to same Blueprint
   2. Regenerate all Instance_Templates for new blueprint version
@@ -431,6 +492,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **UPDATE Instance_Template Values**
 - **What:** Override specific template values for this instance
+- **URL:** `PATCH /instances/{public_id}/templates/{template_alias}` (using UUID for instance)
 - **When:** Instance-specific customization beyond blueprint defaults
 - **Rules:**
   - instance_values merge: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
@@ -438,22 +500,22 @@ This document defines backend API operations with focus on **business rules and 
   - target_namespace changes must follow naming conventions
 - **Impact:** Instance-specific customization while maintaining template version governance
 
-#### **GET Instance Details**
-- **What:** Retrieve complete instance configuration with template versions
-- **Response:** Instance with nested Instance_Templates showing inherited template versions
-- **Data Flow:**
+#### **LIST/GET Instances**
+- **What:** Retrieve instance information
+- **URLs:**
+  - GET `/instances` - List instances with filtering
+  - GET `/instances/{public_id}` - Get specific instance details (using UUID)
+- **List Response:** Instance list with essential metadata (name, blueprint, cluster, status)
+- **Detail Response:** Complete instance configuration with nested Instance_Templates showing inherited template versions
+- **List Filters:** 
+  - By cluster_name (infrastructure management)
+  - By blueprint_public_id (blueprint usage tracking)
+  - By application_name (application-focused view)
+- **Detail Data Flow:**
   - Instance → Blueprint_Version → Blueprint_Templates → Template_Versions
   - Show final merged values: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
   - Include template version information (commit hashes, chart metadata)
-- **Usage:** Primary API for deployment configuration review
-
-#### **LIST Instances**
-- **What:** Retrieve instances with basic filtering
-- **Response:** Instance list with essential metadata (name, blueprint, cluster, status)
-- **Filters:** 
-  - By cluster_id (infrastructure management)
-  - By blueprint_id (blueprint usage tracking)
-  - By application_id (application-focused view)
+- **Usage:** Primary API for deployment configuration review and management
 - **Usage:** Primary dashboard and operational views
 
 #### **GENERATE Helm Chart**
@@ -479,6 +541,7 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **DELETE Instance**
 - **What:** Remove instance and cascade delete Instance_Templates
+- **URL:** `DELETE /instances/{public_id}` (using UUID)
 - **Process:**
   1. Verify no blocking dependencies
   2. Cascade delete all Instance_Template records  
