@@ -237,9 +237,11 @@ This document defines backend API operations with focus on **business rules and 
 
 #### **DELETE Branch**
 - **What:** Remove branch tracking
+- **URL:** `DELETE /repositories/{repository_name}/branches/{branch_name}`
 - **Rules:**
   - FORBIDDEN if any template versions from this branch are referenced by blueprints
-  - Cascades deletion of all template versions from this branch
+  - If deletion proceeds (no active references), cascades deletion of all template versions from this branch
+  - All template versions from this branch become permanently unavailable
 
 #### **LIST/GET Branches**
 - **What:** Retrieve branch information for repository
@@ -277,39 +279,46 @@ This document defines backend API operations with focus on **business rules and 
   - repository_name and git_path changes allowed (affects future imports only)
   - No impact on existing Template_Versions
 
-#### **IMPORT Template Version**
-- **What:** Import specific version from branch+commit
-- **URL:** `POST /templates/{public_id}/import` (using UUID)
-- **Fields:**
-  - `template_public_id` (required): Target template (UUID)
-  - `branch_name` (required): Source branch name
-  - `git_commit_hash` (optional): Specific commit (if not provided, uses latest)
-- **Process:**
-  1. Validate branch belongs to template's repository
-  2. Fetch Chart.yaml, values.yaml, values.schema.json from branch+commit
-  3. Create Template_Version with imported data
-  4. Optionally update Template.current_version_id
-- **Rules:**
-  - Branch must belong to template's repository
-  - Creates new Template_Version for branch+commit combination
-  - Same template can have versions from multiple branches
-  - Commit hash must exist in specified branch
-
-#### **SYNC Template Branch**
-- **What:** Import latest version from specific branch
+#### **SYNC Template Version**
+- **What:** Synchronize template with Git repository using smart versioning (always uses branch HEAD)
 - **URL:** `POST /templates/{public_id}/sync` (using UUID)
 - **Fields:**
-  - `template_public_id` (required): Target template (UUID)
-  - `branch_name` (required): Source branch name to sync
+  - `branch_name` (required): Source branch name to sync from HEAD
 - **Process:**
-  1. Get latest commit from specified branch
-  2. Check if Template_Version already exists for template+branch+commit
-  3. If new commit, import and create new Template_Version
-  4. Update Template.current_version_id to new version
+  1. Validate branch belongs to template's repository
+  2. Get latest commit from branch HEAD
+  3. Find latest Template_Version for this template+branch combination
+  4. **Smart Versioning Logic:**
+     - **If no previous version exists:** Create new Template_Version with chart data from HEAD
+     - **If previous version exists:**
+       a. Compare `previous_commit_hash` vs `HEAD_commit_hash` in template's `git_path`
+       b. **Changes detected in chart path:**
+          - Fetch updated Chart.yaml, values.yaml, values.schema.json from HEAD
+          - Create NEW Template_Version with updated chart data
+       c. **No changes in chart path:**
+          - UPDATE existing Template_Version `git_commit_hash` to HEAD commit
+          - Preserve all chart data (no new version created)
+  5. Update Template.current_version_id if new version was created
+- **Change Detection:**
+  - Use Git diff to compare commits within template's `git_path` directory
+  - Relevant files: `Chart.yaml`, `values.yaml`, `values.schema.json`, `templates/**/*`
+  - Any file change within chart path triggers new version creation
+  - Changes outside chart path only update commit tracking
 - **Rules:**
-  - Only imports if new commit detected
-  - Preserves all existing Template_Versions
-  - User explicitly chooses which branch to sync
+  - Branch must belong to template's repository
+  - Always uses latest commit from branch HEAD
+  - Same template can have versions from multiple branches
+  - Smart versioning prevents unnecessary version proliferation
+- **Response Types:**
+  - **"version-created"**: New Template_Version created (chart files changed in HEAD)
+  - **"commit-updated"**: Existing version updated with HEAD commit (no chart changes)
+  - **"up-to-date"**: HEAD commit already tracked
+- **Use Cases:**
+  - **Development sync:** `branch_name: "develop"` → always uses develop HEAD
+  - **Release sync:** `branch_name: "release/v2.0"` → always uses release branch HEAD
+  - **Documentation updates:** Chart unchanged in HEAD → commit updated, no new version
+  - **Specific commit needs:** Use Git workflow (checkout/tag + sync) for non-HEAD commits
+- **Impact:** Simplified, predictable template synchronization always using latest branch state while avoiding version pollution from non-chart changes
 
 #### **VALIDATE Template Access**
 - **What:** Test repository accessibility and chart validity
