@@ -82,74 +82,74 @@ This document defines **end-to-end business workflows** and **user journeys** fo
     → API: POST /repositories
     → Data: azure_devops_org="mycompany",
             azure_devops_project="Platform",
-            git_repository_name="helm-charts",
+            repository_name="helm-charts",
             description="Platform team Helm Charts"
     → System: Constructs git_url = "https://dev.azure.com/mycompany/Platform/_git/helm-charts"
     → System: Uses "helm-charts" as repository identifier
     → System: Validates access using Azure Managed Identity
-    → Result: repository_id = 1
+    → Result: Repository created with repository_name="helm-charts"
 
 3.2 Register Application Team Repository
     → API: POST /repositories  
     → Data: azure_devops_org="mycompany",
             azure_devops_project="Applications",
-            git_repository_name="microservices-charts",
+            repository_name="microservices-charts",
             description="Application team microservice charts"
-    → Result: repository_id = 2
+    → Result: Repository created with repository_name="microservices-charts"
 
 3.3 Add Tracked Branches for Platform Repository
-    → API: POST /branches
-    → Data: repository_id=1, name="main"
-    → API: POST /branches
-    → Data: repository_id=1, name="develop"
-    → Results: branch_id = 1 (main), branch_id = 2 (develop)
+    → API: POST /repositories/helm-charts/branches
+    → Data: name="main"
+    → API: POST /repositories/helm-charts/branches
+    → Data: name="develop"
+    → Results: Branches "main" and "develop" tracked for platform repository
 
 3.4 Add Tracked Branches for Application Repository
-    → API: POST /branches
-    → Data: repository_id=2, name="main"
-    → API: POST /branches
-    → Data: repository_id=2, name="feature/v2"
-    → Results: branch_id = 3 (main), branch_id = 4 (feature/v2)
+    → API: POST /repositories/microservices-charts/branches
+    → Data: name="main"
+    → API: POST /repositories/microservices-charts/branches
+    → Data: name="feature/v2"
+    → Results: Branches "main" and "feature/v2" tracked for application repository
 
 3.5 Create Database Template
     → API: POST /templates
     → Data: name="PostgreSQL-Database", 
-            repository_id=1,
+            repository_name="helm-charts",
             git_path="database/postgresql",
             description="PostgreSQL database with monitoring"
-    → Result: template_id = 1
+    → Result: Template created with public_id (UUID)
 
-3.6 Import Database Version from Main Branch
-    → API: POST /templates/1/import-version
-    → Data: branch_id=1 (platform main branch)
+3.6 Sync Database Template from Main Branch
+    → API: POST /templates/{public_id}/sync
+    → Data: branch_name="main"
     → System: Uses Azure Managed Identity to access Azure DevOps
-    → System: Fetches latest commit from main branch and creates Template_Version
+    → System: Fetches latest commit from main branch and creates Template_Version using smart versioning
 
 3.7 Create API Service Template
     → API: POST /templates
     → Data: name="FastAPI-Service",
-            repository_id=2,
+            repository_name="microservices-charts",
             git_path="microservices/fastapi-service",
             description="FastAPI microservice with ingress"
-    → Result: template_id = 2
+    → Result: Template created with public_id (UUID)
 
-3.8 Import API Service Version from Company Main
-    → API: POST /templates/2/import-version
-    → Data: branch_id=3 (company main branch)
-    → System: Creates Template_Version from company repository
+3.8 Sync API Service Template from Main Branch
+    → API: POST /templates/{public_id}/sync
+    → Data: branch_name="main"
+    → System: Creates Template_Version from company repository using HEAD commit
 
 3.9 Create Cache Template
     → API: POST /templates
     → Data: name="Redis-Cache",
-            repository_id=1,
-            git_path="bitnami/redis", 
+            repository_name="helm-charts",
+            git_path="cache/redis", 
             description="Redis cache cluster"
-    → Result: template_id = 3
+    → Result: Template created with public_id (UUID)
 
-3.10 Import Cache Version
-    → API: POST /templates/3/import-version
-    → Data: branch_id=1 (bitnami main branch)
-    → System: Creates Template_Version for Redis
+3.10 Sync Cache Template Version
+    → API: POST /templates/{public_id}/sync
+    → Data: branch_name="main"
+    → System: Creates Template_Version for Redis from HEAD commit
 ```
 
 ### **✅ Expected Outcomes**
@@ -185,32 +185,43 @@ This document defines **end-to-end business workflows** and **user journeys** fo
 ```
 1.1 Create Blueprint
     → API: POST /blueprints
-    → Data: application_id=1, name="Ecommerce-Standard",
+    → Data: application_name="Ecommerce-Platform", name="Ecommerce-Standard",
             description="Standard e-commerce deployment pattern"
-    → System: Auto-creates Blueprint_Version v1 with empty helper_templates
+    → Result: Blueprint created with public_id (UUID), no versions yet
+
+1.2 Create First Blueprint Version
+    → API: POST /blueprints/{public_id}/versions
+    → Data: helper_templates="", description="Initial version"
+    → Result: Blueprint_Version created with version_number=1 in DRAFT state
 ```
 
 #### **Step 2: Add Templates to Blueprint**
 ```
-2.1 Add Database Template (Deploy First)
-    → API: POST /blueprint-versions/{version_id}/templates  
-    → Data: template_version_id=1, alias="database", order=1,
+2.1 Add Database Template (Uses HEAD from main branch)
+    → API: POST /blueprints/{public_id}/versions/1/templates  
+    → Data: template_public_id="{database_template_uuid}",
+            branch_name="main",
+            alias="database",
             custom_values={
               "auth": { "database": "ecommerce_prod" },
               "primary": { "persistence": { "size": "100Gi" } }
             }
 
-2.2 Add Cache Template (Deploy Second)
-    → API: POST /blueprint-versions/{version_id}/templates
-    → Data: template_version_id=3, alias="cache", order=2,
+2.2 Add Cache Template (Uses HEAD from main branch)
+    → API: POST /blueprints/{public_id}/versions/1/templates
+    → Data: template_public_id="{cache_template_uuid}",
+            branch_name="main",
+            alias="cache",
             custom_values={
               "cluster": { "enabled": true, "slaveCount": 2 },
               "metrics": { "enabled": true }
             }
 
-2.3 Add API Service Template (Deploy Last)
-    → API: POST /blueprint-versions/{version_id}/templates
-    → Data: template_version_id=2, alias="api", order=3,
+2.3 Add API Service Template (Uses HEAD from main branch)
+    → API: POST /blueprints/{public_id}/versions/1/templates
+    → Data: template_public_id="{api_template_uuid}",
+            branch_name="main",
+            alias="api",
             custom_values={
               "image": { "repository": "company/ecommerce-api" },
               "ingress": { "enabled": true, "hostname": "api.ecommerce.com" },
@@ -243,25 +254,48 @@ location: {{ .Values.global.location }}
 #### **Step 4: Validate Blueprint Configuration**
 ```
 4.1 Test Template Version Compatibility
-    → API: POST /templates/{template_id}/validate-values
-    → Data: template_version_id=1, custom_values={...}
+    → API: POST /templates/{template_public_id}/validate-values
+    → Data: branch_name="main", custom_values={...}
     → Verify: All custom_values pass schema validation
 
 4.2 Preview Blueprint Deployment
-    → API: GET /blueprints/{blueprint_id}/versions/{version_id}
+    → API: GET /blueprints/{blueprint_public_id}/versions/{version_number}
     → Review: Template combinations, helper templates, deployment order
+```
+
+#### **Step 5: Publish Blueprint**
+```
+5.1 Publish Blueprint Version for Production Use
+    → API: PUT /blueprints/{blueprint_public_id}/versions/{version_number}/publish
+    → System: Changes blueprint version status from DRAFT to PUBLISHED
+    → System: Makes blueprint version available for instance creation
+    → System: Creates immutable snapshot of template versions used
+
+5.2 Set as Current Version (Optional)
+    → API: PUT /blueprints/{blueprint_public_id}/current-version
+    → Data: version_number="v1.0.0"
+    → System: Sets this version as default for new instances
+    → Result: Blueprint ready for production deployments
+
+5.3 Create Release Documentation
+    → Document: Template versions included, breaking changes, upgrade notes
+    → Tag: Git repository with blueprint version for tracking
+    → Notify: Development teams of new blueprint availability
 ```
 
 ### **✅ Expected Outcomes**
 - Blueprint created with tested template combinations
 - Helper templates configured for cross-template references
 - Template deployment order defined (database → cache → api)
-- Blueprint ready for instance creation
+- Blueprint version published and ready for production instance creation
+- Clear versioning and documentation for blueprint releases
 
 ### **❌ Error Scenarios**
 - **Template version conflicts:** Incompatible template versions or conflicting requirements
 - **Helper template syntax errors:** Invalid Go template syntax in helper templates
 - **Custom values validation failures:** Values that don't match template schemas
+- **Blueprint publish failures:** Validation errors preventing blueprint version publication
+- **Version immutability violations:** Attempting to modify published blueprint versions
 
 ---
 
@@ -270,9 +304,9 @@ location: {{ .Values.global.location }}
 **User Story:** *As a Platform/DevOps Engineer, I want to deploy an e-commerce instance to production so that our application is running in the Brazil production environment.*
 
 ### **📋 Prerequisites**
-- Blueprint version exists and is tested
+- Blueprint version exists, is validated, and **published** (not in DRAFT state)
 - Target cluster is configured and accessible
-- Git repository configured for Helm chart storage
+- Centralized Helm charts repository configured
 - ArgoCD access for deployment execution
 
 ### **🔧 Step-by-Step Process**
@@ -283,28 +317,26 @@ location: {{ .Values.global.location }}
     → API: POST /instances
     → Data: {
         "name": "ecommerce-brazil-production",
-        "blueprint_version_id": 1,
-        "cluster_id": 2,      // Brazil-Prod-AKS (independent cluster)
-        "location_id": 1,     // Brazil (for Helm chart generation)
-        "environment_id": 3,  // Production (for Helm chart generation)
-        "git_repository": "https://github.com/company/argocd-charts",
-        "git_path": "instances/ecommerce-brazil-production",
-        "git_branch": "main",
+        "blueprint_public_id": "ecommerce-stack",
+        "blueprint_version_number": "v1.0.0",
+        "cluster_id": 2,      // Brazil-Prod-AKS
+        "environment_name": "production",
+        "location_name": "brazil",
+        "application_name": "ecommerce",
+        "namespace": "ecommerce-production",
         "auto_sync_enabled": false,  // Manual sync for production
         "auto_prune_enabled": true,
-        "auto_heal_enabled": true,
-        "create_namespace": true
+        "auto_heal_enabled": true
       }
     → System: Auto-creates Instance_Templates for database, cache, api
-    → System: Inherits template versions from blueprint
-    → System: Uses location_id and environment_id for Helm chart context
-    → System: Generates target namespaces: "ecommerce-brazil-production"
+    → System: Uses centralized Helm charts repository
+    → System: Generates chart path: "environments/production/locations/brazil/applications/ecommerce/ecommerce-brazil-production"
 ```
 
 #### **Step 2: Customize Instance Values**
 ```
 2.1 Customize Database Configuration
-    → API: PUT /instances/{instance_id}/templates/{instance_template_id}/values
+    → API: PUT /instances/{instance_public_id}/templates/{instance_template_id}/values
     → Data: {
         "primary": {
           "persistence": { "size": "500Gi" },  // Larger disk for production
@@ -317,7 +349,7 @@ location: {{ .Values.global.location }}
       }
 
 2.2 Customize API Service Configuration  
-    → API: PUT /instances/{instance_id}/templates/{instance_template_id}/values
+    → API: PUT /instances/{instance_public_id}/templates/{instance_template_id}/values
     → Data: {
         "replicaCount": 3,  // HA for production
         "image": { "tag": "v2.1.0" },  // Specific production version
@@ -332,7 +364,7 @@ location: {{ .Values.global.location }}
       }
 
 2.3 Customize Cache Configuration
-    → API: PUT /instances/{instance_id}/templates/{instance_template_id}/values  
+    → API: PUT /instances/{instance_public_id}/templates/{instance_template_id}/values  
     → Data: {
         "cluster": { "slaveCount": 3 },  // More replicas for production
         "persistence": { "enabled": true, "size": "50Gi" }
@@ -342,13 +374,13 @@ location: {{ .Values.global.location }}
 #### **Step 3: Generate and Deploy Helm Chart**
 ```
 3.1 Generate Helm Chart
-    → API: POST /instances/{instance_id}/generate-helm-chart
+    → API: POST /instances/{instance_public_id}/generate-helm-chart
     → System: Merges Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
     → System: Generates App of Apps chart with 3 ArgoCD Applications:
               - ecommerce-brazil-production-database
               - ecommerce-brazil-production-cache  
               - ecommerce-brazil-production-api
-    → System: Commits chart to Git repository
+    → System: Commits chart to centralized Helm repository
 
 3.2 Deploy via ArgoCD
     → Manual: Create ArgoCD Application pointing to generated chart
@@ -359,7 +391,7 @@ location: {{ .Values.global.location }}
 #### **Step 4: Verify Deployment**
 ```
 4.1 Check Instance Status
-    → API: GET /instances/{instance_id}
+    → API: GET /instances/{instance_public_id}
     → Review: Instance configuration, template versions, Git commit
     → Verify: All Instance_Templates show correct merged values
 
@@ -397,16 +429,16 @@ location: {{ .Values.global.location }}
 #### **Step 1: Import New Template Version**
 ```
 1.1 Check for Updates in Specific Branch
-    → API: POST /templates/{template_id}/sync-branch
-    → Data: branch_id=1  // Target specific branch (e.g., bitnami main)
+    → API: POST /templates/{template_public_id}/sync
+    → Data: branch_name="main"  // Target specific branch (e.g., bitnami main)
     → System: Checks latest commit in specified branch
-    → System: If new commit found, creates Template_Version with branch_id + commit hash
+    → System: If new commit found, creates Template_Version with branch + commit hash
     → System: Optionally updates Template.current_version_id
     → Review: New default_values, chart_metadata changes
 
 1.2 Alternative: Import from Different Branch
-    → API: POST /templates/{template_id}/import-version
-    → Data: branch_id=2  // Import from develop branch
+    → API: POST /templates/{template_public_id}/sync
+    → Data: branch_name="develop"  // Import from develop branch
     → System: Creates Template_Version from develop branch
     → System: Allows testing development versions
     → Review: Compare differences between branch versions
@@ -415,13 +447,13 @@ location: {{ .Values.global.location }}
 #### **Step 2: Test New Version in Development Blueprint**
 ```
 2.1 Create New Blueprint Version for Testing
-    → API: POST /blueprints/{blueprint_id}/versions
+    → API: POST /blueprints/{blueprint_public_id}/versions
     → Data: helper_templates="..." // Copy from previous version
-    → System: Creates Blueprint_Version v2
+    → System: Creates Blueprint_Version v2.0.0
 
 2.2 Update Template to New Version
-    → API: PUT /blueprint-versions/{new_version_id}/templates/{blueprint_template_id}
-    → Data: template_version_id=4  // New template version
+    → API: PUT /blueprint-versions/{blueprint_public_id}/{version_number}/templates/{blueprint_template_id}
+    → Data: template_public_id="postgres", branch_name="main"  // New template version
     → Keep: Same custom_values and alias
     → System: Blueprint now uses new template version
 ```
@@ -432,14 +464,17 @@ location: {{ .Values.global.location }}
     → API: POST /instances  
     → Data: {
         "name": "ecommerce-brazil-development-v2",
-        "blueprint_version_id": 2,  // New blueprint version
+        "blueprint_public_id": "ecommerce-stack",
+        "blueprint_version_number": "v2.0.0",  // New blueprint version
         "cluster_id": 1,  // Development cluster
-        "git_repository": "https://github.com/company/argocd-charts",
-        "git_path": "instances/ecommerce-brazil-development-v2"
+        "environment_name": "development",
+        "location_name": "brazil",
+        "application_name": "ecommerce",
+        "namespace": "ecommerce-development-v2"
       }
 
 3.2 Generate and Deploy Test Chart
-    → API: POST /instances/{test_instance_id}/generate-helm-chart
+    → API: POST /instances/{instance_public_id}/generate-helm-chart
     → Deploy via ArgoCD
     → Test: Verify new template version works correctly
 ```
@@ -447,18 +482,18 @@ location: {{ .Values.global.location }}
 #### **Step 4: Upgrade Production Instances**
 ```
 4.1 Upgrade Production Instance to New Blueprint Version
-    → API: PUT /instances/{prod_instance_id}/upgrade
-    → Data: blueprint_version_id=2  // Tested blueprint version
+    → API: PUT /instances/{instance_public_id}/upgrade
+    → Data: blueprint_version_number="v2.0.0"  // Tested blueprint version
     → System: Regenerates all Instance_Templates with new template versions
     → System: Preserves instance-specific custom values where compatible
 
 4.2 Review Configuration Changes
-    → API: GET /instances/{prod_instance_id}
+    → API: GET /instances/{instance_public_id}
     → Review: Template version changes, value merging results
     → Verify: Instance-specific overrides preserved
 
 4.3 Generate Updated Production Chart
-    → API: POST /instances/{prod_instance_id}/generate-helm-chart  
+    → API: POST /instances/{instance_public_id}/generate-helm-chart  
     → System: Generates chart with new template versions
     → ArgoCD: Detects changes and shows diff
     → Manual: Review changes and approve sync in ArgoCD
@@ -493,28 +528,28 @@ location: {{ .Values.global.location }}
 1.1 Review All Instances
     → API: GET /instances
     → Filter: By cluster_id for infrastructure view
-    → Filter: By application_id for application-focused view
+    → Filter: By application_name for application-focused view
     → Review: Instance status, blueprint versions, last updates
 
 1.2 Check Specific Instance Details
-    → API: GET /instances/{instance_id}
+    → API: GET /instances/{instance_public_id}
     → Review: Complete configuration, template versions
     → Verify: Instance_Templates show correct merged values
-    → Check: Git repository sync status
+    → Check: Centralized Git repository sync status
 ```
 
 #### **Step 2: Configuration Troubleshooting**
 ```
 2.1 Investigate Configuration Issues
-    → API: GET /instances/{instance_id}
+    → API: GET /instances/{instance_public_id}
     → Review: Final merged values for each template
     → Identify: Conflicts between template defaults, blueprint overrides, instance customizations
     → Trace: Value inheritance from Template_Version → Blueprint_Template → Instance_Template
 
 2.2 Update Instance Configuration
-    → API: PUT /instances/{instance_id}/templates/{template_id}/values
+    → API: PUT /instances/{instance_public_id}/templates/{template_id}/values
     → Data: Updated instance-specific overrides
-    → API: POST /instances/{instance_id}/generate-helm-chart
+    → API: POST /instances/{instance_public_id}/generate-helm-chart
     → ArgoCD: Review diff and approve changes
 ```
 
@@ -527,7 +562,7 @@ location: {{ .Values.global.location }}
     → Plan: Cluster capacity and instance distribution
 
 3.2 Application Deployment Tracking
-    → API: GET /instances?application_id={app_id}
+    → API: GET /instances?application_name={app_name}
     → Review: All instances of specific application
     → Compare: Configuration differences between environments
     → Plan: Standardization and consistency improvements
@@ -570,20 +605,20 @@ location: {{ .Values.global.location }}
 Problem: Instance chart generation fails with template errors
 
 Troubleshooting Steps:
-1. API: GET /instances/{instance_id}
+1. API: GET /instances/{instance_public_id}
    → Review: Instance_Template configurations
    → Check: Template version compatibility
 
-2. API: POST /templates/{template_id}/validate-values
-   → Data: custom_values from failing Instance_Template
+2. API: POST /templates/{template_public_id}/validate-values
+   → Data: branch_name="main", custom_values from failing Instance_Template
    → Identify: Schema validation failures
 
 3. Fix: Update Instance_Template values
-   → API: PUT /instances/{instance_id}/templates/{template_id}/values
+   → API: PUT /instances/{instance_public_id}/templates/{template_id}/values
    → Data: Corrected configuration values
 
 4. Retry: Generate chart
-   → API: POST /instances/{instance_id}/generate-helm-chart
+   → API: POST /instances/{instance_public_id}/generate-helm-chart
 ```
 
 #### **Scenario 2: ArgoCD Sync Failure**
@@ -603,7 +638,7 @@ Troubleshooting Steps:
 Problem: Blueprint template versions are incompatible
 
 Troubleshooting Steps:
-1. API: GET /blueprints/{blueprint_id}/versions/{version_id}
+1. API: GET /blueprints/{blueprint_public_id}/versions/{version_number}
    → Review: All template versions in blueprint
    → Identify: Conflicting requirements
 
@@ -620,14 +655,14 @@ Troubleshooting Steps:
 
 #### **Rollback Instance to Previous Blueprint Version**
 ```
-1. API: GET /instances/{instance_id}
-   → Note: Current blueprint_version_id
+1. API: GET /instances/{instance_public_id}
+   → Note: Current blueprint_version_number
 
-2. API: PUT /instances/{instance_id}/upgrade  
-   → Data: blueprint_version_id={previous_version}
+2. API: PUT /instances/{instance_public_id}/upgrade  
+   → Data: blueprint_version_number={previous_version}
    → System: Reverts to previous template versions
 
-3. API: POST /instances/{instance_id}/generate-helm-chart
+3. API: POST /instances/{instance_public_id}/generate-helm-chart
    → Generate: Chart with previous configuration
 
 4. ArgoCD: Sync to deploy rollback
