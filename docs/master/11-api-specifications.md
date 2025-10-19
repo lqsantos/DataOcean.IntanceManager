@@ -201,9 +201,46 @@ This document defines backend API operations with focus on **business rules and 
   - FORBIDDEN if any template versions are referenced by blueprints
   - Cascades deletion of all branches, templates, and template versions
 
+#### **SYNC Repository**
+- **What:** Synchronize ALL templates in repository with Git remote state and auto-disable orphaned template versions
+- **URL:** `POST /repositories/{repository_name}/sync`
+- **Scope:** Affects all templates and branches tracked within this repository
+- **Process:**
+  1. Get list of branches currently tracked in database for this repository
+  2. For each tracked branch, fetch latest state from Git remote
+  3. **For tracked branches that still exist in Git:**
+     - Synchronize all templates using this branch (equivalent to SYNC Template for each)
+     - Update template versions with latest commits using smart versioning
+  4. **For tracked branches deleted from Git:**
+     - Mark all template versions from deleted branches as `disabled: true`
+     - Update branch status to `deleted: true` (soft delete for audit)
+     - Log orphaned template versions for reporting
+- **Response:**
+  - `branches_synchronized`: List of tracked branches successfully synchronized
+  - `branches_deleted`: List of tracked branches no longer available in Git
+  - `template_versions_created`: Count of new template versions created
+  - `template_versions_updated`: Count of existing template versions updated
+  - `template_versions_disabled`: Count of disabled template versions (from deleted branches)
+  - `affected_instances`: List of instance IDs using disabled template versions
+- **Rules:**
+  - Only synchronizes branches already tracked in the system (no auto-discovery)
+  - New branches must be explicitly added via CREATE Branch API
+  - Disabled template versions cannot be used for new instances
+  - Existing instances retain their configuration but show "source unavailable" status
+  - Manual re-enable possible if branch is restored in Git
+- **Use Cases:**
+  - **Repository-wide synchronization:** Update all tracked templates and branches at once
+  - **Bulk template updates:** Sync multiple templates efficiently after repository changes
+  - **Maintenance:** Periodic sync of all tracked branches to detect deletions
+  - **Incident response:** When ArgoCD reports missing branch references
+  - **DevOps workflows:** Pre-deployment validation of all tracked repository state
+  - **Controlled scope:** Only affects explicitly tracked branches (no surprise additions)
+
 #### **LIST/GET Repositories**
 - **What:** Retrieve repository information
 - **Returns:** Repository data with constructed git_url, repository_name as identifier, branch counts and template summaries
+
+> **📋 Usage Guidelines:** For detailed guidance on when to use SYNC Repository vs SYNC Template, see business-workflow documentation.
 
 ---
 
@@ -236,17 +273,22 @@ This document defines backend API operations with focus on **business rules and 
   - Changes don't affect existing template versions
 
 #### **DELETE Branch**
-- **What:** Remove branch tracking
+- **What:** Remove branch tracking (manual cleanup)
 - **URL:** `DELETE /repositories/{repository_name}/branches/{branch_name}`
 - **Rules:**
-  - FORBIDDEN if any template versions from this branch are referenced by blueprints
-  - If deletion proceeds (no active references), cascades deletion of all template versions from this branch
-  - All template versions from this branch become permanently unavailable
+  - FORBIDDEN if any active instances reference template versions from this branch
+  - If deletion proceeds, marks all template versions as `disabled: true`
+  - Branch marked as `deleted: true` (soft delete for audit)
+  - Disabled template versions cannot be used for new instances/blueprints
+- **Impact:**
+  - Existing instances show "source unavailable" status but continue running
+  - New deployments cannot use disabled template versions
+  - Full cleanup requires instance migration first
 
 #### **LIST/GET Branches**
 - **What:** Retrieve branch information for repository
 - **Filters:** repository_name (repository_name)
-- **Returns:** Branch data with template version counts
+- **Returns:** Branch data with template version counts and availability status
 
 ---
 
@@ -280,12 +322,19 @@ This document defines backend API operations with focus on **business rules and 
   - No impact on existing Template_Versions
 
 #### **SYNC Template Version**
-- **What:** Synchronize template with Git repository using smart versioning (always uses branch HEAD)
+- **What:** Synchronize SINGLE template with specific branch using smart versioning (always uses branch HEAD)
 - **URL:** `POST /templates/{public_id}/sync` (using UUID)
+- **Scope:** Affects only the specified template and branch combination
 - **Fields:**
   - `branch_name` (required): Source branch name to sync from HEAD
 - **Process:**
-  1. Validate branch belongs to template's repository
+  1. **Branch Validation:**
+     - Check if branch exists in template's repository (Git remote)
+     - **If branch not found:**
+       a. Mark branch as `deleted: true, deleted_at: now()`
+       b. Disable all template versions from this branch (`disabled: true, disabled_reason: 'branch_deleted'`)
+       c. Return protective response with affected data summary
+     - **If branch exists:** Continue with synchronization
   2. Get latest commit from branch HEAD
   3. Find latest Template_Version for this template+branch combination
   4. **Smart Versioning Logic:**
@@ -313,12 +362,38 @@ This document defines backend API operations with focus on **business rules and 
   - **"version-created"**: New Template_Version created (chart files changed in HEAD)
   - **"commit-updated"**: Existing version updated with HEAD commit (no chart changes)
   - **"up-to-date"**: HEAD commit already tracked
+  - **"branch-deleted-protective"**: Branch no longer exists, template versions auto-disabled for protection
 - **Use Cases:**
-  - **Development sync:** `branch_name: "develop"` → always uses develop HEAD
-  - **Release sync:** `branch_name: "release/v2.0"` → always uses release branch HEAD
+  - **Active development:** Developer updates specific template after code changes
+  - **Targeted sync:** `branch_name: "develop"` → sync only this template from develop HEAD
+  - **Granular control:** Update individual templates without affecting others
+  - **Performance-focused:** Fast sync of single template vs entire repository
+  - **Branch-specific work:** `branch_name: "release/v2.0"` → sync specific release branch
   - **Documentation updates:** Chart unchanged in HEAD → commit updated, no new version
-  - **Specific commit needs:** Use Git workflow (checkout/tag + sync) for non-HEAD commits
-- **Impact:** Simplified, predictable template synchronization always using latest branch state while avoiding version pollution from non-chart changes
+  - **Branch cleanup detection:** Missing branch → auto-disable versions + protective response
+- **Protective Action Response:**
+  - **HTTP 200** with protective action taken (not an error - system self-healed)
+  - **Protective Response:**
+    ```json
+    {
+      "status": "branch-deleted-protective",
+      "message": "Branch 'feature/deleted-branch' no longer exists - protective action taken",
+      "repository": "my-charts",
+      "branch_name": "feature/deleted-branch",
+      "actions_taken": {
+        "branch_marked_deleted": true,
+        "template_versions_disabled": 2,
+        "affected_instances": ["uuid1", "uuid2"]
+      },
+      "next_steps": [
+        "Review affected instances: GET /instances?source_availability=unavailable",
+        "Migrate instances to available template versions",
+        "Use existing branches for future synchronization"
+      ],
+      "available_branches": ["main", "develop", "release/v1.0"]
+    }
+    ```
+- **Impact:** Self-healing system that automatically protects against broken references while maintaining operational transparency and user guidance
 
 #### **VALIDATE Template Access**
 - **What:** Test repository accessibility and chart validity
@@ -515,11 +590,12 @@ This document defines backend API operations with focus on **business rules and 
   - GET `/instances` - List instances with filtering
   - GET `/instances/{public_id}` - Get specific instance details (using UUID)
 - **List Response:** Instance list with essential metadata (name, blueprint, cluster, status)
-- **Detail Response:** Complete instance configuration with nested Instance_Templates showing inherited template versions
+- **Detail Response:** Complete instance configuration with nested Instance_Templates showing inherited template versions and source availability status
 - **List Filters:** 
   - By cluster_name (infrastructure management)
   - By blueprint_public_id (blueprint usage tracking)
   - By application_name (application-focused view)
+  - By source_availability (available, unavailable) - filters instances using disabled template versions
 - **Detail Data Flow:**
   - Instance → Blueprint_Version → Blueprint_Templates → Template_Versions
   - Show final merged values: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides

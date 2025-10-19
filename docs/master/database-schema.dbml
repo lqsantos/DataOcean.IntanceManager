@@ -122,13 +122,15 @@ Table branches {
   id bigserial [pk]
   repository_id bigint [not null]
   name varchar(100) [not null]
+  deleted boolean [default: false]
+  deleted_at timestamp
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   
   Note: '''
   Branches within repositories that are being tracked/considered by the system.
   User explicitly adds branches they want to monitor.
-  Populated automatically based on user selection.
+  Soft delete supported: deleted=true when branch no longer exists in Git remote.
   '''
   
   indexes {
@@ -174,13 +176,15 @@ Table template_versions {
   values_schema jsonb
   commit_message text
   commit_author varchar(255)
+  disabled boolean [default: false]
+  disabled_reason varchar(100)
   imported_at timestamp [default: `now()`]
   
   Note: '''
   Historical versions of Helm Chart data imported from specific branch.
   Each version is tied to a template and a specific branch.
-  Same template can have different versions across different branches.
-  Each version is immutable after creation.
+  Can be disabled when source branch is deleted (disabled=true, reason='branch_deleted').
+  Disabled versions cannot be used for new instances but preserve audit trail.
   '''
   
   indexes {
