@@ -395,20 +395,12 @@ This document defines backend API operations with focus on **business rules and 
     ```
 - **Impact:** Self-healing system that automatically protects against broken references while maintaining operational transparency and user guidance
 
-#### **VALIDATE Template Access**
-- **What:** Test repository accessibility and chart validity
-- **Process:**
-  1. Test repository access for template's repository
-  2. Verify Chart.yaml and values.yaml exist at git_path
-  3. Check across all tracked branches
-  4. Return detailed validation report per branch
-- **Rules:**
-  - Read-only operation, no data changes
-  - Provides diagnostics per branch
-
 #### **VALIDATE Values Against Schema**
 - **What:** Validate custom values against specific template version
-- **Input:** template_version_id + custom_values
+- **URL:** `POST /templates/versions/{template_version_id}/validate-values`
+- **Fields:**
+  - `template_version_id` (required): Specific template version to validate against
+  - `custom_values` (required): Values object to validate
 - **Process:**
   1. Load Template_Version by ID
   2. Use that version's values_schema for validation
