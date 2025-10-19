@@ -396,19 +396,20 @@ This document defines backend API operations with focus on **business rules and 
 - **Impact:** Self-healing system that automatically protects against broken references while maintaining operational transparency and user guidance
 
 #### **VALIDATE Values Against Schema**
-- **What:** Validate custom values against specific template version
-- **URL:** `POST /templates/versions/{template_version_id}/validate-values`
+- **What:** Validate custom values against specific template version from branch
+- **URL:** `POST /templates/{public_id}/branches/{branch_name}/validate-values`
 - **Fields:**
-  - `template_version_id` (required): Specific template version to validate against
+  - `branch_name` (required): Source branch name to validate against
   - `custom_values` (required): Values object to validate
 - **Process:**
-  1. Load Template_Version by ID
+  1. Load latest Template_Version for template + branch combination
   2. Use that version's values_schema for validation
   3. Validate custom_values against schema
 - **Rules:**
-  - Works for any stored Template_Version
-  - Version-specific validation (branch+commit context)
-  - If no schema exists, validation passes
+  - Uses current HEAD version from specified branch
+  - Branch must exist and have synchronized template versions
+  - If no schema exists in latest version, validation passes
+  - Template must exist with accessible branch
 
 #### **DELETE Template**
 - **What:** Remove template and all versions
@@ -431,56 +432,94 @@ This document defines backend API operations with focus on **business rules and 
 ### **8. Blueprints API** *(Blueprint + Blueprint_Version Management)*
 
 #### **CREATE Blueprint**
-- **What:** Create blueprint metadata and initial version
+- **What:** Create blueprint metadata only (no versions)
 - **URL:** `POST /blueprints`
+- **Fields:**
+  - `name` (required): Unique blueprint identifier within application scope
+  - `description` (optional): Human-readable description
+  - `application_name` (required): Target application name
 - **Process:**
-  1. Create Blueprint record (metadata)
-  2. Create Blueprint_Version with helper_templates
-  3. Set Blueprint.current_version_id → new Blueprint_Version
+  1. Create Blueprint record (metadata only)
+  2. Set Blueprint.current_version_id = null (no versions yet)
 - **Rules:**
   - Name must be unique within application scope
   - Must belong to exactly one valid application
-  - Creates both Blueprint and Blueprint_Version atomically
-  - helper_templates must be valid Go template syntax
+  - Creates Blueprint entity only - versions created separately
+- **Returns:** Blueprint object with generated UUID
+- **State:** Blueprint exists but unusable until first version is created
 
 #### **CREATE Blueprint Version**
-- **What:** Create new version of existing blueprint
+- **What:** Create new version of existing blueprint in DRAFT state (first or subsequent)
 - **URL:** `POST /blueprints/{public_id}/versions` (using UUID)
-- **When:** Updating helper_templates or template combinations
+- **Fields:**
+  - `helper_templates` (required): Go template syntax for Helm value generation
+  - `description` (optional): Version description
 - **Process:**
-  1. Create new Blueprint_Version with updated helper_templates
-  2. Update Blueprint.current_version_id → new Blueprint_Version
-  3. Copy Blueprint_Templates from previous version (optional base)
+  1. Create new Blueprint_Version with status = 'draft'
+  2. Increment version number automatically (1, 2, 3...)
+  3. Blueprint.current_version_id remains unchanged (still points to last published)
 - **Rules:**
-  - helper_templates changes trigger new version creation
-  - Each Blueprint_Version is immutable after creation
-  - Version numbers increment automatically (1, 2, 3...)
-- **Impact:** New version available for instances; existing instances unchanged
+  - Blueprint must exist (created via CREATE Blueprint)
+  - helper_templates must be valid Go template syntax
+  - Version created in 'draft' state - not usable by instances yet
+  - Only one draft version per blueprint allowed at a time
+- **Impact:** Draft version created for editing - blueprint remains at previous published state until new version is published
 
 #### **ADD Template to Blueprint Version**
-- **What:** Associate specific template version with blueprint version
-- **URL:** `POST /blueprints/{public_id}/versions/{version_id}/templates`
-- **Input:** blueprint_version_id + template_version_id + alias + custom_values
-- **Process:** Create Blueprint_Template record
+- **What:** Associate specific template version with blueprint version (only draft versions)
+- **URL:** `POST /blueprints/{public_id}/versions/{version_number}/templates`
+- **Fields:**
+  - `template_public_id` (required): Public UUID of the template to add
+  - `branch_name` (required): Branch name to use for template version
+  - `alias` (required): Unique identifier for template within blueprint version
+  - `custom_values` (optional): Global blueprint configuration for this template
+- **Process:**
+  1. Resolve latest Template_Version for template_public_id + branch_name
+  2. Create Blueprint_Template record with resolved template_version_id
 - **Rules:**
-  - template_version_id must reference existing Template_Version
+  - Blueprint version must be in 'draft' state (FORBIDDEN if published)
+  - template_public_id must reference existing Template with accessible branch
+  - Branch must have synchronized template versions available
   - Alias must be unique within blueprint version scope
-  - Same Template can be added multiple times with different versions/aliases
-  - custom_values define global blueprint configuration for this template
-- **Impact:** Template version becomes part of blueprint; used by all future instances
+  - Same Template can be added multiple times with different branches/aliases
+  - Uses HEAD version from specified branch at time of addition
+- **Impact:** Template version becomes part of draft blueprint version
 
 #### **UPDATE Blueprint Template**
-- **What:** Modify template configuration within blueprint version
-- **URL:** `PUT /blueprints/{public_id}/versions/{version_id}/templates/{template_alias}`
-- **When:** Adjusting template version, alias, or custom_values
+- **What:** Modify template configuration within blueprint version (only draft versions)
+- **URL:** `PUT /blueprints/{public_id}/versions/{version_number}/templates/{template_alias}`
+- **Fields:**
+  - `template_public_id` (optional): Change to different template
+  - `branch_name` (optional): Change to different branch version
+  - `alias` (optional): Change template alias (must remain unique)
+  - `custom_values` (optional): Update global blueprint configuration
 - **Rules:**
-  - Can change template_version_id (upgrade/downgrade template version)
+  - Blueprint version must be in 'draft' state (FORBIDDEN if published)
+  - Can change template_public_id + branch_name (template/version upgrade)
+  - Uses HEAD version from specified branch at time of update
   - Can update custom_values (global blueprint configuration)
   - Alias changes require no conflicts within blueprint version
-  - Changes affect new instances only; existing instances unchanged
-- **Impact:** Blueprint version updated with new template configuration
+- **Impact:** Draft blueprint version updated with new template configuration
 
-
+#### **PUBLISH Blueprint Version**
+- **What:** Finalize draft version and make it available for instances
+- **URL:** `POST /blueprints/{public_id}/versions/{version_number}/publish` (using UUID)
+- **Process:**
+  1. Validate blueprint version is in 'draft' state
+  2. Validate at least one template is configured in blueprint version
+  3. Change status from 'draft' to 'published'
+  4. Set published_at = now()
+  5. Update Blueprint.current_version_id → this version
+- **Rules:**
+  - Blueprint version must be in 'draft' state
+  - Must have at least one Blueprint_Template configured
+  - After publishing, version becomes immutable (no ADD/UPDATE allowed)
+  - Published version becomes available for instance creation
+- **Response:**
+  - `version_id`: Published version identifier
+  - `version_number`: Version number (1, 2, 3...)
+  - `templates_count`: Number of templates in published version
+- **Impact:** Blueprint version becomes available for instances; version is now immutable
 
 #### **LIST/GET Blueprints**
 - **What:** Retrieve blueprint information
@@ -493,8 +532,9 @@ This document defines backend API operations with focus on **business rules and 
 - **What:** Remove blueprint and all versions
 - **URL:** `DELETE /blueprints/{public_id}` (using UUID)
 - **Rules:**
-  - FORBIDDEN if any instances exist using any blueprint version
-  - Must have zero instances across all versions before deletion
+  - FORBIDDEN if any instances exist using any published blueprint version
+  - Draft versions can be deleted freely (no instance impact)
+  - Must have zero instances across all published versions before deletion
   - Cascades deletion of all Blueprint_Versions and Blueprint_Templates
 
 ---
@@ -506,20 +546,23 @@ This document defines backend API operations with focus on **business rules and 
 - **URL:** `POST /instances`
 - **Fields:**
   - `name` (required): Unique instance identifier
-  - `blueprint_version_id` (required): Reference to blueprint version
+  - `blueprint_public_id` (required): Public UUID of the blueprint
+  - `version_number` (required): Blueprint version number to use
   - `cluster_name` (required): Target cluster name (independent selection)
   - `location_name` (required): Geographic location name for Helm chart generation
   - `environment_name` (required): Environment name for Helm chart generation
   - `git_repository`, `git_path`, `git_branch` (required): Git repository configuration
   - Sync policy fields: `auto_sync_enabled`, `auto_prune_enabled`, etc.
 - **Process:**
-  1. Validate blueprint_version_id, cluster_name, location_name, environment_name
-  2. Auto-create Instance_Template for each Blueprint_Template in blueprint version
-  3. Inherit template versions from Blueprint_Template.template_version_id
-  4. Merge values: Template_Version.default_values + Blueprint_Template.custom_values
+  1. Resolve Blueprint_Version using blueprint_public_id + version_number
+  2. Validate resolved blueprint version, cluster_name, location_name, environment_name
+  3. Auto-create Instance_Template for each Blueprint_Template in blueprint version
+  4. Inherit template versions from Blueprint_Template.template_version_id
+  5. Merge values: Template_Version.default_values + Blueprint_Template.custom_values
 - **Rules:**
   - Name must be globally unique across system
-  - blueprint_version_id must reference valid Blueprint_Version
+  - blueprint_public_id + version_number must reference valid published Blueprint_Version
+  - Draft blueprint versions cannot be used for instance creation
   - cluster_name must exist (clusters are independent of location/environment)
   - location_name and environment_name used for Helm chart generation context
   - git_repository must be accessible for Helm Chart generation
@@ -547,7 +590,7 @@ This document defines backend API operations with focus on **business rules and 
 - **What:** Update instance settings (sync policies, Git settings)
 - **URL:** `PUT /instances/{public_id}` (using UUID)
 - **Rules:**
-  - Cannot change blueprint_version_id or cluster_name (structural changes)
+  - Cannot change blueprint or cluster assignments (use UPGRADE operation)
   - Can update Git settings, sync policy fields, status
   - Git repository changes require validation of accessibility
 - **Impact:** Triggers Helm Chart regeneration with updated settings
@@ -555,13 +598,15 @@ This document defines backend API operations with focus on **business rules and 
 #### **UPGRADE Instance Blueprint Version**
 - **What:** Change instance to use different blueprint version (template upgrade)
 - **URL:** `PATCH /instances/{public_id}/blueprint-version` (using UUID)
+- **Fields:**
+  - `version_number` (required): New blueprint version number to upgrade to
 - **Process:**
-  1. Validate new blueprint_version_id belongs to same Blueprint
+  1. Validate new version_number belongs to same Blueprint and is published
   2. Regenerate all Instance_Templates for new blueprint version
   3. Inherit new template versions from new Blueprint_Templates
   4. Preserve instance-specific overrides where possible
 - **Rules:**
-  - Must be same Blueprint (different version)
+  - Must be same Blueprint (different published version)
   - All Instance_Templates regenerated with new template versions
   - Instance-specific values preserved where compatible
 - **Impact:** Instance upgrades to new template versions defined in blueprint

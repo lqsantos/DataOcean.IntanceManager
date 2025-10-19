@@ -228,11 +228,14 @@ Table blueprint_versions {
   blueprint_id bigint [not null]
   version_number integer [not null]
   helper_templates text
+  status varchar(20) [default: 'draft']
+  published_at timestamp
   created_at timestamp [default: `now()`]
   
   Note: '''
-  Blueprint version data (mutable configurations).
-  Contains helper templates and tested template combinations.
+  Blueprint version data with draft/published lifecycle.
+  Status: 'draft' (editable) or 'published' (immutable).
+  Only published versions can be used by instances.
   Version numbers increment: 1, 2, 3...
   '''
   
