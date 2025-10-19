@@ -281,13 +281,10 @@ Table instances {
   cluster_id bigint [not null]
   location_id bigint [not null]
   environment_id bigint [not null]
+  namespace varchar(63) [not null]
   auto_sync_enabled boolean [default: true]
-  auto_prune_enabled boolean [default: true]
+  auto_prune_enabled boolean [default: false]
   auto_heal_enabled boolean [default: true]
-  create_namespace boolean [default: true]
-  git_repository varchar(500) [not null]
-  git_path varchar(200) [not null]
-  git_branch varchar(100) [default: 'main']
   status instance_status [default: 'pending']
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
@@ -297,7 +294,9 @@ Table instances {
   Inherits template versions from Blueprint_Version via Blueprint_Templates.
   Snapshot of blueprint_version_id for stability.
   User selects cluster directly, but location_id and environment_id are required
-  for Helm chart generation and deployment context.
+  for Helm chart path generation and deployment context.
+  Namespace follows Kubernetes naming conventions (63 chars max).
+  Git repository configuration is handled at system level (centralized).
   Uses UUID for external API exposure (security).
   '''
   
@@ -308,9 +307,11 @@ Table instances {
     cluster_id [name: "idx_instances_cluster"]
     location_id [name: "idx_instances_location"]
     environment_id [name: "idx_instances_environment"]
+    namespace [name: "idx_instances_namespace"]
     status [name: "idx_instances_status"]
     (blueprint_version_id, cluster_id) [name: "idx_instances_blueprint_cluster"]
     (location_id, environment_id) [name: "idx_instances_location_environment"]
+    (cluster_id, namespace) [name: "idx_instances_cluster_namespace"]
   }
 }
 
@@ -319,7 +320,6 @@ Table instance_templates {
   instance_id bigint [not null]
   blueprint_template_id bigint [not null]
   instance_values jsonb
-  target_namespace varchar(63)
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   
@@ -328,13 +328,13 @@ Table instance_templates {
   Contains final merged values: Template_Version.default_values + 
   Blueprint_Template.custom_values + Instance overrides.
   Template version inherited from Blueprint_Template.template_version_id.
+  Namespace is now centralized at instance level (instances.namespace).
   '''
   
   indexes {
     (instance_id, blueprint_template_id) [unique, name: "idx_instance_templates_unique"]
     instance_id [name: "idx_instance_templates_instance"]
     blueprint_template_id [name: "idx_instance_templates_blueprint_template"]
-    target_namespace [name: "idx_instance_templates_namespace"]
   }
 }
 
@@ -383,3 +383,24 @@ Enum instance_status {
   failed
   updating
 }
+
+// ================================================================
+// SYSTEM CONFIGURATION (Application Level)
+// ================================================================
+
+/*
+Centralized Helm Charts Repository Configuration:
+- helm_charts_repository: Single repository for all generated Helm Charts
+- helm_charts_branch: Single branch for all deployments (typically "main")
+- Path Structure: {environment}/{location}/{application}/{instance}/
+
+Example System Configuration:
+{
+  "helm_charts_repository": "https://dev.azure.com/company/platform/_git/helm-charts",
+  "helm_charts_branch": "main",
+  "path_template": "{environment_name}/{location_name}/{application_name}/{instance_name}/"
+}
+
+This approach eliminates per-instance Git configuration complexity while
+providing centralized governance and consistent deployment patterns.
+*/

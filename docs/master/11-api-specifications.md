@@ -549,28 +549,32 @@ This document defines backend API operations with focus on **business rules and 
   - `blueprint_public_id` (required): Public UUID of the blueprint
   - `version_number` (required): Blueprint version number to use
   - `cluster_name` (required): Target cluster name (independent selection)
-  - `location_name` (required): Geographic location name for Helm chart generation
-  - `environment_name` (required): Environment name for Helm chart generation
-  - `git_repository`, `git_path`, `git_branch` (required): Git repository configuration
-  - Sync policy fields: `auto_sync_enabled`, `auto_prune_enabled`, etc.
+  - `location_name` (required): Geographic location name for path generation
+  - `environment_name` (required): Environment name for path generation
+  - `namespace` (required): Target Kubernetes namespace for deployment
+  - Sync policy fields: `auto_sync_enabled`, `auto_prune_enabled`, `auto_heal_enabled`, etc.
 - **Process:**
   1. Resolve Blueprint_Version using blueprint_public_id + version_number
-  2. Validate resolved blueprint version, cluster_name, location_name, environment_name
-  3. Auto-create Instance_Template for each Blueprint_Template in blueprint version
-  4. Inherit template versions from Blueprint_Template.template_version_id
-  5. Merge values: Template_Version.default_values + Blueprint_Template.custom_values
+  2. Extract application_name from Blueprint.application_name for path generation
+  3. Validate cluster_name, location_name, environment_name, namespace
+  4. Auto-create Instance_Template for each Blueprint_Template in blueprint version
+  5. Inherit template versions from Blueprint_Template.template_version_id
+  6. Merge values: Template_Version.default_values + Blueprint_Template.custom_values
+  7. Generate Helm charts path: `{environment_name}/{location_name}/{application_name}/{instance_name}/`
 - **Rules:**
   - Name must be globally unique across system
   - blueprint_public_id + version_number must reference valid published Blueprint_Version
   - Draft blueprint versions cannot be used for instance creation
   - cluster_name must exist (clusters are independent of location/environment)
-  - location_name and environment_name used for Helm chart generation context
-  - git_repository must be accessible for Helm Chart generation
-  - ArgoCD sync policy fields have sensible defaults
+  - location_name and environment_name must exist for path generation
+  - namespace follows Kubernetes naming conventions (max 63 chars)
+  - Uses system-wide helm_charts_repository and helm_charts_branch configuration
+  - ArgoCD sync policy defaults: auto_sync_enabled=true, auto_prune_enabled=false, auto_heal_enabled=true
 - **Impact:** 
   - Creates Instance_Template records inheriting template versions from blueprint
-  - Triggers Helm Chart generation with location/environment context
-  - Enables ArgoCD deployment workflow with tested template combinations
+  - Generates structured path: `{environment}/{location}/{application}/{instance}/`
+  - Enables centralized Helm Chart generation in configured repository
+  - Creates ArgoCD App of Apps structure with tested template combinations
 
 #### **Instance_Template Auto-Creation Logic**
 - **What:** Automatically create Instance_Template for each Blueprint_Template
@@ -579,20 +583,22 @@ This document defines backend API operations with focus on **business rules and 
   2. Create Instance_Template with blueprint_template_id reference (internal relationship)
   3. Inherit template version from Blueprint_Template.template_version_id
   4. Merge values: Template_Version.default_values + Blueprint_Template.custom_values
-  5. Generate target_namespace from instance naming pattern
+  5. Namespace inherited from instance.namespace (centralized)
 - **Rules:**
   - One Instance_Template per Blueprint_Template in blueprint version
   - Template versions inherited from blueprint (no instance choice)
   - instance_values are pre-merged ready for Helm Chart generation
+  - All templates in instance deploy to same namespace (instance.namespace)
 - **Impact:** Complete deployment configuration with tested template combinations
 
 #### **UPDATE Instance Metadata**
-- **What:** Update instance settings (sync policies, Git settings)
+- **What:** Update instance settings (namespace, sync policies)
 - **URL:** `PUT /instances/{public_id}` (using UUID)
 - **Rules:**
   - Cannot change blueprint or cluster assignments (use UPGRADE operation)
-  - Can update Git settings, sync policy fields, status
-  - Git repository changes require validation of accessibility
+  - Can update namespace (following Kubernetes naming conventions)
+  - Can update sync policy fields (auto_sync_enabled, auto_prune_enabled, auto_heal_enabled)
+  - Cannot change location/environment (affects path generation - requires new instance)
 - **Impact:** Triggers Helm Chart regeneration with updated settings
 
 #### **UPGRADE Instance Blueprint Version**
@@ -618,7 +624,7 @@ This document defines backend API operations with focus on **business rules and 
 - **Rules:**
   - instance_values merge: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
   - Cannot change template version (controlled by blueprint)
-  - target_namespace changes must follow naming conventions
+  - Namespace changes must be done at instance level (affects all templates)
 - **Impact:** Instance-specific customization while maintaining template version governance
 
 #### **LIST/GET Instances**
@@ -641,23 +647,38 @@ This document defines backend API operations with focus on **business rules and 
 - **Usage:** Primary dashboard and operational views
 
 #### **GENERATE Helm Chart**
-- **What:** Create/update App of Apps Helm Chart in Git repository using template versions
+- **What:** Create/update App of Apps Helm Chart in centralized Git repository using structured path
+- **Target Path:** `{environment_name}/{location_name}/{application_name}/{instance_name}/`
 - **Process:**
-  1. For each Instance_Template, resolve template version via Blueprint_Template relationship
-  2. Use Template_Version.git_repository and Template_Version.git_revision for ArgoCD source
-  3. Merge values: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
-  4. Generate ArgoCD Applications with specific template version references
+  1. Extract application_name from Blueprint.application_name relationship
+  2. For each Instance_Template, resolve template version via Blueprint_Template relationship
+  3. Use Template_Version.git_repository and Template_Version.git_revision for ArgoCD source
+  4. Merge values: Template_Version.default_values + Blueprint_Template.custom_values + Instance overrides
+  5. Generate ArgoCD App of Apps structure in centralized helm_charts_repository
+  6. Create ArgoCD Applications with specific template version references
+- **Generated Structure:**
+  ```
+  {helm_charts_repository}/{helm_charts_branch}/
+  └── {environment}/{location}/{application}/{instance}/
+      ├── Chart.yaml              # App of Apps metadata
+      ├── values.yaml             # Merged configuration values
+      └── templates/
+          ├── app-database.yaml   # ArgoCD Application for database template
+          ├── app-backend.yaml    # ArgoCD Application for backend template
+          └── app-frontend.yaml   # ArgoCD Application for frontend template
+  ```
 - **Rules:**
-  - System is single source of truth (overwrites existing Git content)
+  - System is single source of truth (overwrites existing Git content in target path)
   - Each ArgoCD Application references Template_Version.git_repository with Template_Version.git_revision
   - ArgoCD Application destination uses cluster.server_url from instance's cluster relationship
+  - All applications deployed to instance.namespace
   - Sync policy from instance settings (auto_sync_enabled, auto_prune_enabled, auto_heal_enabled)
   - Values merging uses 3-level hierarchy with template version as base
-  - Namespace creation controlled by instance.create_namespace setting
+  - Path structure enables logical organization and easy navigation
 - **Impact:**
-  - Creates Helm Chart with specific template versions (commit-based isolation)
-  - Ready for ArgoCD deployment with tested template combinations
-  - Provides complete deployment specification with version governance
+  - Creates centralized Helm Chart with specific template versions (commit-based isolation)
+  - Enables scalable App of Apps pattern with clear organizational structure
+  - Provides complete deployment specification with version governance and path-based organization
 
 
 
@@ -668,12 +689,29 @@ This document defines backend API operations with focus on **business rules and 
   1. Verify no blocking dependencies
   2. Cascade delete all Instance_Template records  
   3. Clean up ArgoCD Applications (optional integration)
-  4. Remove generated Helm Charts from Git repository (optional)
+  4. Remove generated Helm Charts from centralized git repository path (optional)
 - **Rules:**
   - Removes all associated Instance_Template records
-  - Optional cleanup of external resources (ArgoCD, Git)
+  - Optional cleanup of external resources (ArgoCD, centralized Git path)
   - Cannot delete if referenced by other entities
-- **Impact:** Complete instance removal with configurable infrastructure cleanup
+- **Impact:** Complete instance removal with configurable infrastructure cleanup and path-based Git cleanup
+
+---
+
+## ⚙️ System Configuration
+
+### **Centralized Helm Charts Repository**
+- **Global Configuration:** System maintains single helm_charts_repository and helm_charts_branch
+- **No Instance Override:** All instances use same centralized repository (simplified governance)
+- **Default Values:** Typically `helm_charts_repository: "https://dev.azure.com/{org}/{project}/_git/helm-charts"` and `helm_charts_branch: "main"`
+- **Path Generation:** Automatic structure `{environment}/{location}/{application}/{instance}/`
+- **Repository Requirements:** Must be accessible via Azure Managed Identity for chart generation
+
+### **Path Structure Convention**
+- **Format:** `{environment_name}/{location_name}/{application_name}/{instance_name}/`
+- **Benefits:** Logical organization, easy navigation, clear separation of concerns
+- **Example:** `production/brazil/ecommerce/web-frontend/`
+- **Scalability:** Supports unlimited environments, locations, applications per structure
 
 ---
 
