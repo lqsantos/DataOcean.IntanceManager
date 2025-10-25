@@ -19,6 +19,45 @@ This document defines backend API operations with focus on **business rules and 
 
 ---
 
+## 📊 HTTP Status Codes
+
+All API endpoints follow standard HTTP status code conventions:
+
+**Success Responses:**
+- **200 OK** - Successful GET, PUT, PATCH operations or successful operation with data
+- **201 Created** - Successful POST operation creating new resource
+- **204 No Content** - Successful DELETE operation
+
+**Client Error Responses:**
+- **400 Bad Request** - Invalid input data, validation errors, business rule violations
+  - Invalid Helm chart structure
+  - Branch not found in Git repository
+  - Invalid template path
+  - Malformed request body
+- **404 Not Found** - Requested resource does not exist
+  - Template, Blueprint, Instance not found by UUID
+  - Location, Environment, Cluster, Application not found by name
+- **409 Conflict** - Resource already exists with same unique identifier
+  - Duplicate name, duplicate git_path within repository
+
+**Server Error Responses:**
+- **500 Internal Server Error** - Unexpected server-side error
+  - Database operation failure
+  - Template version processing error
+- **502 Bad Gateway** - External service communication failure
+  - Azure DevOps authentication failure
+  - Git repository connection timeout
+
+**Error Response Format:**
+All error responses follow FastAPI standard format:
+```json
+{
+  "detail": "Human-readable error message describing the issue"
+}
+```
+
+---
+
 ## 🏗️ API Operations
 
 ### **1. Locations API**
@@ -202,39 +241,21 @@ This document defines backend API operations with focus on **business rules and 
   - Cascades deletion of all branches, templates, and template versions
 
 #### **SYNC Repository**
-- **What:** Synchronize ALL templates in repository with Git remote state and auto-disable orphaned template versions
-- **URL:** `POST /repositories/{repository_name}/sync`
-- **Scope:** Affects all templates and branches tracked within this repository
-- **Process:**
-  1. Get list of branches currently tracked in database for this repository
-  2. For each tracked branch, fetch latest state from Git remote
-  3. **For tracked branches that still exist in Git:**
-     - Synchronize all templates using this branch (equivalent to SYNC Template for each)
-     - Update template versions with latest commits using smart versioning
-  4. **For tracked branches deleted from Git:**
-     - Mark all template versions from deleted branches as `disabled: true`
-     - Update branch status to `deleted: true` (soft delete for audit)
-     - Log orphaned template versions for reporting
-- **Response:**
-  - `branches_synchronized`: List of tracked branches successfully synchronized
-  - `branches_deleted`: List of tracked branches no longer available in Git
-  - `template_versions_created`: Count of new template versions created
-  - `template_versions_updated`: Count of existing template versions updated
-  - `template_versions_disabled`: Count of disabled template versions (from deleted branches)
-  - `affected_instances`: List of instance IDs using disabled template versions
-- **Rules:**
-  - Only synchronizes branches already tracked in the system (no auto-discovery)
-  - New branches must be explicitly added via CREATE Branch API
-  - Disabled template versions cannot be used for new instances
-  - Existing instances retain their configuration but show "source unavailable" status
-  - Manual re-enable possible if branch is restored in Git
-- **Use Cases:**
-  - **Repository-wide synchronization:** Update all tracked templates and branches at once
-  - **Bulk template updates:** Sync multiple templates efficiently after repository changes
-  - **Maintenance:** Periodic sync of all tracked branches to detect deletions
-  - **Incident response:** When ArgoCD reports missing branch references
-  - **DevOps workflows:** Pre-deployment validation of all tracked repository state
-  - **Controlled scope:** Only affects explicitly tracked branches (no surprise additions)
+**URL:** `POST /repositories/{repository_name}/sync`
+**Purpose:** Synchronize ALL templates across ALL tracked branches
+
+**Process:**
+1. Get tracked branches for repository
+2. For each branch: Run SYNC Template for all templates
+3. Disable versions from deleted branches
+
+**Response:**
+- `branches_synchronized` - Successfully synced branches
+- `branches_deleted` - Branches removed from Git
+- `template_versions_created/updated/disabled` - Counts
+- `affected_instances` - Instances using disabled versions
+
+**Rules:** Only syncs explicitly tracked branches (no auto-discovery)
 
 #### **LIST/GET Repositories**
 - **What:** Retrieve repository information
@@ -294,6 +315,17 @@ This document defines backend API operations with focus on **business rules and 
 
 ### **7. Templates API** *(Enhanced with Repository Structure)*
 
+**Endpoint Summary:**
+- `POST /templates` - Create template metadata
+- `PUT /templates/{public_id}` - Update template metadata
+- `POST /templates/{public_id}/sync` - Sync template version from branch
+- `GET /templates` - List all templates
+- `GET /templates/{public_id}` - Get template with versions summary
+- `GET /templates/{public_id}/versions` - List template versions
+- `GET /templates/{public_id}/versions/{commit_hash}` - Get version details
+- `POST /templates/{public_id}/validate-values` - Validate values against schema
+- `DELETE /templates/{public_id}` - Delete template and versions
+
 #### **CREATE Template**
 - **What:** Create template metadata within a repository
 - **URL:** `POST /templates`
@@ -322,82 +354,92 @@ This document defines backend API operations with focus on **business rules and 
   - No impact on existing Template_Versions
 
 #### **SYNC Template Version**
-- **What:** Synchronize SINGLE template with specific branch using smart versioning (always uses branch HEAD)
-- **URL:** `POST /templates/{public_id}/sync` (using UUID)
-- **Scope:** Affects only the specified template and branch combination
-- **Fields:**
-  - `branch_name` (required): Source branch name to sync from HEAD
-- **Process:**
-  1. **Branch Validation:**
-     - Check if branch exists in template's repository (Git remote)
-     - **If branch not found:**
-       a. Mark branch as `deleted: true, deleted_at: now()`
-       b. Disable all template versions from this branch (`disabled: true, disabled_reason: 'branch_deleted'`)
-       c. Return protective response with affected data summary
-     - **If branch exists:** Continue with synchronization
-  2. Get latest commit from branch HEAD
-  3. Find latest Template_Version for this template+branch combination
-  4. **Smart Versioning Logic:**
-     - **If no previous version exists:** Create new Template_Version with chart data from HEAD
-     - **If previous version exists:**
-       a. Compare `previous_commit_hash` vs `HEAD_commit_hash` in template's `git_path`
-       b. **Changes detected in chart path:**
-          - Fetch updated Chart.yaml, values.yaml, values.schema.json from HEAD
-          - Create NEW Template_Version with updated chart data
-       c. **No changes in chart path:**
-          - UPDATE existing Template_Version `git_commit_hash` to HEAD commit
-          - Preserve all chart data (no new version created)
-  5. Update Template.current_version_id if new version was created
-- **Change Detection:**
-  - Use Git diff to compare commits within template's `git_path` directory
-  - Relevant files: `Chart.yaml`, `values.yaml`, `values.schema.json`, `templates/**/*`
-  - Any file change within chart path triggers new version creation
-  - Changes outside chart path only update commit tracking
-- **Rules:**
-  - Branch must belong to template's repository
-  - Always uses latest commit from branch HEAD
-  - Same template can have versions from multiple branches
-  - Smart versioning prevents unnecessary version proliferation
-- **Response Types:**
-  - **"version-created"**: New Template_Version created (chart files changed in HEAD)
-  - **"commit-updated"**: Existing version updated with HEAD commit (no chart changes)
-  - **"up-to-date"**: HEAD commit already tracked
-  - **"branch-deleted-protective"**: Branch no longer exists, template versions auto-disabled for protection
-- **Use Cases:**
-  - **Active development:** Developer updates specific template after code changes
-  - **Targeted sync:** `branch_name: "develop"` → sync only this template from develop HEAD
-  - **Granular control:** Update individual templates without affecting others
-  - **Performance-focused:** Fast sync of single template vs entire repository
-  - **Branch-specific work:** `branch_name: "release/v2.0"` → sync specific release branch
-  - **Documentation updates:** Chart unchanged in HEAD → commit updated, no new version
-  - **Branch cleanup detection:** Missing branch → auto-disable versions + protective response
-- **Protective Action Response:**
-  - **HTTP 200** with protective action taken (not an error - system self-healed)
-  - **Protective Response:**
-    ```json
-    {
-      "status": "branch-deleted-protective",
-      "message": "Branch 'feature/deleted-branch' no longer exists - protective action taken",
-      "repository": "my-charts",
-      "branch_name": "feature/deleted-branch",
-      "actions_taken": {
-        "branch_marked_deleted": true,
-        "template_versions_disabled": 2,
-        "affected_instances": ["uuid1", "uuid2"]
-      },
-      "next_steps": [
-        "Review affected instances: GET /instances?source_availability=unavailable",
-        "Migrate instances to available template versions",
-        "Use existing branches for future synchronization"
-      ],
-      "available_branches": ["main", "develop", "release/v1.0"]
-    }
-    ```
-- **Impact:** Self-healing system that automatically protects against broken references while maintaining operational transparency and user guidance
+**URL:** `POST /templates/{public_id}/sync`
+**Field:** `branch_name` (required) - Branch to sync from HEAD
+**Core Logic:**
+1. **Branch Check:** Validate branch exists, handle recovery/deletion
+2. **Commit Audit:** Verify all Template_Version commit hashes still exist in Git  
+3. **Smart Versioning:** Create new version only if chart files changed
+
+**Commit Audit Process:**
+```
+For each Template_Version (active + disabled):
+  commit_exists = git rev-parse --verify <commit_hash>
+  
+  IF commit_exists AND currently_disabled AND disabled_reason IN ('orphaned_commit', 'branch_deleted'):
+    → Re-enable (recovery)
+  ELIF NOT commit_exists AND currently_active:  
+    → Disable (disabled_reason='orphaned_commit')
+```
+
+**Smart Versioning (MVP Logic):**
+- **No valid versions:** Create first Template_Version from HEAD
+- **Valid baseline exists:** Git diff baseline vs HEAD in `git_path`
+  - **Any changes detected:** Create new Template_Version
+  - **No changes detected:** Update commit_hash only  
+- **All orphaned:** Create new Template_Version (recovery mode)
+
+**Change Detection (MVP):** Simple git diff in template's `git_path`:
+- Detects **ANY file changes** within the path (not specific files)
+- Command: `git diff <baseline_commit> <HEAD_commit> -- <git_path>/`
+- If diff output exists → Changes detected → New version
+- If diff output empty → No changes → Update commit only
+
+**Response Types:**
+- `up-to-date` - No action needed
+- `version-created` - Chart files changed  
+- `commit-updated` - Files unchanged, commit updated
+- `branch-recovered` - Branch restored, versions re-enabled
+- `multiple-orphaned-commits` - Git history rewritten, all versions orphaned
+- `partial-orphaned-commits` - Some commits missing
+- `branch-deleted-protective` - Branch deleted, versions disabled
+
+#### **SYNC Process Flow**
+
+**3-Phase Approach:**
+1. **Initial Check:** If no versions exist → create first version
+2. **Commit Audit:** Validate all commit hashes exist in Git
+3. **Smart Versioning:** Create/update based on chart changes
+
+**Commit States:**
+- `EXISTS + ACTIVE` → Keep active
+- `EXISTS + DISABLED (orphaned/branch_deleted)` → Re-enable (recovery)  
+- `EXISTS + DISABLED (other reasons)` → Keep disabled
+- `NOT_EXISTS + ACTIVE` → Disable (orphaned)
+- `NOT_EXISTS + DISABLED` → Keep disabled
+
+**Baseline Selection:**
+- **All orphaned:** Create new version from HEAD
+- **Valid versions exist:** Use latest valid as baseline for diff
+- **Mixed state:** Use valid baseline + log orphaned actions
+
+#### **Git History Scenarios**
+
+**Common Git Operations Handled:**
+- **Squash:** All commits → single commit (Response: `multiple-orphaned-commits`)
+- **Rebase:** Some commits missing/modified (Response: `partial-orphaned-commits`) 
+- **Force Push:** Complete history rewrite (Response: `multiple-orphaned-commits`)
+- **Branch Delete:** All versions disabled (Response: `branch-deleted-protective`)
+- **Branch Recovery:** Re-enable valid commits (Response: `branch-recovered`)
+
+**Design Principles:**
+✅ Individual commit validation - no Git history assumptions
+✅ Automatic recovery when commits return  
+✅ Zero data loss - content preserved when commits disappear
+✅ **Selective recovery** - only re-enable Git-related disabled reasons
+
+> **⚠️ Recovery Rules:** Only Template_Versions disabled due to `orphaned_commit` or `branch_deleted` are candidates for automatic recovery. Versions disabled for other reasons (manual, security, etc.) remain disabled.
+
+**Disabled Reasons:**
+- `orphaned_commit` - Commit no longer exists in Git history (auto-recoverable)
+- `branch_deleted` - Source branch was deleted (auto-recoverable)  
+- `manual` - Manually disabled by admin (NOT recoverable)
+- `security` - Security issue identified (NOT recoverable)
+- `deprecated` - Version marked as deprecated (NOT recoverable)  
 
 #### **VALIDATE Values Against Schema**
 - **What:** Validate custom values against specific template version from branch
-- **URL:** `POST /templates/{public_id}/branches/{branch_name}/validate-values`
+- **URL:** `POST /templates/{public_id}/validate-values`
 - **Fields:**
   - `branch_name` (required): Source branch name to validate against
   - `custom_values` (required): Values object to validate
@@ -410,6 +452,8 @@ This document defines backend API operations with focus on **business rules and 
   - Branch must exist and have synchronized template versions
   - If no schema exists in latest version, validation passes
   - Template must exist with accessible branch
+- **Alternative URL:** `POST /templates/{public_id}/versions/{commit_hash}/validate-values`
+  - Validates against specific version instead of branch HEAD
 
 #### **DELETE Template**
 - **What:** Remove template and all versions
@@ -419,13 +463,295 @@ This document defines backend API operations with focus on **business rules and 
   - Must be completely unused across all blueprints
   - Cascades deletion of all Template_Versions from all branches
 
-#### **LIST/GET Templates**
-- **What:** Retrieve template information
-- **URLs:**
-  - GET `/templates` - List all templates
-  - GET `/templates/{public_id}` - Get specific template (using UUID)
-- **Filters:** repository_name, branch_name (for versions)
-- **Returns:** Template metadata with version summaries per branch
+#### **SYNC Response Examples**
+
+**Success Responses (HTTP 200 OK):**
+```json
+// No changes detected
+{ "result": "up-to-date", "current_version": {...} }
+
+// New version created
+{ "result": "version-created", "current_version": {...} }
+
+// Commit updated without new version
+{ "result": "commit-updated", "current_version": {...} }
+```
+
+**Recovery Responses (HTTP 200 OK):**
+```json
+// Branch recovered with versions re-enabled
+{ "result": "branch-recovered", "recovered_versions": 3 }
+
+// Multiple commits orphaned (Git history rewrite)
+{ "result": "multiple-orphaned-commits", "orphaned_count": 5 }
+
+// Some commits orphaned
+{ "result": "partial-orphaned-commits", "orphaned_count": 2 }
+
+// Branch deleted, versions disabled (protective action)
+{ "result": "branch-deleted-protective", "disabled_versions": 4 }
+```
+
+**Error Responses (HTTP Status Codes):**
+- **400 Bad Request** - Invalid Helm chart structure, branch not found, invalid parameters
+  ```json
+  { "detail": "Git operation 'helm_chart_validation' failed: Invalid Helm Chart at 'airflow/charts2': missing files Chart.yaml" }
+  ```
+- **404 Not Found** - Template not found
+  ```json
+  { "detail": "Template with identifier 'uuid-xyz' not found" }
+  ```
+- **502 Bad Gateway** - Azure DevOps authentication or connection issues
+  ```json
+  { "detail": "Git operation 'authentication' failed: Azure DevOps authentication failed" }
+  ```
+
+#### **LIST Templates**
+- **What:** Retrieve all templates with basic information
+- **URL:** `GET /templates`
+- **Filters:** 
+  - `repository_name` (optional): Filter by repository
+  - `include_versions` (optional, default: false): Include version summaries
+- **Returns:** Array of templates with basic metadata
+- **Response Format:**
+  ```json
+  [
+    {
+      "public_id": "uuid-123",
+      "name": "PostgreSQL-Database",
+      "description": "PostgreSQL database with monitoring", 
+      "repository_name": "helm-charts",
+      "git_path": "database/postgresql",
+      "created_at": "2024-01-10T10:00:00Z",
+      "current_version": {
+        "commit_hash": "abc123def",
+        "branch_name": "main",
+        "version_display": "main-abc123d",
+        "chart_version": "15.2.1"
+      },
+      "versions_count": 5
+    }
+  ]
+  ```
+
+#### **GET Template with Versions Summary**
+- **What:** Retrieve specific template with versions summary
+- **URL:** `GET /templates/{public_id}` (using UUID)
+- **Purpose:** Provides overview of available versions for blueprint creation and upgrade planning
+- **Returns:** Template details with summarized version information
+- **Response Format:**
+  ```json
+  {
+    "public_id": "uuid-123",
+    "name": "PostgreSQL-Database",
+    "description": "PostgreSQL database with monitoring",
+    "repository_name": "helm-charts", 
+    "git_path": "database/postgresql",
+    "created_at": "2024-01-10T10:00:00Z",
+    "updated_at": "2024-01-15T10:00:00Z",
+    "current_version": {
+      "commit_hash": "abc123def",
+      "branch_name": "main",
+      "version_display": "main-abc123d",
+      "chart_version": "15.2.1",
+      "created_at": "2024-01-15T10:00:00Z"
+    },
+    "versions_summary": [
+      {
+        "commit_hash": "abc123def",
+        "branch_name": "main",
+        "version_display": "main-abc123d",
+        "chart_version": "15.2.1",
+        "app_version": "15.2",
+        "created_at": "2024-01-15T10:00:00Z",
+        "is_current": true
+      },
+      {
+        "commit_hash": "def456abc", 
+        "branch_name": "main",
+        "version_display": "main-def456a",
+        "chart_version": "15.2.0",
+        "app_version": "15.2",
+        "created_at": "2024-01-10T10:00:00Z",
+        "is_current": false
+      },
+      {
+        "commit_hash": "ghi789def",
+        "branch_name": "develop", 
+        "version_display": "develop-ghi789d",
+        "chart_version": "15.3.0-beta",
+        "app_version": "15.3-beta",
+        "created_at": "2024-01-12T10:00:00Z",
+        "is_current": false
+      }
+    ]
+  }
+  ```
+- **Use Cases:**
+  - Blueprint creation: Choose template version for blueprint
+  - Upgrade planning: See available newer versions
+  - Version comparison: Compare chart_version between branches
+  - Quick overview: See all versions without loading details
+
+#### **GET Template Versions List**
+- **What:** List all versions for specific template
+- **URL:** `GET /templates/{public_id}/versions`
+- **Filters:**
+  - `branch_name` (optional): Filter by specific branch
+  - `limit` (optional, default: 50): Limit number of results
+  - `order` (optional, default: "desc"): Order by created_at (desc/asc)
+- **Returns:** Array of version summaries with pagination
+- **Response Format:**
+  ```json
+  {
+    "template_public_id": "uuid-123",
+    "total_count": 25,
+    "versions": [
+      {
+        "commit_hash": "abc123def",
+        "branch_name": "main",
+        "version_display": "main-abc123d", 
+        "chart_version": "15.2.1",
+        "app_version": "15.2",
+        "created_at": "2024-01-15T10:00:00Z",
+        "is_current": true
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "per_page": 50,
+      "total_pages": 1
+    }
+  }
+  ```
+
+#### **GET Template Version Details**
+- **What:** Get complete details for specific template version
+- **URL:** `GET /templates/{public_id}/versions/{commit_hash}`
+- **Purpose:** Deep analysis of specific version for troubleshooting and configuration
+- **Returns:** Complete template version data including schema and default values
+- **Response Format:**
+  ```json
+  {
+    "template_public_id": "uuid-123",
+    "commit_hash": "abc123def",
+    "branch_name": "main",
+    "version_display": "main-abc123d",
+    "created_at": "2024-01-15T10:00:00Z",
+    "chart_metadata": {
+      "name": "postgresql",
+      "version": "15.2.1",
+      "app_version": "15.2",
+      "description": "PostgreSQL object-relational database",
+      "type": "application",
+      "keywords": ["postgresql", "database", "sql"],
+      "home": "https://github.com/bitnami/charts/tree/main/bitnami/postgresql",
+      "sources": ["https://github.com/bitnami/containers/tree/main/bitnami/postgresql"],
+      "maintainers": [
+        {
+          "name": "Bitnami",
+          "email": "containers@bitnami.com"
+        }
+      ]
+    },
+    "default_values": {
+      "image": {
+        "repository": "bitnami/postgresql",
+        "tag": "15.2.0-debian-11-r14",
+        "pullPolicy": "IfNotPresent"
+      },
+      "auth": {
+        "enablePostgresUser": true,
+        "postgresPassword": "",
+        "username": "",
+        "password": "",
+        "database": ""
+      },
+      "primary": {
+        "persistence": {
+          "enabled": true,
+          "size": "8Gi"
+        },
+        "resources": {
+          "limits": {},
+          "requests": {
+            "cpu": "250m",
+            "memory": "256Mi"
+          }
+        }
+      }
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "repository": {"type": "string"},
+            "tag": {"type": "string"},
+            "pullPolicy": {"type": "string", "enum": ["Always", "Never", "IfNotPresent"]}
+          }
+        },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "enablePostgresUser": {"type": "boolean"},
+            "database": {"type": "string"}
+          }
+        }
+      }
+    },
+    "import_details": {
+      "imported_at": "2024-01-15T10:00:00Z",
+      "sync_method": "manual",
+      "chart_files_detected": ["Chart.yaml", "values.yaml", "values.schema.json"],
+      "template_files_count": 12
+    }
+  }
+  ```
+- **Use Cases:**
+  - Configuration planning: See complete default values for customization
+  - Schema validation: Understand available configuration options
+  - Troubleshooting: Deep dive into specific version causing issues
+  - Documentation: Complete chart metadata and structure
+
+#### **Template Version Status Management**
+
+**Status Fields:** All Template_Version records include status tracking fields:
+- `disabled` (boolean): Whether version is available for use (default: false)
+- `disabled_reason` (string, nullable): Reason for disabling (when disabled = true)
+- `disabled_at` (timestamp, nullable): When version was disabled
+- `recovered_at` (timestamp, nullable): When version was recovered from disabled state
+
+**Status Values:**
+- **Available** (`disabled: false`): Template version ready for use in blueprints and instances
+- **Disabled** (`disabled: true`): Template version cannot be used for new blueprints/instances
+
+**Disable Reasons:**
+- `"branch_deleted"`: Source branch no longer exists in repository
+- `"orphaned_commit"`: Git commit hash no longer exists in repository history
+- `"orphaned_commit_after_recovery"`: Branch was recovered but commit no longer exists in new branch history
+- `"manual_disable"`: Administratively disabled by user
+- `"repository_deleted"`: Source repository no longer accessible
+
+**Business Rules:**
+- **New Blueprints/Instances:** Cannot use disabled template versions
+- **Existing Instances:** Continue running but show "source unavailable" status
+- **Automatic Recovery:** Template versions automatically re-enabled when branch is recovered and commits still exist
+- **Partial Recovery:** If branch is recovered but commits are missing, versions remain disabled with updated reason
+- **Manual Recovery:** Administrators can manually re-enable template versions after validation
+- **Cleanup:** Disabled versions older than retention period can be purged
+
+**Branch Recovery Process:**
+- **Automatic Detection:** Next sync operation detects previously deleted branch is now available
+- **Commit Validation:** Each disabled template version's commit is checked against recovered branch
+- **Smart Re-enabling:** Only commits that still exist in recovered branch are automatically re-enabled
+- **Audit Trail:** All recovery actions logged with timestamps for operational transparency
+
+**Impact on Instance Operations:**
+- **LIST Instances Filter:** `source_availability=unavailable` shows instances using disabled template versions
+- **Instance Status:** Instances using disabled versions show warning indicators
+- **Upgrade Recommendations:** System suggests alternative template versions for affected instances
 
 ---
 
