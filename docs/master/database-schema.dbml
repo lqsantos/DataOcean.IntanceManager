@@ -124,13 +124,19 @@ Table branches {
   name varchar(100) [not null]
   deleted boolean [default: false]
   deleted_at timestamp
+  recovered_at timestamp
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   
   Note: '''
   Branches within repositories that are being tracked/considered by the system.
   User explicitly adds branches they want to monitor.
-  Soft delete supported: deleted=true when branch no longer exists in Git remote.
+  
+  SYNC Functionality Support:
+  - deleted=true when branch no longer exists in Git remote
+  - recovered_at tracks when deleted branch is restored
+  - Supports automatic branch recovery detection
+  - Template versions from deleted branches are auto-disabled
   '''
   
   indexes {
@@ -170,6 +176,7 @@ Table template_versions {
   id bigserial [pk]
   template_id bigint [not null]
   branch_id bigint [not null]
+  branch_name varchar(100) [not null]
   git_commit_hash varchar(40) [not null]
   chart_metadata jsonb [not null]
   default_values jsonb [not null]
@@ -178,20 +185,32 @@ Table template_versions {
   commit_author varchar(255)
   disabled boolean [default: false]
   disabled_reason varchar(100)
+  disabled_at timestamp
+  recovered_at timestamp
   imported_at timestamp [default: `now()`]
   
   Note: '''
   Historical versions of Helm Chart data imported from specific branch.
   Each version is tied to a template and a specific branch.
-  Can be disabled when source branch is deleted (disabled=true, reason='branch_deleted').
+  
+  SYNC Functionality Support:
+  - disabled=true when commits become orphaned or branch deleted
+  - disabled_reason: 'orphaned_commit', 'branch_deleted', 'manual', 'security', 'deprecated'
+  - disabled_at/recovered_at track automatic recovery events
+  - branch_name denormalized for efficient SYNC queries
+  - Supports automatic recovery when commits return to Git history
+  
   Disabled versions cannot be used for new instances but preserve audit trail.
   '''
   
   indexes {
     (template_id, branch_id, git_commit_hash) [unique, name: "idx_template_versions_template_branch_commit"]
+    (template_id, branch_name) [name: "idx_template_versions_template_branch_name"]
     template_id [name: "idx_template_versions_template"]
     branch_id [name: "idx_template_versions_branch"]
     git_commit_hash [name: "idx_template_versions_commit"]
+    disabled [name: "idx_template_versions_disabled"]
+    disabled_reason [name: "idx_template_versions_disabled_reason"]
     imported_at [name: "idx_template_versions_imported"]
   }
 }
