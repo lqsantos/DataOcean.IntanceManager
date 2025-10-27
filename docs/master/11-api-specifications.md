@@ -48,13 +48,247 @@ All API endpoints follow standard HTTP status code conventions:
   - Azure DevOps authentication failure
   - Git repository connection timeout
 
-**Error Response Format:**
-All error responses follow FastAPI standard format:
+---
+
+## 🔴 Error Response Format
+
+All API endpoints return structured error responses following RFC 7807 principles with additional context for better debugging and user experience.
+
+### **Standard Error Structure**
 ```json
 {
-  "detail": "Human-readable error message describing the issue"
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "Template not found",
+    "detail": "Template with identifier 'abc-123-def' not found",
+    "field": "public_id",
+    "value": "abc-123-def",
+    "metadata": {
+      "resource": "Template",
+      "identifier": "abc-123-def"
+    }
+  }
 }
 ```
+
+### **Error Response Fields**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `code` | string | Yes | Machine-readable error code for programmatic handling |
+| `message` | string | Yes | Short, user-friendly error message for UI display |
+| `detail` | string | Yes | Technical error message with full context for debugging |
+| `field` | string | No | Field name that caused the validation error |
+| `value` | any | No | Field value that was invalid or caused the error |
+| `metadata` | object | No | Additional context information about the error |
+
+### **Error Response Examples**
+
+#### **404 Not Found**
+```json
+{
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "Template not found",
+    "detail": "Template with identifier 'abc-123-def' not found",
+    "field": "public_id",
+    "value": "abc-123-def",
+    "metadata": {
+      "resource": "Template",
+      "identifier": "abc-123-def"
+    }
+  }
+}
+```
+
+#### **409 Conflict**
+```json
+{
+  "error": {
+    "code": "RESOURCE_ALREADY_EXISTS",
+    "message": "Template already exists",
+    "detail": "Template with name 'PostgreSQL-DB' already exists",
+    "field": "name",
+    "value": "PostgreSQL-DB",
+    "metadata": {
+      "resource": "Template",
+      "field": "name"
+    }
+  }
+}
+```
+
+#### **400 Bad Request - Invalid Helm Chart**
+```json
+{
+  "error": {
+    "code": "INVALID_HELM_CHART",
+    "message": "Invalid Helm Chart structure",
+    "detail": "Git operation 'helm_chart_validation' failed: Invalid Helm Chart at 'airflow/charts2': missing files Chart.yaml",
+    "field": "git_path",
+    "value": "airflow/charts2",
+    "metadata": {
+      "git_path": "airflow/charts2",
+      "missing_files": ["Chart.yaml"]
+    }
+  }
+}
+```
+
+#### **502 Bad Gateway - Authentication Failed**
+```json
+{
+  "error": {
+    "code": "AUTHENTICATION_FAILED",
+    "message": "Authentication with external service failed",
+    "detail": "Git operation 'authentication' failed: Azure DevOps authentication failed",
+    "metadata": {
+      "service": "Azure DevOps"
+    }
+  }
+}
+```
+
+#### **500 Internal Server Error**
+```json
+{
+  "error": {
+    "code": "TEMPLATE_VERSION_ERROR",
+    "message": "Template version creation failed",
+    "detail": "Template 'PostgreSQL-DB' version creation failed: database transaction timeout",
+    "metadata": {
+      "template": "PostgreSQL-DB",
+      "operation": "creation",
+      "reason": "database transaction timeout"
+    }
+  }
+}
+```
+
+### **Error Codes Reference**
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `RESOURCE_NOT_FOUND` | 404 | Requested resource does not exist |
+| `RESOURCE_ALREADY_EXISTS` | 409 | Resource with identifier already exists |
+| `INVALID_HELM_CHART` | 400 | Helm Chart structure is invalid or incomplete |
+| `INVALID_REPOSITORY` | 400 | Repository is invalid or inaccessible |
+| `GIT_SERVICE_ERROR` | 400 | Git service operation failed |
+| `AUTHENTICATION_FAILED` | 502 | External service authentication failed |
+| `TEMPLATE_SYNC_FAILED` | 400 | Template synchronization operation failed |
+| `TEMPLATE_VERSION_ERROR` | 500 | Template version processing error |
+| `INTERNAL_ERROR` | 500 | Unexpected server-side error |
+
+---
+
+### **Error Message Guidelines (Legacy Reference)**
+
+> **Note:** The sections below document message patterns for reference. All errors now use the structured format above.
+
+
+
+All API endpoints follow consistent error message patterns for better debugging and user experience:
+
+#### **Message Structure**
+Error messages follow the pattern: `{Context}: {Specific Issue}` or `{Entity} '{identifier}' {action/state}`
+
+**Examples:**
+- `"Template with identifier 'uuid-123' not found"`
+- `"Template with name 'PostgreSQL-DB' already exists"`
+- `"Git operation 'helm_chart_validation' failed: Invalid Helm Chart at 'airflow/charts'"`
+
+#### **Best Practices**
+1. **Be Specific:** Include entity type, identifier, and exact issue
+2. **Be Actionable:** Help user understand what went wrong and how to fix it
+3. **Be Consistent:** Use same terminology across all endpoints
+4. **Include Context:** Mention the operation being performed when relevant
+5. **Avoid Technical Jargon:** Use business terminology when possible
+
+#### **Common Error Patterns**
+
+**Not Found Errors (404):**
+```
+"{Entity} with identifier '{value}' not found"
+"{Entity} '{name}' not found"
+
+Examples:
+- "Template with identifier 'abc-123-def' not found"
+- "Repository 'helm-charts' not found"
+- "Cluster 'production-aks' not found"
+```
+
+**Already Exists Errors (409):**
+```
+"{Entity} with {field} '{value}' already exists"
+
+Examples:
+- "Template with name 'PostgreSQL-DB' already exists"
+- "Template with git_path 'database/postgresql' already exists in repository 'helm-charts'"
+- "Location with name 'Brazil' already exists"
+```
+
+**Validation Errors (400):**
+```
+"Invalid {field}: {reason}"
+"{Entity} validation failed: {specific_issue}"
+
+Examples:
+- "Invalid branch_name: Branch 'feature-x' not found in repository"
+- "Invalid git_path: Chart.yaml not found at 'airflow/charts2'"
+- "Template validation failed: repository_name is required"
+```
+
+**Git Service Errors (400):**
+```
+"Git operation '{operation}' failed: {detailed_message}"
+
+Examples:
+- "Git operation 'helm_chart_validation' failed: Invalid Helm Chart at 'airflow/charts2': missing files Chart.yaml"
+- "Git operation 'branch_validation' failed: Branch 'develop' not found in repository 'DataOcean.Infra'"
+```
+
+**External Service Errors (502):**
+```
+"Git operation '{operation}' failed: {external_service_error}"
+
+Examples:
+- "Git operation 'authentication' failed: Azure DevOps authentication failed"
+- "Git operation 'repository_access' failed: Repository 'helm-charts' is invalid or inaccessible"
+```
+
+**Business Rule Violations (400):**
+```
+"Cannot {action}: {business_rule_reason}"
+
+Examples:
+- "Cannot delete template: Template version is referenced by 3 blueprints"
+- "Cannot use disabled template version: commit no longer exists in repository"
+- "Cannot publish blueprint version: must have at least one template configured"
+```
+
+**Internal Server Errors (500):**
+```
+"Template '{name}' version {operation} failed: {technical_reason}"
+
+Examples:
+- "Template 'PostgreSQL-DB' version synchronization failed: database transaction timeout"
+- "Template 'Airflow-Chart' version creation failed: failed to parse Chart.yaml"
+```
+
+#### **Field Naming Conventions**
+Use consistent field names across all error messages:
+- `public_id` (not uuid, guid, id)
+- `name` (for human-readable identifiers)
+- `branch_name` (not branch, branchName)
+- `repository_name` (not repo, repository)
+- `git_path` (not path, chartPath)
+- `commit_hash` (not commit, sha, revision)
+
+#### **Multi-Language Support (Future)**
+Error messages use clear English. Future versions may include:
+- Error codes for programmatic handling
+- i18n support for localized messages
+- Structured error details with machine-readable codes
 
 ---
 
@@ -493,18 +727,70 @@ For each Template_Version (active + disabled):
 ```
 
 **Error Responses (HTTP Status Codes):**
-- **400 Bad Request** - Invalid Helm chart structure, branch not found, invalid parameters
-  ```json
-  { "detail": "Git operation 'helm_chart_validation' failed: Invalid Helm Chart at 'airflow/charts2': missing files Chart.yaml" }
-  ```
-- **404 Not Found** - Template not found
-  ```json
-  { "detail": "Template with identifier 'uuid-xyz' not found" }
-  ```
-- **502 Bad Gateway** - Azure DevOps authentication or connection issues
-  ```json
-  { "detail": "Git operation 'authentication' failed: Azure DevOps authentication failed" }
-  ```
+
+**400 Bad Request - Invalid Helm chart structure:**
+```json
+{
+  "error": {
+    "code": "INVALID_HELM_CHART",
+    "message": "Invalid Helm Chart structure",
+    "detail": "Git operation 'helm_chart_validation' failed: Invalid Helm Chart at 'airflow/charts2': missing files Chart.yaml",
+    "field": "git_path",
+    "value": "airflow/charts2",
+    "metadata": {
+      "git_path": "airflow/charts2",
+      "missing_files": ["Chart.yaml"]
+    }
+  }
+}
+```
+
+**400 Bad Request - Branch not found:**
+```json
+{
+  "error": {
+    "code": "GIT_SERVICE_ERROR",
+    "message": "Git operation failed: branch_validation",
+    "detail": "Git operation 'branch_validation' failed: Branch 'feature-x' not found in repository 'DataOcean.Infra'",
+    "field": "branch_name",
+    "value": "feature-x",
+    "metadata": {
+      "operation": "branch_validation"
+    }
+  }
+}
+```
+
+**404 Not Found - Template not found:**
+```json
+{
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "Template not found",
+    "detail": "Template with identifier 'uuid-xyz' not found",
+    "field": "public_id",
+    "value": "uuid-xyz",
+    "metadata": {
+      "resource": "Template",
+      "identifier": "uuid-xyz"
+    }
+  }
+}
+```
+
+**502 Bad Gateway - Authentication issues:**
+```json
+{
+  "error": {
+    "code": "AUTHENTICATION_FAILED",
+    "message": "Authentication with external service failed",
+    "detail": "Git operation 'authentication' failed: Azure DevOps authentication failed",
+    "metadata": {
+      "service": "Azure DevOps"
+    }
+  }
+}
+```
 
 #### **LIST Templates**
 - **What:** Retrieve all templates with basic information
@@ -790,6 +1076,21 @@ For each Template_Version (active + disabled):
   - Version created in 'draft' state - not usable by instances yet
   - Only one draft version per blueprint allowed at a time
 - **Impact:** Draft version created for editing - blueprint remains at previous published state until new version is published
+
+#### **UPDATE Blueprint Version**
+- **What:** Update blueprint version metadata
+- **URL:** `PUT /blueprints/{public_id}/versions/{version_number}` (using UUID)
+- **Fields:**
+  - `helper_templates` (optional): Update Go template syntax for Helm value generation (draft only)
+  - `description` (optional): Update version description (allowed anytime)
+- **Rules:**
+  - `helper_templates` can only be updated on 'draft' versions (FORBIDDEN if published)
+  - `description` can be updated on both 'draft' and 'published' versions (documentation field)
+  - helper_templates must be valid Go template syntax (if provided)
+  - Version number cannot be changed (auto-generated)
+- **Impact:** 
+  - Description updates: Pure documentation change, no functional impact
+  - helper_templates updates: Only allowed on draft versions, affects Helm value generation
 
 #### **ADD Template to Blueprint Version**
 - **What:** Associate specific template version with blueprint version (only draft versions)
